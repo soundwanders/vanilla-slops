@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steam Launch Options</title>
+  <script defer src="main.js"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Steam Launch Options</h1>
+    
+    <!-- Input for Game ID -->
+    <input type="text" id="gameIdInput" placeholder="Enter Game ID">
+    <button id="fetchButton">Fetch Launch Options</button>
+    
+    <!-- Table for displaying data -->
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Game ID</th>
+          <th>Game Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be dynamically added here -->
+      </tbody>
+    </table>
+    
+    <!-- Pagination controls -->
+    <div id="pagination" style="margin-top: 20px; text-align: center;">
+      <!-- Buttons will be dynamically generated here -->
+    </div>
+  </div>
+</body>
+</html>

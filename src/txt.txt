@@ -1,0 +1,12 @@
+steam-launch-options/
+├── server/
+│   ├── app.js
+│   ├── routes/
+│   │   └── steam.js
+├── client/
+│   ├── index.html
+│   ├── main.js
+│   ├── styles.js
+├── .env
+├── package.json
+└── README.md
