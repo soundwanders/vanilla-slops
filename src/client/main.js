@@ -79,5 +79,5 @@ function changePage(page) {
   fetchGames(currentPage);
 }
 
-// Initial data fetch when the page loads
+// Initial data fetch on page load
 document.addEventListener('DOMContentLoaded', () => fetchGames(currentPage));

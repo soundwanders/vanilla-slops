@@ -5,7 +5,7 @@ router.get('/games', async (req, res) => {
     const start = (page - 1) * limit;
     const end = start + parseInt(limit, 10) - 1;
 
-    // Fetch total count of games
+    // Fetch total amount of games
     const { count } = await supabase.from('games').select('*', { count: 'exact', head: true });
 
     // Fetch paginated games
