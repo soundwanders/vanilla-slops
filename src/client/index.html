@@ -3,34 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Steam Launch Options</title>
+  <title>Vanilla Slops</title>
   <script defer src="main.js"></script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
-    <h1>Steam Launch Options</h1>
-    
-    <!-- Input for Game ID -->
-    <input type="text" id="gameIdInput" placeholder="Enter Game ID">
-    <button id="fetchButton">Fetch Launch Options</button>
-    
-    <!-- Table for displaying data -->
-    <table id="resultsTable">
-      <thead>
-        <tr>
-          <th>Game ID</th>
-          <th>Game Name</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be dynamically added here -->
-      </tbody>
-    </table>
-    
-    <!-- Pagination controls -->
-    <div id="pagination" style="margin-top: 20px; text-align: center;">
-      <!-- Buttons will be dynamically generated here -->
-    </div>
+    <header>
+      <h1>Vanilla Slops</h1>
+      <p>Find the best Steam launch options effortlessly.</p>
+    </header>
+
+    <section id="search-section">
+      <input type="text" id="gameIdInput" placeholder="Search for a game...">
+      <button id="fetchButton">Search</button>
+    </section>
+
+    <section id="results-container">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Game ID</th>
+            <th>Game Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows dynamically added here -->
+        </tbody>
+      </table>
+    </section>
+
+    <div id="pagination"></div>
   </div>
 </body>
 </html>
