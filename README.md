@@ -18,11 +18,10 @@ allows users to search, sort, and filter launch options for thousands of Steam g
 🚧 **Code Splitting & Bundling** – Manually optimize JavaScript loading  
 🚧 **Pagination & Infinite Scroll** – Optimize large data sets  
 🚧 **Caching Strategies** – Reduce API calls for faster page loads  
-🚀 **Scheduled Data Updates** – CRON job to keep game launch options up to date  
+🚧 **Scheduled Data Updates** – CRON job to purge stale data and keep game launch options up to date  
 
 ## 📜 License
 MIT License. See `LICENSE` for details.
 
 ---
-Built with 💚
-
+Built with ❤️
