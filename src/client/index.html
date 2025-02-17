@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vanilla Slops</title>
-    <script defer src="main.js"></script>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <div id="app">
-      <header>
-        <h1>Vanilla Slops</h1>
-        <p>Steam Launch Options</p>
-      </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanilla Slops</title>
+  <script src="js/style.js" defer></script>
+</head>
+<body>
 
-      <section id="search-section">
-        <input type="text" id="gameIdInput" placeholder="Search for a game...">
-        <button id="fetchButton">Search</button>
-      </section>
+  <div id="app">
+    <header>
+      <h1>Vanilla Slops</h1>
+      <h3>Steam Launch Options</h3>
+    </header>
 
-      <section id="results-container">
-        <table id="resultsTable">
-          <thead>
-            <tr>
-              <th>Game ID</th>
-              <th>Game Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Rows dynamically added here -->
-          </tbody>
-        </table>
-      </section>
+    <section id="search-section">
+      <input type="text" id="gameSearch" placeholder="Search for a game...">
+      <button id="searchButton">Search</button>
+    </section>
 
-      <div id="pagination"></div>
-    </div>
-  </body>
+    <section id="results-container">
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Game Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows dynamically added here -->
+        </tbody>
+      </table>
+    </section>
+
+    <div id="pagination"></div>
+  </div>
+
+  <script src="js/pagination.js" defer></script>
+</body>
 </html>
