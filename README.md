@@ -13,8 +13,8 @@ allows users to search, sort, and filter launch options for thousands of Steam g
 - **Database:** Supabase (PostgreSQL)
 - **Data Source:** Steamworks/Steampowered API
 
-### 🔄 **Roadmap**  
-🚧 **Server-Side Rendering (SSR) with Express** – Generate and serve HTML dynamically  
+### 🔄 **Roadmap** 
+🚧 **Server-Side Rendering (SSR)** – Generate and serve HTML dynamically  
 🚧 **Code Splitting & Bundling** – Manually optimize JavaScript loading  
 🚧 **Pagination & Infinite Scroll** – Optimize large data sets  
 🚧 **Caching Strategies** – Reduce API calls for faster page loads  
