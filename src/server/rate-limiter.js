@@ -1,6 +1,6 @@
 /**
- * @param {number} limit - Max number of concurrent tasks
- * @returns {Function} - A function to schedule tasks with controlled concurrency
+ * @param {number} limit - max number of concurrent tasks
+ * @returns {Function} - Schedule tasks with controlled concurrency
  */
 function createRateLimiter(limit) {
   let activeCount = 0;
@@ -14,7 +14,7 @@ function createRateLimiter(limit) {
       activeCount++;
       task().finally(() => {
         activeCount--;
-        next(); // Process next task in queue
+        next();
       });
     }
   };
@@ -22,7 +22,7 @@ function createRateLimiter(limit) {
   return function runTask(fn) {
     return new Promise((resolve, reject) => {
       const task = () =>
-        fn().then(resolve).catch(reject); // Wrap the task with resolve/reject handling
+        fn().then(resolve).catch(reject); // Wrap task with resolve/reject handling
       queue.push(task);
       next(); // Process tasks if still UNDER the limit
     });
