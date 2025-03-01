@@ -4,7 +4,10 @@ const { createClient } = require('@supabase/supabase-js');
 const { processGames } = require('../server/controller/fetch-controller');
 const createRateLimiter = require('../server/rate-limiter');
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabaseURL = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+const supabase = createClient(supabaseURL, supabaseKey);
 const CONCURRENT_REQUEST_LIMIT = 10;
 const limit = createRateLimiter(CONCURRENT_REQUEST_LIMIT);
 const BATCH_SIZE = 20;
