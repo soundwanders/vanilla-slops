@@ -5,13 +5,15 @@
 </p>
 
 Built with vanilla JavaScript on top of a Supabase-powered postgreSQL database,
-allows users to search, sort, and filter launch options for thousands of Steam games.
+allows users to search, sort, and filter launch options for thousands of Steam games. 
+
+This project's core philosophy is to recreate some functionality that modern frameworks abstract away, 
+while staying lightweight, fast, and useful. Let's see how it goes :fearful:
 
 ## 🛠️ Building Blocks
-- **Frontend:** Vanilla JavaScript, CSS-in-JS
-- **Backend:** Node.js (Express)
-- **Database:** Supabase (PostgreSQL)
-- **Data Source:** Steamworks/Steampowered API
+- **Frontend:** Vanilla JavaScript
+- **Backend:** Node (Express)
+- **Database:** Supabase
 
 ### 🔄 **Roadmap** 
 🚧 **Server-Side Rendering (SSR)** – Generate and serve HTML dynamically  
@@ -19,9 +21,6 @@ allows users to search, sort, and filter launch options for thousands of Steam g
 🚧 **Pagination & Infinite Scroll** – Optimize large data sets  
 🚧 **Caching Strategies** – Reduce API calls for faster page loads  
 🚧 **Scheduled Data Updates** – CRON job to purge stale data and keep game launch options up to date  
-
-## 📜 License
-MIT License. See `LICENSE` for details.
 
 ---
 Built with ❤️

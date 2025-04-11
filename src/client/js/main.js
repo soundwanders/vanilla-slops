@@ -1,4 +1,4 @@
-import { games } from "./data.js";
+import { games } from "./mock-data.js";
 import { searchInput, setupEventListeners } from "./dom.js";
 import { renderPagination } from "./pagination.js";
 import { renderGamesTable } from "./games-table.js";
