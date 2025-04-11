@@ -17,14 +17,64 @@ class SlopScraper:
         self.cache_file = cache_file
         self.max_games = max_games
         self.output_dir = output_dir
+        
+        # Create output directory if it doesn't exist
+        if self.test_mode and not os.path.exists(self.output_dir):
+            try:
+                os.makedirs(self.output_dir)
+                print(f"Created output directory: {self.output_dir}")
+            except Exception as e:
+                print(f"Error creating output directory: {e}")
+                # Fall back to current directory if we can't create the specified one
+                self.output_dir = "./"
+                print(f"Falling back to current directory: {self.output_dir}")
+        
         self.cache = self.load_cache()
         
         if not self.test_mode:
             url = os.getenv("SUPABASE_URL")
             key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            
+            # Check if environment variables are set
             if not url or not key:
-                raise ValueError("Supabase credentials not set in environment variables.")
-            self.supabase = create_client(url, key)
+                print("⚠️ Supabase credentials not found in environment variables.")
+                print("Checking for credentials file...")
+                
+                # Try loading from a credentials file as fallback
+                creds_file = os.path.join(os.path.expanduser('~'), '.supabase_creds')
+                if os.path.exists(creds_file):
+                    try:
+                        with open(creds_file, 'r') as f:
+                            creds = json.load(f)
+                            url = creds.get('url')
+                            key = creds.get('key')
+                            print("✅ Loaded Supabase credentials from file.")
+                    except Exception as e:
+                        print(f"Error loading credentials file: {e}")
+                
+                # Allow manual entry if still not found
+                if not url or not key:
+                    print("\nSupabase credentials not found. You can:")
+                    print("1. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables")
+                    print("2. Create a .supabase_creds file in your home directory")
+                    print("3. Enter credentials now (not recommended for security reasons)")
+                    
+                    use_manual = input("Enter credentials manually? (y/n): ").lower() == 'y'
+                    if use_manual:
+                        url = input("Enter Supabase URL: ")
+                        key = input("Enter Supabase Service Role Key: ")
+                    else:
+                        print("Running in test mode instead.")
+                        self.test_mode = True
+            
+            if url and key and not self.test_mode:
+                try:
+                    self.supabase = create_client(url, key)
+                    print("✅ Connected to Supabase successfully.")
+                except Exception as e:
+                    print(f"Error connecting to Supabase: {e}")
+                    print("Falling back to test mode.")
+                    self.test_mode = True
         
         # Initialize test results dict if test mode is on
         if self.test_mode:
@@ -44,11 +94,18 @@ class SlopScraper:
             except json.JSONDecodeError:
                 print("⚠️ Cache file is corrupt. Starting fresh.")
                 return {}
+            except Exception as e:
+                print(f"⚠️ Error loading cache: {e}")
+                return {}
         return {}
 
     def save_cache(self):
-        with open(self.cache_file, 'w') as f:
-            json.dump(self.cache, f, indent=2)
+        try:
+            with open(self.cache_file, 'w') as f:
+                json.dump(self.cache, f, indent=2)
+            print(f"✅ Cache saved to {self.cache_file}")
+        except Exception as e:
+            print(f"⚠️ Error saving cache: {e}")
     
     def get_steam_game_list(self, limit=100):
         print(f"Fetching game list (force_refresh={self.force_refresh})...")
@@ -133,7 +190,8 @@ class SlopScraper:
         url = f"https://www.pcgamingwiki.com/wiki/{formatted_title}"
         
         # Add a delay for rate limiting
-        time.sleep(self.rate_limit)
+        if self.rate_limit:
+            time.sleep(self.rate_limit)
         
         try:
             response = requests.get(url)
@@ -191,7 +249,8 @@ class SlopScraper:
         url = f"https://steamcommunity.com/app/{app_id}/guides/"
         
         # Add a delay for rate limiting
-        time.sleep(self.rate_limit)
+        if self.rate_limit:
+            time.sleep(self.rate_limit)
         
         try:
             response = requests.get(url)
@@ -242,38 +301,78 @@ class SlopScraper:
         if self.test_mode:
             return
 
-        # Insert game info
-        self.supabase.table("games").upsert({
-            "app_id": game['appid'],
-            "title": game['name']
-        }).execute()
-
-        # Insert each launch option
-        for option in options:
-            self.supabase.table("launch_options").insert({
+        try:
+            # Insert game info
+            res = self.supabase.table("games").upsert({
                 "app_id": game['appid'],
-                "command": option['command'],
-                "description": option['description'],
-                "source": option['source'],
-                "verified": False
+                "title": game['name']
             }).execute()
+            
+            # Check response
+            if hasattr(res, 'error') and res.error:
+                print(f"Error saving game {game['name']}: {res.error}")
+                return
+
+            print(f"✅ Saved game {game['name']} to database")
+
+            # Insert each launch option
+            success_count = 0
+            for option in options:
+                try:
+                    self.supabase.table("launch_options").insert({
+                        "app_id": game['appid'],
+                        "command": option['command'],
+                        "description": option['description'],
+                        "source": option['source'],
+                        "verified": False
+                    }).execute()
+                    success_count += 1
+                except Exception as inner_e:
+                    print(f"Error saving option {option['command']}: {inner_e}")
+            
+            print(f"✅ Saved {success_count}/{len(options)} options to database")
+            
+        except Exception as e:
+            print(f"⚠️ Database error: {e}")
+            print("Make sure your Supabase tables are set up correctly with the right columns")
     
     def save_test_results(self):
         """Save test results to JSON file"""
         if not self.test_mode:
             return
             
-        output_file = os.path.join(self.output_dir, "test_results.json")
-        with open(output_file, 'w') as f:
-            json.dump(self.test_results, f, indent=4)
-        
-        print(f"\nTest results saved to {output_file}")
-        print(f"Games processed: {self.test_results['games_processed']}")
-        print(f"Games with options found: {self.test_results['games_with_options']}")
-        print(f"Total options found: {self.test_results['total_options_found']}")
-        print("Options by source:")
-        for source, count in self.test_results['options_by_source'].items():
-            print(f"  {source}: {count}")
+        try:
+            output_file = os.path.join(self.output_dir, "test_results.json")
+            with open(output_file, 'w') as f:
+                json.dump(self.test_results, f, indent=4)
+            
+            print(f"\nTest results saved to {output_file}")
+            print(f"Games processed: {self.test_results['games_processed']}")
+            print(f"Games with options found: {self.test_results['games_with_options']}")
+            print(f"Total options found: {self.test_results['total_options_found']}")
+            print("Options by source:")
+            for source, count in self.test_results['options_by_source'].items():
+                print(f"  {source}: {count}")
+        except Exception as e:
+            print(f"Error saving test results: {e}")
+            print("Try running the script with sudo or check directory permissions")
+    
+    def save_game_results(self, app_id, title, options):
+        """Save individual game results to file"""
+        if not self.test_mode:
+            return
+            
+        try:
+            game_file = os.path.join(self.output_dir, f"game_{app_id}.json")
+            with open(game_file, 'w') as f:
+                json.dump({
+                    'app_id': app_id,
+                    'title': title,
+                    'options': options
+                }, f, indent=4)
+            print(f"  Game data saved to {game_file}")
+        except Exception as e:
+            print(f"  Error saving game data: {e}")
     
     def run(self):
         """Main execution method"""
@@ -312,13 +411,7 @@ class SlopScraper:
                 })
                 
                 # Save individual game results to separate file
-                game_file = os.path.join(self.output_dir, f"game_{app_id}.json")
-                with open(game_file, 'w') as f:
-                    json.dump({
-                        'app_id': app_id,
-                        'title': title,
-                        'options': all_options
-                    }, f, indent=4)
+                self.save_game_results(app_id, title, all_options)
             else:
                 # Save to database in production mode
                 self.save_to_database(game, all_options)
@@ -335,15 +428,23 @@ if __name__ == "__main__":
     parser.add_argument('--limit', type=int, default=5, help='Maximum number of games to process')
     parser.add_argument('--rate', type=float, default=2.0, help='Rate limit in seconds between requests')
     parser.add_argument('--output', type=str, default='./test_output', help='Output directory for test results')
+    parser.add_argument('--absolute-path', action='store_true', help='Use absolute path for output directory')
+    parser.add_argument('--force-refresh', action='store_true', help='Force refresh of game data cache')
     
     args = parser.parse_args()
+    
+    # Convert to absolute path if requested
+    if args.absolute_path:
+        args.output = os.path.abspath(args.output)
+        print(f"Using absolute path: {args.output}")
     
     # Initialize scraper
     scraper = SlopScraper(
         rate_limit=args.rate,
         max_games=args.limit,
         test_mode=args.test,
-        output_dir=args.output
+        output_dir=args.output,
+        force_refresh=args.force_refresh
     )
     
     # Run the scraper

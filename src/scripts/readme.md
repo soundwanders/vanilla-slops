@@ -12,7 +12,12 @@
    ```
    This will wait 3 seconds between requests
 
-3. **Production Run** (when you think you're ready to rumble):
+3. **Output to a specific directory**:
    ```
-   python3 slop-scraper.py --limit 100
+   python3 slop-scraper.py --test --output /path/to/writable/dir --absolute-path
+   ```
+
+4. **Production Run** (when you think you're ready to rumble):
+   ```
+   python3 slop-scraper.py --limit 20 --rate 1.5
    ```
