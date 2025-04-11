@@ -1,18 +1,18 @@
-### How to Use This Test Script:
+### Basic Readme
 
-1. **Basic Test Run**:
+1. **Using the Test Flag**:
    ```
-   python launch-options.py --test --limit 5
+   python3 slop-scraper.py --test --limit 5
    ```
    This will run in test mode, processing 5 games and saving results to `./test_output/`
 
-2. **Adjust Rate Limit**:
+2. **Adjusting Rate Limit**:
    ```
-   python launch-options.py --test --limit 10 --rate 3
+   python3 slop-scraper.py --test --limit 10 --rate 3
    ```
    This will wait 3 seconds between requests
 
-3. **Production Run** (when you're ready to rumble):
+3. **Production Run** (when you think you're ready to rumble):
    ```
-   python launch-options.py --limit 100
+   python3 slop-scraper.py --limit 100
    ```
