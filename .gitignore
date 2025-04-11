@@ -7,7 +7,9 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 package-lock.json
-frontend/package-lock.json
+*/package-lock.json
+scripts/test-output
+/*/*/test-output
 node_modules
 
 # dotenv environment variable files
