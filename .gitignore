@@ -8,8 +8,9 @@ lerna-debug.log*
 .pnpm-debug.log*
 package-lock.json
 */package-lock.json
-scripts/test_output
-/*/*/test_output
+src/scripts
+scripts/*
+scripts
 node_modules
 
 # dotenv environment variable files
