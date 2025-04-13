@@ -10,6 +10,11 @@ package-lock.json
 frontend/package-lock.json
 node_modules
 
+# scripts
+scripts
+scripts/*
+src/scripts
+
 # dotenv environment variable files
 .env
 .env.development.local
