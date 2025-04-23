@@ -8,10 +8,14 @@ lerna-debug.log*
 .pnpm-debug.log*
 package-lock.json
 */package-lock.json
-src/scripts
-scripts/*
-scripts
 node_modules
+changelog.md
+
+# fetch games scripts dir
+src/scripts/test_output
+src/scripts/appdetails_cache.json
+src/scripts/backups
+src/scripts/readme.md
 
 # dotenv environment variable files
 .env
