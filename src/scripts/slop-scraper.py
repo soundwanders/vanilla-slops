@@ -12,13 +12,18 @@ from tqdm import tqdm
 
 load_dotenv()
 
+def get_script_dir():
+    """Get directory where this script is located"""
+    script_path = os.path.dirname(os.path.abspath(__file__))
+    return script_path
+
 # If env not found, try parent directory (root)
 if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     load_dotenv(os.path.join(project_root, ".env"))
 
 class SlopScraper:
-    def __init__(self, test_mode=False, cache_file='appdetails_cache.json', rate_limit=None, force_refresh=False, max_games=5, output_dir="./test_output"):
+    def __init__(self, test_mode=False, cache_file='appdetails_cache.json', rate_limit=None, force_refresh=False, max_games=20, output_dir="./src/scripts/test_output"):
         self.test_mode = test_mode
         self.force_refresh = force_refresh
         self.rate_limit = rate_limit
@@ -527,7 +532,6 @@ if __name__ == "__main__":
         # Run the scraper
         scraper.run()
     except KeyboardInterrupt:
-        # shouldn't be reached if signal handling works, but just in case
-        # because signal handling always works, right guys...?
+        # shouldnt be reached if signal handling works
         print("\nScript interrupted. Exiting.")
         sys.exit(1)
