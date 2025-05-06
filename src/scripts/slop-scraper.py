@@ -6,9 +6,11 @@ import requests
 import argparse
 import signal
 import sys
+import re
 from bs4 import BeautifulSoup
 from supabase import create_client
 from tqdm import tqdm
+from urllib.parse import quote
 
 load_dotenv()
 
@@ -23,17 +25,18 @@ if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
     load_dotenv(os.path.join(project_root, ".env"))
 
 class SlopScraper:
-    def __init__(self, test_mode=False, cache_file='appdetails_cache.json', rate_limit=None, force_refresh=False, max_games=20, output_dir="./src/scripts/test_output"):
+    def __init__(self, test_mode=False, cache_file='appdetails_cache.json', rate_limit=None, force_refresh=False, max_games=5, output_dir="./test_output", debug=False):
         self.test_mode = test_mode
         self.force_refresh = force_refresh
         self.rate_limit = rate_limit
         self.cache_file = cache_file
         self.max_games = max_games
         self.output_dir = output_dir
-        self.failed_cache = set() 
+        self.failed_cache = set()
+        self.debug = debug
         
         # Create output directory if it doesn't exist
-        if self.test_mode and not os.path.exists(self.output_dir):
+        if not os.path.exists(self.output_dir):
             try:
                 os.makedirs(self.output_dir)
                 print(f"Created output directory: {self.output_dir}")
@@ -141,18 +144,17 @@ class SlopScraper:
         except Exception as e:
             print(f"⚠️ Error saving cache: {e}")
             
-
     def get_steam_game_list(self, limit=100):
         print(f"Fetching game list (force_refresh={self.force_refresh})...")
         print(f"Debug: Attempting to fetch up to {limit} games")
 
         if self.test_mode and limit <= 10:
             return [
-                {"appid": 570, "name": "Final Fantasy IX"},
+                {"appid": 570, "name": "Dota 2"},
                 {"appid": 730, "name": "Counter-Strike 2"},
-                {"appid": 440, "name": "Marvel Rivals"},
-                {"appid": 578080, "name": "Dave the Diver"},
-                {"appid": 252490, "name": "Blasphemous"}
+                {"appid": 264710, "name": "Subnautica"},
+                {"appid": 377840, "name": "Final Fantasy IX"},
+                {"appid": 1868140, "name": "Dave the Diver"},
             ][:limit]
 
         url = "https://api.steampowered.com/ISteamApps/GetAppList/v2/"
@@ -185,9 +187,14 @@ class SlopScraper:
                         try:
                             store_res = requests.get(store_url, timeout=5)
                             raw = store_res.json()
-                            store_data = raw.get(app_id, {}).get("data", {})
+                            store_data = raw.get(app_id, {}).get("data", None)
+
                             if store_data:
                                 self.cache[app_id] = store_data
+                            else:
+                                pbar.write(f"⚠️ No valid data for app_id {app_id}. Skipping.")
+                                continue  # Skip app if no valid data is found
+
                             time.sleep(0.2)
                         except Exception as inner_e:
                             pbar.write(f"Failed to fetch store data for {app_id}: {inner_e}")
@@ -242,59 +249,189 @@ class SlopScraper:
         except Exception as e:
             print(f"Error fetching game list: {e}")
             return []
+            
+    def format_game_title_for_wiki(self, title):
+        """Format game title for PCGamingWiki URL properly"""
+        # Replace common special characters
+        formatted = title.replace(' ', '_')
+        formatted = formatted.replace(':', '')
+        formatted = formatted.replace('&', 'and')
+        formatted = formatted.replace("'", '')
+        formatted = formatted.replace('-', '_')
+        # URL encode the result
+        return quote(formatted)
     
     def fetch_pcgamingwiki_launch_options(self, game_title):
         """Fetch launch options from PCGamingWiki"""
         # Format game title for URL
-        formatted_title = game_title.replace(' ', '_')
+        formatted_title = self.format_game_title_for_wiki(game_title)
         url = f"https://www.pcgamingwiki.com/wiki/{formatted_title}"
         
+        if self.debug:
+            print(f"Fetching PCGamingWiki data from: {url}")
+            
         # Add a delay for rate limiting
         if self.rate_limit:
             time.sleep(self.rate_limit)
         
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                  
-                # Look for launch options section
-                launch_options_section = soup.find(id="Launch_options")
-                if not launch_options_section:
-                    # Alternative section titles
-                    for section_id in ["Command_line_arguments", "Parameters", "Launch_parameters"]:
-                        section = soup.find(id=section_id)
-                        if section:
-                            launch_options_section = section
-                            break
                 
-                if launch_options_section:
-                    # Find the table after this section
-                    table = launch_options_section.find_next('table')
-                    if table:
-                        options = []
-                        rows = table.find_all('tr')[1:]  # Skip header row
-                        for row in rows:
-                            cells = row.find_all('td')
-                            if len(cells) >= 2:
-                                command = cells[0].get_text(strip=True)
-                                description = cells[1].get_text(strip=True)
-                                options.append({
-                                    'command': command,
-                                    'description': description,
-                                    'source': 'PCGamingWiki'
-                                })
-                          
-                        # Update test statistics
-                        if self.test_mode:
-                            source = 'PCGamingWiki'
-                            if source not in self.test_results['options_by_source']:
-                                self.test_results['options_by_source'][source] = 0
-                            self.test_results['options_by_source'][source] += len(options)
-                              
-                        return options
-                else:
-                    return []
+                # Try to find more section headers that could contain launch options
+                potential_section_ids = [
+                    "Command_line_arguments", 
+                    "Launch_options", 
+                    "Launch_commands",
+                    "Parameters", 
+                    "Launch_parameters",
+                    "Command-line_arguments",
+                    "Command_line_parameters",
+                    "Steam_launch_options"
+                ]
+                
+                options = []
+                
+                # Method 1: Find tables in relevant sections
+                for section_id in potential_section_ids:
+                    section = soup.find(id=section_id)
+                    if section:
+                        if self.debug:
+                            print(f"Found section: {section_id}")
+                        
+                        # Navigate up to the heading element
+                        if section.parent and section.parent.name.startswith('h'):
+                            heading = section.parent
+                            
+                            # Find the next table after this heading
+                            table = heading.find_next('table')
+                            if table and 'wikitable' in table.get('class', []):
+                                if self.debug:
+                                    print(f"Found table in section {section_id}")
+                                
+                                rows = table.find_all('tr')[1:]  # Skip header row
+                                for row in rows:
+                                    cells = row.find_all('td')
+                                    if len(cells) >= 2:
+                                        command = cells[0].get_text(strip=True)
+                                        description = cells[1].get_text(strip=True)
+                                        if command:  # Only add non-empty commands
+                                            options.append({
+                                                'command': command,
+                                                'description': description,
+                                                'source': 'PCGamingWiki'
+                                            })
+                
+                # Method 2: Look for lists in relevant sections
+                if not options:
+                    for section_id in potential_section_ids:
+                        section = soup.find(id=section_id)
+                        if section and section.parent:
+                            heading = section.parent
+                            
+                            # Find lists (ul/ol) after the heading
+                            list_element = heading.find_next(['ul', 'ol'])
+                            if list_element:
+                                list_items = list_element.find_all('li')
+                                for item in list_items:
+                                    text = item.get_text(strip=True)
+                                    # Try to separate command from description
+                                    if ':' in text:
+                                        parts = text.split(':', 1)
+                                        cmd = parts[0].strip()
+                                        desc = parts[1].strip()
+                                    elif ' - ' in text:
+                                        parts = text.split(' - ', 1)
+                                        cmd = parts[0].strip()
+                                        desc = parts[1].strip()
+                                    elif ' – ' in text:
+                                        parts = text.split(' – ', 1)
+                                        cmd = parts[0].strip()
+                                        desc = parts[1].strip()
+                                    else:
+                                        # If we can't split, look for patterns like -command or --command
+                                        match = re.search(r'(-{1,2}\w+)', text)
+                                        if match:
+                                            cmd = match.group(1)
+                                            desc = text.replace(cmd, '').strip()
+                                        else:
+                                            cmd = text
+                                            desc = "No description available"
+                                    
+                                    if cmd and cmd.strip():  # Only add non-empty commands
+                                        options.append({
+                                            'command': cmd,
+                                            'description': desc,
+                                            'source': 'PCGamingWiki'
+                                        })
+                
+                # Method 3: Look for code blocks or pre elements
+                if not options:
+                    code_blocks = soup.find_all(['code', 'pre'])
+                    for block in code_blocks:
+                        text = block.get_text(strip=True)
+                        # Check if this looks like a command line argument
+                        if text.startswith('-') or text.startswith('/') or text.startswith('+'):
+                            parent_text = block.parent.get_text(strip=True) if block.parent else ""
+                            if len(parent_text) > len(text):
+                                desc = parent_text.replace(text, '', 1).strip()
+                            else:
+                                desc = "No description available"
+                            
+                            options.append({
+                                'command': text,
+                                'description': desc,
+                                'source': 'PCGamingWiki'
+                            })
+                
+                # Method 4: Look for text with typical command patterns
+                if not options:
+                    potential_commands = []
+                    for tag in soup.find_all(['p', 'li']):
+                        text = tag.get_text()
+                        # Look for patterns like -command, --long-option, +option, /option
+                        matches = re.finditer(r'(?:^|\s)(-{1,2}[\w\-]+|\+[\w\-]+|\/[\w\-]+)(?:\s|$)', text)
+                        for match in matches:
+                            cmd = match.group(1)
+                            potential_commands.append({
+                                'command': cmd,
+                                'description': text,
+                                'source': 'PCGamingWiki'
+                            })
+                    
+                    # De-duplicate by command
+                    seen_commands = set()
+                    for cmd in potential_commands:
+                        if cmd['command'] not in seen_commands:
+                            seen_commands.add(cmd['command'])
+                            options.append(cmd)
+                
+                # Update test statistics
+                if self.test_mode:
+                    source = 'PCGamingWiki'
+                    if source not in self.test_results['options_by_source']:
+                        self.test_results['options_by_source'][source] = 0
+                    self.test_results['options_by_source'][source] += len(options)
+                
+                if self.debug:
+                    print(f"Found {len(options)} options from PCGamingWiki")
+                
+                return options
+            elif response.status_code == 404:
+                if self.debug:
+                    print(f"PCGamingWiki page not found for '{game_title}'")
+                # Try alternative title formats
+                alt_title = game_title.split(':')[0] if ':' in game_title else None
+                if alt_title and alt_title != game_title:
+                    if self.debug:
+                        print(f"Trying alternate title: {alt_title}")
+                    return self.fetch_pcgamingwiki_launch_options(alt_title)
+                return []
+            else:
+                if self.debug:
+                    print(f"PCGamingWiki returned status code {response.status_code}")
+                return []
         except Exception as e:
             print(f"    Error fetching from PCGamingWiki: {e}")
         
@@ -305,12 +442,16 @@ class SlopScraper:
         # Search for guides containing "launch options" for this game
         url = f"https://steamcommunity.com/app/{app_id}/guides/"
         
+        if self.debug:
+            print(f"Fetching Steam Community guides from: {url}")
+        
         # Add a delay for rate limiting
         if self.rate_limit:
             time.sleep(self.rate_limit)
         
+        options = []
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 guides = soup.find_all('div', class_='guide_item')
@@ -320,7 +461,7 @@ class SlopScraper:
                     title_elem = guide.find('div', class_='guide_title')
                     if title_elem:
                         title = title_elem.text.lower()
-                        if 'launch' in title and ('option' in title or 'command' in title or 'parameter' in title):
+                        if any(keyword in title for keyword in ['launch', 'command', 'option', 'parameter', 'argument', 'fps', 'performance']):
                             link_elem = guide.find('a')
                             if link_elem and 'href' in link_elem.attrs:
                                 relevant_guides.append({
@@ -328,15 +469,80 @@ class SlopScraper:
                                     'url': link_elem['href']
                                 })
                 
-                options = []
-                for guide in relevant_guides[:3]: 
-                    # WIP: Limited to 3 guides for testing
-                    # In real implementation, fetch and parse each guide
-                    options.append({
-                        'command': f"(See guide: {guide['title']})",
-                        'description': f"Found in Steam Community guide: {guide['url']}",
-                        'source': 'Steam Community'
-                    })
+                if self.debug:
+                    print(f"Found {len(relevant_guides)} relevant guides")
+                
+                # Process the most relevant guides (limit to 3 to avoid overloading)
+                for guide in relevant_guides[:3]:
+                    try:
+                        if self.debug:
+                            print(f"Processing guide: {guide['title']}")
+                        
+                        # Add a delay between guide requests
+                        if self.rate_limit:
+                            time.sleep(self.rate_limit)
+                        
+                        guide_response = requests.get(guide['url'], timeout=15)
+                        if guide_response.status_code == 200:
+                            guide_soup = BeautifulSoup(guide_response.text, 'html.parser')
+                            guide_content = guide_soup.find('div', class_='guide_body')
+                            
+                            if guide_content:
+                                # Method 1: Look for code blocks or pre elements (common in guides)
+                                code_blocks = guide_content.find_all(['code', 'pre'])
+                                for block in code_blocks:
+                                    text = block.get_text(strip=True)
+                                    # Check if this looks like launch options text
+                                    if any(symbol in text for symbol in ['-', '+', '/']):
+                                        # Try to identify individual options
+                                        option_matches = re.finditer(r'(?:^|\s)(-{1,2}[\w\-]+|\+[\w\-]+|\/[\w\-]+)(?:\s|$)', text)
+                                        for match in option_matches:
+                                            cmd = match.group(1)
+                                            # Find surrounding text for context
+                                            parent_text = block.parent.get_text(strip=True) if block.parent else ""
+                                            # Get the closest paragraph that might describe this command
+                                            prev_p = block.find_previous('p')
+                                            next_p = block.find_next('p')
+                                            if prev_p:
+                                                desc = prev_p.get_text(strip=True)
+                                            elif next_p:
+                                                desc = next_p.get_text(strip=True)
+                                            else:
+                                                desc = f"Found in guide: {guide['title']}"
+                                            
+                                            options.append({
+                                                'command': cmd,
+                                                'description': desc[:200] + "..." if len(desc) > 200 else desc,
+                                                'source': 'Steam Community'
+                                            })
+                                
+                                # Method 2: Look for paragraphs with launch options patterns
+                                if not any(opt['source'] == 'Steam Community' for opt in options):
+                                    for p in guide_content.find_all(['p', 'li']):
+                                        text = p.get_text(strip=True)
+                                        if 'launch' in text.lower() and any(symbol in text for symbol in ['-', '+', '/']):
+                                            # Extract commands that look like options
+                                            option_matches = re.finditer(r'(?:^|\s)(-{1,2}[\w\-]+|\+[\w\-]+|\/[\w\-]+)(?:\s|$)', text)
+                                            for match in option_matches:
+                                                cmd = match.group(1)
+                                                options.append({
+                                                    'command': cmd,
+                                                    'description': text[:200] + "..." if len(text) > 200 else text,
+                                                    'source': 'Steam Community'
+                                                })
+                            
+                    except Exception as guide_e:
+                        print(f"    Error processing guide {guide['url']}: {guide_e}")
+                        continue
+                
+                # If no specific options found but guides exist, add guide references
+                if not options and relevant_guides:
+                    for guide in relevant_guides[:3]:
+                        options.append({
+                            'command': f"See guide: {guide['title']}",
+                            'description': f"This guide may contain launch options: {guide['url']}",
+                            'source': 'Steam Community'
+                        })
                 
                 # Update test statistics
                 if self.test_mode:
@@ -345,11 +551,170 @@ class SlopScraper:
                         self.test_results['options_by_source'][source] = 0
                     self.test_results['options_by_source'][source] += len(options)
                 
+                if self.debug:
+                    print(f"Found {len(options)} options from Steam Community")
+                
                 return options
         except Exception as e:
             print(f"    Error fetching from Steam Community: {e}")
         
         return []
+    
+    def fetch_steam_launch_options_from_db(self, app_id):
+        """Try to fetch known launch options from our database"""
+        if self.test_mode:
+            return []
+            
+        try:
+            # Query the launch_options table for this app_id
+            result = self.supabase.table("launch_options").select("*").eq("app_id", app_id).execute()
+            options = []
+            
+            if hasattr(result, 'data'):
+                for item in result.data:
+                    options.append({
+                        'command': item['command'],
+                        'description': item['description'],
+                        'source': item['source'],
+                        'verified': item.get('verified', False)
+                    })
+            
+            print(f"✅ Found {len(options)} existing options in database for app_id {app_id}")
+            return options
+        except Exception as e:
+            print(f"⚠️ Database query error: {e}")
+            return []
+    
+    def fetch_game_specific_options(self, title, app_id):
+        """Fetch game-specific launch options based on common knowledge and patterns"""
+        options = []
+        
+        # Source engine games often share common options
+        source_engine_options = [
+            {
+                'command': '-novid',
+                'description': 'Skip intro videos when starting the game',
+                'source': 'Common Source Engine'
+            },
+            {
+                'command': '-console',
+                'description': 'Enable developer console',
+                'source': 'Common Source Engine'
+            },
+            {
+                'command': '-windowed',
+                'description': 'Run the game in windowed mode',
+                'source': 'Common Source Engine'
+            },
+            {
+                'command': '-fullscreen',
+                'description': 'Run the game in fullscreen mode',
+                'source': 'Common Source Engine'
+            },
+            {
+                'command': '-noborder',
+                'description': 'Run the game in borderless windowed mode',
+                'source': 'Common Source Engine'
+            }
+        ]
+        
+        # Unity engine games often share common options
+        unity_engine_options = [
+            {
+                'command': '-screen-width',
+                'description': 'Set screen width (e.g., -screen-width 1920)',
+                'source': 'Common Unity Engine'
+            },
+            {
+                'command': '-screen-height',
+                'description': 'Set screen height (e.g., -screen-height 1080)',
+                'source': 'Common Unity Engine'
+            },
+            {
+                'command': '-popupwindow',
+                'description': 'Run in borderless windowed mode',
+                'source': 'Common Unity Engine'
+            },
+            {
+                'command': '-window-mode',
+                'description': 'Set window mode (values: exclusive, windowed, borderless)',
+                'source': 'Common Unity Engine'
+            }
+        ]
+        
+        # Unreal Engine games often share common options
+        unreal_engine_options = [
+            {
+                'command': '-windowed',
+                'description': 'Run the game in windowed mode',
+                'source': 'Common Unreal Engine'
+            },
+            {
+                'command': '-fullscreen',
+                'description': 'Run the game in fullscreen mode',
+                'source': 'Common Unreal Engine'
+            },
+            {
+                'command': '-presets=',
+                'description': 'Specify graphics preset (e.g., -presets=high)',
+                'source': 'Common Unreal Engine'
+            },
+            {
+                'command': '-dx12',
+                'description': 'Force DirectX 12 rendering',
+                'source': 'Common Unreal Engine'
+            },
+            {
+                'command': '-dx11',
+                'description': 'Force DirectX 11 rendering',
+                'source': 'Common Unreal Engine'
+            }
+        ]
+        
+        # Check for known games
+        lower_title = title.lower()
+        
+        # Source engine games
+        if any(game in lower_title for game in ['counter-strike', 'half-life', 'portal', 'team fortress', 'left 4 dead', 'garry', 'dota']):
+            options.extend(source_engine_options)
+        
+        # Check for Unity games
+        elif 'unity' in lower_title or app_id in self.cache and 'unity' in str(self.cache.get(str(app_id), {})).lower():
+            options.extend(unity_engine_options)
+        
+        # Check for Unreal Engine games
+        elif 'unreal' in lower_title or app_id in self.cache and 'unreal' in str(self.cache.get(str(app_id), {})).lower():
+            options.extend(unreal_engine_options)
+        
+        # General options that work for many games
+        general_options = [
+            {
+                'command': '-fps_max',
+                'description': 'Limit maximum FPS (e.g., -fps_max 144)',
+                'source': 'Common Launch Option'
+            },
+            {
+                'command': '-nojoy',
+                'description': 'Disable joystick/controller support',
+                'source': 'Common Launch Option'
+            },
+            {
+                'command': '-nosplash',
+                'description': 'Skip splash/intro screens',
+                'source': 'Common Launch Option'
+            }
+        ]
+        
+        options.extend(general_options)
+        
+        # Update test statistics
+        if self.test_mode and options:
+            source = 'Game-Specific Knowledge'
+            if source not in self.test_results['options_by_source']:
+                self.test_results['options_by_source'][source] = 0
+            self.test_results['options_by_source'][source] += len(options)
+        
+        return options
     
     def save_to_database(self, game, options):
         """Save game and launch options to Supabase"""
@@ -374,12 +739,12 @@ class SlopScraper:
             success_count = 0
             for option in options:
                 try:
-                    self.supabase.table("launch_options").insert({
+                    self.supabase.table("launch_options").upsert({
                         "app_id": game['appid'],
                         "command": option['command'],
                         "description": option['description'],
                         "source": option['source'],
-                        "verified": False
+                        "verified": option.get('verified', False)
                     }).execute()
                     success_count += 1
                 except Exception as inner_e:
@@ -445,8 +810,23 @@ class SlopScraper:
                     # Update progress bar description
                     game_pbar.set_description(f"Processing {title}")
                     
+                    # Check if we already have data in database
+                    existing_options = [] if self.test_mode else self.fetch_steam_launch_options_from_db(app_id)
+                    
+                    # If we already have data and not forcing refresh, skip
+                    if existing_options and not self.force_refresh:
+                        game_pbar.write(f"Skipping {title} - already have {len(existing_options)} options in database")
+                        continue
+                    
                     # Collect options from different sources
                     all_options = []
+                    
+                    # Add game-specific options from our knowledge base
+                    game_specific_options = self.fetch_game_specific_options(title, app_id)
+                    if game_specific_options:
+                        all_options.extend(game_specific_options)
+                        game_pbar.write(f"  Added {len(game_specific_options)} game-specific options")
+
                     
                     # Create a small progress bar for sources
                     sources = [
@@ -464,33 +844,42 @@ class SlopScraper:
                             except Exception as e:
                                 game_pbar.write(f"  Error fetching from {source_name}: {e}")
                     
+                    # Deduplicate options by command
+                    unique_options = []
+                    seen_commands = set()
+                    for option in all_options:
+                        cmd = option['command'].strip().lower()
+                        if cmd not in seen_commands:
+                            seen_commands.add(cmd)
+                            unique_options.append(option)
+                    
                     # Update test statistics
                     if self.test_mode:
                         self.test_results['games_processed'] += 1
-                        if all_options:
+                        if unique_options:
                             self.test_results['games_with_options'] += 1
-                        self.test_results['total_options_found'] += len(all_options)
+                        self.test_results['total_options_found'] += len(unique_options)
                         
                         # Add game data to test results
                         self.test_results['games'].append({
                             'app_id': app_id,
                             'title': title,
-                            'options_count': len(all_options),
-                            'options': all_options
+                            'options_count': len(unique_options),
+                            'options': unique_options
                         })
                         
                         # Save individual game results to separate file
-                        self.save_game_results(app_id, title, all_options)
+                        self.save_game_results(app_id, title, unique_options)
                     else:
                         # Save to database in production mode
-                        self.save_to_database(game, all_options)
+                        self.save_to_database(game, unique_options)
                     
-                    game_pbar.write(f"Found {len(all_options)} launch options for {title}")
+                    game_pbar.write(f"Found {len(unique_options)} unique launch options for {title}")
                     
                     # Periodically save cache during execution
                     if game['appid'] % 3 == 0:  # Save every 3 games
                         self.save_cache()
-            
+
             # Save test results summary
             if self.test_mode:
                 self.save_test_results()
