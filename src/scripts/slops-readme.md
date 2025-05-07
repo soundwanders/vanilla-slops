@@ -67,7 +67,7 @@ python slop-scraper.py [OPTIONS]
 | `--test` | Run in test mode (saves results locally instead of to Supabase) | False |
 | `--limit LIMIT` | Maximum number of games to process | 5 |
 | `--rate RATE` | Rate limit in seconds between requests | 2.0 |
-| `--output OUTPUT` | Output directory for test results | ./test_output |
+| `--output OUTPUT` | Output directory for test results | ./test-output |
 | `--absolute-path` | Use absolute path for output directory | False |
 | `--force-refresh` | Force refresh of game data cache | False |
 

@@ -12,12 +12,12 @@ node_modules
 changelog.md
 
 # fetch games scripts dir
-src/scripts/test_output
 src/scripts/appdetails_cache.json
 src/scripts/backups
 src/scripts/readme.md
 src/scripts/appdetails_cache.json.bak
 src/scripts/game_list_cache.json
+src/scripts/test-output
 
 # dotenv environment variable files
 .env
