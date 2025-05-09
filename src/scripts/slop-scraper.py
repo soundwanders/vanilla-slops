@@ -15,12 +15,12 @@ from urllib.parse import quote
 load_dotenv()
 
 def get_script_dir():
-    """Get directory where this script is located"""
+    """Get directory where this script (slop-scraper) is located"""
     script_path = os.path.dirname (os.path.abspath(__file__))
     return script_path
 
 # If env not found, try parent directory (root)
-if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_KEY"):
+if not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_ROLE_KEY"):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     load_dotenv(os.path.join(project_root, ".env"))
 
@@ -75,9 +75,8 @@ class SlopScraper:
         signal.signal(signal.SIGTERM, self.signal_handler)
     
     def get_supabase_credentials(self):
-        """Get Supabase credentials from environment variables or credentials file"""
         url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_KEY")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         
         # Check if environment variables are set
         if not url or not key:
@@ -99,7 +98,7 @@ class SlopScraper:
             # Allow manual entry if still not found
             if not url or not key:
                 print("\nSupabase credentials not found. You can:")
-                print("1. Set SUPABASE_URL and SUPABASE_KEY environment variables")
+                print("1. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables")
                 print("2. Create a .supabase_creds file in your home directory")
                 print("3. Enter credentials now (not recommended for security reasons)")
                 
@@ -369,7 +368,7 @@ class SlopScraper:
             print(f"✅ Cache saved to {self.cache_file}")
         except Exception as e:
             print(f"⚠️ Error saving cache: {e}")
-            
+
     def get_steam_game_list(self, limit=100):
         print(f"Fetching game list (force_refresh={self.force_refresh})...")
         print(f"Debug: Attempting to fetch up to {limit} games")
@@ -390,6 +389,19 @@ class SlopScraper:
             all_apps = response.json()['applist']['apps']
             print(f"Fetched {len(all_apps)} total apps")
 
+            # Blocklist of terms to exclude
+            blocklist_terms = [
+                'dlc', 'soundtrack', 'beta', 'demo', 'test', 'adult', 'hentai', 'xxx', 'mature', 'expansion', 'tool', 'software'
+            ]
+
+            # Regex patterns for filtering unwanted games
+            blocklist_pattern = re.compile(r'(?i)(' + '|'.join(re.escape(term) for term in blocklist_terms) + ')')
+            non_latin_pattern = re.compile(r'[^\x00-\x7F]')
+            only_numeric_special = re.compile(r'^[0-9\s\-_+=.,!@#$%^&*()\[\]{}|\\/<>?;:\'"`~]*$')
+
+            # Known game engines to keep
+            known_engines = ['unreal', 'unity', 'godot', 'source', 'cryengine', 'frostbite', 'id tech']
+
             filtered_games = []
 
             # Use tqdm for processing apps
@@ -402,20 +414,26 @@ class SlopScraper:
                     name = app['name']
                     pbar.update(1)
 
-                    # Skip invalid or unwanted entries
-                    if not name or any(k in name.lower() for k in ['dlc', 'soundtrack', 'beta', 'demo', 'test', 'adult', 'hentai', 'xxx']):
+                    # Skip invalid or unwanted entries based on blocklist
+                    if not name or blocklist_pattern.search(name) or non_latin_pattern.search(name) or only_numeric_special.match(name):
+                        continue
+
+                    # Check if the game is using a known engine, if required
+                    if not any(engine in name.lower() for engine in known_engines):
                         continue
 
                     store_data = None
                     if not self.force_refresh and app_id in self.cache:
                         store_data = self.cache[app_id]
                     else:
+                        # Fetch detailed data from store if not cached or forced refresh
                         store_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=us&l=en"
                         try:
                             store_res = requests.get(store_url, timeout=5)
                             store_res.raise_for_status()
                             raw = store_res.json()
                             store_data = raw.get(app_id, {}).get("data", {})
+
                             if store_data:
                                 self.cache[app_id] = store_data
                             else:
@@ -460,7 +478,7 @@ class SlopScraper:
         except Exception as e:
             print(f"Error fetching game list: {e}")
             return []
-            
+
     def format_game_title_for_wiki(self, title):
         """Format game title for PCGamingWiki URL properly"""
         # Replace common special characters
@@ -772,7 +790,7 @@ class SlopScraper:
         return []
     
     def fetch_steam_launch_options_from_db(self, app_id):
-        """Try to fetch known launch options from our database"""
+        """Fetch known launch options from our database"""
         if self.test_mode:
             return []
             
@@ -797,7 +815,7 @@ class SlopScraper:
             return []
     
     def fetch_game_specific_options(self, title, app_id):
-        """Fetch game-specific launch options based on common knowledge and patterns"""
+        """Fetch game-specific launch options based on common patterns"""
         options = []
         
         # Source engine games often share common options
@@ -1032,7 +1050,6 @@ class SlopScraper:
             print(f"  Error saving game data: {e}")
     
     def run(self):
-        """Main execution method"""
         print(f"Running in {'TEST' if self.test_mode else 'PRODUCTION'} mode")
         
         try:
