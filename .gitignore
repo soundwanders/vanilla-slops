@@ -18,6 +18,7 @@ src/scripts/readme.md
 src/scripts/appdetails_cache.json.bak
 src/scripts/game_list_cache.json
 src/scripts/test-output
+src/scripts/sql-backup.sql
 
 # dotenv environment variable files
 .env
