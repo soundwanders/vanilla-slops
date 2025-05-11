@@ -94,29 +94,6 @@ class SlopScraper:
                         print("✅ Loaded Supabase credentials from file.")
                 except Exception as e:
                     print(f"Error loading credentials file: {e}")
-            
-            # Allow manual entry if still not found
-            if not url or not key:
-                print("\nSupabase credentials not found. You can:")
-                print("1. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables")
-                print("2. Create a .supabase_creds file in your home directory")
-                print("3. Enter credentials now (not recommended for security reasons)")
-                
-                use_manual = input("Enter credentials manually? (y/n): ").lower() == 'y'
-                if use_manual:
-                    url = input("Enter Supabase URL: ")
-                    key = input("Enter Supabase Service Role Key: ")
-                    
-                    # Ask if user wants to save credentials
-                    save = input("Save credentials to local file? (y/n): ").lower() == 'y'
-                    if save:
-                        try:
-                            with open(creds_file, 'w') as f:
-                                json.dump({"url": url, "key": key}, f)
-                            print(f"Credentials saved to {creds_file}")
-                        except Exception as e:
-                            print(f"Failed to save credentials: {e}")
-        
         return url, key
     
     def setup_supabase_connection(self):
@@ -347,7 +324,7 @@ class SlopScraper:
                             else:
                                 pbar.write(f"⚠️ No valid data for app_id {app_id}. Skipping.")
                                 continue
-                            time.sleep(0.2)  # Rate limiting
+                            time.sleep(0.2)
                         except Exception as e:
                             pbar.write(f"⚠️ Error fetching data for app_id {app_id}: {e}. Skipping.")
                             continue
@@ -823,7 +800,7 @@ class SlopScraper:
         elif 'unreal' in lower_title or app_id in self.cache and 'unreal' in str(self.cache.get(str(app_id), {})).lower():
             options.extend(unreal_engine_options)
         
-        # General options that work for many games
+        # Common launch options
         general_options = [
             {
                 'command': '-fps_max',
@@ -859,14 +836,14 @@ class SlopScraper:
             return
 
         try:
-            # Prepare game data with more fields
+            # Prepare game data
             game_data = {
                 "app_id": game['appid'],
                 "title": game['name'],
                 "developer": game.get('developer', ''),
+                "publisher": game.get('publisher', ''), 
                 "release_date": game.get('release_date', ''),
-                "engine": game.get('engine', 'Unknown'),
-                "total_options_count": len(options)  # This will be managed by triggers but set initial value
+                "engine": game.get('engine', 'Unknown')
             }
             
             # Insert game info
@@ -879,33 +856,55 @@ class SlopScraper:
 
             print(f"✅ Saved game {game['name']} to database")
 
-            # Insert each launch option with error handling and retries
+            # Process each launch option - first ensuring they exist in launch_options table
             success_count = 0
             error_count = 0
+            
             for option in options:
                 # Try up to 3 times for each option
                 for attempt in range(3):
                     try:
+                        # 1. First upsert the launch option itself (if it doesn't exist)
                         option_data = {
-                            "app_id": game['appid'],
                             "command": option['command'],
                             "description": option['description'],
                             "source": option['source'],
-                            "verified": option.get('verified', False),
-                            "upvotes": 0,
-                            "downvotes": 0
+                            "verified": option.get('verified', False)
+                            # upvotes/downvotes are defaulted to 0 in schema
                         }
                         
-                        self.supabase.table("launch_options").upsert(option_data).execute()
-                        success_count += 1
-                        # If successful, break out of retry loop
-                        break
+                        # Use on_conflict to handle the case where this option already exists
+                        option_res = self.supabase.table("launch_options")\
+                            .upsert(option_data, on_conflict="command")\
+                            .execute()
+                            
+                        # Extract the launch option id (either new or existing)
+                        if option_res.data and len(option_res.data) > 0:
+                            option_id = option_res.data[0]['id']
+                            
+                            # 2. Now create the association between game and launch option
+                            junction_data = {
+                                "game_app_id": game['appid'],
+                                "launch_option_id": option_id
+                            }
+                            
+                            # Insert into junction table (will fail if already exists)
+                            self.supabase.table("game_launch_options")\
+                                .upsert(junction_data, on_conflict="game_app_id,launch_option_id")\
+                                .execute()
+                                
+                            success_count += 1
+                            # Break out of retry loop
+                            break
+                        else:
+                            raise Exception("Failed to get launch option ID")
+                            
                     except Exception as inner_e:
                         # Only print error on last attempt
                         if attempt == 2:
                             print(f"Error saving option {option['command']} after 3 attempts: {inner_e}")
                             error_count += 1
-                        time.sleep(0.5)  # Short delay before retry
+                        time.sleep(0.5)
             
             # Calculate percentage success rate
             if options:
@@ -919,7 +918,7 @@ class SlopScraper:
         except Exception as e:
             print(f"⚠️ Database error: {e}")
             print("Make sure your Supabase tables are set up correctly with the right columns")
-               
+
     def save_test_results(self):
         """Save test results to JSON file"""
         if not self.test_mode:
@@ -990,7 +989,6 @@ class SlopScraper:
                         all_options.extend(game_specific_options)
                         game_pbar.write(f"  Added {len(game_specific_options)} game-specific options")
 
-                    
                     # Create a small progress bar for sources
                     sources = [
                         ("PCGamingWiki", lambda: self.fetch_pcgamingwiki_launch_options(title)),
@@ -1081,7 +1079,7 @@ if __name__ == "__main__":
         force_refresh=args.force_refresh
     )
     
-    # If just testing database connection
+    # Only while testing the database connection
     if args.test_db:
         success = scraper.test_database_connection()
         sys.exit(0 if success else 1)
