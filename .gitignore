@@ -11,15 +11,6 @@ package-lock.json
 node_modules
 changelog.md
 
-# fetch games scripts dir
-src/scripts/appdetails_cache.json
-src/scripts/backups
-src/scripts/readme.md
-src/scripts/appdetails_cache.json.bak
-src/scripts/game_list_cache.json
-src/scripts/test-output
-src/scripts/sql-backup.sql
-
 # dotenv environment variable files
 .env
 .env.development.local
@@ -27,6 +18,15 @@ src/scripts/sql-backup.sql
 .env.production.local
 .env.local
 .env.*
+
+# scripts directory
+src/scripts/appdetails_cache.json
+src/scripts/backups
+src/scripts/readme.md
+src/scripts/appdetails_cache.json.bak
+src/scripts/game_list_cache.json
+src/scripts/test-output
+src/scripts/sql-backup.sql
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
