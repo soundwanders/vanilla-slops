@@ -78,7 +78,7 @@ python slop-scraper.py [OPTIONS]
 python slop-scraper.py --test --limit 10
 ```
 
-#### Run with a slower rate limit (3 seconds between requests):
+#### Run with a custom rate limit (3.0 = 3 seconds between requests):
 ```bash
 python slop-scraper.py --rate 3.0
 ```
@@ -96,11 +96,6 @@ python slop-scraper.py --test --output /Desktop/test/slops-data --absolute-path
 #### Force refresh the game data cache:
 ```bash
 python slop-scraper.py --force-refresh
-```
-
-#### Run for a larger dataset (50 games) with slower rate limit:
-```bash
-python slop-scraper.py --limit 50 --rate 3.5
 ```
 
 #### Run in production mode with 20 games and faster rate limit:
