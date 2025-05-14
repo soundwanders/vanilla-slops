@@ -3,7 +3,7 @@ import os
 import sys
 import argparse
 from dotenv import load_dotenv
-from slop_scraper.core.scraper import SlopScraper
+from .core.scraper import SlopScraper
  
 def get_script_dir():
     """Get directory where this script (slop_scraper) is located"""
@@ -20,7 +20,6 @@ def setup_argument_parser():
     parser.add_argument('--absolute-path', action='store_true', help='Use absolute path for output directory')
     parser.add_argument('--force-refresh', action='store_true', help='Force refresh of game data cache')
     parser.add_argument('--test-db', action='store_true', help='Test database connection and exit')
-    
     return parser
 
 def main():
@@ -49,7 +48,7 @@ def main():
         test_mode=args.test,
         output_dir=args.output,
         force_refresh=args.force_refresh,
-        debug=False  # Add a debug flag if needed
+        debug=False
     )
     
     # Only test the database connection if requested

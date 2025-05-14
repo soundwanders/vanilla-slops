@@ -169,24 +169,23 @@ def fetch_pcgamingwiki_launch_options(game_title, rate_limit=None, debug=False, 
               test_results['options_by_source'][source] += len(options)
           
           if debug:
-              print(f"Found {len(options)} options from PCGamingWiki")
+            print(f"Found {len(options)} options from PCGamingWiki")
           
           return options
       elif response.status_code == 404:
           if debug:
-              print(f"PCGamingWiki page not found for '{game_title}'")
+            print(f"PCGamingWiki page not found for '{game_title}'")
           # Try alternative title formats
           alt_title = game_title.split(':')[0] if ':' in game_title else None
           if alt_title and alt_title != game_title:
               if debug:
-                  print(f"Trying alternate title: {alt_title}")
+                print(f"Trying alternate title: {alt_title}")
               return fetch_pcgamingwiki_launch_options(alt_title)
           return []
       else:
           if debug:
-              print(f"PCGamingWiki returned status code {response.status_code}")
+            print(f"PCGamingWiki returned status code {response.status_code}")
           return []
   except Exception as e:
-      print(f"    Error fetching from PCGamingWiki: {e}")
-  
+    print(f"    Error fetching from PCGamingWiki: {e}")
   return []

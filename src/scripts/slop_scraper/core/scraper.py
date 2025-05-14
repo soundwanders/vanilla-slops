@@ -18,19 +18,19 @@ from slop_scraper.utils.results_utils import save_test_results, save_game_result
 
 class SlopScraper:
     def __init__(self, test_mode=False, cache_file='appdetails_cache.json', 
-                 rate_limit=None, force_refresh=False, max_games=5, 
+                 rate_limit=None, force_refresh=False, max_games=100, 
                  output_dir="./test-output", debug=False):
-        """Initialiaze with configuartion options"""
+        """Initialize with configuration options"""
         self.test_mode = test_mode
         self.force_refresh = force_refresh
         self.rate_limit = rate_limit
         self.cache_file = cache_file
-        self.max_games = max_games
+        self.max_games = max_games 
         self.output_dir = output_dir
         self.failed_cache = set()
         self.debug = debug
         self.supabase = None
-        
+
         # Create output directory if it doesn't exist
         if not os.path.exists(self.output_dir):
             try:
@@ -97,7 +97,7 @@ class SlopScraper:
         try:
             # Get list of games (limited by max_games)
             games = get_steam_game_list(
-                max_games=self.max_games,
+                limit=self.max_games,
                 force_refresh=self.force_refresh,
                 cache=self.cache,
                 test_mode=self.test_mode,
