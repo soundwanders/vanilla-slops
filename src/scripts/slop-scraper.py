@@ -1056,7 +1056,7 @@ class SlopScraper:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Steam Launch Options Scraper')
     parser.add_argument('--test', action='store_true', help='Run in test mode')
-    parser.add_argument('--limit', type=int, default=5, help='Maximum number of games to process')
+    parser.add_argument('--limit', type=int, default=100, help='Maximum number of games to process')
     parser.add_argument('--rate', type=float, default=2.0, help='Rate limit in seconds between requests')
     parser.add_argument('--output', type=str, default='./test-output', help='Output directory for test results')
     parser.add_argument('--absolute-path', action='store_true', help='Use absolute path for output directory')

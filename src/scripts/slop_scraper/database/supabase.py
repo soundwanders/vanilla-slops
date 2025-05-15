@@ -145,23 +145,28 @@ def test_database_connection(test_mode=False, supabase=None):
         return False
 
 def fetch_steam_launch_options_from_db(app_id, supabase):
-    """Fetch known launch options from our database"""
     try:
-        # Query the launch_options table for this app_id
-        result = supabase.table("launch_options").select("*").eq("app_id", app_id).execute()
+        # Query the junction table, embed related launch_options
+        result = supabase.table("game_launch_options") \
+            .select("launch_options(*)") \
+            .eq("game_app_id", app_id) \
+            .execute()
+
         options = []
-        
         if hasattr(result, 'data'):
             for item in result.data:
-                options.append({
-                    'command': item['command'],
-                    'description': item['description'],
-                    'source': item['source'],
-                    'verified': item.get('verified', False)
-                })
-        
-        print(f"✅ Found {len(options)} existing options in database for app_id {app_id}")
+                lo = item.get('launch_options')
+                if lo:
+                    options.append({
+                        'command': lo['command'],
+                        'description': lo['description'],
+                        'source': lo['source'],
+                        'verified': lo.get('verified', False)
+                    })
+
+        print(f"✅ Found {len(options)} launch options for app_id {app_id}")
         return options
+
     except Exception as e:
         print(f"⚠️ Database query error: {e}")
         return []

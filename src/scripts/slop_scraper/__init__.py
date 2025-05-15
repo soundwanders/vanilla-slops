@@ -13,8 +13,8 @@ __author__ = "soundwanders"
 # Import and expose the main class for ease of use
 from .core.scraper import SlopScraper
 
-# Import the main function for entry point
-from .main import main
+if __name__ == "__main__":
+    main()
 
 __all__ = [
     "SlopScraper",  # Main class
