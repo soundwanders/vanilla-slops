@@ -2,26 +2,26 @@ import json
 import os
 
 def load_cache(cache_file):
-    """
-    Load cache from a file.
-    
-    Args:
-      cache_file (str): Path to the cache file.
-    
-    Returns:
-      dict: The loaded cache data, or an empty dictionary if the file doesn't exist or is invalid.
-    """
-    if os.path.exists(cache_file):
-      try:
-        with open(cache_file, 'r') as f:
-          return json.load(f)
-      except json.JSONDecodeError:
-        print("⚠️ Cache file is corrupt. Starting fresh.")
-        return {}
-      except Exception as e:
-        print(f"⚠️ Error loading cache: {e}")
-        return {}
-    return {}
+  """
+  Load cache from a file.
+  
+  Args:
+    cache_file (str): Path to the cache file.
+  
+  Returns:
+    dict: The loaded cache data, or an empty dictionary if the file doesn't exist or is invalid.
+  """
+  if os.path.exists(cache_file):
+    try:
+      with open(cache_file, 'r') as f:
+        return json.load(f)
+    except json.JSONDecodeError:
+      print("⚠️ Cache file is corrupt. Starting fresh.")
+      return {}
+    except Exception as e:
+      print(f"⚠️ Error loading cache: {e}")
+      return {}
+  return {}
 
 def save_cache(cache, cache_file):
   """

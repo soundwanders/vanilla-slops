@@ -23,27 +23,6 @@ SlopScraper is a tool for scraping Steam launch options from various sources and
 pip install python-dotenv requests beautifulsoup4 supabase tqdm
 ```
 
-### Supabase Setup (for Production Mode)
-
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Create two tables in your Supabase project:
-   - `games` table with columns:
-     - `app_id` (integer, primary key)
-     - `title` (text)
-   - `launch_options` table with columns:
-     - `id` (integer, primary key, auto-increment)
-     - `app_id` (integer, foreign key to games.app_id)
-     - `command` (text)
-     - `description` (text)
-     - `source` (text)
-     - `verified` (boolean)
-3. Create a `.env` file in the project root with your Supabase credentials:
-
-```
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_service_role_key
-```
-
 ## Usage
 
 ### Basic Usage
