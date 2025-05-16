@@ -1,0 +1,32 @@
+:root {
+  /* Typography */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-size-base: 16px;
+  --font-size-sm: 0.875rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+
+  /* Colors */
+  --color-bg: #121212;
+  --color-fg: #e0e0e0;
+  --color-muted: #aaa;
+  --color-card: rgba(255, 255, 255, 0.05);
+  --color-border: #444;
+  --color-accent: #007bff;
+  --color-accent-hover: #0056b3;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 1.5rem;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
