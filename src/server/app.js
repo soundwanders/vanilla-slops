@@ -1,15 +1,31 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const steamRoutes = require('./routes/steam-routes');
+import express from 'express';
+import cors from 'cors';
+import gamesRoutes from './routes/gamesRoutes.js';
+import errorHandler from './middlewares/errorHandler.js';
+import notFoundHandler from './middlewares/notFoundHandler.js';
+import logRequests from './middlewares/logRequests.js';
+
+const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
 
 const app = express();
 
-app.use(cors());
-app.use(bodyParser.json());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET'],
+}));
 
-// Route for Steam data
-app.use('/api/steam', steamRoutes);
+app.use(express.json());
+app.use(logRequests);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.use('/api/games', gamesRoutes);
+
+// Error handlers
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+export default app;
