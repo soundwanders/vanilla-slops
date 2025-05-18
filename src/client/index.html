@@ -1,40 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vanilla Slops</title>
-    <link rel="stylesheet" href="styles/main.css">
+
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="icon" href="/favicon.ico" />
+
+    <!-- Optional: Preload essential scripts -->
+    <link rel="modulepreload" href="js/main.js" />
   </head>
   <body>
     <div id="app">
       <header>
         <h1>Vanilla Slops</h1>
-        <h3>Steam Launch Options</h3>
+        <h2>Steam Launch Options</h2>
+        <button id="theme-toggle" aria-label="Toggle light/dark theme">🌓</button>
       </header>
 
-      <section id="search-section">
-        <input type="text" id="gameSearch" placeholder="Search for a game...">
-        <button id="searchButton">Search</button>
-      </section>
+      <main>
+        <section id="search-section" aria-labelledby="search-label">
+          <label id="search-label" for="gameSearch">Search for a game:</label>
+          <input
+            type="search"
+            id="gameSearch"
+            placeholder="e.g., Half-Life"
+            aria-label="Game search input"
+          />
+          <button id="searchButton" aria-label="Search button">Search</button>
+        </section>
 
-      <section id="results-container">
-        <table id="resultsTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Game Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Rows dynamically added here -->
-          </tbody>
-        </table>
-      </section>
+        <section id="results-container" aria-labelledby="results-label">
+          <h2 id="results-label" class="sr-only">Search Results</h2>
+          <table id="resultsTable">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Game Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rows dynamically rendered -->
+            </tbody>
+          </table>
+        </section>
 
-      <div id="pagination"></div>
+        <nav id="pagination" aria-label="Pagination controls">
+          <!-- Pagination buttons get inserted here -->
+        </nav>
+
+        <div id="status" role="status" aria-live="polite" class="sr-only"></div>
+      </main>
     </div>
-    
+
     <script src="js/main.js" type="module" defer></script>
   </body>
 </html>
