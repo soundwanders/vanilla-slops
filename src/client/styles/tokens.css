@@ -1,0 +1,22 @@
+:root {
+  --font-body: system-ui, sans-serif;
+  --color-bg: #ffffff;
+  --color-text: #000000;
+  --color-card-bg: #f0f0f0;
+  --color-border: #ccc;
+  --color-accent: #66ccff;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+[data-theme="dark"] {
+  --color-bg: #121212;
+  --color-text: #f1f1f1;
+  --color-card-bg: #1a1a1a;
+  --color-border: #444;
+}
