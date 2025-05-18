@@ -2,15 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Vanilla Slops</title>
 
     <link rel="stylesheet" href="styles/main.css" />
     <link rel="icon" href="/favicon.ico" />
-
-    <!-- Optional: Preload essential scripts -->
     <link rel="modulepreload" href="js/main.js" />
   </head>
+
   <body>
     <div id="app">
       <header>
@@ -20,15 +19,19 @@
       </header>
 
       <main>
-        <section id="search-section" aria-labelledby="search-label">
-          <label id="search-label" for="gameSearch">Search for a game:</label>
-          <input
-            type="search"
-            id="gameSearch"
-            placeholder="e.g., Half-Life"
-            aria-label="Game search input"
-          />
-          <button id="searchButton" aria-label="Search button">Search</button>
+        <section id="search-section" aria-labelledby="search-label" role="search">
+          <form id="search-form">
+            <label id="search-label" for="search-input">Search for a game:</label>
+            <input
+              type="search"
+              id="search-input"
+              name="search"
+              placeholder="e.g., Half-Life"
+              aria-label="Game search"
+              autocomplete="off"
+            />
+            <button id="searchButton" type="submit" aria-label="Search button">Search</button>
+          </form>
         </section>
 
         <section id="results-container" aria-labelledby="results-label">
@@ -54,6 +57,12 @@
       </main>
     </div>
 
-    <script src="js/main.js" type="module" defer></script>
+    <footer>
+      <p>Made with ❤️</p>
+    </footer>
+
+    <div id="scroll-sentinel"></div>
+
+    <script src="/main.js" type="module" defer></script>
   </body>
 </html>

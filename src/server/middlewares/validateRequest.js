@@ -1,6 +1,4 @@
-import { z } from 'zod';
-
-export function validateQuery(schema) {
+export function validateRequest(schema) {
   return (req, res, next) => {
     const result = schema.safeParse(req.query);
     if (!result.success) {

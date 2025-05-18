@@ -1,8 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import gamesRoutes from './routes/gamesRoutes.js';
-import errorHandler from './middlewares/errorHandler.js';
-import notFoundHandler from './middlewares/notFoundHandler.js';
+import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
 
 const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
