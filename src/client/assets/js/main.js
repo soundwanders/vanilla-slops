@@ -2,56 +2,103 @@ import { fetchGames } from './api.js';
 import { renderTable } from './ui/table.js';
 import { renderPagination } from './ui/pagination.js';
 import { setupThemeToggle } from './theme.js';
+import { setupFilters } from './filters.js';
+import { parseURLParams, setupFilters, setupThemeToggle } from './utils.js';
+import { createSearchComponent } from './ui/search.js';
 
-let currentPage = 1;
-let searchQuery = '';
-let hideDLC = false;
 const PAGE_SIZE = 20;
 
-async function loadPage(page = 1) {
+let currentPage = 1;
+let isLoading = false;
+let hasMorePages = true;
+
+// let filters = {
+//   search: '',
+//   types: ['game'],
+// };
+
+let filters = {};
+
+async function loadPage(page = 1, append = false) {
+  if (isLoading || !hasMorePages) return;
+  isLoading = true;
+
   try {
-    const { games, total } = await fetchGames({ page, search: searchQuery, hideDLC });
+    const { games, total } = await fetchGames({ page, filters });
     const totalPages = Math.ceil(total / PAGE_SIZE);
     currentPage = page;
+    hasMorePages = page < totalPages;
 
     const app = document.getElementById('app');
-    // Clear old cards and pagination before re-rendering
-    app.querySelectorAll('.card, .pagination').forEach(el => el.remove());
+    if (!append) {
+      app.querySelectorAll('.card, .pagination').forEach(el => el.remove());
+    }
 
-    renderTable(games);
-    renderPagination(currentPage, totalPages, loadPage);
+    renderTable(games, append);
+    if (!append) renderPagination(currentPage, totalPages, (p) => loadPage(p));
+
+    setupScrollObserver();
+    updateURL();
   } catch (err) {
     console.error('Error loading page:', err);
+  } finally {
+    isLoading = false;
   }
 }
 
-function setupEventListeners() {
-  const searchInput = document.getElementById('search-input');
-  const filterDLC = document.getElementById('filter-dlc');
+function updateURL() {
+  const params = new URLSearchParams();
 
-  searchInput.addEventListener('input', debounce((e) => {
-    searchQuery = e.target.value;
-    loadPage(1);
-  }, 300));
+  if (filters.search) params.set('search', filters.search);
+  if (filters.types) params.set('types', filters.types.join(','));
+  if (currentPage > 1) params.set('page', currentPage);
 
-  filterDLC.addEventListener('change', (e) => {
-    hideDLC = e.target.checked;
-    loadPage(1);
-  });
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState(null, '', newURL);
 }
 
-// Debounce to avoid excessive API calls
-function debounce(fn, delay) {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), delay);
-  };
+function parseURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  const search = params.get('search') || '';
+  const types = params.get('types')?.split(',') || ['game'];
+  const page = parseInt(params.get('page'), 10) || 1;
+
+  filters = { search, types };
+  currentPage = page;
+}
+
+function setupScrollObserver() {
+  const sentinel = document.getElementById('scroll-sentinel');
+  if (!sentinel) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      observer.disconnect();
+      loadPage(currentPage + 1, true);
+    }
+  }, { rootMargin: '100px' });
+
+  observer.observe(sentinel);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  setupEventListeners();
-  loadPage(1);
+  // Mount the search UI
+  const target = document.getElementById('search-container');
+  const searchComponent = createSearchComponent();
+  target.appendChild(searchComponent);
+
+  // Parse initial filters from URL
+  parseURLParams();
+
+  // Setup filter event listeners
+  setupFilters((newFilters) => {
+    filters = { ...filters, ...newFilters };
+    loadPage(1);
+  });
+
+  // Load initial data
+  loadPage(currentPage);
+
+  // Toggle dark/light theme
   setupThemeToggle();
-  init();
 });

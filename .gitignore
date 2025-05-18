@@ -9,16 +9,11 @@ lerna-debug.log*
 package-lock.json
 */package-lock.json
 node_modules
-changelog.md
 **/__pycache__
+**/slops-setup-guide.md
 
 # changelog 
 changelog.md
-
-# scripts
-scripts
-scripts/*
-src/scripts
 
 # dotenv environment variable files
 .env
@@ -29,13 +24,14 @@ src/scripts
 .env.*
 
 # scripts directory
+scripts/*
+src/scripts
 src/scripts/appdetails_cache.json
 src/scripts/backups
 src/scripts/readme.md
 src/scripts/appdetails_cache.json.bak
 src/scripts/game_list_cache.json
 src/scripts/test-output
-src/scripts/module-refactor
 src/scripts/module-refactor
 
 # Diagnostic reports (https://nodejs.org/api/report.html)

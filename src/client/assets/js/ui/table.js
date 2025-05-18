@@ -1,29 +1,27 @@
-export function renderTable(games) {
-  const app = document.getElementById('app');
+// Renders a list of game cards into #results-container
+export function renderTable(games, append = false) {
+  const container = document.getElementById('results-container');
+  let grid = container.querySelector('.game-grid');
 
-  const container = document.createElement('div');
-  container.className = 'game-grid';
+  if (!grid || !append) {
+    if (grid) grid.remove();
+    grid = document.createElement('div');
+    grid.className = 'game-grid';
+    container.appendChild(grid);
+  }
 
   games.forEach(game => {
     const card = document.createElement('div');
     card.className = 'card';
-
-    card.innerHTML = `
-      <h2>${game.name}</h2>
-      <p><strong>AppID:</strong> ${game.appid}</p>
-      <p><strong>Launch Options:</strong> ${game.launch_options?.join(', ') || 'None'}</p>
-    `;
-
-    container.appendChild(card);
+    card.textContent = game.title;
+    grid.appendChild(card);
   });
-
-  app.appendChild(container);
 }
 
+// Renders pagination controls into #pagination
 export function renderPagination(currentPage, totalPages, onPageChange) {
-  const app = document.getElementById('app');
-  const pagination = document.createElement('div');
-  pagination.className = 'pagination';
+  const container = document.getElementById('pagination');
+  container.innerHTML = ''; // Clear existing buttons
 
   for (let i = 1; i <= totalPages; i++) {
     const pageButton = document.createElement('button');
@@ -34,8 +32,7 @@ export function renderPagination(currentPage, totalPages, onPageChange) {
       onPageChange(i);
     });
 
-    pagination.appendChild(pageButton);
+    container.appendChild(pageButton);
   }
-
-  app.appendChild(pagination);
 }
+
