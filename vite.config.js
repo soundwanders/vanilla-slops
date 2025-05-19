@@ -2,13 +2,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: './src/client',
-  base: './', 
   server: {
-    port: 3000,
-    open: true,   // Open browser on start
+    port: 3000, 
+    open: true, 
   },
   build: {
-    outDir: 'src/client/dist', 
+    outDir: './src/client/dist', 
     emptyOutDir: true,
   },
 });

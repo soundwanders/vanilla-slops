@@ -1,9 +1,8 @@
 import { fetchGames } from './api.js';
 import { renderTable } from './ui/table.js';
 import { renderPagination } from './ui/pagination.js';
-import { setupThemeToggle } from './theme.js';
-import { setupFilters } from './filters.js';
-import { parseURLParams, setupFilters, setupThemeToggle } from './utils.js';
+import { setupThemeToggle } from './ui/theme.js';
+import { setupFilters } from './ui/filters.js';
 import { createSearchComponent } from './ui/search.js';
 
 const PAGE_SIZE = 20;
