@@ -10,12 +10,6 @@ const PAGE_SIZE = 20;
 let currentPage = 1;
 let isLoading = false;
 let hasMorePages = true;
-
-// let filters = {
-//   search: '',
-//   types: ['game'],
-// };
-
 let filters = {};
 
 async function loadPage(page = 1, append = false) {
@@ -56,14 +50,36 @@ function updateURL() {
   window.history.replaceState(null, '', newURL);
 }
 
-function parseURLParams() {
+export function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
-  const search = params.get('search') || '';
-  const types = params.get('types')?.split(',') || ['game'];
-  const page = parseInt(params.get('page'), 10) || 1;
 
-  filters = { search, types };
-  currentPage = page;
+  currentPage = parseInt(params.get('page')) || 1;
+
+  const search = params.get('search') || '';
+  const genre = params.get('genre') || '';
+  const engine = params.get('engine') || '';
+  const platform = params.get('platform') || '';
+  const sort = params.get('sort') || 'asc';
+
+  // Populate form fields
+  const form = document.getElementById('search-form-component');
+  if (form) {
+    form.search.value = search;
+    form.genre.value = genre;
+    form.engine.value = engine;
+    form.platform.value = platform;
+    form.sort.value = sort;
+  }
+
+  // Update global filters
+  filters = {
+    ...filters,
+    searchQuery: search,
+    genre,
+    engine,
+    platform,
+    sort,
+  };
 }
 
 function setupScrollObserver() {
@@ -81,23 +97,18 @@ function setupScrollObserver() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Mount the search UI
   const target = document.getElementById('search-container');
   const searchComponent = createSearchComponent();
   target.appendChild(searchComponent);
 
-  // Parse initial filters from URL
+  // Parse filters from URL and populate form
   parseURLParams();
 
-  // Setup filter event listeners
   setupFilters((newFilters) => {
     filters = { ...filters, ...newFilters };
     loadPage(1);
   });
 
-  // Load initial data
   loadPage(currentPage);
-
-  // Toggle dark/light theme
   setupThemeToggle();
 });
