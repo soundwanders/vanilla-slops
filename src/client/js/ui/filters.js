@@ -1,31 +1,46 @@
-export function setupFilters(onFilterChange) {
-  const searchInput = document.getElementById('search-input');
-  const typeInputs = document.querySelectorAll('[name="game-type"]');
+// Set up SEARCH FILTERS
+export function setupFilters(onChange) {
+  const form = document.getElementById('search-form-component');
+  if (!form) return;
 
-  let debounceTimer;
+  // Update URL params without reloading
+  const updateURL = (filters) => {
+    const params = new URLSearchParams();
 
-  searchInput.addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      const search = e.target.value;
-      const types = getSelectedTypes();
-      onFilterChange({ search, types });
-    }, 300);
+    if (filters.searchQuery) params.set('search', filters.searchQuery);
+    if (filters.genre) params.set('genre', filters.genre);
+    if (filters.engine) params.set('engine', filters.engine);
+    if (filters.platform) params.set('platform', filters.platform);
+    if (filters.sort) params.set('sort', filters.sort);
+
+    history.replaceState(null, '', `?${params.toString()}`);
+  };
+
+  const handleChange = () => {
+    const newFilters = {
+      searchQuery: form.search.value.trim(),
+      genre: form.genre.value,
+      engine: form.engine.value,
+      platform: form.platform.value,
+      sort: form.sort.value,
+    };
+
+    updateURL(newFilters);
+    onChange(newFilters);
+  };
+
+  ['genre', 'engine', 'platform', 'sort'].forEach((name) => {
+    form[name].addEventListener('change', handleChange);
   });
 
-  typeInputs.forEach(input => {
-    input.addEventListener('change', () => {
-      const types = getSelectedTypes();
-      onFilterChange({ types });
-    });
+  // Debounced search input
+  let debounceTimeout;
+  form.search.addEventListener('input', () => {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(handleChange, 300);
   });
-
-  function getSelectedTypes() {
-    return Array.from(typeInputs)
-      .filter(el => el.checked)
-      .map(el => el.value);
-  }
 }
+
 
 export function getFilters() {
   return {
