@@ -1,4 +1,11 @@
-// Renders a list of game cards into #results-container
+/**
+ * Renders a list of game cards into #results-container
+ * 
+ * @param {Array} games - The list of our steam games to render
+ * @param {boolean} [append=false] - Whether to append the games to the existing table
+ * 
+ * @returns {void}
+ */
 export function renderTable(games, append = false) {
   const container = document.getElementById('results-container');
   let grid = container.querySelector('.game-grid');

@@ -12,6 +12,14 @@ let isLoading = false;
 let hasMorePages = true;
 let filters = {};
 
+/**
+ * Load games from our supabase database and load them to UI
+ * 
+ * @param {number} [page=1] - The page number to load
+ * @param {boolean} [append=false] - Whether to append the results to the existing list
+ * 
+ * @returns {Promise<void>}
+ */
 async function loadPage(page = 1, append = false) {
   if (isLoading || !hasMorePages) return;
   isLoading = true;
@@ -34,11 +42,25 @@ async function loadPage(page = 1, append = false) {
     updateURL();
   } catch (err) {
     console.error('Error loading page:', err);
+
+    // Log additional debugging information
+    console.log('Filters:', filters);
+    console.log('Page:', page);
+
+    // If the error is related to JSON parsing, log the raw response
+    if (err instanceof SyntaxError) {
+      console.error('Possible JSON parsing error. Check the API response.');
+    }
   } finally {
     isLoading = false;
   }
 }
 
+/**
+ * Update the URL with the current filters and page number.
+ * 
+ * @returns {void}
+ */
 function updateURL() {
   const params = new URLSearchParams();
 

@@ -1,0 +1,50 @@
+/* Import base styles (reset and global styles) */
+@import './base.css';
+
+/* Import design tokens (variables for colors, spacing, etc.) */
+@import './tokens.css';
+
+/* Import component-specific styles */
+@import './components.css';
+
+/* Add any additional global styles here */
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: bold;
+}
+
+a {
+  text-decoration: none;
+  color: var(--color-accent);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: var(--space-sm);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+footer {
+  text-align: center;
+  padding: var(--space-md);
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+}
