@@ -1,9 +1,26 @@
-// Set up SEARCH FILTERS
+/**
+ * Set up search filters and handle changes to inputs
+ * 
+ * @param {Function} onChange - Callback function to execute when filters change.
+ * 
+ * @returns {void}
+ */
 export function setupFilters(onChange) {
   const form = document.getElementById('search-form-component');
   if (!form) return;
 
-  // Update URL params without reloading
+  /**
+   * Update URL parameters without reloading page
+   * 
+   * @param {Object} filters - current filter values
+   * @param {string} [filters.searchQuery] - search query 
+   * @param {string} [filters.genre] - selected genre 
+   * @param {string} [filters.engine] - selected engine 
+   * @param {string} [filters.platform] - selected platform 
+   * @param {string} [filters.sort] - selected sort order ('asc' or 'desc')
+   * 
+   * @returns {void}
+   */
   const updateURL = (filters) => {
     const params = new URLSearchParams();
 
@@ -41,7 +58,16 @@ export function setupFilters(onChange) {
   });
 }
 
-
+/**
+ * Get current filter values from the DOM
+ * 
+ * @returns {Object} - The current filter values
+ * @returns {string} [search] - The search query string
+ * @returns {string} [genre] - The selected genre filter
+ * @returns {string} [engine] - The selected engine filter
+ * @returns {string} [platform] - The selected platform filter
+ * @returns {string} [sort] - The selected sort order ('asc' or 'desc')
+ */
 export function getFilters() {
   return {
     search: document.getElementById('search-input').value.trim(),

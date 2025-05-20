@@ -6,7 +6,7 @@ export function createSearchComponent() {
 
   form.innerHTML = `
     <label for="search-input">Search by title</label>
-    <input id="search-input" name="search" type="search" placeholder="Search by title..." autocomplete="off" />
+    <input id="search-input" name="search" type="search" placeholder="..." autocomplete="off" />
 
     <label for="genre-filter">Genre</label>
     <select id="genre-filter" name="genre">
