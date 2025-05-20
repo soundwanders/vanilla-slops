@@ -30,7 +30,7 @@ export async function fetchGames({ searchQuery = '', genre = '', engine = '', pl
   if (searchQuery) {
     query = query.ilike('title', `%${searchQuery}%`);
   }
-  if (genre) {th
+  if (genre) {
     query = query.eq('genre', genre);
   }
   if (engine) {
