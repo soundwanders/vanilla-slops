@@ -1,32 +1,14 @@
+import { fetchGames, fetchGameWithLaunchOptions, fetchLaunchOptionsForGame } from '../services/gamesService.js';
+
 /**
- * Controller to handle requests for fetching games from the database
- * 
- * @param {Object} req - The HTTP request object
- * @param {Object} req.query - Query parameters from the request
- * @param {Object} res - The HTTP response object
- * 
- * @returns {void}
+ * Controller to handle requests for fetching games from the database.
+ * Supports query parameters for search, genre, engine, platform, sort, pagination, and limit.
+ *
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} req.query - Query parameters: search, genre, engine, platform, sort, page, limit.
+ * @param {Object} res - The HTTP response object.
+ * @returns {Promise<void>}
  */
-
-// import { fetchGames } from '../services/gamesService.js';
-// import { log } from '../utils/logger.js';
-
-// export async function gamesController(req, res) {
-//   try {
-//     log('Incoming request query:', req.query);
-
-//     const result = await fetchGames(req.query);
-
-//     log('Outgoing response data:', result);
-//     res.json(result);
-//   } catch (err) {
-//     log('Error fetching games:', err.message);
-//     res.status(500).json({ error: 'Failed to fetch games' });
-//   }
-// }
-
-import { fetchGames } from '../services/gamesService.js';
-
 export async function gamesController(req, res) {
   try {
     const filters = {
@@ -36,17 +18,52 @@ export async function gamesController(req, res) {
       platform: req.query.platform || '',
       sort: req.query.sort || 'asc',
       page: parseInt(req.query.page, 10) || 1,
-      limit: 20, // Default page size
+      limit: parseInt(req.query.limit, 10) || 20,
     };
-
     const result = await fetchGames(filters);
-
-    // Log the result for debugging
-    console.log('API Response:', result);
-
     res.json(result);
   } catch (err) {
     console.error('Error in gamesController:', err.message);
     res.status(500).json({ error: 'Failed to fetch games' });
+  }
+}
+
+/**
+ * Controller to handle requests for fetching a single game and its launch options.
+ *
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} req.params - Route parameters.
+ * @param {string} req.params.id - The ID of the game to fetch.
+ * @param {Object} res - The HTTP response object.
+ * @returns {Promise<void>}
+ */
+export async function gameDetailsController(req, res) {
+  try {
+    const gameId = req.params.id;
+    const result = await fetchGameWithLaunchOptions(gameId);
+    res.json(result);
+  } catch (err) {
+    console.error('Error in gameDetailsController:', err.message);
+    res.status(500).json({ error: 'Failed to fetch game details' });
+  }
+}
+
+/**
+ * Controller to handle requests for fetching only the launch options of a specific game.
+ *
+ * @param {Object} req - The HTTP request object.
+ * @param {Object} req.params - Route parameters.
+ * @param {string} req.params.id - The ID of the game whose launch options to fetch.
+ * @param {Object} res - The HTTP response object.
+ * @returns {Promise<void>}
+ */
+export async function gameLaunchOptionsController(req, res) {
+  try {
+    const gameId = req.params.id;
+    const result = await fetchLaunchOptionsForGame(gameId);
+    res.json(result);
+  } catch (err) {
+    console.error('Error in gameLaunchOptionsController:', err.message);
+    res.status(500).json({ error: `Failed to fetch launch options for game ${gameId}` });
   }
 }
