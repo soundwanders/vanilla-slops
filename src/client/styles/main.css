@@ -1,19 +1,19 @@
-/* Import base styles (reset and global styles) */
-@import './base.css';
-
-/* Import design tokens (variables for colors, spacing, etc.) */
 @import './tokens.css';
-
-/* Import component-specific styles */
 @import './components.css';
 
-/* Add any additional global styles here */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--color-bg);
   color: var(--color-text);
   margin: 0;
   padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
