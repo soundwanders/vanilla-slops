@@ -1,27 +1,136 @@
-import { games } from "./mock-data.js";
-import { searchInput, setupEventListeners } from "./dom.js";
-import { renderPagination } from "./pagination.js";
-import { renderGamesTable } from "./games-table.js";
+import { fetchGames } from './api.js';
+import { renderTable } from './ui/table.js';
+import { renderPagination } from './ui/pagination.js';
+import { setupThemeToggle } from './ui/theme.js';
+import { setupFilters } from './ui/filters.js';
+import { createSearchComponent } from './ui/search.js';
 
-const itemsPerPage = 5;
+const PAGE_SIZE = 20;
+
 let currentPage = 1;
+let isLoading = false;
+let hasMorePages = true;
+let filters = {};
 
-// Function to update table based on search & pagination
-function updateTable(page = 1) {
-  currentPage = page;
-  let filteredGames = games.filter(game =>
-    game.name.toLowerCase().includes(searchInput.value.toLowerCase())
-  );
+/**
+ * Load games from our supabase database and load them to UI
+ * 
+ * @param {number} [page=1] - The page number to load
+ * @param {boolean} [append=false] - Whether to append the results to the existing list
+ * 
+ * @returns {Promise<void>}
+ */
+async function loadPage(page = 1, append = false) {
+  if (isLoading || !hasMorePages) return;
+  isLoading = true;
 
-  const start = (currentPage - 1) * itemsPerPage;
-  const paginatedGames = filteredGames.slice(start, start + itemsPerPage);
+  try {
+    const { games, total } = await fetchGames({ page, filters });
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    currentPage = page;
+    hasMorePages = page < totalPages;
 
-  renderGamesTable(paginatedGames);
-  renderPagination(filteredGames.length, itemsPerPage, currentPage, updateTable);
+    const app = document.getElementById('app');
+    if (!append) {
+      app.querySelectorAll('.card, .pagination').forEach(el => el.remove());
+    }
+
+    renderTable(games, append);
+    if (!append) renderPagination(currentPage, totalPages, (p) => loadPage(p));
+
+    setupScrollObserver();
+    updateURL();
+  } catch (err) {
+    console.error('Error loading page:', err);
+
+    // Log additional debugging information
+    console.log('Filters:', filters);
+    console.log('Page:', page);
+
+    // If the error is related to JSON parsing, log the raw response
+    if (err instanceof SyntaxError) {
+      console.error('Possible JSON parsing error. Check the API response.');
+    }
+  } finally {
+    isLoading = false;
+  }
 }
 
-// Setup event listeners
-setupEventListeners(updateTable);
+/**
+ * Update the URL with the current filters and page number.
+ * 
+ * @returns {void}
+ */
+function updateURL() {
+  const params = new URLSearchParams();
 
-// Initial render
-updateTable();
+  if (filters.search) params.set('search', filters.search);
+  if (filters.types) params.set('types', filters.types.join(','));
+  if (currentPage > 1) params.set('page', currentPage);
+
+  const newURL = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState(null, '', newURL);
+}
+
+export function parseURLParams() {
+  const params = new URLSearchParams(window.location.search);
+
+  currentPage = parseInt(params.get('page')) || 1;
+
+  const search = params.get('search') || '';
+  const genre = params.get('genre') || '';
+  const engine = params.get('engine') || '';
+  const platform = params.get('platform') || '';
+  const sort = params.get('sort') || 'asc';
+
+  // Populate form fields
+  const form = document.getElementById('search-form-component');
+  if (form) {
+    form.search.value = search;
+    form.genre.value = genre;
+    form.engine.value = engine;
+    form.platform.value = platform;
+    form.sort.value = sort;
+  }
+
+  // Update global filters
+  filters = {
+    ...filters,
+    searchQuery: search,
+    genre,
+    engine,
+    platform,
+    sort,
+  };
+}
+
+function setupScrollObserver() {
+  const sentinel = document.getElementById('scroll-sentinel');
+  if (!sentinel) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      observer.disconnect();
+      loadPage(currentPage + 1, true);
+    }
+  }, { rootMargin: '100px' });
+
+  observer.observe(sentinel);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const target = document.getElementById('search-container');
+  const searchComponent = createSearchComponent();
+  target.appendChild(searchComponent);
+
+  // Parse filters from URL and populate form
+  parseURLParams();
+
+  setupFilters((newFilters) => {
+    filters = { ...filters, ...newFilters };
+    loadPage(1);
+  });
+
+  loadPage(currentPage);
+  setupThemeToggle();
+});

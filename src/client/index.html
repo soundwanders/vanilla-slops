@@ -1,40 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Vanilla Slops</title>
-    <link rel="stylesheet" href="styles/main.css">
+
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="modulepreload" href="js/main.js" />
   </head>
+
   <body>
     <div id="app">
       <header>
         <h1>Vanilla Slops</h1>
-        <h3>Steam Launch Options</h3>
+        <h2>Steam Launch Options</h2>
+        <button id="theme-toggle" aria-label="Toggle light/dark theme">🌓</button>
       </header>
 
-      <section id="search-section">
-        <input type="text" id="gameSearch" placeholder="Search for a game...">
-        <button id="searchButton">Search</button>
-      </section>
+      <main>
+        <section id="search-container" aria-label="Game search area"></section>
+        <div id="table-container"></div> 
+        
+        <nav id="pagination" aria-label="Pagination controls">
+          <!-- Pagination buttons get inserted here -->
+        </nav>
 
-      <section id="results-container">
-        <table id="resultsTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Game Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Rows dynamically added here -->
-          </tbody>
-        </table>
-      </section>
-
-      <div id="pagination"></div>
+        <div id="status" role="status" aria-live="polite" class="sr-only"></div>
+      </main>
     </div>
-    
-    <script src="js/main.js" type="module" defer></script>
+
+    <footer>
+      <p>Made with ❤️</p>
+    </footer>
+
+    <div id="scroll-sentinel"></div>
+
+    <script src="./js/main.js" type="module" defer></script>
   </body>
 </html>
