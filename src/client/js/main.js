@@ -57,7 +57,7 @@ async function loadPage(page = 1, append = false) {
 }
 
 /**
- * Update the URL with the current filters and page number.
+ * Update the URL with current filters and page number
  * 
  * @returns {void}
  */
