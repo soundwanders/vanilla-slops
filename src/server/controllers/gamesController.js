@@ -1,5 +1,5 @@
 
-import { fetchGames, fetchGameSuggestions, fetchFilterFacets } from '../services/gamesService.js';
+import { fetchGames, fetchGameSuggestions, getFacets } from '../services/gamesService.js';
 
 /**
  * Enhanced games controller with full search and filtering capabilities
@@ -53,7 +53,7 @@ export async function searchSuggestionsController(req, res) {
  */
 export async function filterFacetsController(req, res) {
   try {
-    const facets = await fetchFilterFacets();
+    const facets = await getFacets();
     res.json(facets);
   } catch (err) {
     console.error('Error in filterFacetsController:', err.message);
