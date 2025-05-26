@@ -1,15 +1,29 @@
 import { Router } from 'express';
-import { gamesController, gameDetailsController, gameLaunchOptionsController } from '../controllers/gameController.js';
+import { validateRequest } from '../middlewares/validateRequest.js';
+import { 
+  gamesController, 
+  searchSuggestionsController, 
+  filterFacetsController,
+  gameDetailsController,
+  gameLaunchOptionsController 
+} from '../controllers/gamesController.js';
+import { querySchema, suggestionQuerySchema } from '../schemas/gameQuerySchema.js';
 
 const router = Router();
 
-// Get all games with pagination and filtering
-router.get('/games', gamesController);
+// Get all games with enhanced filtering and search
+router.get('/', validateRequest(querySchema), gamesController);
+
+// Get search suggestions for autocomplete
+router.get('/suggestions', validateRequest(suggestionQuerySchema), searchSuggestionsController);
+
+// Get available filter facets
+router.get('/facets', filterFacetsController);
 
 // Get a specific game with its launch options
-router.get('/games/:id', gameDetailsController);
+router.get('/:id', gameDetailsController);
 
 // Get just the launch options for a specific game
-router.get('/games/:id/launch-options', gameLaunchOptionsController);
+router.get('/:id/launch-options', gameLaunchOptionsController);
 
 export default router;
