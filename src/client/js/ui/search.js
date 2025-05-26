@@ -1,7 +1,7 @@
 /**
  * Debounced searches, filter, sort, suggestion dropdown, and renders results
 */
-export class SlopSearch {
+export default class SlopSearch {
   constructor({
     inputId = 'searchInput',
     suggestionsId = 'suggestionsDropdown',
