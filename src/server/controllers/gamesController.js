@@ -1,25 +1,26 @@
-import { fetchGames, fetchGameWithLaunchOptions, fetchLaunchOptionsForGame } from '../services/gamesService.js';
+
+import { fetchGames, fetchGameSuggestions, fetchFilterFacets } from '../services/gamesService.js';
 
 /**
- * Controller to handle requests for fetching games from the database.
- * Supports query parameters for search, genre, engine, platform, sort, pagination, and limit.
- *
- * @param {Object} req - The HTTP request object.
- * @param {Object} req.query - Query parameters: search, genre, engine, platform, sort, page, limit.
- * @param {Object} res - The HTTP response object.
- * @returns {Promise<void>}
+ * Enhanced games controller with full search and filtering capabilities
  */
 export async function gamesController(req, res) {
   try {
     const filters = {
-      searchQuery: req.query.search || '',
+      search: req.query.search || '',
       genre: req.query.genre || '',
       engine: req.query.engine || '',
       platform: req.query.platform || '',
-      sort: req.query.sort || 'asc',
+      developer: req.query.developer || '',
+      category: req.query.category || '',
+      options: req.query.options || '', // 'has-options', 'no-options', 'performance', 'graphics'
+      year: req.query.year || '',
+      sort: req.query.sort || 'title',
+      order: req.query.order || 'asc',
       page: parseInt(req.query.page, 10) || 1,
       limit: parseInt(req.query.limit, 10) || 20,
     };
+
     const result = await fetchGames(filters);
     res.json(result);
   } catch (err) {
@@ -29,7 +30,39 @@ export async function gamesController(req, res) {
 }
 
 /**
- * Controller to handle requests for fetching a single game and its launch options.
+ * Get search suggestions for autocomplete
+ */
+export async function searchSuggestionsController(req, res) {
+  try {
+    const { q: query } = req.query;
+    
+    if (!query || query.length < 2) {
+      return res.json([]);
+    }
+
+    const suggestions = await fetchGameSuggestions(query);
+    res.json(suggestions);
+  } catch (err) {
+    console.error('Error in searchSuggestionsController:', err.message);
+    res.status(500).json({ error: 'Failed to fetch search suggestions' });
+  }
+}
+
+/**
+ * Get filter facets (available filter options)
+ */
+export async function filterFacetsController(req, res) {
+  try {
+    const facets = await fetchFilterFacets();
+    res.json(facets);
+  } catch (err) {
+    console.error('Error in filterFacetsController:', err.message);
+    res.status(500).json({ error: 'Failed to fetch filter facets' });
+  }
+}
+
+/**
+ * Controller to handle requests for fetching a specific game and its launch options
  *
  * @param {Object} req - The HTTP request object.
  * @param {Object} req.params - Route parameters.
@@ -39,31 +72,35 @@ export async function gamesController(req, res) {
  */
 export async function gameDetailsController(req, res) {
   try {
-    const gameId = req.params.id;
-    const result = await fetchGameWithLaunchOptions(gameId);
-    res.json(result);
+    const { id } = req.params;
+    const game = await fetchGameWithLaunchOptions(parseInt(id));
+    res.json(game);
   } catch (err) {
     console.error('Error in gameDetailsController:', err.message);
-    res.status(500).json({ error: 'Failed to fetch game details' });
+    if (err.message.includes('not found')) {
+      res.status(404).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch game details' });
+    }
   }
 }
 
 /**
- * Controller to handle requests for fetching only the launch options of a specific game.
+ * Controller to handle requests for fetching only the launch options of a specific game
  *
- * @param {Object} req - The HTTP request object.
- * @param {Object} req.params - Route parameters.
- * @param {string} req.params.id - The ID of the game whose launch options to fetch.
- * @param {Object} res - The HTTP response object.
+ * @param {Object} req - The HTTP request object
+ * @param {Object} req.params - Route parameters
+ * @param {string} req.params.id - The ID of the game whose launch options to fetch
+ * @param {Object} res - The HTTP response object
  * @returns {Promise<void>}
  */
 export async function gameLaunchOptionsController(req, res) {
   try {
-    const gameId = req.params.id;
-    const result = await fetchLaunchOptionsForGame(gameId);
-    res.json(result);
+    const { id } = req.params;
+    const launchOptions = await fetchLaunchOptionsForGame(parseInt(id));
+    res.json({ launchOptions });
   } catch (err) {
     console.error('Error in gameLaunchOptionsController:', err.message);
-    res.status(500).json({ error: `Failed to fetch launch options for game ${gameId}` });
+    res.status(500).json({ error: 'Failed to fetch launch options' });
   }
 }
