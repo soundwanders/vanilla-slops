@@ -260,6 +260,62 @@ async function getFacets(searchQuery = '') {
   };
 }
 
+
+/**
+ * Fetch available filter facets
+ */
+export async function fetchFilterFacets() {
+  try {
+    const facets = {};
+
+    // Get unique genres
+    const { data: genres } = await supabase
+      .from('games')
+      .select('genre')
+      .not('genre', 'is', null);
+    
+    facets.genres = [...new Set(genres?.map(g => g.genre) || [])].sort();
+
+    // Get unique developers
+    const { data: developers } = await supabase
+      .from('games')
+      .select('developer')
+      .not('developer', 'is', null);
+    
+    facets.developers = [...new Set(developers?.map(d => d.developer) || [])].sort();
+
+    // Get unique engines
+    const { data: engines } = await supabase
+      .from('games')
+      .select('engine')
+      .not('engine', 'is', null);
+    
+    facets.engines = [...new Set(engines?.map(e => e.engine) || [])].sort();
+
+    // Get unique platforms
+    const { data: platforms } = await supabase
+      .from('games')
+      .select('platform')
+      .not('platform', 'is', null);
+    
+    facets.platforms = [...new Set(platforms?.map(p => p.platform) || [])].sort();
+
+    // Get release years
+    const { data: years } = await supabase
+      .from('games')
+      .select('release_year')
+      .not('release_year', 'is', null)
+      .order('release_year', { ascending: false });
+    
+    facets.years = [...new Set(years?.map(y => y.release_year) || [])];
+
+    return facets;
+  } catch (error) {
+    console.error('Error fetching filter facets:', error);
+    return {};
+  }
+}
+
 /**
  * Get unique values for a specific field with occurrence counts
  * @private
