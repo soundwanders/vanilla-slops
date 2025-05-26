@@ -2,8 +2,7 @@ import { fetchGames } from './api.js';
 import { renderTable } from './ui/table.js';
 import { renderPagination } from './ui/pagination.js';
 import { setupThemeToggle } from './ui/theme.js';
-import { setupFilters } from './ui/filters.js';
-import { createSearchComponent } from './ui/search.js';
+import SlopSearch from './ui/search.js';
 
 const PAGE_SIZE = 20;
 
@@ -13,7 +12,7 @@ let hasMorePages = true;
 let filters = {};
 
 /**
- * Load games from our supabase database and load them to UI
+ * Load games from our supabase database to the UI
  * 
  * @param {number} [page=1] - The page number to load
  * @param {boolean} [append=false] - Whether to append the results to the existing list
@@ -57,7 +56,7 @@ async function loadPage(page = 1, append = false) {
 }
 
 /**
- * Update the URL with the current filters and page number.
+ * Update the URL with current filters and page number
  * 
  * @returns {void}
  */
@@ -83,7 +82,7 @@ export function parseURLParams() {
   const platform = params.get('platform') || '';
   const sort = params.get('sort') || 'asc';
 
-  // Populate form fields
+  // Populate form
   const form = document.getElementById('search-form-component');
   if (form) {
     form.search.value = search;
@@ -119,17 +118,14 @@ function setupScrollObserver() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const target = document.getElementById('search-container');
-  const searchComponent = createSearchComponent();
-  target.appendChild(searchComponent);
-
-  // Parse filters from URL and populate form
-  parseURLParams();
-
-  setupFilters((newFilters) => {
-    filters = { ...filters, ...newFilters };
-    loadPage(1);
-  });
+  const container = document.getElementById('search-container');
+  if (container) {
+    const enhanced = new SlopSearch(container);
+    enhanced.onFilterChange = (newFilters) => {
+      filters = { ...filters, ...newFilters };
+      loadPage(1);
+    };
+  }
 
   loadPage(currentPage);
   setupThemeToggle();

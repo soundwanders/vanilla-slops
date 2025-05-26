@@ -11,23 +11,85 @@
   </head>
 
   <body>
-    <div id="app">
-      <header>
-        <h1>Vanilla Slops</h1>
-        <h2>Steam Launch Options</h2>
-        <button id="theme-toggle" aria-label="Toggle light/dark theme">🌓</button>
-      </header>
+    <div class="search-container">
+        <div class="search-header">
+            <h2>SLOPS</h2>
+            <p>Discover Steam Launch Options</p>
+        </div>
 
-      <main>
-        <section id="search-container" aria-label="Game search area"></section>
-        <div id="table-container"></div> 
-        
-        <nav id="pagination" aria-label="Pagination controls">
-          <!-- Pagination buttons get inserted here -->
-        </nav>
+        <div class="search-input-wrapper">
+            <div class="search-icon">🔍</div>
+            <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search games, developers, or launch options..."
+                id="searchInput"
+            >
+            <div class="suggestions-dropdown" id="suggestionsDropdown"></div>
+        </div>
 
-        <div id="status" role="status" aria-live="polite" class="sr-only"></div>
-      </main>
+        <div class="filters-container">
+            <div class="filter-group">
+                <label class="filter-label">Category</label>
+                <select class="filter-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="action">Action</option>
+                    <option value="rpg">RPG</option>
+                    <option value="strategy">Strategy</option>
+                    <option value="simulation">Simulation</option>
+                    <option value="fps">FPS</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Developer</label>
+                <select class="filter-select" id="developerFilter">
+                    <option value="">All Developers</option>
+                    <option value="valve">Valve Corporation</option>
+                    <option value="bethesda">Bethesda</option>
+                    <option value="rockstar">Rockstar Games</option>
+                    <option value="ubisoft">Ubisoft</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Launch Options</label>
+                <select class="filter-select" id="optionsFilter">
+                    <option value="">Any Options</option>
+                    <option value="has-options">Has Launch Options</option>
+                    <option value="no-options">No Launch Options</option>
+                    <option value="performance">Performance Options</option>
+                    <option value="graphics">Graphics Options</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Release Year</label>
+                <select class="filter-select" id="yearFilter">
+                    <option value="">All Years</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="older">Before 2020</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="active-filters" id="activeFilters"></div>
+
+        <div class="results-container">
+            <div class="results-header">
+                <span class="results-count" id="resultsCount">0 results found</span>
+                <select class="sort-select" id="sortSelect">
+                    <option value="relevance">Sort by Relevance</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="year">Sort by Release Year</option>
+                    <option value="options">Sort by Option Count</option>
+                </select>
+            </div>
+            <div class="results-list" id="resultsList">
+                <div class="no-results">Search...</div>
+            </div>
+        </div>
     </div>
 
     <footer>

@@ -4,12 +4,10 @@
   <img src="./src/client/public/frogslops.png" alt="FrogSlops Logo" width="140">
 </p>
 
-We call it Vanilla Slops because it’s exactly that: a clean, no frills frontend built with vanilla JavaScript. all about cataloging Steam Launch Options (SLOPs). Powered by Supabase and an Express.js API, this full-stack project gives users fast, filterable access to thousands of Steam games and their launch options.
+The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and an Express.js API. This project serves as a way to search and filter through the launch options for games in the Steam library.
 
-This project's core philosophy is to recreate functionality that modern frameworks abstract away, 
+This project's core philosophy is to recreate some of the functionality that modern frameworks abstract away, 
 while staying lightweight, fast, and minimal. 
-
-I call it Vanilla Slops because it’s exactly that: a vanilla JavaScript project cataloging Steam Launch Options (SLOPs). Backed by a Supabase database and a custom Node.js API, it helps users search and filter thousands of games for useful startup flags.
 
 ### 🛠️ Building Blocks
 - **Frontend:** Vanilla JavaScript
@@ -20,13 +18,13 @@ I call it Vanilla Slops because it’s exactly that: a vanilla JavaScript projec
 ---
 
 
-### ⚙️ **The Bones Make the Skeleton**
+### ⚙️ **A Skeleton Made of Bones**
 
 #### 🖥️ Frontend (`src/client`)
 
 * Supports:
 
-  * 🔍 Game searching (debounced)
+  * 🔍 Search games by title
   * 🧩 Filtering (genre, engine, platform)
   * ↕ Sorting (A → Z)
   * 🎨 Light/Dark theme toggle
@@ -44,9 +42,9 @@ I call it Vanilla Slops because it’s exactly that: a vanilla JavaScript projec
 #### 🧹 Data Collection (`src/scripts`)
 
 A lovely Python script named `Slop Scraper` that:
-- Fetches games from the Steam API
-- Scrape launch options for each game from various sources
+- Fetches a list of games from the Steam API
 - Filters out non-game content (DLC, demos, NSFW)
+- Collect launch options for each fetched game
 - Saves data to Supabase (or JSON if running in test mode)
 - Supports CLI flags for test mode, rate limits, and batch size
 - Uses caching to avoid redundant API calls
