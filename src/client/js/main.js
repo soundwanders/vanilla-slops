@@ -118,11 +118,13 @@ function setupScrollObserver() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('search-container');
-  if (container) {
+  const container = document.querySelector('.search-container');
+  if (!container) {
+    console.error('Search container not found in DOM');
+  } else {
     const enhanced = new SlopSearch(container);
     enhanced.onFilterChange = (newFilters) => {
-      filters = { ...filters, ...newFilters };
+      filters = {...filters, ...newFilters};
       loadPage(1);
     };
   }
