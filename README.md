@@ -14,6 +14,7 @@
 
 ---
 
+
 ### 👖 What Do You Mean Vanilla Slops?
 
 **Vanilla Slops** is a web application that provides a searchable database of community-verified launch options for thousands of Steam games.
