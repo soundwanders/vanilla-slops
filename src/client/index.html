@@ -44,10 +44,7 @@
                 <label class="filter-label">Developer</label>
                 <select class="filter-select" id="developerFilter">
                     <option value="">All Developers</option>
-                    <option value="valve">Valve Corporation</option>
-                    <option value="bethesda">Bethesda</option>
-                    <option value="rockstar">Rockstar Games</option>
-                    <option value="ubisoft">Ubisoft</option>
+                    <!-- Options will be populated dynamically -->
                 </select>
             </div>
             <div class="filter-group">
@@ -64,12 +61,7 @@
                 <label class="filter-label">Release Year</label>
                 <select class="filter-select" id="yearFilter">
                     <option value="">All Years</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
-                    <option value="2021">2021</option>
-                    <option value="2020">2020</option>
-                    <option value="older">Before 2020</option>
+                    <!-- Options will be populated dynamically -->
                 </select>
             </div>
         </div>
@@ -80,23 +72,36 @@
             <div class="results-header">
                 <span class="results-count" id="resultsCount">0 results found</span>
                 <select class="sort-select" id="sortSelect">
-                    <option value="relevance">Sort by Relevance</option>
-                    <option value="name">Sort by Name</option>
-                    <option value="year">Sort by Release Year</option>
-                    <option value="options">Sort by Option Count</option>
+                    <option value="title-asc">Sort by Name (A-Z)</option>
+                    <option value="title-desc">Sort by Name (Z-A)</option>
+                    <option value="year-desc">Sort by Release Year (Newest)</option>
+                    <option value="year-asc">Sort by Release Year (Oldest)</option>
+                    <option value="options-desc">Sort by Option Count (Most)</option>
+                    <option value="options-asc">Sort by Option Count (Least)</option>
                 </select>
             </div>
             <div class="results-list" id="resultsList">
-                <div class="no-results">Search...</div>
+                <div class="loading">Loading games...</div>
             </div>
         </div>
     </div>
 
+    <!-- Main app container for table and pagination -->
+    <div id="app">
+        <div id="table-container"></div>
+    </div>
+
     <footer>
-      <p>Made with ❤️</p>
+      <p>Made with ❤️ for Steam gamers</p>
     </footer>
 
-    <div id="scroll-sentinel"></div>
+    <!-- Scroll sentinel for infinite scroll -->
+    <div id="scroll-sentinel" style="height: 1px; margin-top: 2rem;"></div>
+
+    <!-- Theme toggle button (if needed) -->
+    <button id="theme-toggle" style="position: fixed; top: 1rem; right: 1rem; padding: 0.5rem; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+      🌓 Theme
+    </button>
 
     <script src="./js/main.js" type="module" defer></script>
   </body>

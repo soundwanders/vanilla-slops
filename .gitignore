@@ -11,6 +11,8 @@ package-lock.json
 node_modules
 **/__pycache__
 **/slops-setup-guide.md
+src/client/api-test
+src/client/api-test/*
 
 # changelog 
 changelog.md
