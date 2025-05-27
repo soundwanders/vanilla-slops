@@ -14,18 +14,16 @@
 
 ---
 
-### 🎮 Did You Say Vanilla Slops?
+### 👖 What Do You Mean Vanilla Slops?
 
 **Vanilla Slops** is a web application that provides a searchable database of community-verified launch options for thousands of Steam games.
+
+Steam Launch Options (SLOPS) are powerful command-line parameters that can improve game performance or unlock features outside of the standard game menus. If I said `--windowed` or `--novid`, that might sound familiar? Finding the right options for your games has required scouring forums (RIP) and documentation, traversing deserts and riding train cars across continents, only to end up right back where you started. Yeah, it kind of sucks.
 
 The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and a Node (Express.js) API. This project serves as a way to search and filter through the launch options for games in the Steam library.
 
 One of the core philosophies of this project is to recreate some of the functionality that modern frameworks abstract away, 
-while staying lightweight, fast, and secure by shedding any frameworks and doing some of the heavy lifting ourselves.
-
-### What Do You Mean Launch Options?
-
-Launch options are powerful command-line parameters that can improve game performance or unlock features outside of the standard game menus. If I said `--windowed` or `--novid`, that might sound familiar? Finding the right options for your games has required scouring forums (RIP) and documentation, traversing deserts and riding train cars across continents, only to end up right back where you started. Yeah, it kind of sucks.
+while staying lightweight, fast, and secure by shedding frameworks and doing some of the heavy lifting ourselves.
 
 ---
 
