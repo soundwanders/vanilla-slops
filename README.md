@@ -21,17 +21,17 @@
 
 Steam Launch Options (SLOPS) are powerful command-line parameters that can improve game performance or unlock features outside of the standard game menus. If I said `--windowed` or `--novid`, that might sound familiar? Finding the right options for your games has required scouring forums (RIP) and documentation, traversing deserts and riding train cars across continents, only to end up right back where you started. Yeah, it kind of sucks.
 
-The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and a Node (Express.js) API. This project serves as a way to search and filter through the launch options for games in the Steam library.
+The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and a Node.js API.
 
-One of the core philosophies of this project is to recreate some of the functionality that modern frameworks abstract away, 
-while staying lightweight, fast, and secure by shedding frameworks and doing some of the heavy lifting ourselves.
+One of the core philosophies of this project, and how this all got started, is a concentrated effort to recreate some of the functionality that modern frameworks abstract away, 
+while staying lightweight, fast, and secure.
 
 ---
 
 ## 🧙 Features
 
 #### **🔎 Smart Search & Discovery**
-- **Real-time search suggestions** with mildly intelligent autocomplete
+- **Real-time search suggestions** with (mildly) intelligent autocomplete
 - **Multi-field search** across titles, developers, publishers with instant results
 - **Advanced filtering** by category, engine, release year, and launch option availability
 
@@ -57,7 +57,7 @@ while staying lightweight, fast, and secure by shedding frameworks and doing som
 - **Database**: Supabase (PostgreSQL) with optimized queries and indexing
 - **Data Collection**: Python-based scraper with Steam API integration
 
-#### **System Design Principles**
+#### **Design Principles**
 - ⚡ **Performance First** - Minimal JavaScript bundle, efficient caching, optimized queries
 - 🎯 **User-Centric** - Intuitive interface, fast search, accessibility compliance
 - 🔧 **Developer Experience** - Clean code, comprehensive documentation, easy setup
