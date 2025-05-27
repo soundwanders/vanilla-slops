@@ -11,7 +11,7 @@ import { querySchema, suggestionQuerySchema } from '../schemas/gameQuerySchema.j
 
 const router = Router();
 
-// Get all games with enhanced filtering and search
+// Get all games with filtering and search
 router.get('/', validateRequest(querySchema), gamesController);
 
 // Get search suggestions for autocomplete
