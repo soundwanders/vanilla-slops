@@ -23,7 +23,10 @@ changelog.md
 .env.test.local
 .env.production.local
 .env.local
-.env.*
+.env.dev
+.env.prod
+.env.staging
+.env.testing
 
 # scripts directory
 scripts/*
