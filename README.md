@@ -21,17 +21,17 @@
 
 Steam Launch Options (SLOPS) are powerful command-line parameters that can improve game performance or unlock features outside of the standard game menus. If I said `--windowed` or `--novid`, that might sound familiar? Finding the right options for your games has required scouring forums (RIP) and documentation, traversing deserts and riding train cars across continents, only to end up right back where you started. Yeah, it kind of sucks.
 
-The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and a Node (Express.js) API. This project serves as a way to search and filter through the launch options for games in the Steam library.
+The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and an Express.js API.
 
-One of the core philosophies of this project is to recreate some of the functionality that modern frameworks abstract away, 
-while staying lightweight, fast, and secure by shedding frameworks and doing some of the heavy lifting ourselves.
+One of the core philosophies of this project is to recreate some of the functionality that modern frameworks abstract away. 
+The goal is to stay lightweight, fast, and secure while shedding the help of frameworks and doing a bit more heavy lifting myself.
 
 ---
 
 ## 🧙 Features
 
 #### **🔎 Smart Search & Discovery**
-- **Real-time search suggestions** with mildly intelligent autocomplete
+- **Real-time search suggestions** with (mildly) intelligent autocomplete
 - **Multi-field search** across titles, developers, publishers with instant results
 - **Advanced filtering** by category, engine, release year, and launch option availability
 
@@ -57,7 +57,7 @@ while staying lightweight, fast, and secure by shedding frameworks and doing som
 - **Database**: Supabase (PostgreSQL) with optimized queries and indexing
 - **Data Collection**: Python-based scraper with Steam API integration
 
-#### **System Design Principles**
+#### **Design Principles**
 - ⚡ **Performance First** - Minimal JavaScript bundle, efficient caching, optimized queries
 - 🎯 **User-Centric** - Intuitive interface, fast search, accessibility compliance
 - 🔧 **Developer Experience** - Clean code, comprehensive documentation, easy setup
@@ -81,16 +81,11 @@ while staying lightweight, fast, and secure by shedding frameworks and doing som
 
 ## 🚀 Quick Start
 
-#### Prerequisites
-- **Node.js** 18+ and npm
-- **Python** 3.8+ (for data collection)
-- **Supabase** account (free tier available)
-
 #### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vanilla-slops.git
+git clone https://github.com/soundwanders/vanilla-slops.git
 cd vanilla-slops
 
 # Install backend dependencies
@@ -190,7 +185,7 @@ Your contributions can only make the project better, and maybe we both learn som
 5. Push to your branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
 
-#### COMING SOON...
+#### Coming Soon...
 [📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 
 ---
@@ -222,5 +217,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <p align="center">
   <br/>
-  <strong>Built with ❤︎</strong> <br/>
+  <sub>Built with ❤︎</sub> <br/>
 </p>
