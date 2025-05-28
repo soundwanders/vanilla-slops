@@ -172,8 +172,8 @@ Vanilla Slops is a great environment to get your feet wet, because there's nothi
 Your contributions can only make the project better, and maybe we both learn something along the way.
 
 #### **Ways to Contribute**
-- 🎮 **Launch Options** - Submit verified launch options for games, so we can grow the database.
-- 🐛 **Bug Reports** - Issues, broken things, stupid things, or things that just don't make no sense
+- 🎮 **Launch Options** - Submit verified launch options for games, so we can grow the database
+- 🐛 **Bug Reports** - Issues, broken things, silly things, or things that just don't make no sense
 - ✨ **Feature Requests** - Any ideas for new features, or improving on currently implemented features
 - 📝 **Documentation** - Help improve our docs and test-coverage
 
