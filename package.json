@@ -7,7 +7,12 @@
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite --config vite.config.js",
     "dev:server": "nodemon src/server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run build:client",
+    "build:client": "vite build --config vite.config.js",
+    "start": "node src/server/index.js",
+    "test": "echo \"Tests not implemented yet\" && exit 0",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix"
   },
   "keywords": [],
   "author": "",
