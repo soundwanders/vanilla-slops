@@ -1,3 +1,12 @@
+/**
+ * Render pagination controls to the UI.
+ * 
+ * @param {number} currentPage - The current page number.
+ * @param {number} totalPages - The total number of pages.
+ * @param {Function} onPageChange - Callback function to handle page changes.
+ * 
+ * @returns {void}
+ */
 export function renderPagination(currentPage, totalPages, onPageChange) {
   const app = document.getElementById('app');
 
