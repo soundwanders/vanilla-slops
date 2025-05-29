@@ -1,119 +1,349 @@
 
-/* --- Grid & Table --- */
-.game-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+/* -----------------------------------------------------------------------------
+   STEAM LAUNCH OPTIONS SPECIFIC COMPONENTS
+   Custom components for the Slops application
+   ----------------------------------------------------------------------------- */
+
+/* Search Container */
+.slops-search {
+  background-color: var(--color-surface-raised);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
+  box-shadow: var(--shadow-lg);
 }
-.table-container {
+
+.slops-search-header {
+  text-align: center;
+  margin-bottom: var(--space-2xl);
+}
+
+.slops-logo {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-accent);
+  margin-bottom: var(--space-sm);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.slops-tagline {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Search Input */
+.slops-search-input-wrapper {
+  position: relative;
+  margin-bottom: var(--space-lg);
+}
+
+.slops-search-input {
   width: 100%;
-  overflow-x: auto;
-  margin-bottom: 2rem;
+  padding: var(--space-lg) var(--space-lg) var(--space-lg) 3.5rem;
+  font-size: var(--font-size-lg);
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  transition: all var(--transition-fast);
 }
+
+.slops-search-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
+.slops-search-icon {
+  position: absolute;
+  left: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-tertiary);
+}
+
+/* Suggestions Dropdown */
+.slops-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: var(--z-dropdown);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  margin-top: var(--space-xs);
+  max-height: 20rem;
+  overflow-y: auto;
+  display: none;
+}
+
+.slops-suggestions.is-open {
+  display: block;
+}
+
+.suggestion-category-header {
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.suggestion-item {
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+  background-color: var(--color-interactive-hover);
+}
+
+.suggestion-item mark {
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+  padding: 0;
+}
+
+/* Filters */
+.slops-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.filter-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Active Filters */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.filter-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.filter-remove:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Results */
+.slops-results {
+  background-color: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.slops-results-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-surface);
+}
+
+.results-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Game Table */
 .games-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  background-color: var(--bg-card);
-  border-radius: 8px;
-  overflow: hidden;
+  font-size: var(--font-size-sm);
 }
-.games-table th,
-.games-table td {
-  padding: 12px 15px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
+
 .games-table th {
-  background-color: var(--bg-table-header);
-  color: var(--text-primary);
-  font-weight: 600;
+  background-color: var(--color-surface);
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
   text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.025em;
+  font-size: var(--font-size-xs);
+  border-bottom: 1px solid var(--color-border);
 }
+
+.games-table td {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
 .games-table tbody tr {
-  transition: background-color 0.2s ease;
+  transition: background-color var(--transition-fast);
 }
+
 .games-table tbody tr:hover {
-  background-color: var(--bg-hover);
+  background-color: var(--color-interactive-hover);
 }
 
-/* --- Game Titles & Launch Options --- */
 .game-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-}
-.launch-options-cell {
-  background: #1a1a1a;
-  padding: 1em;
-  font-size: 0.9em;
-  color: #ccc;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
-/* --- Launch Options Display --- */
-.launch-options-container {
-  padding: 15px;
-  max-height: 400px;
-  overflow-y: auto;
-  background-color: var(--bg-secondary);
+/* Launch Options */
+.launch-options-btn {
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
-.launch-options-container h3 {
-  margin: 0 0 12px 0;
-  color: var(--text-primary);
-  font-size: 1.1rem;
+
+.launch-options-btn:hover {
+  background-color: var(--color-accent-hover);
+  transform: translateY(-1px);
 }
+
+.launch-options-row {
+  background-color: var(--color-surface) !important;
+}
+
+.launch-options-cell {
+  padding: var(--space-xl) !important;
+}
+
 .launch-options-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--space-lg);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
+
 .launch-option {
-  background-color: var(--bg-card);
-  border-radius: 6px;
-  padding: 15px;
-  border: 1px solid var(--border-color);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: all var(--transition-fast);
 }
+
 .launch-option:hover {
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 .option-command {
-  background-color: var(--bg-code);
-  color: var(--text-code);
-  font-family: monospace;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 4px;
+  background-color: var(--color-code-background);
+  color: var(--color-code-text);
+  font-family: var(--font-family-mono);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  font-size: var(--font-size-sm);
 }
+
 .option-description {
-  margin-bottom: 10px;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+  line-height: var(--line-height-relaxed);
 }
+
 .option-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
+
 .option-source {
   cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
 }
+
 .option-verified {
-  color: var(--success-color);
-  font-weight: 600;
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
 }
-.option-votes {
-  display: flex;
-  gap: 10px;
+
+/* Theme Toggle */
+.theme-toggle {
+  position: fixed;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  z-index: var(--z-fixed);
+  padding: var(--space-sm);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+}
+
+.theme-toggle:hover {
+  background-color: var(--color-interactive-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
