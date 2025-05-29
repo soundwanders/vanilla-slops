@@ -1,28 +1,31 @@
 
 /* -----------------------------------------------------------------------------
    STEAM LAUNCH OPTIONS SPECIFIC COMPONENTS
-   Custom components for the Slops application
    ----------------------------------------------------------------------------- */
 
 /* Search Container */
+.search-container,
 .slops-search {
+  margin: 0 auto var(--space-xl);
+  margin-bottom: var(--space-2xl);
+  padding: var(--space-xl);
   background-color: var(--color-surface-raised);
   border-radius: var(--radius-xl);
-  padding: var(--space-2xl);
-  margin-bottom: var(--space-2xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
 
 .slops-search-header {
   text-align: center;
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .slops-logo {
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-extrabold);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-accent);
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
   background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -30,7 +33,7 @@
 }
 
 .slops-tagline {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   color: var(--color-text-secondary);
   margin: 0;
 }
@@ -38,16 +41,19 @@
 /* Search Input */
 .slops-search-input-wrapper {
   position: relative;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md); 
+  max-width: 600px; 
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .slops-search-input {
   width: 100%;
-  padding: var(--space-lg) var(--space-lg) var(--space-lg) 3.5rem;
-  font-size: var(--font-size-lg);
+  padding: var(--space-md) var(--space-md) var(--space-md) 3rem;
+  font-size: var(--font-size-base);
   background-color: var(--color-surface);
   border: 2px solid var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   transition: all var(--transition-fast);
 }
 
@@ -58,10 +64,10 @@
 
 .slops-search-icon {
   position: absolute;
-  left: var(--space-lg);
+  left: var(--space-md);
   top: 50%;
   transform: translateY(-50%);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg); 
   color: var(--color-text-tertiary);
 }
 
@@ -77,11 +83,14 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   margin-top: var(--space-xs);
-  max-height: 20rem;
+  max-height: 16rem;
   overflow-y: auto;
   display: none;
+  width: 100%;   /* limit the width to parent container */
+  box-sizing: border-box;
 }
 
+.suggestions-dropdown.is-open,
 .slops-suggestions.is-open {
   display: block;
 }
@@ -98,10 +107,13 @@
 }
 
 .suggestion-item {
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
   transition: background-color var(--transition-fast);
   border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .suggestion-item:last-child {
@@ -121,25 +133,29 @@
 
 /* Filters */
 .slops-filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
   padding: var(--space-lg);
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-lg);
+  align-items: end; /* Align filters at bottom */
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  min-width: 180px;
+  flex: 1;
 }
 
 .filter-label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
 }
 
 /* Active Filters */
@@ -147,7 +163,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
+  padding: 0 var(--space-lg);
 }
 
 .filter-tag {
@@ -160,6 +177,7 @@
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  animation: fadeInUp 0.2s ease-out;
 }
 
 .filter-remove {
@@ -175,6 +193,7 @@
   cursor: pointer;
   font-size: 0.75rem;
   line-height: 1;
+  transition: background-color var(--transition-fast);
 }
 
 .filter-remove:hover {
@@ -182,10 +201,13 @@
 }
 
 /* Results */
+.results-container,
 .slops-results {
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-top: var(--space-lg);
   background-color: var(--color-surface-raised);
   border-radius: var(--radius-lg);
-  overflow: hidden;
   box-shadow: var(--shadow-md);
 }
 
@@ -196,11 +218,34 @@
   justify-content: space-between;
   align-items: center;
   background-color: var(--color-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.sort-select {
+  padding: var(--space-sm);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  min-height: 2.5rem;
+}
+
+.filter-select:focus,
+.sort-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
 }
 
 .results-count {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.filter-group.engine-filter {
+  display: flex;
 }
 
 /* Game Table */
@@ -208,6 +253,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-sm);
+  margin: 0;
 }
 
 .games-table th {
@@ -328,7 +374,8 @@
 }
 
 /* Theme Toggle */
-.theme-toggle {
+.theme-toggle,
+#theme-toggle {
   position: fixed;
   top: var(--space-lg);
   right: var(--space-lg);
@@ -340,10 +387,17 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-md);
+  font-size: var(--font-size-sm);
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+#theme-toggle:hover {
   background-color: var(--color-interactive-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
 }
