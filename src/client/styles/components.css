@@ -246,8 +246,9 @@
 .table-container {
   width: 100%;
   overflow-x: auto;
-  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
 }
 
 .table {
@@ -436,12 +437,19 @@
 }
 
 /* Loading States */
-.loading {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
+.loading,
+.no-results {
+  text-align: center;
+  padding: var(--space-2xl);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
 }
 
 .spinner {
@@ -456,6 +464,28 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.error {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--color-error);
+}
+
+.retry-btn {
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  transition: background-color var(--transition-fast);
+}
+
+.retry-btn:hover {
+  background-color: var(--color-accent-hover);
 }
 
 .skeleton {
