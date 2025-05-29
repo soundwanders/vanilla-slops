@@ -1,0 +1,94 @@
+
+/* -----------------------------------------------------------------------------
+   ACCESSIBILITY ENHANCEMENTS
+   Focus management, screen reader support, and reduced motion
+   ----------------------------------------------------------------------------- */
+
+/* Focus Management */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: #000000;
+    --color-border-strong: #000000;
+    --color-text-primary: #000000;
+    --color-background: #ffffff;
+  }
+  
+  [data-theme="dark"] {
+    --color-text-primary: #ffffff;
+    --color-background: #000000;
+    --color-border: #ffffff;
+  }
+  
+  .btn {
+    border-width: 2px;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .spinner {
+    animation: none;
+    border-top-color: var(--color-accent);
+  }
+  
+  .skeleton {
+    animation: none;
+    background: var(--color-surface);
+  }
+}
+
+/* Screen Reader Improvements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* Skip Links */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  z-index: var(--z-maximum);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
