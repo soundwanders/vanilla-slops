@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { validateRequest } from '../middlewares/validateRequest.js';
+import { querySchema, suggestionQuerySchema, gameIdSchema } from '../schemas/gameQuerySchema.js';
 import { 
   gamesController, 
   searchSuggestionsController, 
@@ -7,7 +8,6 @@ import {
   gameDetailsController,
   gameLaunchOptionsController 
 } from '../controllers/gamesController.js';
-import { querySchema, suggestionQuerySchema, gameIdSchema } from '../schemas/gameQuerySchema.js';
 
 /**
  * Express router for games-related API endpoints
