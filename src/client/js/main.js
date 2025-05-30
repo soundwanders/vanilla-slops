@@ -1,12 +1,13 @@
 import { fetchGames, preloadPopularContent } from './api.js';
 import { renderTable } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
+import { renderPagination } from './ui/pagination.js';
 import SlopSearch from './ui/search.js';
 
 /**
  * @fileoverview Main application controller for Vanilla Slops front-end
  * Manages application state and handles user interactions
- * Implements search integration and URL state management
+ * Implements search integration and URL state management with PAGINATION ONLY
  */
 
 const PAGE_SIZE = 20;
@@ -14,49 +15,40 @@ const PAGE_SIZE = 20;
 /**
  * Centralized application state management
  * Prevents state fragmentation across components
- * 
- * @namespace AppState
- * @property {number} currentPage - Current pagination page
- * @property {boolean} isLoading - Loading state flag
- * @property {boolean} hasMorePages - Whether more pages are available
- * @property {Object} filters - Current active filters
- * @property {number} totalPages - Total number of pages available
- * @property {SlopSearch|null} searchInstance - Reference to search component
  */
 const AppState = {
   currentPage: 1,
   isLoading: false,
-  hasMorePages: true,
   filters: {},
   totalPages: 0,
   searchInstance: null
 };
 
 /**
- * Loads a page of games with  error handling and state management
+ * Loads a page of games with comprehensive error handling and state management
  * Supports both pagination and infinite scroll patterns
  * 
  * @async
  * @function loadPage
  * @param {number} [page=1] - Page number to load
- * @param {boolean} [append=false] - Whether to append results or replace
+ * @param {boolean} [replace=true] - Whether to replace results or append (pagination only - always replaces)
  * @returns {Promise<void>} Resolves when page is loaded and rendered
  * @throws {Error} When API request fails or invalid parameters
  * 
  * @example
  * // Load first page (replace current results)
- * await loadPage(1, false);
+ * await loadPage(1, true);
  * 
- * // Load next page (append to current results)
- * await loadPage(2, true);
+ * // Load specific page
+ * await loadPage(3, true);
  */
-async function loadPage(page = 1, append = false) {
-  if (AppState.isLoading || (!append && !AppState.hasMorePages && page > 1)) {
+async function loadPage(page = 1, replace = true) {
+  if (AppState.isLoading) {
     return;
   }
   
   AppState.isLoading = true;
-  showLoadingState(!append);
+  showLoadingState(replace);
 
   try {
     // Build query parameters with proper mapping
@@ -80,22 +72,17 @@ async function loadPage(page = 1, append = false) {
     // Update application state
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
-    AppState.hasMorePages = response.hasNextPage || false;
 
     // Update UI
     updateResultsCount(response.total || 0);
     
-    if (!append) {
-      clearResults();
-    }
-
-    renderTable(response.games || [], append);
+    // Always clear results for pagination (no appending)
+    clearResults();
+    renderTable(response.games || [], false);
     
-    if (!append) {
-      renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
-    }
+    // Render pagination controls
+    renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
 
-    setupScrollObserver();
     updateURL();
 
   } catch (error) {
@@ -108,7 +95,11 @@ async function loadPage(page = 1, append = false) {
 }
 
 /**
- * Update results count display
+ * Update results count display with proper pluralization
+ * 
+ * @function updateResultsCount
+ * @param {number} total - Total number of results found
+ * @returns {void} Updates the results count element in the DOM
  */
 function updateResultsCount(total) {
   const resultsCount = document.getElementById('resultsCount');
@@ -118,25 +109,26 @@ function updateResultsCount(total) {
 }
 
 /**
- * Show loading state
+ * Show loading state in the results container
+ * 
+ * @function showLoadingState
+ * @param {boolean} [clearContent=false] - Whether to clear existing content
+ * @returns {void} Updates the UI to show loading indicator
  */
 function showLoadingState(clearContent = false) {
   const resultsList = document.getElementById('resultsList');
   if (resultsList) {
     if (clearContent) {
       resultsList.innerHTML = '<div class="loading">Loading games...</div>';
-    } else {
-      // Add loading indicator for infinite scroll
-      const loadingDiv = document.createElement('div');
-      loadingDiv.className = 'loading';
-      loadingDiv.textContent = 'Loading more games...';
-      resultsList.appendChild(loadingDiv);
     }
   }
 }
 
 /**
- * Hide loading state
+ * Hide loading state by removing loading elements from DOM
+ * 
+ * @function hideLoadingState
+ * @returns {void} Removes all loading indicators from the page
  */
 function hideLoadingState() {
   const loadingElements = document.querySelectorAll('.loading');
@@ -144,7 +136,11 @@ function hideLoadingState() {
 }
 
 /**
- * Show error state
+ * Show error state with retry functionality
+ * 
+ * @function showErrorState
+ * @param {string} message - Error message to display to the user
+ * @returns {void} Updates the UI to show error state with retry option
  */
 function showErrorState(message) {
   const resultsList = document.getElementById('resultsList');
@@ -159,7 +155,10 @@ function showErrorState(message) {
 }
 
 /**
- * Clear results display
+ * Clear results display and pagination for fresh content
+ * 
+ * @function clearResults
+ * @returns {void} Removes table content and existing pagination elements
  */
 function clearResults() {
   // Clear table container if it exists
@@ -176,7 +175,11 @@ function clearResults() {
 }
 
 /**
- * Update URL with current state
+ * Update URL with current application state for deep linking
+ * Maintains browser history and enables shareable URLs
+ * 
+ * @function updateURL
+ * @returns {void} Updates browser URL without page reload
  */
 function updateURL() {
   const params = new URLSearchParams();
@@ -198,16 +201,6 @@ function updateURL() {
 
 /**
  * Parses URL parameters and restores application state
- * Enables deep linking and browser back/forward functionality
- * 
- * @function parseURLParams
- * @returns {void} Updates AppState.filters and AppState.currentPage
- * 
- * @example
- * // URL: /games?search=valve&category=fps&page=2
- * parseURLParams();
- * // AppState.filters = { search: 'valve', category: 'fps' }
- * // AppState.currentPage = 2
  */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
@@ -226,38 +219,6 @@ function parseURLParams() {
   };
 
   console.log('Parsed URL params:', AppState.filters);
-}
-
-/**
- * Sets up Intersection Observer for infinite scroll functionality
- * Automatically loads next page when user scrolls near bottom
- * Handles cleanup of previous observers to prevent memory leaks
- * 
- * @function setupScrollObserver
- * @returns {void} Attaches observer to scroll sentinel element
- */
-function setupScrollObserver() {
-  // Remove existing observer
-  const existingSentinel = document.getElementById('scroll-sentinel');
-  if (existingSentinel && existingSentinel._observer) {
-    existingSentinel._observer.disconnect();
-  }
-
-  const sentinel = document.getElementById('scroll-sentinel');
-  if (!sentinel || !AppState.hasMorePages) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && !AppState.isLoading && AppState.hasMorePages) {
-      observer.disconnect();
-      loadPage(AppState.currentPage + 1, true);
-    }
-  }, { 
-    rootMargin: '100px',
-    threshold: 0.1 
-  });
-
-  observer.observe(sentinel);
-  sentinel._observer = observer; // Store reference for cleanup
 }
 
 /**
@@ -281,12 +242,11 @@ function handleFilterChange(newFilters) {
   // Merge new filters with existing ones
   AppState.filters = { ...AppState.filters, ...newFilters };
   
-  // Reset to first page
+  // Reset to first page when filters change
   AppState.currentPage = 1;
-  AppState.hasMorePages = true;
   
   // Load new results
-  loadPage(1, false);
+  loadPage(1, true);
 }
 
 /**
@@ -454,13 +414,10 @@ function ensureRequiredDOMElements() {
     appContainer.appendChild(tableContainer);
   }
 
-  // Ensure scroll sentinel exists
-  let scrollSentinel = document.getElementById('scroll-sentinel');
-  if (!scrollSentinel) {
-    scrollSentinel = document.createElement('div');
-    scrollSentinel.id = 'scroll-sentinel';
-    scrollSentinel.style.height = '1px';
-    document.body.appendChild(scrollSentinel);
+  // Remove scroll sentinel as we're not using infinite scroll
+  const scrollSentinel = document.getElementById('scroll-sentinel');
+  if (scrollSentinel) {
+    scrollSentinel.remove();
   }
 }
 
