@@ -7,7 +7,10 @@ export default defineConfig({
     open: true, 
   },
   build: {
-    outDir: './src/client/dist', 
+    outDir: './dist',
     emptyOutDir: true,
   },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+  }
 });

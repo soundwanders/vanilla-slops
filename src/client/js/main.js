@@ -1,6 +1,5 @@
 import { fetchGames, preloadPopularContent } from './api.js';
 import { renderTable } from './ui/table.js';
-import { renderPagination } from './ui/pagination.js';
 import { setupThemeToggle } from './ui/theme.js';
 import SlopSearch from './ui/search.js';
 

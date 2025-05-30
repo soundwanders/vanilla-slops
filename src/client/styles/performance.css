@@ -5,10 +5,28 @@
    ----------------------------------------------------------------------------- */
 
 /* GPU Acceleration for transforms */
-.gpu-accelerated {
+.search-input,
+.suggestions-dropdown,
+.filter-tag,
+.games-table tbody tr,
+.theme-toggle {
   transform: translateZ(0);
   backface-visibility: hidden;
-  perspective: 1000px;
+}
+
+/* Optimize repaints */
+.games-table {
+  contain: layout;
+}
+
+.suggestions-dropdown {
+  contain: layout style;
+}
+
+/* Optimize large lists */
+.games-table tbody {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
 }
 
 /* Contain layout shifts */
