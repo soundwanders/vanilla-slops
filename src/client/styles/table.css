@@ -1,0 +1,425 @@
+/* -----------------------------------------------------------------------------
+   TABLE STYLES
+   Main table that renders our list of games and their launch options
+   ----------------------------------------------------------------------------- */
+
+/* Tables - Base Styles */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background-color: var(--color-surface-raised);
+}
+
+.table th,
+.table td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table th {
+  background-color: var(--color-surface);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-size: var(--font-size-xs);
+}
+
+.table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-interactive-hover);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table Variants */
+.table-striped tbody tr:nth-child(even) {
+  background-color: var(--color-surface);
+}
+
+.table-striped tbody tr:nth-child(even):hover {
+  background-color: var(--color-interactive-hover);
+}
+
+/* Table Responsive Wrapper - Enhanced */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+/* -----------------------------------------------------------------------------
+   LAUNCH OPTIONS SPECIFIC STYLES - NEW ADDITIONS ONLY
+   ----------------------------------------------------------------------------- */
+
+/* Launch Options Close Button */
+.launch-options-close-container {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.launch-options-close {
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.launch-options-close:hover {
+  background-color: var(--color-interactive-hover);
+  border-color: var(--color-border-strong);
+}
+
+.launch-options-close:focus-visible {
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* No Options State */
+.no-options {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-secondary);
+}
+
+.no-options p {
+  margin-bottom: var(--space-sm);
+}
+
+.no-options .text-small {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* No Results State */
+.no-results {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-xl);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+  margin: var(--space-xl) 0;
+}
+
+.no-results p {
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-base);
+}
+
+.no-results p:last-child {
+  margin-bottom: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+/* Table Loading State */
+.table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-3xl);
+  text-align: center;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* Table Error State */
+.table-error {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-xl);
+  background-color: var(--color-error-subtle);
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-lg);
+  margin: var(--space-xl) 0;
+}
+
+.table-error h3 {
+  color: var(--color-error);
+  margin-bottom: var(--space-md);
+  font-size: var(--font-size-lg);
+}
+
+.table-error p {
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+}
+
+/* Option Votes Styling */
+.option-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Enhanced Launch Options List - Updated from slops.css */
+.launch-options-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--space-lg);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Individual Launch Option Styling - Enhanced */
+.launch-option {
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.launch-option:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
+}
+
+.launch-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Option Command Styling - Enhanced */
+.option-command {
+  background-color: var(--color-code-background);
+  color: var(--color-code-text);
+  font-family: var(--font-family-mono);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: var(--font-size-sm);
+  position: relative;
+}
+
+.option-command code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Copy button for launch options - NEW FEATURE */
+.option-command::after {
+  content: '📋';
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  padding: var(--space-2xs) var(--space-xs);
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  font-size: var(--font-size-xs);
+}
+
+.option-command:hover::after {
+  opacity: 1;
+}
+
+/* Option Description - Enhanced */
+.option-description {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+  line-height: var(--line-height-relaxed);
+  font-size: var(--font-size-sm);
+}
+
+/* Option Meta Information - Enhanced */
+.option-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.option-source {
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  color: var(--color-text-secondary);
+}
+
+.option-verified {
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+/* -----------------------------------------------------------------------------
+   RESPONSIVE DESIGN - ENHANCED AND CONSOLIDATED
+   ----------------------------------------------------------------------------- */
+
+/* Responsive Table for Mobile */
+@media (max-width: 768px) {
+  .launch-options-list {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+  
+  .launch-option {
+    padding: var(--space-md);
+  }
+  
+  .option-command {
+    font-size: var(--font-size-xs);
+    padding: var(--space-sm);
+  }
+  
+  .option-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+}
+
+/* Mobile table view - Enhanced */
+@media (max-width: 640px) {
+  .games-table,
+  .games-table thead,
+  .games-table tbody,
+  .games-table th,
+  .games-table td,
+  .games-table tr {
+    display: block;
+  }
+  
+  .games-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  
+  .games-table tr {
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-raised);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .games-table td {
+    border: none;
+    position: relative;
+    padding-left: 35% !important;
+    padding-top: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    padding-right: var(--space-md);
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .games-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: var(--space-md);
+    width: 30%;
+    padding-right: var(--space-sm);
+    white-space: nowrap;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+  
+  .launch-options-btn {
+    width: 100%;
+    padding: var(--space-sm);
+    font-size: var(--font-size-sm);
+  }
+  
+  .launch-options-row td {
+    padding-left: var(--space-md) !important;
+  }
+  
+  .launch-options-row td:before {
+    display: none;
+  }
+}
+
+/* Print Styles - Enhanced */
+@media print {
+  .launch-options-btn,
+  .launch-options-close,
+  .pagination-container {
+    display: none !important;
+  }
+  
+  .games-table {
+    box-shadow: none;
+    border: 1px solid #000;
+    font-size: 10pt;
+  }
+  
+  .games-table th,
+  .games-table td {
+    border: 1px solid #000;
+    padding: 4pt;
+  }
+  
+  .games-table th {
+    background: #f0f0f0 !important;
+    font-weight: bold;
+  }
+  
+  .launch-options-cell {
+    background: #f5f5f5 !important;
+    color: #000 !important;
+    font-size: 9pt;
+  }
+  
+  .option-command {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border: 1px solid #ccc !important;
+    font-size: 8pt;
+  }
+}

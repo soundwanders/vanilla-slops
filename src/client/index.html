@@ -11,6 +11,9 @@
   </head>
 
   <body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <div class="search-container">
         <div class="search-header">
             <h2>SLOPS</h2>
@@ -24,14 +27,17 @@
                 class="search-input" 
                 placeholder="Search games, developers, or launch options..."
                 id="searchInput"
+                autocomplete="off"
+                role="searchbox"
+                aria-label="Search games, developers, or launch options"
             >
-            <div class="suggestions-dropdown" id="suggestionsDropdown"></div>
+            <div class="suggestions-dropdown" id="suggestionsDropdown" role="listbox" aria-label="Search suggestions"></div>
         </div>
 
         <div class="filters-container">
             <div class="filter-group">
-                <label class="filter-label">Category</label>
-                <select class="filter-select" id="categoryFilter">
+                <label class="filter-label" for="categoryFilter">Category</label>
+                <select class="filter-select" id="categoryFilter" aria-label="Filter by category">
                     <option value="">All Categories</option>
                     <option value="action">Action</option>
                     <option value="rpg">RPG</option>
@@ -41,15 +47,15 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Developer</label>
-                <select class="filter-select" id="developerFilter">
+                <label class="filter-label" for="developerFilter">Developer</label>
+                <select class="filter-select" id="developerFilter" aria-label="Filter by developer">
                     <option value="">All Developers</option>
                     <!-- Options will be populated dynamically -->
                 </select>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Launch Options</label>
-                <select class="filter-select" id="optionsFilter">
+                <label class="filter-label" for="optionsFilter">Launch Options</label>
+                <select class="filter-select" id="optionsFilter" aria-label="Filter by launch options">
                     <option value="">Any Options</option>
                     <option value="has-options">Has Launch Options</option>
                     <option value="no-options">No Launch Options</option>
@@ -58,20 +64,21 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Release Year</label>
-                <select class="filter-select" id="yearFilter">
+                <label class="filter-label" for="yearFilter">Release Year</label>
+                <select class="filter-select" id="yearFilter" aria-label="Filter by release year">
                     <option value="">All Years</option>
                     <!-- Options will be populated dynamically -->
                 </select>
             </div>
         </div>
 
-        <div class="active-filters" id="activeFilters"></div>
+        <div class="active-filters" id="activeFilters" role="region" aria-label="Active filters"></div>
 
         <div class="results-container">
             <div class="results-header">
-                <span class="results-count" id="resultsCount">0 results found</span>
-                <select class="sort-select" id="sortSelect">
+                <span class="results-count" id="resultsCount" role="status" aria-live="polite">0 results found</span>
+                <label for="sortSelect" class="sr-only">Sort results by</label>
+                <select class="sort-select" id="sortSelect" aria-label="Sort results">
                     <option value="title-asc">Sort by Name (A-Z)</option>
                     <option value="title-desc">Sort by Name (Z-A)</option>
                     <option value="year-desc">Sort by Release Year (Newest)</option>
@@ -80,35 +87,26 @@
                     <option value="options-asc">Sort by Option Count (Least)</option>
                 </select>
             </div>
-            <div class="results-list" id="resultsList">
+            <div class="results-list" id="resultsList" role="region" aria-label="Search results">
                 <div class="loading">Loading games...</div>
             </div>
         </div>
     </div>
 
-    <!-- Main app container for slops table-->
-    <div id="app">
-        <div id="table-container">
-            <td data-label="Title">Game Name</td>
-            <td data-label="Developer">Studio Name</td>
-            <td data-label="Publisher">Publisher Name</td>
-            <td data-label="Release Date">2023</td>
-            <td data-label="Engine">Unity</td>
-            <td data-label="Launch Options">
-            <button class="launch-options-btn">Show Options (5)</button>
-            </td>
+    <!-- Main app container for games table and pagination -->
+    <main id="app" role="main">
+        <div id="table-container" role="region" aria-label="Games table">
+            <!-- Table will be rendered here by JavaScript -->
         </div>
-    </div>
+        <!-- Pagination will be rendered here by JavaScript -->
+    </main>
 
     <footer>
       <sub>Made with ❤️</sub>
     </footer>
 
-    <!-- Scroll sentinel for infinite scroll -->
-    <div id="scroll-sentinel" style="height: 1px; margin-top: 2rem;"></div>
-
-    <!-- Theme toggle button (if needed) -->
-    <button id="theme-toggle" style="position: fixed; top: 1rem; right: 1rem; padding: 0.5rem; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+    <!-- Theme toggle button -->
+    <button id="theme-toggle" aria-label="Toggle dark/light theme">
       🌓 Theme
     </button>
 
