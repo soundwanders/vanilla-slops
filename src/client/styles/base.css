@@ -36,6 +36,10 @@ html {
 }
 
 body {
+  min-height: 100vh;
+  max-width: 1400px;
+  padding: var(--space-lg) var(--space-md);
+  margin: 0 auto;
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-normal);
@@ -43,8 +47,12 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-background);
   transition: color var(--transition-base), background-color var(--transition-base);
-  min-height: 100vh;
   overflow-x: hidden;
+}
+
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Remove list styles on ul, ol elements with a list role */

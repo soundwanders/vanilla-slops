@@ -1,0 +1,35 @@
+
+/* -----------------------------------------------------------------------------
+   DEBUG UTILITIES
+   Development helpers (REMOVE IN PRODUCTION)
+   ----------------------------------------------------------------------------- */
+
+.debug-grid {
+  background-image: 
+    linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 1rem 1rem;
+}
+
+.debug-outline * {
+  outline: 1px solid red !important;
+}
+
+.debug-spacing * {
+  background-color: rgba(255, 0, 0, 0.1) !important;
+}
+
+/* Element information on hover (dev only) */
+.debug-info:hover::after {
+  content: attr(class);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+}
