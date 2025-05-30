@@ -242,59 +242,6 @@
   pointer-events: none;
 }
 
-/* Tables */
-.table-container {
-  width: 100%;
-  overflow-x: auto;
-  border: 1px solid var(--color-border);
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  overflow: hidden;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-  background-color: var(--color-surface-raised);
-}
-
-.table th,
-.table td {
-  padding: var(--space-sm) var(--space-md);
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.table th {
-  background-color: var(--color-surface);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  font-size: var(--font-size-xs);
-}
-
-.table tbody tr {
-  transition: background-color var(--transition-fast);
-}
-
-.table tbody tr:hover {
-  background-color: var(--color-interactive-hover);
-}
-
-.table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* Table Variants */
-.table-striped tbody tr:nth-child(even) {
-  background-color: var(--color-surface);
-}
-
-.table-striped tbody tr:nth-child(even):hover {
-  background-color: var(--color-interactive-hover);
-}
-
 /* Badges */
 .badge {
   display: inline-flex;
@@ -503,47 +450,6 @@
 @keyframes skeleton-loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin: var(--space-xl) 0;
-}
-
-.pagination-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  text-decoration: none;
-}
-
-.pagination-btn:hover {
-  background-color: var(--color-interactive-hover);
-}
-
-.pagination-btn.is-active {
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
-  border-color: var(--color-accent);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
 }
 
 /* Modals */
