@@ -1,0 +1,69 @@
+
+/* -----------------------------------------------------------------------------
+   BROWSER COMPATIBILITY
+   Fallbacks and vendor prefixes for older browsers
+   ----------------------------------------------------------------------------- */
+
+/* Safari flexbox fixes */
+.safari-flex-fix {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* IE11 grid fixes */
+@supports not (display: grid) {
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .grid-cols-2 > * {
+    flex: 0 0 50%;
+  }
+  
+  .grid-cols-3 > * {
+    flex: 0 0 33.333%;
+  }
+  
+  .grid-cols-4 > * {
+    flex: 0 0 25%;
+  }
+}
+
+/* Backdrop-filter fallback */
+@supports not (backdrop-filter: blur(4px)) {
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* Custom property fallbacks */
+@supports not (color: var(--color-accent)) {
+  .btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+  
+  .text-accent {
+    color: #2563eb;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}

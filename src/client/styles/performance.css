@@ -1,0 +1,62 @@
+
+/* -----------------------------------------------------------------------------
+   PERFORMANCE OPTIMIZATIONS
+   CSS optimizations for better rendering performance
+   ----------------------------------------------------------------------------- */
+
+/* GPU Acceleration for transforms */
+.search-input,
+.suggestions-dropdown,
+.filter-tag,
+.games-table tbody tr,
+.theme-toggle {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize repaints */
+.games-table {
+  contain: layout;
+}
+
+.suggestions-dropdown {
+  contain: layout style;
+}
+
+/* Optimize large lists */
+.games-table tbody {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+/* Contain layout shifts */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-size {
+  contain: size;
+}
+
+/* Content visibility for large lists */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+/* Will-change for frequently animated elements */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+.will-change-scroll {
+  will-change: scroll-position;
+}
