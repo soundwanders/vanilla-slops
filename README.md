@@ -7,6 +7,7 @@
 <p align="center">
   <a href="#-features">Features</a> •
   <a href="#-architecture">Architecture</a> •
+  <a href="#-quick-start">Quick Start</a> •
   <a href="#-api-documentation">API</a> •
   <a href="#-contributing">Contributing</a>
 </p>
@@ -21,7 +22,7 @@ The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-
 
 Steam Launch Options (SLOPS) are custom command-line parameters that can improve game performance or unlock features outside of the standard game menus.
 
-<img src="./src/client/public/slops-screenshot.png" alt="Steam Launch Options Screenshot" width="500">
+<img src="./src/client/public/slops-screenshot.png" alt="Steam Launch Options Screenshot" width="540">
 
 One of the core philosophies of this project is to recreate some of the functionality that modern frameworks abstract away, while remaining lightweight, fast, and secure. 
 
@@ -105,7 +106,7 @@ PORT=8000
 CORS_ORIGIN=http://localhost:3000
 ```
 
-### Development
+### Development & npm Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -118,7 +119,6 @@ CORS_ORIGIN=http://localhost:3000
 | `npm run lint` | Check code with ESLint |
 | `npm run lint:fix` | Fix ESLint issues automatically |
 
-**Quick start:** `npm run dev` → `npm run build` → `npm start`
 ---
 
 ## 📚 API Documentation
@@ -168,6 +168,8 @@ Vanilla Slops is a welcoming place, whether you're a first-timer or a seasoned d
 It's a great environment to get your feet wet because there's nothing at stake here. 
 Your contributions can only make the project better, and maybe we both learn something along the way. 
 
+[📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
+
 ### **Ways to Contribute**
 - 🎮 **Launch Options** - Submit verified launch options for games, so we can grow the database
 - 🐛 **Bug Reports** - Issues, broken things, silly things, or things that just don't make no sense
@@ -181,9 +183,6 @@ Your contributions can only make the project better, and maybe we both learn som
 4. Commit with conventional commits (`git commit -m 'feat: add amazing feature'`)
 5. Push to your branch (`git push origin feature/amazing-feature`)
 6. Open a Pull Request
-
-#### Coming Soon...
-[📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 
 ---
 
@@ -200,7 +199,7 @@ Your contributions can only make the project better, and maybe we both learn som
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - please see the [LICENSE](LICENSE) file for details.
 
 ---
 
