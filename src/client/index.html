@@ -14,14 +14,14 @@
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <div class="search-container">
+    <header class="search-container">
         <div class="search-header">
-            <h2>SLOPS</h2>
-            <p>Discover Steam Launch Options</p>
+            <h1>VANILLA SLOPS</h1>
+            <p>Steam Launch Options</p>
         </div>
 
-        <div class="search-input-wrapper">
-            <div class="search-icon">🔍</div>
+        <search class="search-input-wrapper" role="search">
+            <div class="search-icon" aria-hidden="true">🔍</div>
             <input 
                 type="text" 
                 class="search-input" 
@@ -30,84 +30,102 @@
                 autocomplete="off"
                 role="searchbox"
                 aria-label="Search games, developers, or launch options"
+                aria-describedby="search-description"
+                aria-expanded="false"
+                aria-owns="suggestionsDropdown"
             >
+            <!-- Hidden description for screen readers -->
+            <div id="search-description" class="sr-only">
+                Search through games or launch options. Use arrow keys to navigate suggestions when available.
+            </div>
             <div class="suggestions-dropdown" id="suggestionsDropdown" role="listbox" aria-label="Search suggestions"></div>
-        </div>
+        </search>
 
-        <div class="filters-container">
-            <div class="filter-group">
-                <label class="filter-label" for="categoryFilter">Category</label>
-                <select class="filter-select" id="categoryFilter" aria-label="Filter by category">
-                    <option value="">All Categories</option>
-                    <option value="action">Action</option>
-                    <option value="rpg">RPG</option>
-                    <option value="strategy">Strategy</option>
-                    <option value="simulation">Simulation</option>
-                    <option value="fps">FPS</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label" for="developerFilter">Developer</label>
-                <select class="filter-select" id="developerFilter" aria-label="Filter by developer">
-                    <option value="">All Developers</option>
-                    <!-- Options will be populated dynamically -->
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label" for="optionsFilter">Launch Options</label>
-                <select class="filter-select" id="optionsFilter" aria-label="Filter by launch options">
-                    <option value="">Any Options</option>
-                    <option value="has-options">Has Launch Options</option>
-                    <option value="no-options">No Launch Options</option>
-                    <option value="performance">Performance Options</option>
-                    <option value="graphics">Graphics Options</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label" for="yearFilter">Release Year</label>
-                <select class="filter-select" id="yearFilter" aria-label="Filter by release year">
-                    <option value="">All Years</option>
-                    <!-- Options will be populated dynamically -->
-                </select>
-            </div>
-        </div>
+        <form class="filters-container" role="region" aria-label="Filter options">
+            <fieldset class="filter-fieldset"> <!-- Group related filters -->
+                <legend class="sr-only">Filter games by various criteria</legend>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="categoryFilter">Category</label>
+                    <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
+                        <option value="">All Categories</option>
+                        <option value="action">Action</option>
+                        <option value="rpg">RPG</option>
+                        <option value="strategy">Strategy</option>
+                        <option value="simulation">Simulation</option>
+                        <option value="fps">FPS</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="developerFilter">Developer</label>
+                    <select class="filter-select" id="developerFilter" aria-label="Filter by developer" name="developer">
+                        <option value="">All Developers</option>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="optionsFilter">Launch Options</label>
+                    <select class="filter-select" id="optionsFilter" aria-label="Filter by launch options" name="launch-options">
+                        <option value="">Any Options</option>
+                        <option value="has-options">Has Launch Options</option>
+                        <option value="no-options">No Launch Options</option>
+                        <option value="performance">Performance Options</option>
+                        <option value="graphics">Graphics Options</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" for="yearFilter">Release Year</label>
+                    <select class="filter-select" id="yearFilter" aria-label="Filter by release year" name="year">
+                        <option value="">All Years</option>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+            </fieldset>
+        </form>
 
-        <div class="active-filters" id="activeFilters" role="region" aria-label="Active filters"></div>
+        <section class="active-filters" id="activeFilters" role="region" aria-label="Active filters">
+            <h2 class="sr-only">Currently Applied Filters</h2> 
+        </section>
 
-        <div class="results-container">
-            <div class="results-header">
-                <span class="results-count" id="resultsCount" role="status" aria-live="polite">0 results found</span>
-                <label for="sortSelect" class="sr-only">Sort results by</label>
-                <select class="sort-select" id="sortSelect" aria-label="Sort results">
-                    <option value="title-asc">Sort by Name (A-Z)</option>
-                    <option value="title-desc">Sort by Name (Z-A)</option>
-                    <option value="year-desc">Sort by Release Year (Newest)</option>
-                    <option value="year-asc">Sort by Release Year (Oldest)</option>
-                    <option value="options-desc">Sort by Option Count (Most)</option>
-                    <option value="options-asc">Sort by Option Count (Least)</option>
-                </select>
+        <section class="results-container">
+            <header class="results-header">
+                <h2 class="sr-only">Search Results</h2>
+                <div class="results-meta"> <!-- Wrapper for meta information -->
+                    <div class="results-count" id="resultsCount" role="status" aria-live="polite">0 results found</div>
+                    <div class="sort-wrapper">
+                        <label for="sortSelect" class="sr-only">Sort results by</label>
+                        <select class="sort-select" id="sortSelect" aria-label="Sort results">
+                            <option value="title-asc">Sort by Name (A-Z)</option>
+                            <option value="title-desc">Sort by Name (Z-A)</option>
+                            <option value="year-desc">Sort by Release Year (Newest)</option>
+                            <option value="year-asc">Sort by Release Year (Oldest)</option>
+                            <option value="options-desc">Sort by Option Count (Most)</option>
+                            <option value="options-asc">Sort by Option Count (Least)</option>
+                        </select>
+                    </div>
+                </div>
+            </header>
+            <div class="results-list" id="resultsList" role="region" aria-label="Search results list">
+                <div class="loading" role="status" aria-live="polite">Loading games...</div>
             </div>
-            <div class="results-list" id="resultsList" role="region" aria-label="Search results">
-                <div class="loading">Loading games...</div>
-            </div>
-        </div>
-    </div>
+        </section>
+    </header>
 
     <!-- Main app container for games table and pagination -->
     <main id="app" role="main">
-        <div id="table-container" role="region" aria-label="Games table">
-            <!-- Table will be rendered here by JavaScript -->
-        </div>
-        <!-- Pagination will be rendered here by JavaScript -->
+        <section id="table-container" role="region" aria-label="Games table">
+            <h2 class="sr-only">Games Data Table</h2>
+            <!-- Table will be rendered here -->
+        </section>
+        <!-- Pagination will be rendered here -->
     </main>
 
     <footer>
-      <sub>Made with ❤️</sub>
+      <p><small>Made with ❤️</small></p>
     </footer>
 
-    <!-- Theme toggle button -->
-    <button id="theme-toggle" aria-label="Toggle dark/light theme">
-      🌓 Theme
+    <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
+      <span aria-hidden="true">🌓</span> Theme
     </button>
 
     <script src="./js/main.js" type="module" defer></script>
