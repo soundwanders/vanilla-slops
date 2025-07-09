@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new feature or improvement for Vanilla Slops. Feel free to show off and make this project way better!
+about: Suggest a new feature or improvement for Vanilla Slops. Feel free to show off and make this project better.
 title: '[FEATURE] '
 labels: 'enhancement'
 assignees: ''
