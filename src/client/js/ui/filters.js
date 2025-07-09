@@ -1,5 +1,5 @@
 /**
- * @fileoverview Enhanced filter management system for Vanilla Slops
+ * @fileoverview Filter management system for Vanilla Slops
  * Handles search filters, URL state management, and dynamic filter population
  * Integrates with Steam Launch Options API for real-time filter data
  */
@@ -458,7 +458,7 @@ function populateSelectFilter(filterId, options, defaultText) {
 
 /**
  * Improve filter UI with better styling and functionality
- * Adds custom styling and enhanced user experience features
+ * Adds custom styling and UX features
  *
  * @returns {void}
  */

@@ -12,7 +12,10 @@
     "start": "node src/server/index.js",
     "test": "echo \"Tests not implemented yet\" && exit 0",
     "lint": "eslint src/ --ext .js",
-    "lint:fix": "eslint src/ --ext .js --fix"
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "db:verify": "node src/server/scripts/verify-database.js",
+    "test:api": "curl http://localhost:8000/api/games?limit=3",
+    "test:health": "curl http://localhost:8000/health"
   },
   "keywords": ["node", "express", "javascript", "supabase", "steam", "launch", "options", "vanilla", "slops"],
   "author": "soundwanders",
