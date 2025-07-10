@@ -21,19 +21,21 @@
         </div>
 
         <search class="search-input-wrapper" role="search">
-            <div class="search-icon" aria-hidden="true">🔍</div>
-            <input 
-                type="text" 
-                class="search-input" 
-                placeholder="Search games, developers, or launch options..."
-                id="searchInput"
-                autocomplete="off"
-                role="searchbox"
-                aria-label="Search games, developers, or launch options"
-                aria-describedby="search-description"
-                aria-expanded="false"
-                aria-owns="suggestionsDropdown"
-            >
+            <div class="search-field">
+                <div class="search-icon" aria-hidden="true">🔍</div>
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search games, developers, or launch options..."
+                    id="searchInput"
+                    autocomplete="off"
+                    role="searchbox"
+                    aria-label="Search games, developers, or launch options"
+                    aria-describedby="search-description"
+                    aria-expanded="false"
+                    aria-owns="suggestionsDropdown"
+                >
+            </div>
             <!-- Hidden description for screen readers -->
             <div id="search-description" class="sr-only">
                 Search through games or launch options. Use arrow keys to navigate suggestions when available.
