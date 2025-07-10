@@ -1,5 +1,5 @@
 /**
- * @fileoverview Enhanced filter management system for Vanilla Slops
+ * @fileoverview Filter management system for Vanilla Slops
  * Handles search filters, URL state management, and dynamic filter population
  * Integrates with Steam Launch Options API for real-time filter data
  */
@@ -341,7 +341,7 @@ function improveOptionsFilter() {
   // Clear existing options
   optionsFilter.innerHTML = '';
   
-  // Add improved options with better labels
+  // Add improved options with custom labels
   const options = [
     { value: '', label: 'All Games' },
     { value: 'has-options', label: 'Has Launch Options' },
@@ -457,13 +457,13 @@ function populateSelectFilter(filterId, options, defaultText) {
 }
 
 /**
- * Improve filter UI with better styling and functionality
- * Adds custom styling and enhanced user experience features
+ * Improved filter UI with styling and functionality
+ * Adds custom styling and UX features
  *
  * @returns {void}
  */
 function improveFilterUI() {
-  // Add custom styling for better select appearance
+  // Add custom styling to select appearance
   addCustomSelectStyling();
   
   // Add loading states for filters

@@ -1,7 +1,7 @@
 /* =============================================================================
    RESPONSIVE DESIGN SYSTEM
    Mobile-first responsive design with utilities and breakpoints
-   Merged layout improvements and responsive enhancements
+   Merged the layout and responsive style improvements
    ============================================================================= */
 
 /* Small screens and up (640px+) */
@@ -143,7 +143,7 @@
   }
 }
 
-/* Mobile and below (639px and down) - Enhanced */
+/* Mobile and below (639px and down) */
 @media (max-width: 639px) {
   /* Container spacing */
   .container {
@@ -325,8 +325,6 @@
   
   /* Launch options print styling */
   .launch-options-cell {
-    background: #f5f5f5 !important;
-    color: #000 !important;
     font-size: 9pt;
   }
   
@@ -361,7 +359,6 @@
 
 /* -----------------------------------------------------------------------------
    ACCESSIBILITY RESPONSIVE FEATURES
-   Enhanced accessibility for different screen sizes
    ----------------------------------------------------------------------------- */
 
 /* Large text support */
@@ -437,7 +434,7 @@
 
 /* -----------------------------------------------------------------------------
    TOUCH DEVICE OPTIMIZATIONS
-   Enhanced touch targets and interactions
+   Touch targets and interactions
    ----------------------------------------------------------------------------- */
 
 @media (pointer: coarse) {
@@ -457,7 +454,7 @@
     min-height: 44px;
   }
   
-  /* Enhanced filter tag touch targets */
+  /* Filter tag touch targets */
   .filter-tag {
     padding: var(--space-sm) var(--space-md);
     min-height: 32px;
@@ -469,7 +466,6 @@
     margin-left: var(--space-xs);
   }
   
-  /* Better checkbox and radio targets */
   input[type="checkbox"],
   input[type="radio"] {
     width: 20px;
@@ -526,7 +522,7 @@
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Reduce box-shadows on mobile for better performance */
+  /* Reduce box-shadows on mobile for performance boost */
   .card,
   .slops-search,
   .slops-results {
