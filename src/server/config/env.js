@@ -17,7 +17,7 @@ requiredVars.forEach((key) => {
 });
 
 export default {
-  port: process.env.PORT || 3000,
+  port: process.env.PORT || 8000,
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
 };

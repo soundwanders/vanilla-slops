@@ -586,31 +586,52 @@ export async function fetchGameWithLaunchOptions(gameId) {
  * @property {boolean} verified - Whether option is verified
  * @throws {Error} When database queries fail
  * 
- * @example
- * const options = await fetchLaunchOptionsForGame(440);
- * // Returns: [
- * //   { option: '-novid', description: 'Skip intro videos', upvotes: 150 },
- * //   { option: '-console', description: 'Enable developer console', upvotes: 89 }
- * // ]
  */
 export async function fetchLaunchOptionsForGame(gameId) {
   try {
+    console.log(`Fetching launch options for game ID: ${gameId}`);
+    
+    // Step 1: Verify game exists
+    const { data: gameExists, error: gameCheckError } = await supabase
+      .from('games')
+      .select('app_id, title')
+      .eq('app_id', gameId)
+      .single();
+    
+    if (gameCheckError) {
+      console.error('❌ Game check error:', gameCheckError);
+      throw new Error(`Game ${gameId} not found: ${gameCheckError.message}`);
+    }
+    
+    console.log(`✅ Found game: ${gameExists.title} (ID: ${gameId})`);
+    
+    // Step 2: Check junction table
     const { data: gameOptions, error: joinError } = await supabase
       .from('game_launch_options')
       .select('launch_option_id')
       .eq('game_app_id', gameId);
+    
+    console.log(`🔗 Junction table query result:`, { 
+      gameId,
+      found: gameOptions?.length || 0, 
+      error: joinError?.message || 'none',
+      data: gameOptions?.slice(0, 3) // Show first 3 for debugging
+    });
         
     if (joinError) {
-      console.error('Join table fetch error:', joinError);
-      throw new Error(`Failed to fetch launch options for game ${gameId}`);
+      console.error('❌ Junction table error:', joinError);
+      throw new Error(`Failed to query game_launch_options for game ${gameId}: ${joinError.message}`);
     }
     
     if (!gameOptions || gameOptions.length === 0) {
+      console.log(`ℹ️  No launch options found in junction table for game ${gameId}`);
       return [];
     }
     
     const optionIds = gameOptions.map(option => option.launch_option_id);
+    console.log(`🎯 Looking up ${optionIds.length} launch option IDs:`, optionIds);
     
+    // Step 3: Get actual launch options
     const { data: options, error: optionsError } = await supabase
       .from('launch_options')
       .select(`
@@ -624,27 +645,43 @@ export async function fetchLaunchOptionsForGame(gameId) {
         created_at
       `)
       .in('id', optionIds)
-      .order('upvotes', { ascending: false }); // Order by popularity
+      .order('upvotes', { ascending: false });
+    
+    console.log(`📋 Launch options query result:`, { 
+      searchedIds: optionIds,
+      found: options?.length || 0, 
+      error: optionsError?.message || 'none',
+      sampleOptions: options?.slice(0, 2) // Show first 2 for debugging
+    });
     
     if (optionsError) {
-      console.error('Launch options fetch error:', optionsError);
-      throw new Error('Failed to fetch launch options details');
+      console.error('❌ Launch options error:', optionsError);
+      throw new Error(`Failed to fetch launch options details: ${optionsError.message}`);
     }
     
-    // Transform to match frontend expectations
-    return (options || []).map(option => ({
+    // Transform data for frontend
+    const transformedOptions = (options || []).map(option => ({
       id: option.id,
       option: option.command, // Frontend expects 'option' field
       command: option.command,
-      description: option.description,
-      source: option.source,
-      upvotes: option.upvotes,
-      downvotes: option.downvotes,
-      verified: option.verified,
+      description: option.description || 'No description available',
+      source: option.source || 'Community',
+      upvotes: option.upvotes || 0,
+      downvotes: option.downvotes || 0,
+      verified: option.verified || false,
       created_at: option.created_at
     }));
+    
+    console.log(`✅ Successfully transformed ${transformedOptions.length} launch options for game ${gameId}`);
+    console.log(`📦 Sample transformed option:`, transformedOptions[0]);
+    
+    return transformedOptions;
+    
   } catch (error) {
-    console.error('Error in fetchLaunchOptionsForGame:', error);
+    console.error(`💥 Error in fetchLaunchOptionsForGame(${gameId}):`, {
+      message: error.message,
+      stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+    });
     throw error;
   }
 }
