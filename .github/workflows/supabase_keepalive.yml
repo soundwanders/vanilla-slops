@@ -1,0 +1,127 @@
+name: Keep Supabase Database Alive (Thoroughly Zombified and Ready for Service)
+
+# Runs twice per week to prevent 7-day inactivity pause
+on:
+  schedule:
+    # Tuesdays at 9:00 AM UTC and Fridays at 2:00 PM UTC
+    - cron: '0 9 * * 2'   # Tuesday 9 AM UTC
+    - cron: '0 14 * * 5'  # Friday 2 PM UTC
+  workflow_dispatch:      # Allow manual triggering
+
+jobs:
+  keep-supabase-alive:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install Supabase client
+        run: npm install @supabase/supabase-js --no-save
+        
+      - name: Keep Supabase database alive
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node << 'EOF'
+          const { createClient } = require('@supabase/supabase-js');
+          
+          async function keepDatabaseAlive() {
+            try {
+              console.log('🚀 Starting Supabase keep-alive ping...');
+              console.log('📅 Timestamp:', new Date().toISOString());
+              
+              // Validate environment variables
+              if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+                throw new Error('❌ Missing Supabase credentials in GitHub secrets');
+              }
+              
+              console.log('🔑 Environment variables found');
+              console.log('🔗 Supabase URL:', process.env.SUPABASE_URL);
+              
+              // Create Supabase client
+              const supabase = createClient(
+                process.env.SUPABASE_URL,
+                process.env.SUPABASE_SERVICE_ROLE_KEY
+              );
+              
+              console.log('✅ Supabase client created successfully');
+              
+              // Perform a simple query to keep the database active
+              console.log('🎯 Executing keep-alive query...');
+              
+              const { data, error, count } = await supabase
+                .from('games')
+                .select('app_id, title', { count: 'exact', head: true })
+                .limit(1);
+              
+              if (error) {
+                console.log('⚠️  Primary query failed, trying fallback method...');
+                console.log('Error details:', error.message);
+                
+                // Fallback: Try a more basic query
+                const { data: fallbackData, error: fallbackError } = await supabase
+                  .from('games')
+                  .select('app_id')
+                  .limit(1);
+                  
+                if (fallbackError) {
+                  throw new Error(`Both primary and fallback queries failed: ${fallbackError.message}`);
+                }
+                
+                console.log('✅ Fallback query successful');
+                console.log('📊 Result:', fallbackData?.length ? `Found ${fallbackData.length} record(s)` : 'No data returned');
+              } else {
+                console.log('✅ Keep-alive query executed successfully');
+                console.log(`📊 Database contains ${count || 0} total games`);
+                
+                if (data && data.length > 0) {
+                  console.log(`📋 Sample game: ${data[0].title} (ID: ${data[0].app_id})`);
+                }
+              }
+              
+              console.log('🎉 Database keep-alive completed successfully!');
+              console.log('📅 Next scheduled runs:');
+              console.log('   • Tuesday at 9:00 AM UTC');
+              console.log('   • Friday at 2:00 PM UTC');
+              console.log('💡 Manual runs: Go to Actions tab → Keep Supabase Database Alive → Run workflow');
+              
+            } catch (error) {
+              console.error('💥 Keep-alive operation failed:');
+              console.error('Error message:', error.message);
+              console.error('Full error:', error);
+              
+              console.log('');
+              console.log('🔧 Troubleshooting steps:');
+              console.log('1. Check GitHub Secrets are properly set:');
+              console.log('   - SUPABASE_URL');
+              console.log('   - SUPABASE_SERVICE_ROLE_KEY');
+              console.log('2. Verify Supabase project is not paused');
+              console.log('3. Check Supabase dashboard for any issues');
+              console.log('4. Ensure service role key has proper permissions');
+              
+              process.exit(1);
+            }
+          }
+          
+          // Run the keep-alive function
+          keepDatabaseAlive();
+          EOF
+
+      - name: Report workflow status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Workflow completed successfully"
+            echo "📈 Database activity logged to prevent inactivity pause"
+          else
+            echo "❌ Workflow failed - check logs above"
+            echo "⚠️  Database may still pause if issue isn't resolved"
+          fi
