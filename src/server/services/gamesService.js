@@ -589,7 +589,7 @@ export async function fetchGameWithLaunchOptions(gameId) {
  */
 export async function fetchLaunchOptionsForGame(gameId) {
   try {
-    console.log(`🔍 Fetching launch options for game ID: ${gameId}`);
+    console.log(`Fetching launch options for game ID: ${gameId}`);
     
     // Step 1: Verify game exists
     const { data: gameExists, error: gameCheckError } = await supabase

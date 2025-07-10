@@ -15,7 +15,7 @@ const supabase = createClient(
 );
 
 async function verifyDatabase() {
-  console.log('🔍 Verifying Vanilla Slops database structure and data...\n');
+  console.log('Verifying Vanilla Slops database structure and data...\n');
   
   try {
     // Check Supabase connection
