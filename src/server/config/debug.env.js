@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const envPath = path.resolve(__dirname, '../../.env');
 
 // Debug information
-console.log('🔍 Environment Debugging:');
+console.log('Environment Debugging:');
 console.log('Current file:', __filename);
 console.log('Current directory:', __dirname);
 console.log('Looking for .env at:', envPath);

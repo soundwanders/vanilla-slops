@@ -176,7 +176,7 @@ function setupLaunchOptionListeners() {
       const gameId = e.currentTarget.dataset.gameId;
       const optionsRow = document.getElementById(`launch-options-${gameId}`);
       
-      console.log(`🔍 Launch options requested for game ID: ${gameId}`);
+      console.log(`Launch options requested for game ID: ${gameId}`);
 
       // Toggle visibility if already shown (collapse functionality)
       if (optionsRow.style.display === 'table-row') {
@@ -436,7 +436,7 @@ function createErrorMessage(gameId, err) {
           ${technicalDetails ? `<p><strong>Technical Details:</strong><br/><code>${technicalDetails}</code></p>` : ''}
           
           <p><strong>Full Error:</strong></p>
-          <pre style="background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.8rem;">
+          <pre style="padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.8rem;">
             ${err.stack || err.message || 'No additional details available'}
           </pre>
         </div>

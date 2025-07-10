@@ -164,7 +164,7 @@ jobs:
 
       - name: Run development validation
         run: |
-          echo "🔍 Running development branch validation..."
+          echo "Running development branch validation..."
           echo "✅ Package.json validation"
           npm ls --depth=0 > /dev/null 2>&1 || echo "Dependencies checked"
           

@@ -81,8 +81,7 @@ router.get('/facets', filterFacetsController);
  * @returns {Object} 404 - Game not found
  * @returns {Object} 500 - Server error
  */
-router.get('/:id', validateRequest(gameIdSchema), gameDetailsController);
-
+router.get('/:id', gameDetailsController);
 /**
  * @route GET /api/games/:id/launch-options
  * @description Get only the launch options for a specific game
@@ -93,6 +92,6 @@ router.get('/:id', validateRequest(gameIdSchema), gameDetailsController);
  * @returns {Object} 400 - Invalid game ID
  * @returns {Object} 500 - Server error
  */
-router.get('/:id/launch-options', validateRequest(gameIdSchema), gameLaunchOptionsController);
+router.get('/:id/launch-options', gameLaunchOptionsController);
 
 export default router;
