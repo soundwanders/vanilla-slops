@@ -4,54 +4,200 @@ import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
 import SlopSearch from './ui/search.js';
 
-/**
- * @fileoverview Main application controller for Vanilla Slops front-end
- * Manages application state and handles user interactions
- * Implements search integration and URL state management with PAGINATION ONLY
- */
-
 const PAGE_SIZE = 20;
 
 /**
  * Centralized application state management
- * Prevents state fragmentation across components
  */
 const AppState = {
   currentPage: 1,
   isLoading: false,
   filters: {},
   totalPages: 0,
-  searchInstance: null
+  searchInstance: null,
+  filtersInitialized: false
 };
 
 /**
- * Loads a page of games with comprehensive error handling and state management
- * Supports both pagination and infinite scroll patterns
- * 
- * @async
- * @function loadPage
- * @param {number} [page=1] - Page number to load
- * @param {boolean} [replace=true] - Whether to replace results or append (pagination only - always replaces)
- * @returns {Promise<void>} Resolves when page is loaded and rendered
- * @throws {Error} When API request fails or invalid parameters
- * 
- * @example
- * // Load first page (replace current results)
- * await loadPage(1, true);
- * 
- * // Load specific page
- * await loadPage(3, true);
+ * Initialize and populate filter dropdowns with real data
  */
-async function loadPage(page = 1, replace = true) {
-  if (AppState.isLoading) {
+async function initializeFilters() {
+  if (AppState.filtersInitialized) return;
+  
+  try {
+    console.log('🔄 Initializing filter dropdowns...');
+    
+    // Show loading state on filters
+    const filterSelects = document.querySelectorAll('.filter-select');
+    filterSelects.forEach(select => {
+      select.disabled = true;
+      select.style.opacity = '0.6';
+    });
+    
+    // Fetch facets from the API
+    const response = await fetch('/api/games/facets');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch facets: ${response.status}`);
+    }
+    
+    const facets = await response.json();
+    console.log('📊 Received facets:', facets);
+    
+    // Populate each filter dropdown
+    populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
+    populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
+    populateYearFilter(facets.releaseYears);
+    populateOptionsFilter();
+    
+    // Remove loading state
+    filterSelects.forEach(select => {
+      select.disabled = false;
+      select.style.opacity = '';
+    });
+    
+    AppState.filtersInitialized = true;
+    console.log('✅ All filters populated successfully');
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize filters:', error);
+    
+    // Remove loading state and provide fallback
+    const filterSelects = document.querySelectorAll('.filter-select');
+    filterSelects.forEach(select => {
+      select.disabled = false;
+      select.style.opacity = '';
+    });
+  }
+}
+
+/**
+ * Populate a filter dropdown with data from the API
+ */
+function populateFilterDropdown(elementId, data, defaultText) {
+  const selectElement = document.getElementById(elementId);
+  if (!selectElement) {
+    console.warn(`Filter element ${elementId} not found`);
     return;
   }
+  
+  // Store current value
+  const currentValue = selectElement.value;
+  
+  // Clear existing options
+  selectElement.innerHTML = '';
+  
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = defaultText;
+  selectElement.appendChild(defaultOption);
+  
+  // Add data options
+  if (Array.isArray(data) && data.length > 0) {
+    data.forEach(item => {
+      const option = document.createElement('option');
+      
+      if (typeof item === 'string') {
+        option.value = item;
+        option.textContent = item;
+      } else if (item && typeof item === 'object') {
+        option.value = item.value || item.name || item;
+        const count = item.count ? ` (${item.count})` : '';
+        option.textContent = `${item.value || item.name || item}${count}`;
+      }
+      
+      selectElement.appendChild(option);
+    });
+    
+    // Restore previous value if it still exists
+    if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
+      selectElement.value = currentValue;
+    }
+    
+    console.log(`✅ Populated ${elementId} with ${data.length} options`);
+  }
+}
+
+/**
+ * Populate year filter with extracted years
+ */
+function populateYearFilter(releaseYears) {
+  const yearFilter = document.getElementById('yearFilter');
+  if (!yearFilter) return;
+  
+  const currentValue = yearFilter.value;
+  yearFilter.innerHTML = '';
+  
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'All Years';
+  yearFilter.appendChild(defaultOption);
+  
+  if (Array.isArray(releaseYears) && releaseYears.length > 0) {
+    // Extract and sort years
+    const years = releaseYears
+      .map(year => parseInt(year, 10))
+      .filter(year => !isNaN(year) && year > 1990 && year <= new Date().getFullYear() + 1)
+      .sort((a, b) => b - a);
+    
+    // Remove duplicates
+    const uniqueYears = [...new Set(years)];
+    
+    uniqueYears.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year.toString();
+      option.textContent = year.toString();
+      yearFilter.appendChild(option);
+    });
+    
+    // Restore value
+    if (currentValue && [...yearFilter.options].some(opt => opt.value === currentValue)) {
+      yearFilter.value = currentValue;
+    }
+  }
+}
+
+/**
+ * Populate options filter with predefined options
+ */
+function populateOptionsFilter() {
+  const optionsFilter = document.getElementById('optionsFilter');
+  if (!optionsFilter) return;
+  
+  const currentValue = optionsFilter.value;
+  optionsFilter.innerHTML = '';
+  
+  const optionsData = [
+    { value: '', label: 'Any Options' },
+    { value: 'has-options', label: 'Has Launch Options' },
+    { value: 'no-options', label: 'No Launch Options' },
+    { value: 'many-options', label: '5+ Launch Options' },
+    { value: 'few-options', label: '1-4 Launch Options' },
+    { value: 'performance', label: 'Performance Options' },
+    { value: 'graphics', label: 'Graphics Options' }
+  ];
+  
+  optionsData.forEach(item => {
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.label;
+    optionsFilter.appendChild(option);
+  });
+  
+  // Restore value
+  if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
+    optionsFilter.value = currentValue;
+  }
+}
+
+async function loadPage(page = 1, replace = true) {
+  if (AppState.isLoading) return;
   
   AppState.isLoading = true;
   showLoadingState(replace);
 
   try {
-    // Build query parameters with proper mapping
     const queryParams = {
       page,
       limit: PAGE_SIZE,
@@ -67,23 +213,23 @@ async function loadPage(page = 1, replace = true) {
     console.log('Loading page with params:', queryParams);
 
     const response = await fetchGames(queryParams);
-    console.log('API Response:', response);
     
     // Update application state
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
 
-    // Update UI
+    // Update UI with smooth transitions
     updateResultsCount(response.total || 0);
-    
-    // Always clear results for pagination (no appending)
     clearResults();
     renderTable(response.games || [], false);
-    
-    // Render pagination controls
     renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
 
     updateURL();
+
+    // Add success feedback
+    if (response.games?.length > 0) {
+      showSuccessFeedback(`Loaded ${response.games.length} games`);
+    }
 
   } catch (error) {
     console.error('Error loading page:', error);
@@ -95,12 +241,77 @@ async function loadPage(page = 1, replace = true) {
 }
 
 /**
- * Update results count display with proper pluralization
- * 
- * @function updateResultsCount
- * @param {number} total - Total number of results found
- * @returns {void} Updates the results count element in the DOM
+ * Show subtle success feedback
  */
+function showSuccessFeedback(message) {
+  const resultsCount = document.getElementById('resultsCount');
+  if (resultsCount) {
+    resultsCount.style.color = 'var(--color-success)';
+    resultsCount.style.fontWeight = 'var(--font-weight-semibold)';
+    
+    setTimeout(() => {
+      resultsCount.style.color = '';
+      resultsCount.style.fontWeight = '';
+    }, 2000);
+  }
+}
+
+/**
+ * Loading state with UX
+ */
+function showLoadingState(clearContent = false) {
+  const resultsList = document.getElementById('resultsList');
+  if (resultsList && clearContent) {
+    resultsList.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading games...</span>
+      </div>
+    `;
+  }
+  
+  // Disable form elements during loading
+  const formElements = document.querySelectorAll('.filter-select, .search-input, .sort-select');
+  formElements.forEach(el => {
+    el.disabled = true;
+    el.style.opacity = '0.6';
+  });
+}
+
+/**
+ * Hide loading state and re-enable UI
+ */
+function hideLoadingState() {
+  const loadingElements = document.querySelectorAll('.loading');
+  loadingElements.forEach(el => el.remove());
+  
+  // Re-enable form elements
+  const formElements = document.querySelectorAll('.filter-select, .search-input, .sort-select');
+  formElements.forEach(el => {
+    el.disabled = false;
+    el.style.opacity = '';
+  });
+}
+
+/**
+ * Error state
+ */
+function showErrorState(message) {
+  const resultsList = document.getElementById('resultsList');
+  if (resultsList) {
+    resultsList.innerHTML = `
+      <div class="error">
+        <h3>❌ Error Loading Games</h3>
+        <p>${message}</p>
+        <button onclick="location.reload()" class="retry-btn">
+          🔄 Try Again
+        </button>
+      </div>
+    `;
+  }
+}
+
+// Rest of the existing functions remain the same...
 function updateResultsCount(total) {
   const resultsCount = document.getElementById('resultsCount');
   if (resultsCount) {
@@ -108,83 +319,21 @@ function updateResultsCount(total) {
   }
 }
 
-/**
- * Show loading state in the results container
- * 
- * @function showLoadingState
- * @param {boolean} [clearContent=false] - Whether to clear existing content
- * @returns {void} Updates the UI to show loading indicator
- */
-function showLoadingState(clearContent = false) {
-  const resultsList = document.getElementById('resultsList');
-  if (resultsList) {
-    if (clearContent) {
-      resultsList.innerHTML = '<div class="loading">Loading games...</div>';
-    }
-  }
-}
-
-/**
- * Hide loading state by removing loading elements from DOM
- * 
- * @function hideLoadingState
- * @returns {void} Removes all loading indicators from the page
- */
-function hideLoadingState() {
-  const loadingElements = document.querySelectorAll('.loading');
-  loadingElements.forEach(el => el.remove());
-}
-
-/**
- * Show error state with retry functionality
- * 
- * @function showErrorState
- * @param {string} message - Error message to display to the user
- * @returns {void} Updates the UI to show error state with retry option
- */
-function showErrorState(message) {
-  const resultsList = document.getElementById('resultsList');
-  if (resultsList) {
-    resultsList.innerHTML = `
-      <div class="error">
-        <p>❌ ${message}</p>
-        <button onclick="location.reload()" class="retry-btn">Try Again</button>
-      </div>
-    `;
-  }
-}
-
-/**
- * Clear results display and pagination for fresh content
- * 
- * @function clearResults
- * @returns {void} Removes table content and existing pagination elements
- */
 function clearResults() {
-  // Clear table container if it exists
   const tableContainer = document.getElementById('table-container');
   if (tableContainer) {
     tableContainer.innerHTML = '';
   }
   
-  // Clear existing pagination
-  const existingPagination = document.querySelector('.pagination');
+  const existingPagination = document.querySelector('.pagination-container');
   if (existingPagination) {
     existingPagination.remove();
   }
 }
 
-/**
- * Update URL with current application state for deep linking
- * Maintains browser history and enables shareable URLs
- * 
- * @function updateURL
- * @returns {void} Updates browser URL without page reload
- */
 function updateURL() {
   const params = new URLSearchParams();
 
-  // Add non-empty filters to URL
   Object.entries(AppState.filters).forEach(([key, value]) => {
     if (value && value.toString().trim()) {
       params.set(key, value);
@@ -199,15 +348,11 @@ function updateURL() {
   window.history.replaceState(null, '', newURL);
 }
 
-/**
- * Parses URL parameters and restores application state
- */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
 
   AppState.currentPage = parseInt(params.get('page')) || 1;
   
-  // Parse all possible filter parameters
   AppState.filters = {
     search: params.get('search') || '',
     category: params.get('category') || '',
@@ -217,46 +362,17 @@ function parseURLParams() {
     sort: params.get('sort') || 'title',
     order: params.get('order') || 'asc'
   };
-
-  console.log('Parsed URL params:', AppState.filters);
 }
 
-/**
- * Handles filter changes from search component and manual controls
- * Resets pagination and triggers new search with updated filters
- * 
- * @function handleFilterChange
- * @param {Object} newFilters - New filter values to apply
- * @param {string} [newFilters.search] - Search query
- * @param {string} [newFilters.category] - Game category
- * @param {string} [newFilters.developer] - Developer name
- * @param {string} [newFilters.options] - Launch options filter
- * @param {string} [newFilters.year] - Release year
- * @param {string} [newFilters.sort] - Sort field
- * @param {string} [newFilters.order] - Sort order
- * @returns {void} Updates application state and triggers page reload
- */
 function handleFilterChange(newFilters) {
   console.log('Filter change:', newFilters);
   
-  // Merge new filters with existing ones
   AppState.filters = { ...AppState.filters, ...newFilters };
-  
-  // Reset to first page when filters change
   AppState.currentPage = 1;
   
-  // Load new results
   loadPage(1, true);
 }
 
-/**
- * Initializes search component with proper configuration
- * Maps DOM elements and sets up event handlers for search functionality
- * 
- * @function initializeSearchComponent
- * @returns {SlopSearch|null} Configured search component instance or null if initialization fails
- * @throws {Error} When required DOM elements are missing
- */
 function initializeSearchComponent() {
   const container = document.querySelector('.search-container');
   if (!container) {
@@ -265,7 +381,6 @@ function initializeSearchComponent() {
   }
 
   try {
-    // Configure search component with correct element IDs
     const searchConfig = {
       inputId: 'searchInput',
       suggestionsId: 'suggestionsDropdown', 
@@ -282,8 +397,6 @@ function initializeSearchComponent() {
     };
 
     const searchInstance = new SlopSearch(searchConfig);
-    
-    // Set up filter change handler
     searchInstance.onFilterChange = handleFilterChange;
     
     return searchInstance;
@@ -294,28 +407,22 @@ function initializeSearchComponent() {
 }
 
 /**
- * Main application initialization function
- * Coordinates component setup, state restoration, and initial data loading
- * 
- * @async
- * @function initializeApp
- * @returns {Promise<void>} Resolves when application is fully initialized
- * @throws {Error} When critical initialization steps fail
+ * App initialization
  */
 async function initializeApp() {
   try {
-    console.log('Initializing Steam Launch Options app...');
+    console.log('🚀 Initializing Vanilla Slops app...');
     
-    // Parse URL parameters to restore state
     parseURLParams();
     
-    // Initialize search component
+    // Initialize components in sequence
     AppState.searchInstance = initializeSearchComponent();
-    
-    // Setup theme toggle
     setupThemeToggle();
     
-    // Preload popular content for better UX
+    // Initialize filters before loading data
+    await initializeFilters();
+    
+    // Preload popular content
     preloadPopularContent().catch(err => 
       console.warn('Failed to preload popular content:', err)
     );
@@ -323,29 +430,25 @@ async function initializeApp() {
     // Load initial page
     await loadPage(AppState.currentPage);
     
-    console.log('App initialized successfully');
+    console.log('✅ App initialized successfully');
+    
+    // Add visual feedback that app is ready
+    document.body.classList.add('app-ready');
     
   } catch (error) {
-    console.error('Failed to initialize app:', error);
+    console.error('❌ Failed to initialize app:', error);
     showErrorState('Failed to initialize application. Please refresh the page.');
   }
 }
 
-/**
- * Sets up global event listeners for browser navigation and manual controls
- * Handles back/forward navigation, sort changes, and filter interactions
- * 
- * @function setupEventListeners
- * @returns {void} Attaches event listeners to DOM elements
- */
 function setupEventListeners() {
-  // Handle browser back/forward
+  // Browser navigation
   window.addEventListener('popstate', () => {
     parseURLParams();
     loadPage(AppState.currentPage);
   });
 
-  // Handle manual sort changes
+  // Manual sort changes
   const sortSelect = document.getElementById('sortSelect');
   if (sortSelect) {
     sortSelect.addEventListener('change', (e) => {
@@ -357,27 +460,19 @@ function setupEventListeners() {
     });
   }
 
-  // Handle manual filter changes for elements not managed by SlopSearch
-  const filterElements = [
-    'categoryFilter',
-    'developerFilter', 
-    'optionsFilter',
-    'yearFilter'
-  ];
-
+  // Manual filter changes
+  const filterElements = ['categoryFilter', 'developerFilter', 'optionsFilter', 'yearFilter'];
   filterElements.forEach(filterId => {
     const element = document.getElementById(filterId);
     if (element) {
       element.addEventListener('change', (e) => {
         const filterType = filterId.replace('Filter', '');
-        handleFilterChange({
-          [filterType]: e.target.value
-        });
+        handleFilterChange({ [filterType]: e.target.value });
       });
     }
   });
 
-  // Handle search input with debouncing
+  // Debounced search input
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
     let debounceTimeout;
@@ -390,15 +485,7 @@ function setupEventListeners() {
   }
 }
 
-/**
- * Ensures required DOM elements exist for proper application functionality
- * Creates missing elements dynamically if not found in HTML
- * 
- * @function ensureRequiredDOMElements
- * @returns {void} Creates missing DOM structure
- */
 function ensureRequiredDOMElements() {
-  // Ensure app container exists
   let appContainer = document.getElementById('app');
   if (!appContainer) {
     appContainer = document.createElement('div');
@@ -406,18 +493,11 @@ function ensureRequiredDOMElements() {
     document.body.appendChild(appContainer);
   }
 
-  // Ensure table container exists
   let tableContainer = document.getElementById('table-container');
   if (!tableContainer) {
     tableContainer = document.createElement('div');
     tableContainer.id = 'table-container';
     appContainer.appendChild(tableContainer);
-  }
-
-  // Remove scroll sentinel as we're not using infinite scroll
-  const scrollSentinel = document.getElementById('scroll-sentinel');
-  if (scrollSentinel) {
-    scrollSentinel.remove();
   }
 }
 

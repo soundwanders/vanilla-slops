@@ -326,8 +326,7 @@ function populateEngineFilterWithDefaults(engineFilter) {
 }
 
 /**
- * Improve the options filter with better, more descriptive labels
- * Replaces generic options with user-friendly descriptions
+ * Populate options filter with predefined options
  *
  * @returns {void}
  */
@@ -363,8 +362,6 @@ function improveOptionsFilter() {
   if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
     optionsFilter.value = currentValue;
   }
-  
-  console.log('Options filter improved with better labels');
 }
 
 /**

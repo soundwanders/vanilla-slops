@@ -225,10 +225,6 @@
 }
 
 /* Search Input with Icon */
-.search-wrapper {
-  position: relative;
-}
-
 .search-input {
   padding-left: var(--space-2xl);
 }
