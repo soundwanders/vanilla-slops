@@ -395,7 +395,7 @@ function createCloseButton() {
  * @since 1.0.0
  */
 function createErrorMessage(gameId, err) {
-  // Analyze error type for better user feedback
+  // Analyze error type for user feedback
   let errorTitle = '❌ Error Loading Launch Options';
   let errorMessage = err.message || 'Unknown error occurred';
   let technicalDetails = '';
