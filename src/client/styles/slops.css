@@ -180,8 +180,8 @@
 }
 
 [data-theme="dark"] .suggestions-dropdown {
-  background-color: var(--color-surface);
-  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  border-color: var(--color-border);
 }
 
 .suggestion-category-header {
