@@ -124,7 +124,7 @@ export async function fetchGames({
       throw new Error('Failed to fetch games from database');
     }
 
-    // Get facets for better filtering UI
+    // Fetch facets for dynamic UI generation
     const facets = await getFacets(searchTerm);
     
     return {
@@ -264,7 +264,7 @@ function applySorting(query, sort, order) {
       sortField = 'total_options_count';
       break;
     case 'relevance':
-      // For relevance, we'll use title for now, but could implement more complex scoring
+      // For relevance, we use title, but could implement more complex scoring
       sortField = 'title';
       break;
   }
