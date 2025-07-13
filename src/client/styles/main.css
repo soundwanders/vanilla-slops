@@ -6,7 +6,7 @@
    -----------------------------------------------------------------------------
    Total size: ~50KB minified and gzipped
    Compatible with: All modern browsers + IE11 fallbacks
-   Performance: Optimized for Core Web Vitals
+   Performance optimized for Core Web Vitals
    Accessibility: WCAG 2.1 AA compliant
    =============================================================================
 */
@@ -16,6 +16,8 @@
 @import 'compatible.css';
 @import 'components.css';
 @import 'debug.css';
+@import 'footer.css';
+@import 'hero.css';
 @import 'layout.css';
 @import 'pagination.css';
 @import 'performance.css';

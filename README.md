@@ -1,7 +1,7 @@
 # Vanilla Slops
 
 <p align="center">
-  <img src="./src/client/public/frogslops.png" alt="Vanilla Slops - Steam Launch Options Discovery" width="160">
+  <img src="./src/client/public/slops-logo.png" alt="Vanilla Slops - Steam Launch Options Discovery" width="160">
 </p>
 
 <p align="center">
@@ -13,7 +13,6 @@
 </p>
 
 ---
-
 
 ### 👖 Vanilla Slops?
 
@@ -166,7 +165,7 @@ Retrieve launch options for a specific game.
 
 Vanilla Slops is a welcoming place, whether you're a first-timer or a seasoned developer I would love to hear your ideas.
 It's a great environment to get your feet wet because there's nothing at stake here. 
-Your contributions can only make the project better, and maybe we both learn something along the way. 
+Your contributions can only make the project better, and maybe we'll both learn something along the way. 
 
 [📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 

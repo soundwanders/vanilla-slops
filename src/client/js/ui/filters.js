@@ -326,8 +326,7 @@ function populateEngineFilterWithDefaults(engineFilter) {
 }
 
 /**
- * Improve the options filter with better, more descriptive labels
- * Replaces generic options with user-friendly descriptions
+ * Populate options filter with predefined options
  *
  * @returns {void}
  */
@@ -341,7 +340,7 @@ function improveOptionsFilter() {
   // Clear existing options
   optionsFilter.innerHTML = '';
   
-  // Add improved options with custom labels
+  // Add options with custom labels
   const options = [
     { value: '', label: 'All Games' },
     { value: 'has-options', label: 'Has Launch Options' },
@@ -363,8 +362,6 @@ function improveOptionsFilter() {
   if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
     optionsFilter.value = currentValue;
   }
-  
-  console.log('Options filter improved with better labels');
 }
 
 /**
@@ -457,8 +454,8 @@ function populateSelectFilter(filterId, options, defaultText) {
 }
 
 /**
- * Improved filter UI with styling and functionality
- * Adds custom styling and UX features
+ * Filter UI with styling and functionality
+ * 
  *
  * @returns {void}
  */
