@@ -340,7 +340,7 @@ function improveOptionsFilter() {
   // Clear existing options
   optionsFilter.innerHTML = '';
   
-  // Add improved options with custom labels
+  // Add options with custom labels
   const options = [
     { value: '', label: 'All Games' },
     { value: 'has-options', label: 'Has Launch Options' },
@@ -454,8 +454,8 @@ function populateSelectFilter(filterId, options, defaultText) {
 }
 
 /**
- * Improved filter UI with styling and functionality
- * Adds custom styling and UX features
+ * Filter UI with styling and functionality
+ * 
  *
  * @returns {void}
  */
