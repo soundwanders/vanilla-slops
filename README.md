@@ -1,7 +1,7 @@
 # Vanilla Slops
 
 <p align="center">
-  <img src="./src/client/public/frogslops.png" alt="Vanilla Slops - Steam Launch Options Discovery" width="160">
+  <img src="./src/client/public/slops-logo.png" alt="Vanilla Slops - Steam Launch Options Discovery" width="160">
 </p>
 
 <p align="center">
@@ -13,7 +13,6 @@
 </p>
 
 ---
-
 
 ### 👖 Vanilla Slops?
 
