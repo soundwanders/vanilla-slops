@@ -13,7 +13,7 @@
   background: var(--color-surface-raised);
 }
 
-/* Enhanced Table Base */
+/* Table Base */
 .games-table {
   width: 100%;
   border-collapse: separate;
@@ -23,7 +23,7 @@
   position: relative;
 }
 
-/* Enhanced Table Header */
+/* Table Header */
 .games-table thead {
   background: var(--gradient-surface);
   position: sticky;
@@ -78,7 +78,7 @@
   opacity: 1;
 }
 
-/* Enhanced Table Body */
+/* Table Body */
 .games-table tbody tr {
   transition: all var(--transition-fast);
   border-bottom: 1px solid var(--color-border-subtle);
@@ -104,7 +104,7 @@
   border-bottom-right-radius: var(--radius-2xl);
 }
 
-/* Enhanced Table Cells */
+/* Table Cells */
 .games-table td {
   padding: var(--space-4) var(--space-6);
   vertical-align: middle;
@@ -154,7 +154,7 @@
   opacity: 0.6;
 }
 
-/* Enhanced Launch Options Button */
+/* Launch Options Button */
 .launch-options-btn {
   background: var(--gradient-accent);
   color: var(--color-text-inverse);
@@ -204,7 +204,7 @@
   margin-left: var(--space-2);
 }
 
-/* Enhanced Launch Options Display */
+/* Launch Options Display */
 .launch-options-row {
   background: var(--gradient-surface) !important;
   border-top: 2px solid var(--color-accent-subtle);
@@ -220,7 +220,7 @@
   border-radius: 0;
 }
 
-/* Enhanced Launch Options List */
+/* Launch Options List */
 .launch-options-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -310,7 +310,7 @@
   font-size: var(--font-size-sm);
 }
 
-/* Enhanced Option Meta */
+/* Option Meta */
 .option-meta {
   display: flex;
   justify-content: space-between;
@@ -365,7 +365,7 @@
   font-size: var(--font-size-xs);
 }
 
-/* Enhanced Close Button */
+/* Close Button */
 .launch-options-close-container {
   margin-top: var(--space-8);
   padding-top: var(--space-6);
@@ -445,7 +445,7 @@
   animation: spin 1s linear infinite;
 }
 
-/* Enhanced Responsive Design */
+/* Responsive Design */
 @media (max-width: 1024px) {
   .games-table th,
   .games-table td {

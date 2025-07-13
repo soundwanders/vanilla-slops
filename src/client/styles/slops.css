@@ -226,6 +226,11 @@
   margin-bottom: var(--space-2);
 }
 
+/* Remove Fieldset border */
+fieldset {
+  border: none;
+}
+
 /* Active Filters */
 .active-filters {
   display: flex;
