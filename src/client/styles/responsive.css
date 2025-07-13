@@ -84,8 +84,14 @@
   /* Search container improvements */
   .search-container,
   .slops-search {
-    padding: var(--space-lg);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-8);
+    padding: var(--space-8) var(--space-6);
+    border-radius: var(--radius-2xl);
+  }
+
+  .search-header h1,
+  .slops-logo {
+    font-size: clamp(2rem, 8vw, 2.5rem);
   }
   
   /* Search header scaling */
@@ -97,8 +103,9 @@
   /* Filters layout changes */
   .filters-container,
   .slops-filters {
-    flex-direction: column;
-    gap: var(--space-md);
+    grid-template-columns: 1fr;
+    padding: var(--space-6);
+    gap: var(--space-4);
   }
   
   .filter-group {
@@ -126,7 +133,11 @@
   /* Launch options list */
   .launch-options-list {
     grid-template-columns: 1fr;
-    gap: var(--space-md);
+    gap: var(--space-4);
+  }
+
+  .launch-option {
+    padding: var(--space-4);
   }
   
   /* Modal adjustments */
