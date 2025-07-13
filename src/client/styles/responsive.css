@@ -100,7 +100,7 @@
     font-size: var(--font-size-xl);
   }
   
-  /* Filters layout changes */
+  /* Filters */
   .filters-container,
   .slops-filters {
     grid-template-columns: 1fr;
