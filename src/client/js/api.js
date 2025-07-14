@@ -498,7 +498,7 @@ export function invalidateGameCache(gameId) {
 }
 
 /**
- * Preloads frequently accessed content for improved user experience
+ * Preloads frequently accessed content
  * Caches first page of games and filter facets in background
  * 
  * @async

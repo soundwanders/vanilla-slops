@@ -1,6 +1,5 @@
 /* -----------------------------------------------------------------------------
    STEAM LAUNCH OPTIONS SPECIFIC COMPONENTS
-   Enhanced with improved search UX and visual feedback
    ----------------------------------------------------------------------------- */
 
 /* Search Container */
@@ -58,7 +57,7 @@
   opacity: 0.8;
 }
 
-/* Enhanced Search Input Wrapper */
+/* Search Input Wrapper */
 .search-input-wrapper {
   position: relative;
   margin-bottom: var(--space-8);
@@ -73,7 +72,6 @@
   align-items: center;
 }
 
-/* Enhanced Search Input with New States */
 .search-input {
   width: 100%;
   padding: var(--space-4) var(--space-4) var(--space-4) var(--space-14);
@@ -113,7 +111,7 @@
   box-shadow: var(--shadow-glow), var(--shadow-lg);
 }
 
-/* NEW: Search Pending Indicator */
+/* Search Pending Indicator */
 .search-pending-indicator {
   position: absolute;
   right: var(--space-16);
@@ -137,18 +135,7 @@
   white-space: nowrap;
 }
 
-@keyframes searchPendingPulse {
-  0%, 100% { 
-    opacity: 0.8; 
-    transform: translateY(-50%) scale(1);
-  }
-  50% { 
-    opacity: 1; 
-    transform: translateY(-50%) scale(1.05);
-  }
-}
-
-/* Enhanced Search Icon */
+/* Search Icon */
 .search-icon {
   position: absolute;
   left: var(--space-4);
@@ -170,7 +157,7 @@
   color: var(--color-warning);
 }
 
-/* Enhanced Suggestions Dropdown */
+/* Suggestions Dropdown */
 .suggestions-dropdown {
   position: absolute;
   top: calc(100% + var(--space-2));
@@ -193,7 +180,7 @@
   display: block;
 }
 
-/* Enhanced Suggestion Animations */
+/* Suggestion Animations */
 @keyframes suggestionsSlideIn {
   from {
     opacity: 0;
@@ -219,7 +206,7 @@
   z-index: 1;
 }
 
-/* Enhanced Suggestion Items */
+/* Suggestion Items */
 .suggestion-item {
   padding: var(--space-4) var(--space-5);
   cursor: pointer;
@@ -276,7 +263,7 @@
   display: none;
 }
 
-/* Enhanced Suggestion Text Highlighting */
+/* Suggestion Text Highlighting */
 .suggestion-item mark {
   background: var(--color-accent-subtle);
   color: var(--color-accent);
@@ -298,7 +285,7 @@
   }
 }
 
-/* Enhanced Dark Theme Support for Suggestions */
+/* Dark Theme Support for Suggestions */
 [data-theme="dark"] .suggestions-dropdown {
   background: var(--color-surface);
   border-color: var(--color-border);
@@ -348,7 +335,7 @@ fieldset {
   border: none;
 }
 
-/* Enhanced Active Filters */
+/* Active Filters */
 .active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -453,7 +440,7 @@ fieldset {
   background: var(--gradient-surface);
 }
 
-/* Enhanced Filter and Sort Select Styling */
+/* Filter and Sort Select Styling */
 .filter-select,
 .sort-select {
   padding: var(--space-3) var(--space-4);
@@ -490,7 +477,7 @@ fieldset {
   box-shadow: var(--shadow-md);
 }
 
-/* Enhanced Loading States for Filters */
+/* Loading States for Filters */
 .filter-select.loading,
 .sort-select.loading {
   opacity: 0.6;
@@ -523,7 +510,7 @@ fieldset {
   transition: all var(--transition-fast);
 }
 
-/* Enhanced Results Count with Success State */
+/* Results Count with Success State */
 .results-count.success-highlight {
   color: var(--color-success);
   font-weight: var(--font-weight-semibold);
@@ -540,7 +527,7 @@ fieldset {
   display: flex;
 }
 
-/* Enhanced Dark Theme Specific Adjustments */
+/* Dark Theme Specific Adjustments */
 [data-theme="dark"] .search-input {
   background-color: var(--color-surface);
   border-color: var(--color-border-strong);
@@ -608,7 +595,7 @@ fieldset {
   background-color: var(--color-interactive-hover);
 }
 
-/* Enhanced Loading State for Table */
+/* Loading State for Table */
 .games-table.loading {
   opacity: 0.7;
 }
@@ -639,7 +626,7 @@ fieldset {
   overflow: hidden;
 }
 
-/* Enhanced Button Ripple Effect */
+/* Button Ripple Effect */
 .launch-options-btn::after {
   content: '';
   position: absolute;
@@ -745,7 +732,7 @@ fieldset {
   border-color: var(--color-accent);
 }
 
-/* Enhanced Option Command Display */
+/* Option Command Display */
 .option-command {
   background: var(--color-code-background);
   color: var(--color-code-text);
@@ -767,7 +754,7 @@ fieldset {
   transform: scale(1.02);
 }
 
-/* Enhanced Copy Success Feedback */
+/* Copy Success Feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.6s ease-out;
 }
@@ -837,7 +824,7 @@ fieldset {
   to { opacity: 1; }
 }
 
-/* Enhanced Theme Toggle */
+/* Theme Toggle */
 .theme-toggle,
 #theme-toggle {
   position: fixed;

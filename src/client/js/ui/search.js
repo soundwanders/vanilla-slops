@@ -1,5 +1,5 @@
 /**
- * @fileoverview Improved Search component with better UX
+ * @fileoverview Search component
  * Single source of truth for all search interactions
  * Eliminates duplicate event listeners and implements smart debouncing
  */
@@ -42,7 +42,7 @@ export default class SlopSearch {
     this.suggestions = [];
     this.selectedSuggestionIndex = -1;
     
-    // Improved timing controls
+    // Timing controls
     this.suggestionsTimeout = null;
     this.searchTimeout = null;
     this.keystrokeCount = 0;
@@ -68,12 +68,12 @@ export default class SlopSearch {
     this.initializeEventListeners();
     this.loadInitialData();
     
-    console.log('🎯 SlopSearch initialized with improved UX timing');
+    console.log('🎯 SlopSearch initialized');
   }
 
   /**
-   * Set up all event listeners with improved debouncing
-   * This is now the ONLY place that listens to search input
+   * Set up all event listeners with debouncing
+   * This is the ONLY place that listens to search input
    */
   initializeEventListeners() {
     // Search input events with smart debouncing - SINGLE SOURCE OF TRUTH
@@ -105,7 +105,7 @@ export default class SlopSearch {
   }
 
   /**
-   * Improved search input handling with two-tier approach
+   * Search input handling with two-tier approach
    * TIER 1: Fast suggestions (150ms)
    * TIER 2: Deliberate search (800ms with progressive debouncing)
    */
@@ -254,7 +254,7 @@ export default class SlopSearch {
   }
 
   /**
-   * Enhanced keyboard navigation with immediate search on Enter
+   * Keyboard navigation with immediate search on Enter
    */
   handleKeyNavigation(e) {
     if (!this.suggestions || this.suggestions.length === 0) {
@@ -331,7 +331,7 @@ export default class SlopSearch {
   }
 
   /**
-   * Render suggestions with improved UX
+   * Render suggestions
    */
   renderSuggestions() {
     if (!this.suggestionsDropdown) return;

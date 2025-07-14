@@ -213,7 +213,7 @@
 /* Quick Stats Section */
 .hero-stats {
   position: relative;
-  z-index: var(--z-base);
+  z-index: var(--z-behind);
   display: flex;
   justify-content: center;
   align-items: center;

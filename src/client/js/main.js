@@ -382,7 +382,7 @@ function handleFilterChange(newFilters) {
 }
 
 /**
- * Initialize search component with improved UX settings
+ * Initialize search component
  */
 function initializeSearchComponent() {
   const container = document.querySelector('.search-container, .hero-search');
@@ -422,7 +422,7 @@ function initializeSearchComponent() {
     // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER NOW
     searchInstance.onFilterChange = handleFilterChange;
     
-    console.log('🎯 Search component initialized with improved UX settings');
+    console.log('🎯 Search component initialized');
     console.log('📝 Search component is now the SINGLE source of truth for search input');
     
     return searchInstance;
