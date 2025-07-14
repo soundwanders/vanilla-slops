@@ -116,7 +116,6 @@
 }
 
 .hero-title {
-  padding-top: -1em;
   margin: 0 0 var(--space-6) 0;
   font-weight: 800;
   line-height: 1.1;
