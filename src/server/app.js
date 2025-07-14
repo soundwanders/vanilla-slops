@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import gamesRoutes from './routes/gamesRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
@@ -8,6 +10,9 @@ import logRequests from './middlewares/logRequests.js';
  * Express application setup for Steam Launch Options API
  * Configures middleware, routes, and error handling
  */
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url); 
+const __dirname = path.dirname(__filename); 
 
 const app = express();
 
