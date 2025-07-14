@@ -112,7 +112,7 @@
   transition: all var(--transition-fast);
 }
 
-/* Game Title Enhancement */
+/* Game Title */
 .game-title {
   font-weight: 600;
   color: var(--color-text-primary);
@@ -400,7 +400,7 @@
   box-shadow: var(--shadow-md);
 }
 
-/* No Options State Enhancement */
+/* No Options State */
 .no-options {
   text-align: center;
   padding: var(--space-12);
