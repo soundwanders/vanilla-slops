@@ -13,9 +13,34 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Development origins
+    const devOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+    
+    if (process.env.NODE_ENV === 'production') {
+      // If DOMAIN_NAME is set, use it
+      if (process.env.DOMAIN_NAME && origin === process.env.DOMAIN_NAME) {
+        return callback(null, true);
+      }
+      
+      // Bootstrap: Allow any railway.app domain if DOMAIN_NAME not set
+      if (!process.env.DOMAIN_NAME && origin.endsWith('.railway.app')) {
+        console.log(`🚀 Bootstrap: Allowing Railway domain ${origin}`);
+        return callback(null, true);
+      }
+    } else {
+      // Development: allow dev origins
+      if (devOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+    }
+    
+    console.warn(`❌ CORS: Blocked origin ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
