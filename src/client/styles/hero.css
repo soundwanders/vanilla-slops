@@ -212,6 +212,8 @@
 
 /* Quick Stats Section */
 .hero-stats {
+  position: relative;
+  z-index: var(--z-base);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -300,8 +302,8 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Active Filters Enhancement */
-.hero-filters .active-filters {
+/* Active Filters */
+.hero-filters .-filters {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
