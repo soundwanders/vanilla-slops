@@ -410,6 +410,11 @@
   border: 2px dashed var(--color-border);
 }
 
+.no-options ul {
+  list-style: none;
+  margin: 0 auto;
+}
+
 .no-options::before {
   content: '🔍';
   display: block;
