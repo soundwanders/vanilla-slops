@@ -15,9 +15,7 @@ const AppState = {
   filters: {},
   totalPages: 0,
   searchInstance: null,
-  filtersInitialized: false,
-  lastSearchQuery: '',
-  pendingSearchQuery: '' // Actively track user typing
+  filtersInitialized: false
 };
 
 /**
@@ -193,6 +191,9 @@ function populateOptionsFilter() {
   }
 }
 
+/**
+ * Load page with games data - called by search component
+ */
 async function loadPage(page = 1, replace = true) {
   if (AppState.isLoading) return;
   
@@ -219,7 +220,6 @@ async function loadPage(page = 1, replace = true) {
     // Update application state
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
-    AppState.lastSearchQuery = queryParams.search; // Track executed search
 
     // Update UI with smooth transitions
     updateResultsCount(response.total || 0);
@@ -263,9 +263,9 @@ function showSuccessFeedback(message) {
  * Loading state with UX
  */
 function showLoadingState(clearContent = false) {
-  const resultsList = document.getElementById('resultsList');
-  if (resultsList && clearContent) {
-    resultsList.innerHTML = `
+  const tableContainer = document.getElementById('table-container');
+  if (tableContainer && clearContent) {
+    tableContainer.innerHTML = `
       <div class="loading">
         <div class="spinner"></div>
         <span>Loading games...</span>
@@ -273,8 +273,8 @@ function showLoadingState(clearContent = false) {
     `;
   }
   
-  // Disable form elements during loading
-  const formElements = document.querySelectorAll('.filter-select, .search-input, .sort-select');
+  // Disable form elements during loading (but not search input - handled by search component)
+  const formElements = document.querySelectorAll('.filter-select, .sort-select');
   formElements.forEach(el => {
     el.disabled = true;
     el.style.opacity = '0.6';
@@ -289,7 +289,7 @@ function hideLoadingState() {
   loadingElements.forEach(el => el.remove());
   
   // Re-enable form elements
-  const formElements = document.querySelectorAll('.filter-select, .search-input, .sort-select');
+  const formElements = document.querySelectorAll('.filter-select, .sort-select');
   formElements.forEach(el => {
     el.disabled = false;
     el.style.opacity = '';
@@ -300,9 +300,9 @@ function hideLoadingState() {
  * Error state
  */
 function showErrorState(message) {
-  const resultsList = document.getElementById('resultsList');
-  if (resultsList) {
-    resultsList.innerHTML = `
+  const tableContainer = document.getElementById('table-container');
+  if (tableContainer) {
+    tableContainer.innerHTML = `
       <div class="error">
         <h3>❌ Error Loading Games</h3>
         <p>${message}</p>
@@ -314,7 +314,6 @@ function showErrorState(message) {
   }
 }
 
-// Rest of the existing functions remain the same...
 function updateResultsCount(total) {
   const resultsCount = document.getElementById('resultsCount');
   if (resultsCount) {
@@ -368,50 +367,25 @@ function parseURLParams() {
 }
 
 /**
- * Filter change handler with "smart search" execution
+ * Handle filter changes from search component - SINGLE SOURCE OF TRUTH
+ * This is called by the search component when filters change
  */
 function handleFilterChange(newFilters) {
-  console.log('Filter change:', newFilters);
+  console.log('🔄 Filter change received from search component:', newFilters);
   
-  const oldFilters = { ...AppState.filters };
+  // Update app state
   AppState.filters = { ...AppState.filters, ...newFilters };
-  AppState.currentPage = 1;
-
-  // Check if this is just a search query change vs other filters
-  const searchChanged = newFilters.search !== undefined && newFilters.search !== oldFilters.search;
-  const otherFiltersChanged = Object.keys(newFilters).some(key => 
-    key !== 'search' && newFilters[key] !== oldFilters[key]
-  );
-
-  // Immediately execute search for:
-  // 1. Non-search filter changes (dropdown selections, etc.)
-  // 2. Search suggestions selections (handled by search component)
-  // 3. Empty search (clear search)
-  if (otherFiltersChanged || 
-      (searchChanged && newFilters.search === '') ||
-      (searchChanged && newFilters.fromSuggestion)) {
-    
-    loadPage(1, true);
-  } 
-  // For search text changes, just update the pending state
-  else if (searchChanged) {
-    AppState.pendingSearchQuery = newFilters.search;
-    updateSearchIndicator();
-  }
+  AppState.currentPage = 1; // Reset to first page on filter change
+  
+  // Load new results
+  loadPage(1, true);
 }
 
 /**
- * Execute pending search - called by Enter key or search button
+ * Initialize search component with improved UX settings
  */
-function executePendingSearch() {
-  if (AppState.pendingSearchQuery !== AppState.lastSearchQuery) {
-    AppState.filters.search = AppState.pendingSearchQuery;
-    loadPage(1, true);
-  }
-}
-
 function initializeSearchComponent() {
-  const container = document.querySelector('.search-container');
+  const container = document.querySelector('.search-container, .hero-search');
   if (!container) {
     console.error('Search container not found in DOM');
     return null;
@@ -435,16 +409,21 @@ function initializeSearchComponent() {
 
     const searchInstance = new SlopSearch(searchConfig);
     
-    // Callback distinguishes suggestion clicks from typing
-    searchInstance.onFilterChange = (filters, metadata = {}) => {
-      if (metadata.fromSuggestion) {
-        // Immediately execute search for suggestion clicks
-        handleFilterChange({ ...filters, fromSuggestion: true });
-      } else {
-        // For typing, just update suggestions
-        handleFilterChange(filters);
-      }
-    };
+    // Configure for optimal UX - eliminates choppy experience
+    searchInstance.configure({
+      suggestionsDelay: 150,        // Keep suggestions fast and responsive
+      searchDelay: 800,             // Much slower main search (was 300ms)
+      minCharsForSearch: 3,         // Only search after 3 characters
+      enableSearchOnEnter: true,    // Allow Enter key for immediate search
+      enableProgressiveDebounce: true, // Longer delays for rapid typing
+      enableClickOutsideSearch: true   // Search when clicking outside
+    });
+    
+    // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER NOW
+    searchInstance.onFilterChange = handleFilterChange;
+    
+    console.log('🎯 Search component initialized with improved UX settings');
+    console.log('📝 Search component is now the SINGLE source of truth for search input');
     
     return searchInstance;
   } catch (error) {
@@ -460,6 +439,7 @@ async function initializeApp() {
   try {
     console.log('🚀 Initializing Vanilla Slops app...');
     
+    // Parse URL params first
     parseURLParams();
     
     // Initialize components in sequence
@@ -468,6 +448,34 @@ async function initializeApp() {
     
     // Initialize filters before loading data
     await initializeFilters();
+    
+    // Apply URL params to search component if it exists and has values
+    if (AppState.searchInstance && Object.keys(AppState.filters).some(key => AppState.filters[key])) {
+      // Set the search input value from URL
+      if (AppState.filters.search && AppState.searchInstance.searchInput) {
+        AppState.searchInstance.searchInput.value = AppState.filters.search;
+        AppState.searchInstance.currentQuery = AppState.filters.search;
+      }
+      
+      // Set filter values from URL
+      Object.entries(AppState.filters).forEach(([key, value]) => {
+        if (value && AppState.searchInstance.filterElements[key]) {
+          AppState.searchInstance.filterElements[key].value = value;
+          AppState.searchInstance.currentFilters[key] = value;
+        }
+      });
+      
+      // Set sort values from URL
+      if (AppState.filters.sort) {
+        AppState.searchInstance.currentSort = AppState.filters.sort;
+      }
+      if (AppState.filters.order) {
+        AppState.searchInstance.currentOrder = AppState.filters.order;
+      }
+      
+      // Update active filters display
+      AppState.searchInstance.renderActiveFilters();
+    }
     
     // Preload popular content
     preloadPopularContent().catch(err => 
@@ -489,32 +497,8 @@ async function initializeApp() {
 }
 
 /**
- * Update search indicator to show pending vs executed search
+ * Setup event listeners - REMOVED DUPLICATE SEARCH INPUT LISTENERS
  */
-function updateSearchIndicator() {
-  const searchInput = document.getElementById('searchInput');
-  const searchButton = document.getElementById('searchButton');
-  
-  if (!searchInput) return;
-  
-  const hasPendingSearch = AppState.pendingSearchQuery !== AppState.lastSearchQuery;
-  
-  // Add/remove visual indicator for pending search
-  if (hasPendingSearch && AppState.pendingSearchQuery.trim()) {
-    searchInput.classList.add('has-pending-search');
-    if (searchButton) {
-      searchButton.classList.add('search-ready');
-      searchButton.textContent = '🔍 Search';
-    }
-  } else {
-    searchInput.classList.remove('has-pending-search');
-    if (searchButton) {
-      searchButton.classList.remove('search-ready');
-      searchButton.textContent = '🔍';
-    }
-  }
-}
-
 function setupEventListeners() {
   // Browser navigation
   window.addEventListener('popstate', () => {
@@ -522,73 +506,11 @@ function setupEventListeners() {
     loadPage(AppState.currentPage);
   });
 
-  // Manual filter changes (non-search)
-  const filterElements = ['categoryFilter', 'developerFilter', 'optionsFilter', 'yearFilter'];
-  filterElements.forEach(filterId => {
-    const element = document.getElementById(filterId);
-    if (element) {
-      element.addEventListener('change', (e) => {
-        const filterType = filterId.replace('Filter', '');
-        handleFilterChange({ [filterType]: e.target.value });
-      });
-    }
-  });
-
-  // Search input handling
-  const searchInput = document.getElementById('searchInput');
-  if (searchInput) {
-    // Handle typing (for suggestions only, not search execution)
-    let debounceTimeout;
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.trim();
-      AppState.pendingSearchQuery = query;
-      
-      // Clear timeout for suggestion updates
-      clearTimeout(debounceTimeout);
-      
-      // Update suggestions frequently (for good UX)
-      debounceTimeout = setTimeout(() => {
-        if (AppState.searchInstance) {
-          AppState.searchInstance.updateSuggestions(query);
-        }
-      }, 200);
-      
-      // Update visual indicator
-      updateSearchIndicator();
-    });
-
-    // Handle Enter key for search execution
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        executePendingSearch();
-      }
-    });
-  }
-
-  // Add search button for explicit search execution
-  addSearchButton();
-}
-
-/**
- * Submit button next to searchbar
- */
-function addSearchButton() {
-  const searchContainer = document.querySelector('.search-field');
-  if (!searchContainer || document.getElementById('searchButton')) return;
+  // NOTE: All search input and filter event listeners are now handled by SlopSearch component
+  // This eliminates the duplicate listeners that were causing the choppy experience
   
-  const searchButton = document.createElement('button');
-  searchButton.id = 'searchButton';
-  searchButton.type = 'button';
-  searchButton.className = 'search-button';
-  searchButton.textContent = '🔍';
-  searchButton.title = 'Execute search (Enter)';
-  
-  searchButton.addEventListener('click', () => {
-    executePendingSearch();
-  });
-  
-  searchContainer.appendChild(searchButton);
+  console.log('✅ Event listeners setup complete');
+  console.log('📝 Search input listeners are now handled exclusively by SlopSearch component');
 }
 
 function ensureRequiredDOMElements() {
@@ -605,6 +527,15 @@ function ensureRequiredDOMElements() {
     tableContainer.id = 'table-container';
     appContainer.appendChild(tableContainer);
   }
+
+  // Ensure results count element exists
+  let resultsCount = document.getElementById('resultsCount');
+  if (!resultsCount) {
+    resultsCount = document.createElement('div');
+    resultsCount.id = 'resultsCount';
+    resultsCount.className = 'results-count';
+    appContainer.insertBefore(resultsCount, tableContainer);
+  }
 }
 
 // Initialize when DOM is ready
@@ -617,4 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Export for debugging
 window.AppState = AppState;
 window.loadPage = loadPage;
-window.executePendingSearch = executePendingSearch;
+
+// Export the handleFilterChange function for potential external use
+export { handleFilterChange };
