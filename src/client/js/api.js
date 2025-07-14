@@ -5,9 +5,9 @@
  */
 
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://notice-me-im-a-tester-zester-domain.zomb/api' 
-  : 'http://localhost:8000/api'; // Changed from 3000 to 8000
-
+  ? '/api'  // Use relative URL in production (same domain)
+  : 'http://localhost:8000/api';
+  
 /**
  * Intelligent cache implementation with TTL and size management
  * Prevents memory leaks while maintaining performance benefits

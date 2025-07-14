@@ -168,10 +168,6 @@ function setupLaunchOptionListeners() {
   console.log(`🎮 Setting up ${buttons.length} launch option button listeners`);
 
   buttons.forEach(button => {
-    /**
-     * Handle click events on launch options buttons
-     * @param {Event} e - Click event object
-     */
     button.addEventListener('click', async (e) => {
       const gameId = e.currentTarget.dataset.gameId;
       const optionsRow = document.getElementById(`launch-options-${gameId}`);
@@ -199,13 +195,11 @@ function setupLaunchOptionListeners() {
         console.log(`📡 Fetching options for game ${gameId}...`);
         const startTime = performance.now();
         
-        // Fetch launch options from API
         const options = await fetchLaunchOptions(gameId);
         
         const endTime = performance.now();
         console.log(`📦 Received ${options.length} options in ${Math.round(endTime - startTime)}ms:`, options);
 
-        // Handle empty results case
         if (options.length === 0) {
           cell.innerHTML = createNoOptionsMessage(gameId);
           return;
@@ -213,7 +207,7 @@ function setupLaunchOptionListeners() {
 
         // Create the interactive options list
         const list = createLaunchOptionsList(options);
-        const closeContainer = createCloseButton();
+        const closeContainer = createCloseButton(gameId); // Pass gameId here
 
         // Replace loading state with content
         cell.innerHTML = '';
@@ -239,23 +233,36 @@ function setupLaunchOptionListeners() {
  * @since 1.0.0
  */
 function createNoOptionsMessage(gameId) {
-  return `
-    <div class="no-options">
-      <h4>No Launch Options Found</h4>
-      <p>No launch options are currently available for this game.</p>
-      <details>
-        <summary>Why might this happen?</summary>
-        <ul>
-          <li>• No community members have submitted options yet</li>
-          <li>• This game doesn't benefit from launch options</li>
-          <li>• Database hasn't been populated for this game</li>
-          <li>• Game ID ${gameId} has no associated options in the database</li>
-        </ul>
-      </details>
-      <button onclick="this.closest('.launch-options-row').style.display='none'" 
-              class="btn btn-sm btn-ghost">Close</button>
-    </div>
+  const container = document.createElement('div');
+  container.className = 'no-options';
+  
+  container.innerHTML = `
+    <h4>No Launch Options Found</h4>
+    <p>No launch options are currently available for this game.</p>
+    <details>
+      <summary>Why might this happen?</summary>
+      <ul>
+        <li>• No community members have submitted options yet</li>
+        <li>• This game doesn't benefit from launch options</li>
+        <li>• Database hasn't been populated for this game</li>
+        <li>• Game ID ${gameId} has no associated options in the database</li>
+      </ul>
+    </details>
   `;
+  
+  // Create and add close button with proper event listener
+  const closeButton = document.createElement('button');
+  closeButton.className = 'btn btn-sm btn-ghost';
+  closeButton.textContent = 'Close';
+  closeButton.addEventListener('click', () => {
+    const optionsRow = document.getElementById(`launch-options-${gameId}`);
+    if (optionsRow) {
+      optionsRow.style.display = 'none';
+    }
+  });
+  
+  container.appendChild(closeButton);
+  return container.outerHTML;
 }
 
 /**
@@ -359,21 +366,45 @@ function addCopyFunctionality(item, command) {
 }
 
 /**
- * Creates a close button container for the launch options display
- * 
+ * Creates a close button container with proper event listener
+ * @param {string} gameId - The game ID for targeting the specific row
  * @returns {HTMLDivElement} The close button container element
- * 
- * @since 1.0.0
  */
-function createCloseButton() {
+function createCloseButton(gameId) {
   const closeContainer = document.createElement('div');
   closeContainer.className = 'launch-options-close-container';
-  closeContainer.innerHTML = `
-    <button onclick="this.closest('.launch-options-row').style.display='none'" 
-            class="launch-options-close">
-      Close Launch Options
-    </button>
-  `;
+  
+  const closeButton = document.createElement('button');
+  closeButton.className = 'launch-options-close';
+  closeButton.textContent = 'Close Launch Options';
+  closeButton.setAttribute('aria-label', `Close launch options for game ${gameId}`);
+  
+  // Add proper event listener instead of inline onclick
+  closeButton.addEventListener('click', () => {
+    console.log(`Closing launch options for game ${gameId}`);
+    
+    // Find and hide the launch options row
+    const optionsRow = document.getElementById(`launch-options-${gameId}`);
+    if (optionsRow) {
+      optionsRow.style.display = 'none';
+      console.log(`✅ Successfully closed launch options for game ${gameId}`);
+      
+      // Optional: Add a smooth fade out animation
+      optionsRow.style.opacity = '0';
+      optionsRow.style.transition = 'opacity 0.3s ease-out';
+      
+      setTimeout(() => {
+        optionsRow.style.display = 'none';
+        // Reset for next time
+        optionsRow.style.opacity = '';
+        optionsRow.style.transition = '';
+      }, 300);
+    } else {
+      console.warn(`❌ Could not find launch options row for game ${gameId}`);
+    }
+  });
+  
+  closeContainer.appendChild(closeButton);
   return closeContainer;
 }
 
