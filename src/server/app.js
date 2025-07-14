@@ -9,42 +9,36 @@ import logRequests from './middlewares/logRequests.js';
  * Configures middleware, routes, and error handling
  */
 
-const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [
-  'http://localhost:3000', // Frontend dev server
-  'http://127.0.0.1:3000', // Alternative localhost
-  'http://localhost:5173', // Vite default port
-  'http://127.0.0.1:5173'  // Alternative Vite port
-];
-
 const app = express();
 
-// CORS configuration - Allow frontend to access API
+// CORS configuration
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    
-    // In development, be more permissive
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🌐 CORS: Allowing origin ${origin} in development mode`);
-      return callback(null, true);
-    }
-    
-    console.warn(`❌ CORS: Blocked origin ${origin}`);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,
-  optionsSuccessStatus: 200 // For legacy browser support
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL] 
+    : ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true
 }));
 
 // Middleware setup
 app.use(express.json());
 app.use(logRequests);
+
+// Serve static files from the client build
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../client/dist');
+  app.use(express.static(clientBuildPath));
+  
+  // Handle SPA routing
+  app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'API route not found' });
+    }
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
+
+// API routes
+app.use('/api/games', gamesRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -52,18 +46,6 @@ app.get('/health', (req, res) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     service: 'Steam Launch Options API'
-  });
-});
-
-// API routes
-app.use('/api/games', gamesRoutes);
-
-// Test endpoint for debugging
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: 'API is working!',
-    timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || 'development'
   });
 });
 
