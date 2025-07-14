@@ -15,7 +15,9 @@ const AppState = {
   filters: {},
   totalPages: 0,
   searchInstance: null,
-  filtersInitialized: false
+  filtersInitialized: false,
+  lastSearchQuery: '',
+  pendingSearchQuery: '' // Actively track user typing
 };
 
 /**
@@ -217,6 +219,7 @@ async function loadPage(page = 1, replace = true) {
     // Update application state
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
+    AppState.lastSearchQuery = queryParams.search; // Track executed search
 
     // Update UI with smooth transitions
     updateResultsCount(response.total || 0);
@@ -364,13 +367,47 @@ function parseURLParams() {
   };
 }
 
+/**
+ * Filter change handler with "smart search" execution
+ */
 function handleFilterChange(newFilters) {
   console.log('Filter change:', newFilters);
   
+  const oldFilters = { ...AppState.filters };
   AppState.filters = { ...AppState.filters, ...newFilters };
   AppState.currentPage = 1;
-  
-  loadPage(1, true);
+
+  // Check if this is just a search query change vs other filters
+  const searchChanged = newFilters.search !== undefined && newFilters.search !== oldFilters.search;
+  const otherFiltersChanged = Object.keys(newFilters).some(key => 
+    key !== 'search' && newFilters[key] !== oldFilters[key]
+  );
+
+  // Immediately execute search for:
+  // 1. Non-search filter changes (dropdown selections, etc.)
+  // 2. Search suggestions selections (handled by search component)
+  // 3. Empty search (clear search)
+  if (otherFiltersChanged || 
+      (searchChanged && newFilters.search === '') ||
+      (searchChanged && newFilters.fromSuggestion)) {
+    
+    loadPage(1, true);
+  } 
+  // For search text changes, just update the pending state
+  else if (searchChanged) {
+    AppState.pendingSearchQuery = newFilters.search;
+    updateSearchIndicator();
+  }
+}
+
+/**
+ * Execute pending search - called by Enter key or search button
+ */
+function executePendingSearch() {
+  if (AppState.pendingSearchQuery !== AppState.lastSearchQuery) {
+    AppState.filters.search = AppState.pendingSearchQuery;
+    loadPage(1, true);
+  }
 }
 
 function initializeSearchComponent() {
@@ -397,7 +434,17 @@ function initializeSearchComponent() {
     };
 
     const searchInstance = new SlopSearch(searchConfig);
-    searchInstance.onFilterChange = handleFilterChange;
+    
+    // Callback distinguishes suggestion clicks from typing
+    searchInstance.onFilterChange = (filters, metadata = {}) => {
+      if (metadata.fromSuggestion) {
+        // Immediately execute search for suggestion clicks
+        handleFilterChange({ ...filters, fromSuggestion: true });
+      } else {
+        // For typing, just update suggestions
+        handleFilterChange(filters);
+      }
+    };
     
     return searchInstance;
   } catch (error) {
@@ -441,6 +488,33 @@ async function initializeApp() {
   }
 }
 
+/**
+ * Update search indicator to show pending vs executed search
+ */
+function updateSearchIndicator() {
+  const searchInput = document.getElementById('searchInput');
+  const searchButton = document.getElementById('searchButton');
+  
+  if (!searchInput) return;
+  
+  const hasPendingSearch = AppState.pendingSearchQuery !== AppState.lastSearchQuery;
+  
+  // Add/remove visual indicator for pending search
+  if (hasPendingSearch && AppState.pendingSearchQuery.trim()) {
+    searchInput.classList.add('has-pending-search');
+    if (searchButton) {
+      searchButton.classList.add('search-ready');
+      searchButton.textContent = '🔍 Search';
+    }
+  } else {
+    searchInput.classList.remove('has-pending-search');
+    if (searchButton) {
+      searchButton.classList.remove('search-ready');
+      searchButton.textContent = '🔍';
+    }
+  }
+}
+
 function setupEventListeners() {
   // Browser navigation
   window.addEventListener('popstate', () => {
@@ -448,19 +522,7 @@ function setupEventListeners() {
     loadPage(AppState.currentPage);
   });
 
-  // Manual sort changes
-  const sortSelect = document.getElementById('sortSelect');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', (e) => {
-      const [sortField, sortOrder] = e.target.value.split('-');
-      handleFilterChange({
-        sort: sortField || 'title',
-        order: sortOrder || 'asc'
-      });
-    });
-  }
-
-  // Manual filter changes
+  // Manual filter changes (non-search)
   const filterElements = ['categoryFilter', 'developerFilter', 'optionsFilter', 'yearFilter'];
   filterElements.forEach(filterId => {
     const element = document.getElementById(filterId);
@@ -472,17 +534,61 @@ function setupEventListeners() {
     }
   });
 
-  // Debounced search input
+  // Search input handling
   const searchInput = document.getElementById('searchInput');
   if (searchInput) {
+    // Handle typing (for suggestions only, not search execution)
     let debounceTimeout;
     searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      AppState.pendingSearchQuery = query;
+      
+      // Clear timeout for suggestion updates
       clearTimeout(debounceTimeout);
+      
+      // Update suggestions frequently (for good UX)
       debounceTimeout = setTimeout(() => {
-        handleFilterChange({ search: e.target.value.trim() });
-      }, 300);
+        if (AppState.searchInstance) {
+          AppState.searchInstance.updateSuggestions(query);
+        }
+      }, 200);
+      
+      // Update visual indicator
+      updateSearchIndicator();
+    });
+
+    // Handle Enter key for search execution
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executePendingSearch();
+      }
     });
   }
+
+  // Add search button for explicit search execution
+  addSearchButton();
+}
+
+/**
+ * Submit button next to searchbar
+ */
+function addSearchButton() {
+  const searchContainer = document.querySelector('.search-field');
+  if (!searchContainer || document.getElementById('searchButton')) return;
+  
+  const searchButton = document.createElement('button');
+  searchButton.id = 'searchButton';
+  searchButton.type = 'button';
+  searchButton.className = 'search-button';
+  searchButton.textContent = '🔍';
+  searchButton.title = 'Execute search (Enter)';
+  
+  searchButton.addEventListener('click', () => {
+    executePendingSearch();
+  });
+  
+  searchContainer.appendChild(searchButton);
 }
 
 function ensureRequiredDOMElements() {
@@ -511,3 +617,4 @@ document.addEventListener('DOMContentLoaded', () => {
 // Export for debugging
 window.AppState = AppState;
 window.loadPage = loadPage;
+window.executePendingSearch = executePendingSearch;
