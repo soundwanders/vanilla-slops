@@ -389,7 +389,7 @@ function createCloseButton(gameId) {
       optionsRow.style.display = 'none';
       console.log(`✅ Successfully closed launch options for game ${gameId}`);
       
-      // Optional: Add a smooth fade out animation
+      // Add a smooth fade out animation
       optionsRow.style.opacity = '0';
       optionsRow.style.transition = 'opacity 0.3s ease-out';
       

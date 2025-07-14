@@ -191,7 +191,6 @@
     0 0 0 4px rgba(59, 130, 246, 0.1),
     var(--shadow-xl),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
 }
 
 .hero-search .search-icon {
@@ -210,8 +209,15 @@
   color: var(--color-accent);
 }
 
+.hero-search .search-field:focus-within {
+  transform: translateY(-2px);
+  transition: transform var(--transition-fast);
+}
+
 /* Quick Stats Section */
 .hero-stats {
+  position: relative;
+  z-index: var(--z-behind);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -300,8 +306,8 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Active Filters Enhancement */
-.hero-filters .active-filters {
+/* Active Filters */
+.hero-filters .-filters {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
