@@ -60,16 +60,23 @@
 /* Search Input Wrapper */
 .search-input-wrapper {
   position: relative;
-  margin-bottom: var(--space-8);
   max-width: 700px;
+  margin-bottom: 0;
   margin-left: auto;
   margin-right: auto;
+  contain: layout;
 }
 
 .search-field {
   position: relative;
   display: flex;
   align-items: center;
+  contain: layout;
+}
+
+.search-field:focus-within {
+  transform: translateY(-1px);
+  transition: transform var(--transition-fast);
 }
 
 .search-input {
@@ -91,7 +98,6 @@
   border-color: var(--color-accent);
   box-shadow: var(--shadow-glow), var(--shadow-lg);
   background: var(--color-surface-raised);
-  transform: translateY(-1px);
 }
 
 .search-input::placeholder {
@@ -99,7 +105,6 @@
   font-weight: 400;
 }
 
-/* NEW: Search Pending State */
 .search-input.search-pending {
   border-color: var(--color-warning);
   box-shadow: 0 0 0 1px var(--color-warning), var(--shadow-sm);
@@ -137,7 +142,7 @@
 
 /* Search Icon */
 .search-icon {
-  position: absolute;
+  position: relative;
   left: var(--space-4);
   top: 50%;
   transform: translateY(-50%);
@@ -159,7 +164,8 @@
 
 /* Suggestions Dropdown */
 .suggestions-dropdown {
-  position: absolute;
+  display: none;
+  position: fixed;
   top: calc(100% + var(--space-2));
   left: 0;
   right: 0;
@@ -171,7 +177,9 @@
   backdrop-filter: blur(20px);
   max-height: 20rem;
   overflow-y: auto;
-  display: none;
+  contain: layout style;
+  will-change: transform, opacity;
+  pointer-events: auto;
   transform-origin: top center;
   animation: suggestionsSlideIn 0.2s ease-out;
 }
@@ -247,6 +255,7 @@
 }
 
 .suggestion-item.no-suggestions {
+  display: none !important; /* Force hide to prevent any layout impact */
   color: var(--color-text-tertiary);
   font-style: italic;
   cursor: default;

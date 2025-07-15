@@ -330,19 +330,17 @@ export default class SlopSearch {
     }
   }
 
-  /**
-   * Render suggestions
-   */
+  /** Render search suggestions */
   renderSuggestions() {
     if (!this.suggestionsDropdown) return;
 
+    // Simply hide dropdown when no suggestions - no indicator at all
     if (!this.suggestions || this.suggestions.length === 0) {
-      this.suggestionsDropdown.innerHTML = '<div class="suggestion-item no-suggestions">No suggestions found</div>';
-      this.showSuggestions();
+      this.hideSuggestions();
       return;
     }
 
-    // Group suggestions by category
+    // Rest of the existing code stays the same...
     const groupedSuggestions = this.suggestions.reduce((groups, suggestion, index) => {
       const category = suggestion.category || 'Other';
       if (!groups[category]) groups[category] = [];
@@ -357,8 +355,8 @@ export default class SlopSearch {
         const isSelected = item.originalIndex === this.selectedSuggestionIndex;
         html += `
           <div class="suggestion-item ${isSelected ? 'highlighted' : ''}" 
-               data-index="${item.originalIndex}"
-               data-value="${this.escapeHtml(item.value)}">
+              data-index="${item.originalIndex}"
+              data-value="${this.escapeHtml(item.value)}">
             <span class="suggestion-value">${this.highlightMatch(item.value, this.currentQuery)}</span>
           </div>
         `;
