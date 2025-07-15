@@ -208,7 +208,6 @@ function restoreScrollPosition() {
 }
 
 /**
- * Improved load page function with better scroll management
  * Load page with games data - called by search component
  */
 async function loadPage(page = 1, replace = true, reason = 'search') {
@@ -251,7 +250,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
 
     updateURL();
 
-    // Improved feedback logic
+    // Feedback logic
     if (response.games?.length > 0) {
       if (reason !== 'launch-options-interaction') {
         showSuccessFeedback(`Loaded ${response.games.length} games`);
@@ -448,7 +447,6 @@ function initializeSearchComponent() {
 
     const searchInstance = new SlopSearch(searchConfig);
     
-    // Configure for optimal UX - eliminates choppy experience
     searchInstance.configure({
       suggestionsDelay: 150,        // Keep suggestions fast and responsive
       searchDelay: 800,             // Much slower main search (was 300ms)
@@ -458,7 +456,7 @@ function initializeSearchComponent() {
       enableClickOutsideSearch: true   // Search when clicking outside (now with safe zones)
     });
     
-    // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER NOW
+    // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER
     searchInstance.onFilterChange = handleFilterChange;
     
     return searchInstance;
@@ -541,7 +539,6 @@ async function initializeApp() {
       console.warn('Failed to preload popular content:', err)
     );
     
-    // Load initial page
     await loadPage(AppState.currentPage, true, 'initial-load');
     
     // Add visual feedback that app is ready
