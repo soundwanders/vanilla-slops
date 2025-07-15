@@ -30,20 +30,17 @@ One of the core philosophies of this project is to recreate some of the function
 ## 🧙 Features
 
 #### **🔎 Smart Search & Discovery**
-- **Real-time search suggestions** with (mildly) intelligent autocomplete
-- **Multi-field search** across titles, developers, publishers with instant results
-- **Advanced filtering** by category, engine, release year, and launch option availability
+- **Real-time search suggestions** across titles, developers, publishers with instant results
+- **Custom filtering** by category, engine, release year, and launch options
 
 #### **🎯 Steam Launch Options Database**
-- **Community-verified launch options** with upvote/downvote system and reliability scoring
 - **Categorized by purpose**: Performance boosting, graphics optimization, compatibility fixes
 - **Source attribution** linking back to original documentation and community contributions
 
 #### **🛡️ Code Quality & Safety**
-- **Sub-100ms API responses** with intelligent caching and query optimization
 - **Accessibility-first design** with semantic HTML and full keyboard navigation
 - **Security hardened** with input validation, CORS policies, and rate limiting
-- **Type-safe architecture** using Zod schemas throughout the entire stack
+- **Type-safe architecture** using Zod schemas throughout the stack
 
 ---
 
@@ -55,11 +52,6 @@ One of the core philosophies of this project is to recreate some of the function
 - **Backend**: Node.js + Express.js with middleware-based architecture
 - **Database**: Supabase (PostgreSQL) with optimized queries and indexing
 - **Data Collection**: Python-based scraper with Steam API integration
-
-#### **Design Principles**
-- ⚡ **Performance First** - Minimal JavaScript bundle, efficient caching, optimized queries
-- 🎯 **User-Centric** - Intuitive interface, fast search, accessibility compliance
-- 🔧 **Developer Experience** - Clean code, comprehensive documentation, easy setup
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
@@ -163,9 +155,9 @@ Retrieve launch options for a specific game.
 
 ## 🧘 Contributing
 
-Vanilla Slops is a welcoming place, whether you're a first-timer or a seasoned developer I would love to hear your ideas.
-It's a great environment to get your feet wet because there's nothing at stake here. 
+Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, I would love to hear your ideas. 
 Your contributions can only make the project better, and maybe we'll both learn something along the way. 
+This is a personal project and is not intended for commercial use, advertisements, etc.
 
 [📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 

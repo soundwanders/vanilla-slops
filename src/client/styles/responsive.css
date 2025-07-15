@@ -140,10 +140,24 @@
     padding: var(--space-4);
   }
   
-  /* Modal adjustments */
-  .modal {
-    margin: var(--space-sm);
-    max-width: none;
+  .suggestions-dropdown {
+    max-height: 12rem;
+    border-radius: var(--radius-lg);
+    margin: 0 -var(--space-1); 
+  }
+  
+  .suggestion-item {
+    padding: var(--space-2) var(--space-3); 
+    font-size: var(--font-size-xs); 
+  }
+  
+  .suggestion-value {
+    font-size: var(--font-size-xs);
+  }
+  
+  .suggestion-category-header {
+    padding: var(--space-1) var(--space-3);
+    font-size: calc(var(--font-size-xs) * 0.9);
   }
   
   /* Theme toggle positioning */
