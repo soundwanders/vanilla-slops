@@ -633,7 +633,7 @@ body {
 
 /* Search Input States */
 .search-input.search-pending {
-  animation: searchPendingPulse 2s infinite ease-in-out;
+  animation: searchInputPending 2s infinite ease-in-out;
 }
 
 .search-pending-indicator {
