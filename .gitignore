@@ -37,9 +37,8 @@ src/scripts/appdetails_cache.json
 src/scripts/backups
 src/scripts/readme.md
 src/scripts/appdetails_cache.json.bak
-src/scripts/game_list_cache.json
+src/scripts/appdetails_cache.json
 src/scripts/test-output
-src/scripts/module-refactor
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
