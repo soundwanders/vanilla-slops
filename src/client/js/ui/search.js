@@ -64,11 +64,29 @@ export default class SlopSearch {
       enableClickOutsideSearch: true  // Search when clicking outside
     };
 
+    // Define safe zones where clicks shouldn't trigger searches
+    this.safeZones = [
+      '.search-input-wrapper',
+      '.search-field', 
+      '.suggestions-dropdown',
+      '.launch-options-row',        // NEW: Launch options area
+      '.launch-options-cell',       // NEW: Launch options cell
+      '.launch-option',             // NEW: Individual launch options
+      '.option-command',            // NEW: Command areas
+      '.option-meta',               // NEW: Meta information areas
+      '.launch-options-btn',        // NEW: Launch options buttons
+      '.launch-options-close',      // NEW: Close buttons
+      '.filter-select',             // Existing: Filter dropdowns
+      '.active-filters',            // Existing: Active filter tags
+      '.pagination-container',      // Existing: Pagination
+      '.theme-toggle'               // Existing: Theme toggle
+    ];
+
     // Initialize
     this.initializeEventListeners();
     this.loadInitialData();
     
-    console.log('🎯 SlopSearch initialized');
+    console.log('🎯 SlopSearch initialized with enhanced click-outside detection');
   }
 
   /**
@@ -181,6 +199,7 @@ export default class SlopSearch {
 
   /**
    * Add additional search triggers for better UX
+   * Improved click-outside detection to respect safe zones
    */
   addSearchTriggers() {
     // Search on Enter key (immediate)
@@ -195,18 +214,55 @@ export default class SlopSearch {
       });
     }
 
-    // Search when clicking outside (if search is pending)
+    // Improved click-outside detection with safe zones
     if (this.config.enableClickOutsideSearch) {
       document.addEventListener('click', (e) => {
-        if (!this.searchInput.contains(e.target) && 
-            !this.suggestionsDropdown?.contains(e.target) &&
-            this.searchTimeout) {
+        // Check if click is in a safe zone
+        if (this.isClickInSafeZone(e.target)) {
+          return; // Don't trigger search for safe zone clicks
+        }
+        
+        // Only trigger search if we have a pending search timeout
+        if (this.searchTimeout) {
           clearTimeout(this.searchTimeout);
-          console.log('⚡ Search triggered by clicking outside');
+          console.log('⚡ Search triggered by clicking outside safe zones');
           this.executeSearch();
         }
       });
     }
+  }
+
+  /**
+   * New method to check if a click is in a safe zone
+   * Prevents search triggers when interacting with launch options and other UI elements
+   * 
+   * @param {Element} target - The clicked element
+   * @returns {boolean} True if click is in a safe zone
+   */
+  isClickInSafeZone(target) {
+    // Check if the target or any of its parents match a safe zone selector
+    for (const selector of this.safeZones) {
+      if (target.closest(selector)) {
+        return true;
+      }
+    }
+    
+    // Special case: Check for launch options related elements by data attributes
+    const clickedElement = target.closest('[data-game-id]') || 
+                           target.closest('.launch-options-row') ||
+                           target.closest('.games-table tbody tr');
+    
+    if (clickedElement) {
+      return true;
+    }
+    
+    // Special case: Check if we're inside a table row that might contain launch options
+    const tableRow = target.closest('tr');
+    if (tableRow && tableRow.classList.contains('launch-options-row')) {
+      return true;
+    }
+    
+    return false;
   }
 
   /**

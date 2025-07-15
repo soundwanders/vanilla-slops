@@ -171,7 +171,7 @@
   }
 }
 
-@keyframes copySuccess {
+@keyframes copySuccessAnimation {
   0% {
     transform: scale(1);
     background-color: var(--color-code-background);
@@ -179,12 +179,14 @@
   50% {
     transform: scale(1.02);
     background-color: var(--color-success);
+    color: var(--color-text-inverse);
   }
   100% {
     transform: scale(1);
     background-color: var(--color-code-background);
   }
 }
+
 
 @keyframes checkmark {
   0% {
@@ -225,7 +227,7 @@
 }
 
 /* Suggestions Dropdown Animation */
-@keyframes suggestionsSlideIn {
+@keyframes suggestionSlideIn {
   from {
     opacity: 0;
     transform: translateY(-8px) scale(0.95);
@@ -294,23 +296,6 @@
   to {
     opacity: 1;
     transform: translateX(0);
-  }
-}
-
-/* Copy Success Animation */
-@keyframes copySuccessAnimation {
-  0% {
-    transform: scale(1);
-    background-color: var(--color-code-background);
-  }
-  50% {
-    transform: scale(1.02);
-    background-color: var(--color-success);
-    color: var(--color-text-inverse);
-  }
-  100% {
-    transform: scale(1);
-    background-color: var(--color-code-background);
   }
 }
 
@@ -398,8 +383,8 @@
   animation: searchPendingPulse 2s infinite ease-in-out;
 }
 
-.animate-suggestionsSlideIn {
-  animation: suggestionsSlideIn 0.2s ease-out;
+.animate-suggestionSlideIn {
+  animation: suggestionSlideIn 0.2s ease-out;
 }
 
 .animate-filterTagSlideIn {
@@ -408,10 +393,6 @@
 
 .animate-successPulse {
   animation: successPulse 0.6s ease-out;
-}
-
-.animate-copySuccess {
-  animation: copySuccessAnimation 0.6s ease-out;
 }
 
 /* =============================================================================
@@ -501,7 +482,7 @@ body {
    Animations for specific UI components
    ============================================================================= */
 
-/* Enhanced Button Ripple Effect */
+/* Button Ripple Effect */
 .btn,
 .launch-options-btn {
   position: relative;
@@ -529,7 +510,7 @@ body {
   height: 200px;
 }
 
-/* Enhanced Filter Tags */
+/* Filter Tags */
 .filter-tag {
   animation: filterTagSlideIn 0.3s ease-out;
   position: relative;
@@ -576,7 +557,7 @@ body {
   left: 100%;
 }
 
-/* Enhanced Table Row Stagger */
+/* Table Row Stagger */
 .games-table tbody tr {
   opacity: 0;
   animation: slideInLeft 0.3s ease-out forwards;
@@ -593,7 +574,7 @@ body {
 .games-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
 .games-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
 
-/* Enhanced Launch Options */
+/* Launch Options */
 .launch-options-list {
   opacity: 0;
   animation: launchOptionsFadeIn 0.6s ease-out 0.2s forwards;
@@ -611,15 +592,15 @@ body {
 .launch-option:nth-child(5) { animation-delay: 0.3s; }
 .launch-option:nth-child(6) { animation-delay: 0.35s; }
 
-/* Enhanced Copy Success Feedback */
+/* Copy Success Feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.6s ease-out;
 }
 
-/* Enhanced Suggestions Dropdown */
+/* Suggestions Dropdown */
 .suggestions-dropdown {
   transform-origin: top center;
-  animation: suggestionsSlideIn 0.2s ease-out;
+  animation: suggestionSlideIn 0.2s ease-out;
 }
 
 .suggestion-item {
