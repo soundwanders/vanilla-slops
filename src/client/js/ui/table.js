@@ -2,54 +2,17 @@
  * @fileoverview Table rendering and interaction module for Steam games display
  * Handles the rendering of game data in a tabular format with expandable launch options
  * Provides interactive elements for viewing and copying launch options
- * 
- * @author Vanilla Slops Team
- * @version 1.0.0
  */
 
 import { fetchLaunchOptions } from '../api.js';
 
 /**
- * @typedef {Object} GameData
- * @property {number} app_id - Steam application ID
- * @property {string} [title] - Game title
- * @property {string} [developer] - Game developer name
- * @property {string} [publisher] - Game publisher name
- * @property {string} [release_date] - Game release date
- * @property {string} [engine] - Game engine used
- * @property {number} [total_options_count] - Number of available launch options
- */
-
-/**
- * @typedef {Object} LaunchOption
- * @property {string} id - Unique identifier for the launch option
- * @property {string} option - Launch command/option text
- * @property {string} [command] - Alternative command field
- * @property {string} [description] - Description of what the option does
- * @property {string} [source] - Source of the launch option (e.g., 'Community', 'Official')
- * @property {number} [upvotes] - Number of community upvotes
- * @property {number} [downvotes] - Number of community downvotes
- * @property {boolean} [verified] - Whether the option is community verified
- * @property {string} [created_at] - ISO timestamp of when option was created
- */
-
-/**
  * Renders a responsive table of Steam games with interactive launch options functionality
  * Creates table structure, populates with game data, and sets up event listeners
  * 
- * @param {GameData[]} games - Array of game objects to display in the table
+ * @param {Array} games - Array of game objects to display in the table
  * @param {boolean} [append=false] - Whether to append games to existing table or create new table
  * @returns {void}
- * 
- * @example
- * // Render initial games list
- * renderTable(gamesList, false);
- * 
- * @example
- * // Append more games to existing table (for pagination)
- * renderTable(moreGames, true);
- * 
- * @since 1.0.0
  */
 export function renderTable(games, append = false) {
   const tableContainer = document.getElementById('table-container') || createTableContainer();
@@ -90,7 +53,7 @@ export function renderTable(games, append = false) {
       <td>${game.release_date || 'Unknown'}</td>
       <td>${game.engine || 'Unknown'}</td>
       <td>
-        <button class="launch-options-btn" data-game-id="${game.app_id}">
+        <button class="launch-options-btn" data-game-id="${game.app_id}" type="button">
           Show Options (${game.total_options_count ?? 0})
         </button>
       </td>
@@ -119,15 +82,6 @@ export function renderTable(games, append = false) {
 
 /**
  * Creates and returns a table container element if one doesn't exist
- * Ensures the main app container has a dedicated space for the games table
- * 
- * @returns {HTMLDivElement} The created or existing table container element
- * @throws {Error} Throws error if main app container (#app) doesn't exist
- * 
- * @example
- * const container = createTableContainer();
- * 
- * @since 1.0.0
  */
 function createTableContainer() {
   const appContainer = document.getElementById('app');
@@ -158,134 +112,126 @@ function createTableContainer() {
  * - Implements click-to-copy functionality for launch commands
  * - Handles graceful error recovery with user-friendly error messages
  * 
- * @example
- * setupLaunchOptionListeners(); // Called automatically by renderTable()
- * 
- * @since 1.0.0
  */
 function setupLaunchOptionListeners() {
   const buttons = document.querySelectorAll('.launch-options-btn');
-  console.log(`🎮 Setting up ${buttons.length} launch option button listeners`);
 
   buttons.forEach(button => {
-    button.addEventListener('click', async (e) => {
-      const gameId = e.currentTarget.dataset.gameId;
-      const optionsRow = document.getElementById(`launch-options-${gameId}`);
-      
-      console.log(`Launch options requested for game ID: ${gameId}`);
-
-      // Toggle visibility if already shown (collapse functionality)
-      if (optionsRow.style.display === 'table-row') {
-        optionsRow.style.display = 'none';
-        console.log(`👁️ Hiding options for game ${gameId}`);
-        return;
-      }
-
-      // Show the row and display loading state
-      optionsRow.style.display = 'table-row';
-      const cell = optionsRow.querySelector('.launch-options-cell');
-      cell.innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          Loading launch options for game ${gameId}...
-        </div>
-      `;
-
-      try {
-        console.log(`📡 Fetching options for game ${gameId}...`);
-        const startTime = performance.now();
-        
-        const options = await fetchLaunchOptions(gameId);
-        
-        const endTime = performance.now();
-        console.log(`📦 Received ${options.length} options in ${Math.round(endTime - startTime)}ms:`, options);
-
-        if (options.length === 0) {
-          cell.innerHTML = createNoOptionsMessage(gameId);
-          return;
-        }
-
-        // Create the interactive options list
-        const list = createLaunchOptionsList(options);
-        const closeContainer = createCloseButton(gameId); // Pass gameId here
-
-        // Replace loading state with content
-        cell.innerHTML = '';
-        cell.appendChild(list);
-        cell.appendChild(closeContainer);
-        
-        console.log(`✅ Successfully rendered ${options.length} launch options for game ${gameId}`);
-        
-      } catch (err) {
-        console.error(`💥 Failed to load launch options for game ${gameId}:`, err);
-        cell.innerHTML = createErrorMessage(gameId, err);
-      }
-    });
+    // Remove any existing listeners to prevent duplicates
+    button.removeEventListener('click', handleLaunchOptionsClick);
+    // Add the event listener
+    button.addEventListener('click', handleLaunchOptionsClick);
   });
+}
+
+/**
+ * Launch options click handler with comprehensive error handling
+ */
+async function handleLaunchOptionsClick(e) {
+  // Prevent any default behavior and event bubbling
+  e.preventDefault();
+  e.stopPropagation();
+
+  try {
+    const button = e.currentTarget;
+    const gameId = button.dataset.gameId;
+    
+    if (!gameId) {
+      console.error('No game ID found in button dataset');
+      return;
+    }
+
+    const optionsRow = document.getElementById(`launch-options-${gameId}`);
+    
+    if (!optionsRow) {
+      console.error('Options row not found for game:', gameId);
+      return;
+    }
+
+    // Toggle visibility if already shown (collapse functionality)
+    if (optionsRow.style.display === 'table-row') {
+      optionsRow.style.display = 'none';
+      button.textContent = button.textContent.replace('Hide', 'Show');
+      return;
+    }
+
+    // Show the row and display loading state
+    optionsRow.style.display = 'table-row';
+    button.textContent = button.textContent.replace('Show', 'Hide');
+    
+    const cell = optionsRow.querySelector('.launch-options-cell');
+    if (!cell) return;
+
+    cell.innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        Loading launch options for game ${gameId}...
+      </div>
+    `;
+
+    // Fetch launch options
+    const options = await fetchLaunchOptions(gameId);
+
+    if (options.length === 0) {
+      cell.innerHTML = createNoOptionsMessage(gameId);
+      return;
+    }
+
+    // Create the interactive options list
+    const list = createLaunchOptionsList(options);
+    const closeContainer = createCloseButton(gameId);
+
+    // Replace loading state with content
+    cell.innerHTML = '';
+    cell.appendChild(list);
+    cell.appendChild(closeContainer);
+    
+  } catch (error) {
+    console.error('Error loading launch options:', error);
+    
+    // Show user-friendly error
+    const gameId = e.currentTarget?.dataset?.gameId || 'unknown';
+    const optionsRow = document.getElementById(`launch-options-${gameId}`);
+    if (optionsRow) {
+      const cell = optionsRow.querySelector('.launch-options-cell');
+      if (cell) {
+        cell.innerHTML = createErrorMessage(gameId, error);
+      }
+    }
+  }
 }
 
 /**
  * Creates a user-friendly message for games with no launch options
- * 
- * @param {string|number} gameId - The game ID for context
- * @returns {string} HTML string for the no options message
- * 
- * @since 1.0.0
  */
 function createNoOptionsMessage(gameId) {
-  const container = document.createElement('div');
-  container.className = 'no-options';
-  
-  container.innerHTML = `
-    <h4>No Launch Options Found</h4>
-    <p>No launch options are currently available for this game.</p>
-    <details>
-      <summary>Why might this happen?</summary>
-      <ul>
-        <li>• No community members have submitted options yet</li>
-        <li>• This game doesn't benefit from launch options</li>
-        <li>• Database hasn't been populated for this game</li>
-        <li>• Game ID ${gameId} has no associated options in the database</li>
-      </ul>
-    </details>
+  return `
+    <div class="no-options">
+      <h4>No Launch Options Found</h4>
+      <p>No launch options are currently available for this game.</p>
+      <details>
+        <summary>Why might this happen?</summary>
+        <ul>
+          <li>• No community members have submitted options yet</li>
+          <li>• This game doesn't benefit from launch options</li>
+          <li>• Database hasn't been populated for this game</li>
+          <li>• Game ID ${gameId} has no associated options in the database</li>
+        </ul>
+      </details>
+      <button onclick="this.closest('.launch-options-row').style.display='none'" 
+              class="btn btn-sm btn-ghost">Close</button>
+    </div>
   `;
-  
-  // Create and add close button with proper event listener
-  const closeButton = document.createElement('button');
-  closeButton.className = 'btn btn-sm btn-ghost';
-  closeButton.textContent = 'Close';
-  closeButton.addEventListener('click', () => {
-    const optionsRow = document.getElementById(`launch-options-${gameId}`);
-    if (optionsRow) {
-      optionsRow.style.display = 'none';
-    }
-  });
-  
-  container.appendChild(closeButton);
-  return container.outerHTML;
 }
 
 /**
  * Creates an interactive list of launch options with click-to-copy functionality
- * 
- * @param {LaunchOption[]} options - Array of launch option objects
- * @returns {HTMLUListElement} The populated launch options list element
- * 
- * @description
- * Creates a styled list where each option includes:
- * - Clickable command code (with copy functionality)
- * - Description of what the option does
- * - Metadata including source, upvotes, and verification status
- * 
- * @since 1.0.0
  */
 function createLaunchOptionsList(options) {
   const list = document.createElement('ul');
   list.className = 'launch-options-list';
 
-  options.forEach((opt, index) => {
-    console.log(`📋 Rendering option ${index + 1}:`, opt);
-    
+  options.forEach(opt => {
     const item = document.createElement('li');
     item.className = 'launch-option';
     
@@ -323,18 +269,6 @@ function createLaunchOptionsList(options) {
 
 /**
  * Adds click-to-copy functionality to a launch option item
- * 
- * @param {HTMLLIElement} item - The launch option list item
- * @param {string} command - The command text to copy
- * @returns {void}
- * 
- * @description
- * Attaches a click event listener to the command code element that:
- * - Copies the command to clipboard using the Clipboard API
- * - Provides visual feedback by temporarily changing the text
- * - Handles copy failures gracefully with console warnings
- * 
- * @since 1.0.0
  */
 function addCopyFunctionality(item, command) {
   const commandElement = item.querySelector('.option-command code');
@@ -367,8 +301,6 @@ function addCopyFunctionality(item, command) {
 
 /**
  * Creates a close button container with proper event listener
- * @param {string} gameId - The game ID for targeting the specific row
- * @returns {HTMLDivElement} The close button container element
  */
 function createCloseButton(gameId) {
   const closeContainer = document.createElement('div');
@@ -378,29 +310,23 @@ function createCloseButton(gameId) {
   closeButton.className = 'launch-options-close';
   closeButton.textContent = 'Close Launch Options';
   closeButton.setAttribute('aria-label', `Close launch options for game ${gameId}`);
+  closeButton.type = 'button';
   
-  // Add proper event listener instead of inline onclick
-  closeButton.addEventListener('click', () => {
-    console.log(`Closing launch options for game ${gameId}`);
+  // Add proper event listener
+  closeButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     
     // Find and hide the launch options row
     const optionsRow = document.getElementById(`launch-options-${gameId}`);
     if (optionsRow) {
       optionsRow.style.display = 'none';
-      console.log(`✅ Successfully closed launch options for game ${gameId}`);
       
-      // Add a smooth fade out animation
-      optionsRow.style.opacity = '0';
-      optionsRow.style.transition = 'opacity 0.3s ease-out';
-      
-      setTimeout(() => {
-        optionsRow.style.display = 'none';
-        // Reset for next time
-        optionsRow.style.opacity = '';
-        optionsRow.style.transition = '';
-      }, 300);
-    } else {
-      console.warn(`❌ Could not find launch options row for game ${gameId}`);
+      // Also update the main button text
+      const mainButton = document.querySelector(`[data-game-id="${gameId}"]`);
+      if (mainButton) {
+        mainButton.textContent = mainButton.textContent.replace('Hide', 'Show');
+      }
     }
   });
   
@@ -410,20 +336,6 @@ function createCloseButton(gameId) {
 
 /**
  * Creates a comprehensive error message with troubleshooting information
- * 
- * @param {string|number} gameId - The game ID that failed to load
- * @param {Error} err - The error object containing failure details
- * @returns {string} HTML string for the error message display
- * 
- * @description
- * Analyzes the error type and provides:
- * - User-friendly error titles and messages
- * - Specific troubleshooting steps
- * - Technical details for developers
- * - Action buttons for recovery (close, reload)
- * - Direct API testing links
- * 
- * @since 1.0.0
  */
 function createErrorMessage(gameId, err) {
   // Analyze error type for user feedback
