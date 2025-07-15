@@ -171,7 +171,7 @@
   }
 }
 
-@keyframes copySuccess {
+@keyframes copySuccessAnimation {
   0% {
     transform: scale(1);
     background-color: var(--color-code-background);
@@ -179,6 +179,7 @@
   50% {
     transform: scale(1.02);
     background-color: var(--color-success);
+    color: var(--color-text-inverse);
   }
   100% {
     transform: scale(1);
@@ -225,7 +226,7 @@
 }
 
 /* Suggestions Dropdown Animation */
-@keyframes suggestionsSlideIn {
+@keyframes suggestionSlideIn {
   from {
     opacity: 0;
     transform: translateY(-8px) scale(0.95);
@@ -288,29 +289,12 @@
 /* Individual Launch Option Slide In */
 @keyframes launchOptionSlideIn {
   from {
-    opacity: 0;
-    transform: translateX(-20px);
+    opacity: 0.7;
+    transform: translateX(-10px);
   }
   to {
     opacity: 1;
     transform: translateX(0);
-  }
-}
-
-/* Copy Success Animation */
-@keyframes copySuccessAnimation {
-  0% {
-    transform: scale(1);
-    background-color: var(--color-code-background);
-  }
-  50% {
-    transform: scale(1.02);
-    background-color: var(--color-success);
-    color: var(--color-text-inverse);
-  }
-  100% {
-    transform: scale(1);
-    background-color: var(--color-code-background);
   }
 }
 
@@ -398,8 +382,8 @@
   animation: searchPendingPulse 2s infinite ease-in-out;
 }
 
-.animate-suggestionsSlideIn {
-  animation: suggestionsSlideIn 0.2s ease-out;
+.animate-suggestionSlideIn {
+  animation: suggestionSlideIn 0.2s ease-out;
 }
 
 .animate-filterTagSlideIn {
@@ -408,10 +392,6 @@
 
 .animate-successPulse {
   animation: successPulse 0.6s ease-out;
-}
-
-.animate-copySuccess {
-  animation: copySuccessAnimation 0.6s ease-out;
 }
 
 /* =============================================================================
@@ -474,7 +454,7 @@
 
 /* Main page entrance */
 body {
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp 0.4s ease-out;
 }
 
 /* Staggered component entrance */
@@ -493,7 +473,7 @@ body {
 .results-container,
 .slops-results {
   opacity: 0;
-  animation: slideInRight 0.6s ease-out 0.6s both;
+  animation: slideInRight 0.6s ease-out 0.4s both;
 }
 
 /* =============================================================================
@@ -501,7 +481,7 @@ body {
    Animations for specific UI components
    ============================================================================= */
 
-/* Enhanced Button Ripple Effect */
+/* Button Ripple Effect */
 .btn,
 .launch-options-btn {
   position: relative;
@@ -529,7 +509,7 @@ body {
   height: 200px;
 }
 
-/* Enhanced Filter Tags */
+/* Filter Tags */
 .filter-tag {
   animation: filterTagSlideIn 0.3s ease-out;
   position: relative;
@@ -576,7 +556,7 @@ body {
   left: 100%;
 }
 
-/* Enhanced Table Row Stagger */
+/* Table Row Stagger */
 .games-table tbody tr {
   opacity: 0;
   animation: slideInLeft 0.3s ease-out forwards;
@@ -593,10 +573,10 @@ body {
 .games-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
 .games-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
 
-/* Enhanced Launch Options */
+/* Launch Options */
 .launch-options-list {
   opacity: 0;
-  animation: launchOptionsFadeIn 0.6s ease-out 0.2s forwards;
+  animation: launchOptionsFadeIn 0.4s ease-out 0.2s forwards;
 }
 
 .launch-option {
@@ -611,15 +591,15 @@ body {
 .launch-option:nth-child(5) { animation-delay: 0.3s; }
 .launch-option:nth-child(6) { animation-delay: 0.35s; }
 
-/* Enhanced Copy Success Feedback */
+/* Copy Success Feedback */
 .option-command.copied {
-  animation: copySuccessAnimation 0.6s ease-out;
+  animation: copySuccessAnimation 0.4s ease-out;
 }
 
-/* Enhanced Suggestions Dropdown */
+/* Suggestions Dropdown */
 .suggestions-dropdown {
   transform-origin: top center;
-  animation: suggestionsSlideIn 0.2s ease-out;
+  animation: suggestionSlideIn 0.2s ease-out;
 }
 
 .suggestion-item {
