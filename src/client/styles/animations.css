@@ -501,7 +501,7 @@ body {
    Animations for specific UI components
    ============================================================================= */
 
-/* Button Ripple Effect */
+/* Enhanced Button Ripple Effect */
 .btn,
 .launch-options-btn {
   position: relative;
@@ -529,7 +529,7 @@ body {
   height: 200px;
 }
 
-/* Filter Tags */
+/* Enhanced Filter Tags */
 .filter-tag {
   animation: filterTagSlideIn 0.3s ease-out;
   position: relative;
@@ -556,7 +556,27 @@ body {
   left: 100%;
 }
 
-/* Table Row Stagger */
+.filter-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.filter-tag:hover::before {
+  left: 100%;
+}
+
+/* Enhanced Table Row Stagger */
 .games-table tbody tr {
   opacity: 0;
   animation: slideInLeft 0.3s ease-out forwards;
@@ -573,7 +593,7 @@ body {
 .games-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
 .games-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
 
-/* Launch Options */
+/* Enhanced Launch Options */
 .launch-options-list {
   opacity: 0;
   animation: launchOptionsFadeIn 0.6s ease-out 0.2s forwards;
@@ -591,12 +611,12 @@ body {
 .launch-option:nth-child(5) { animation-delay: 0.3s; }
 .launch-option:nth-child(6) { animation-delay: 0.35s; }
 
-/* Copy Success Feedback */
+/* Enhanced Copy Success Feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.6s ease-out;
 }
 
-/* Suggestions Dropdown */
+/* Enhanced Suggestions Dropdown */
 .suggestions-dropdown {
   transform-origin: top center;
   animation: suggestionsSlideIn 0.2s ease-out;

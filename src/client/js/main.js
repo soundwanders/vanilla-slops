@@ -25,8 +25,6 @@ async function initializeFilters() {
   if (AppState.filtersInitialized) return;
   
   try {
-    console.log('🔄 Initializing filter dropdowns...');
-    
     // Show loading state on filters
     const filterSelects = document.querySelectorAll('.filter-select');
     filterSelects.forEach(select => {
@@ -41,7 +39,6 @@ async function initializeFilters() {
     }
     
     const facets = await response.json();
-    console.log('📊 Received facets:', facets);
     
     // Populate each filter dropdown
     populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
@@ -56,10 +53,9 @@ async function initializeFilters() {
     });
     
     AppState.filtersInitialized = true;
-    console.log('✅ All filters populated successfully');
     
   } catch (error) {
-    console.error('❌ Failed to initialize filters:', error);
+    console.error('Failed to initialize filters:', error);
     
     // Remove loading state and provide fallback
     const filterSelects = document.querySelectorAll('.filter-select');
@@ -113,8 +109,6 @@ function populateFilterDropdown(elementId, data, defaultText) {
     if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
       selectElement.value = currentValue;
     }
-    
-    console.log(`✅ Populated ${elementId} with ${data.length} options`);
   }
 }
 
@@ -212,8 +206,6 @@ async function loadPage(page = 1, replace = true) {
       sort: AppState.filters.sort || 'title',
       order: AppState.filters.order || 'asc'
     };
-
-    console.log('Loading page with params:', queryParams);
 
     const response = await fetchGames(queryParams);
     
@@ -371,8 +363,6 @@ function parseURLParams() {
  * This is called by the search component when filters change
  */
 function handleFilterChange(newFilters) {
-  console.log('🔄 Filter change received from search component:', newFilters);
-  
   // Update app state
   AppState.filters = { ...AppState.filters, ...newFilters };
   AppState.currentPage = 1; // Reset to first page on filter change
@@ -422,9 +412,6 @@ function initializeSearchComponent() {
     // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER NOW
     searchInstance.onFilterChange = handleFilterChange;
     
-    console.log('🎯 Search component initialized');
-    console.log('📝 Search component is now the SINGLE source of truth for search input');
-    
     return searchInstance;
   } catch (error) {
     console.error('Failed to initialize search component:', error);
@@ -437,8 +424,6 @@ function initializeSearchComponent() {
  */
 async function initializeApp() {
   try {
-    console.log('🚀 Initializing Vanilla Slops app...');
-    
     // Parse URL params first
     parseURLParams();
     
@@ -485,19 +470,17 @@ async function initializeApp() {
     // Load initial page
     await loadPage(AppState.currentPage);
     
-    console.log('✅ App initialized successfully');
-    
     // Add visual feedback that app is ready
     document.body.classList.add('app-ready');
     
   } catch (error) {
-    console.error('❌ Failed to initialize app:', error);
+    console.error('Failed to initialize app:', error);
     showErrorState('Failed to initialize application. Please refresh the page.');
   }
 }
 
 /**
- * Setup event listeners - REMOVED DUPLICATE SEARCH INPUT LISTENERS
+ * Setup event listeners
  */
 function setupEventListeners() {
   // Browser navigation
@@ -505,12 +488,6 @@ function setupEventListeners() {
     parseURLParams();
     loadPage(AppState.currentPage);
   });
-
-  // NOTE: All search input and filter event listeners are now handled by SlopSearch component
-  // This eliminates the duplicate listeners that were causing the choppy experience
-  
-  console.log('✅ Event listeners setup complete');
-  console.log('📝 Search input listeners are now handled exclusively by SlopSearch component');
 }
 
 function ensureRequiredDOMElements() {
@@ -544,10 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   initializeApp();
 });
-
-// Export for debugging
-window.AppState = AppState;
-window.loadPage = loadPage;
 
 // Export the handleFilterChange function for potential external use
 export { handleFilterChange };
