@@ -1,5 +1,6 @@
 /* -----------------------------------------------------------------------------
    STEAM LAUNCH OPTIONS SPECIFIC COMPONENTS
+   (Table styles moved to table.css for better organization)
    ----------------------------------------------------------------------------- */
 
 /* Search Container */
@@ -163,10 +164,6 @@
   color: var(--color-warning);
 }
 
-.search-input.search-pending ~ .search-icon {
-  color: var(--color-warning);
-}
-
 /* Suggestions Dropdown */
 .suggestions-dropdown {
   position: absolute;
@@ -257,6 +254,7 @@
 .suggestion-item:last-child {
   border-bottom: none;
 }
+
 .suggestion-item:hover,
 .suggestion-item.highlighted {
   background: var(--color-interactive-hover);
@@ -290,6 +288,7 @@
 .suggestion-item.no-suggestions::before {
   display: none;
 }
+
 .suggestion-value {
   font-size: var(--font-size-sm); 
   font-weight: 400; 
@@ -534,7 +533,6 @@ fieldset {
   animation: successPulse 0.6s ease-out;
 }
 
-
 .filter-group.engine-filter {
   display: flex;
 }
@@ -573,384 +571,6 @@ fieldset {
   border-color: var(--color-accent);
 }
 
-/* Game Table */
-.games-table {
-  table-layout: fixed; /* prevent column width changes */
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.games-table th {
-  background-color: var(--color-surface);
-  padding: var(--space-md) var(--space-lg);
-  text-align: left;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  font-size: var(--font-size-xs);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.games-table td {
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: middle;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.games-table tbody tr {
-  transition: all var(--transition-fast);
-}
-
-.games-table tbody tr:hover {
-  background-color: var(--color-interactive-hover);
-}
-
-/* Loading State for Table */
-.games-table.loading {
-  opacity: 0.7;
-}
-
-.games-table.loading tbody tr {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.game-title {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
-
-/* Launch Options */
-.launch-options-btn {
-  background: var(--gradient-accent);
-  color: var(--color-text-inverse);
-  border: none;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Button Ripple Effect */
-.launch-options-btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.4s ease, height 0.4s ease;
-  pointer-events: none;
-}
-
-.launch-options-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.launch-options-btn:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
-}
-
-.launch-options-btn:active::after,
-.launch-options-close:active::after {
-  width: 200px;
-  height: 200px;
-}
-
-
-/* Launch options row animations */
-.launch-options-row {
-  transition: all var(--transition-base);
-}
-
-.launch-options-row[style*="table-row"] {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.launch-options-row[style*="none"] {
-  animation: fadeOut 0.3s ease-out;
-}
-
-.launch-options-cell {
-  padding: var(--space-10) !important;
-}
-
-.launch-options-cell .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-8);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.launch-options-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--space-6);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  opacity: 0;
-  animation: launchOptionsFadeIn 0.6s ease-out 0.2s forwards;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-.launch-options-cell .spinner {
-  width: var(--space-5);
-  height: var(--space-5);
-  border: 2px solid var(--color-border);
-  border-top: 2px solid var(--color-accent);
-  border-radius: var(--radius-full);
-  animation: spin 1s linear infinite;
-}
-
-.launch-option {
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-6);
-  transition: all var(--transition-base);
-  position: relative;
-  cursor: default; 
-  overflow: hidden;
-  opacity: 0;
-  animation: launchOptionSlideIn 0.3s ease-out forwards;
-}
-
-/* Individual launch option stagger animation */
-.launch-options-list .launch-option:nth-child(1) { animation-delay: 0.1s; }
-.launch-options-list .launch-option:nth-child(2) { animation-delay: 0.15s; }
-.launch-options-list .launch-option:nth-child(3) { animation-delay: 0.2s; }
-.launch-options-list .launch-option:nth-child(4) { animation-delay: 0.25s; }
-.launch-options-list .launch-option:nth-child(5) { animation-delay: 0.3s; }
-.launch-options-list .launch-option:nth-child(6) { animation-delay: 0.35s; }
-
-.launch-option::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--gradient-accent);
-}
-
-.launch-option:hover {
-  transform: translateY(-2px) scale(1.005);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--color-accent);
-  z-index: var(--z-raised);
-}
-
-.launch-option:has(.option-command.copied) {
-  transform: none;
-}
-
-.launch-option:has(.option-command.copy-failed) {
-  transform: none;
-}
-
-/* Error state styling */
-.launch-options-cell .error {
-  padding: var(--space-8);
-  background: var(--color-surface-subtle);
-  border: 2px solid var(--color-error);
-  border-radius: var(--radius-lg);
-  color: var(--color-text-primary);
-}
-
-.launch-options-cell .error h3 {
-  color: var(--color-error);
-  margin-bottom: var(--space-4);
-}
-
-.launch-options-cell .error details {
-  margin: var(--space-4) 0;
-  padding: var(--space-3);
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-}
-
-.launch-options-cell .error summary {
-  cursor: pointer;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast);
-}
-
-.launch-options-cell .error summary:hover {
-  background-color: var(--color-interactive-hover);
-}
-
-/* No options state */
-.launch-options-cell .no-options {
-  text-align: center;
-  padding: var(--space-12);
-  background: var(--color-surface-subtle);
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-  color: var(--color-text-secondary);
-}
-
-.launch-options-cell .no-options h4 {
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-4);
-  font-size: var(--font-size-lg);
-}
-
-.launch-options-cell .no-options::before {
-  content: '🔍';
-  display: block;
-  font-size: var(--space-16);
-  margin-bottom: var(--space-4);
-  opacity: 0.5;
-}
-
-/* Option Command Display */
-.option-command {
-  background: var(--color-code-background);
-  color: var(--color-code-text);
-  font-family: var(--font-family-mono);
-  padding: var(--space-4);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-4);
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-size: var(--font-size-sm);
-  position: relative;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  user-select: none; /* Prevent text selection during copy operations */
-}
-
-.option-command:hover {
-  transform: scale(1.015);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-accent);
-}
-
-/* Copy Success Feedback */
-.option-command.copied {
-  animation: copySuccessAnimation 0.6s ease-out;
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-success) !important;
-}
-
-.option-command.copy-failed {
-  animation: copyFailedAnimation 0.6s ease-out;
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-error) !important;
-}
-
-.option-command code {
-  background: none;
-  border: none;
-  padding: 0;
-  color: inherit;
-  font-size: inherit;
-}
-
-.option-command[tabindex]:focus {
-  background: var(--color-interactive-hover);
-  border-color: var(--color-accent);
-}
-
-/* Focus management improvements */
-.launch-options-btn:focus-visible,
-.launch-options-close:focus-visible,
-.option-command:focus-visible {
-  outline: 2px solid var(--color-interactive-focus);
-  outline-offset: 2px;
-  z-index: var(--z-raised);
-}
-
-.option-description {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-4);
-  line-height: var(--line-height-relaxed);
-  font-size: var(--font-size-sm);
-  -webkit-user-select: text;
-  -moz-user-select: text;
-  -ms-user-select: text;
-  user-select: text;
-}
-
-.option-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-.option-source {
-  cursor: help;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.option-verified {
-  color: var(--color-success);
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  animation: verifiedGlow 2s ease-in-out infinite alternate;
-}
-
-/* Launch Options Dark theme adjustments */
-[data-theme="dark"] .option-command.copied {
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
-}
-
-[data-theme="dark"] .option-command.copy-failed {
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
-}
-
-[data-theme="dark"] .launch-options-cell .error {
-  background: var(--color-surface);
-  border-color: var(--color-error);
-}
-
-[data-theme="dark"] .launch-options-cell .no-options {
-  background: var(--color-surface);
-  border-color: var(--color-border);
-}
-
 /* Theme Toggle */
 .theme-toggle,
 #theme-toggle {
@@ -985,8 +605,7 @@ fieldset {
 /* Performance Optimizations */
 .search-input,
 .suggestions-dropdown,
-.filter-tag,
-.launch-option {
+.filter-tag {
   transform: translateZ(0);
   backface-visibility: hidden;
 }

@@ -86,7 +86,7 @@ export default class SlopSearch {
     this.initializeEventListeners();
     this.loadInitialData();
     
-    console.log('🎯 SlopSearch initialized with enhanced click-outside detection');
+    console.log('🎯 SlopSearch initialized with click-outside detection');
   }
 
   /**
@@ -199,7 +199,7 @@ export default class SlopSearch {
 
   /**
    * Add additional search triggers for better UX
-   * Improved click-outside detection to respect safe zones
+   * click-outside detection to respect safe zones
    */
   addSearchTriggers() {
     // Search on Enter key (immediate)
@@ -214,7 +214,7 @@ export default class SlopSearch {
       });
     }
 
-    // Improved click-outside detection with safe zones
+    // click-outside detection with safe zones
     if (this.config.enableClickOutsideSearch) {
       document.addEventListener('click', (e) => {
         // Check if click is in a safe zone
