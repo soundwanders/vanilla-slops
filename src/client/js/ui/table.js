@@ -1,413 +1,579 @@
-/**
- * @fileoverview Table rendering and interaction module for Steam games display
- * Handles the rendering of game data in a tabular format with expandable launch options
- * Provides interactive elements for viewing and copying launch options
- */
+/* -----------------------------------------------------------------------------
+   TABLE STYLES
+   Main table that renders our list of games and their launch options
+   ----------------------------------------------------------------------------- */
 
-import { fetchLaunchOptions } from '../api.js';
+/* Table Container */
+.table-container {
+  width: 100%;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border-subtle);
+  background: var(--color-surface-raised);
+}
 
-/**
- * Renders a responsive table of Steam games with interactive launch options functionality
- * Creates table structure, populates with game data, and sets up event listeners
- * 
- * @param {Array} games - Array of game objects to display in the table
- * @param {boolean} [append=false] - Whether to append games to existing table or create new table
- * @returns {void}
- */
-export function renderTable(games, append = false) {
-  const tableContainer = document.getElementById('table-container') || createTableContainer();
+/* Table Base */
+.games-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--font-size-sm);
+  background: var(--color-surface-raised);
+  position: relative;
+}
 
-  // Create table structure only if not appending
-  if (!append) {
-    tableContainer.innerHTML = `
-      <table class="games-table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Developer</th>
-            <th>Publisher</th>
-            <th>Release Date</th>
-            <th>Engine</th>
-            <th>Launch Options</th>
-          </tr>
-        </thead>
-        <tbody id="games-table-body"></tbody>
-      </table>
-      <div id="scroll-sentinel"></div>
-    `;
+/* Table Header */
+.games-table thead {
+  background: var(--gradient-surface);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.games-table th {
+  padding: var(--space-4) var(--space-6);
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-size-xs);
+  border-bottom: 2px solid var(--color-border);
+  white-space: nowrap;
+  position: relative;
+  background: var(--color-surface);
+}
+
+.games-table th:first-child {
+  border-top-left-radius: var(--radius-2xl);
+}
+
+.games-table th:last-child {
+  border-top-right-radius: var(--radius-2xl);
+}
+
+/* Table Header Sorting Indicators */
+.games-table th.sortable {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.games-table th.sortable:hover {
+  background: var(--color-interactive-hover);
+  color: var(--color-accent);
+}
+
+.games-table th.sortable::after {
+  content: '↕';
+  position: absolute;
+  right: var(--space-3);
+  opacity: 0.5;
+  font-size: var(--font-size-xs);
+  transition: opacity var(--transition-fast);
+}
+
+.games-table th.sortable:hover::after {
+  opacity: 1;
+}
+
+/* Table Body */
+.games-table tbody tr {
+  transition: all var(--transition-fast);
+  border-bottom: 1px solid var(--color-border-subtle);
+  position: relative;
+}
+
+.games-table tbody tr:hover {
+  background: var(--color-interactive-hover);
+  transform: scale(1.005);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-raised);
+}
+
+.games-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.games-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--radius-2xl);
+}
+
+.games-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--radius-2xl);
+}
+
+/* Table Cells */
+.games-table td {
+  padding: var(--space-4) var(--space-6);
+  vertical-align: middle;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+/* Game Title */
+.game-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.game-title::before {
+  content: '🎮';
+  font-size: var(--font-size-sm);
+  opacity: 0.6;
+}
+
+/* Developer and Publisher Styling */
+.games-table td:nth-child(2),
+.games-table td:nth-child(3) {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Release Date Styling */
+.games-table td:nth-child(4) {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+/* Engine Styling */
+.games-table td:nth-child(5) {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.games-table td:nth-child(5)::before {
+  content: '⚙️';
+  margin-right: var(--space-2);
+  opacity: 0.6;
+}
+
+/* Launch Options Button */
+.launch-options-btn {
+  background: var(--gradient-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 120px;
+  justify-content: center;
+}
+
+.launch-options-btn::before {
+  content: '🚀';
+  font-size: var(--font-size-sm);
+}
+
+.launch-options-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-700) 100%);
+}
+
+.launch-options-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Options Count Badge */
+.options-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--space-6);
+  height: var(--space-6);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  margin-left: var(--space-2);
+}
+
+/* Launch Options Display */
+.launch-options-row {
+  background: var(--gradient-surface) !important;
+  border-top: 2px solid var(--color-accent-subtle);
+}
+
+.launch-options-row:hover {
+  background: var(--gradient-surface) !important;
+  transform: none !important;
+}
+
+.launch-options-cell {
+  padding: var(--space-10) !important;
+  border-radius: 0;
+}
+
+/* Launch Options List */
+.launch-options-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--space-6);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Individual Launch Option Cards */
+.launch-option {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.launch-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-accent);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.launch-option:hover {
+  box-shadow: var(--shadow-2xl);
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--color-accent);
+}
+
+/* Command Display */
+.option-command {
+  background: var(--color-code-background);
+  color: var(--color-code-text);
+  font-family: var(--font-family-mono);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: var(--font-size-sm);
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.option-command:hover {
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.02);
+  border-color: var(--color-accent);
+}
+
+.option-command::after {
+  content: '📋 Click to copy';
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+  font-family: var(--font-family-body);
+}
+
+.option-command:hover::after {
+  opacity: 1;
+}
+
+/* Option Description */
+.option-description {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+  line-height: var(--line-height-relaxed);
+  font-size: var(--font-size-sm);
+}
+
+/* Option Meta */
+.option-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.option-source {
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.option-source::before {
+  content: '📝';
+  font-size: var(--font-size-xs);
+}
+
+.option-votes {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.option-votes::before {
+  content: '👍';
+  font-size: var(--font-size-xs);
+}
+
+.option-verified {
+  color: var(--color-success);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.option-verified::before {
+  content: '✅';
+  font-size: var(--font-size-xs);
+}
+
+/* Close Button */
+.launch-options-close-container {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.launch-options-close {
+  padding: var(--space-3) var(--space-8);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.launch-options-close::before {
+  content: '✕';
+  font-size: var(--font-size-sm);
+}
+
+.launch-options-close:hover {
+  background: var(--color-interactive-hover);
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* No Options State */
+.no-options {
+  text-align: center;
+  padding: var(--space-12);
+  color: var(--color-text-secondary);
+  background: var(--gradient-surface);
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--color-border);
+}
+
+.no-options ul {
+  list-style: none;
+  margin: 0 auto;
+}
+
+.no-options::before {
+  content: '🔍';
+  display: block;
+  font-size: var(--space-16);
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+}
+
+.no-options h4 {
+  margin-bottom: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+/* Table Loading State */
+.table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-16);
+  text-align: center;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.table-loading::before {
+  content: '';
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 2px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .games-table th,
+  .games-table td {
+    padding: var(--space-3) var(--space-4);
   }
-
-  const tableBody = document.getElementById('games-table-body');
-
-  // Populate table with game data
-  games.forEach(game => {
-    const row = document.createElement('tr');
-    row.className = 'game-row';
-    row.dataset.gameId = game.app_id;
-
-    // Create table row with game information
-    row.innerHTML = `
-      <td><span class="game-title">${game.title || 'Unknown'}</span></td>
-      <td>${game.developer || 'Unknown'}</td>
-      <td>${game.publisher || 'Unknown'}</td>
-      <td>${game.release_date || 'Unknown'}</td>
-      <td>${game.engine || 'Unknown'}</td>
-      <td>
-        <button class="launch-options-btn" data-game-id="${game.app_id}" type="button">
-          Show Options (${game.total_options_count ?? 0})
-        </button>
-      </td>
-    `;
-
-    // Add the main game row to table
-    tableBody.appendChild(row);
-
-    // Create hidden expandable row for launch options display
-    const optionsRow = document.createElement('tr');
-    optionsRow.className = 'launch-options-row';
-    optionsRow.id = `launch-options-${game.app_id}`;
-    optionsRow.style.display = 'none';
-    optionsRow.innerHTML = `
-      <td colspan="6" class="launch-options-cell">
-        <div class="loading">Loading...</div>
-      </td>
-    `;
-
-    tableBody.appendChild(optionsRow);
-  });
-
-  // Initialize interactive functionality
-  setupLaunchOptionListeners();
-}
-
-/**
- * Creates and returns a table container element if one doesn't exist
- */
-function createTableContainer() {
-  const appContainer = document.getElementById('app');
   
-  if (!appContainer) {
-    throw new Error('Main app container (#app) not found in DOM');
-  }
-
-  const container = document.createElement('div');
-  container.id = 'table-container';
-  appContainer.appendChild(container);
-  return container;
-}
-
-/**
- * Sets up click event listeners for all launch options buttons in the table
- * Handles expanding/collapsing launch options, loading states, error handling,
- * and interactive features like click-to-copy functionality
- * 
- * @returns {void}
- */
-function setupLaunchOptionListeners() {
-  const buttons = document.querySelectorAll('.launch-options-btn');
-
-  buttons.forEach(button => {
-    // Remove any existing listeners to prevent duplicates
-    button.removeEventListener('click', handleLaunchOptionsClick);
-    // Add the event listener
-    button.addEventListener('click', handleLaunchOptionsClick);
-  });
-}
-
-/**
- * Launch options click handler with comprehensive error handling
- */
-async function handleLaunchOptionsClick(e) {
-  // Prevent any default behavior and event bubbling
-  e.preventDefault();
-  e.stopPropagation();
-
-  try {
-    const button = e.currentTarget;
-    const gameId = button.dataset.gameId;
-    
-    if (!gameId) {
-      console.error('No game ID found in button dataset');
-      return;
-    }
-
-    const optionsRow = document.getElementById(`launch-options-${gameId}`);
-    
-    if (!optionsRow) {
-      console.error('Options row not found for game:', gameId);
-      return;
-    }
-
-    // Toggle visibility if already shown (collapse functionality)
-    if (optionsRow.style.display === 'table-row') {
-      optionsRow.style.display = 'none';
-      button.textContent = button.textContent.replace('Hide', 'Show');
-      return;
-    }
-
-    // Show the row and display loading state
-    optionsRow.style.display = 'table-row';
-    button.textContent = button.textContent.replace('Show', 'Hide');
-    
-    const cell = optionsRow.querySelector('.launch-options-cell');
-    if (!cell) return;
-
-    cell.innerHTML = `
-      <div class="loading">
-        <div class="spinner"></div>
-        Loading launch options for game ${gameId}...
-      </div>
-    `;
-
-    // Fetch launch options
-    const options = await fetchLaunchOptions(gameId);
-
-    if (options.length === 0) {
-      cell.innerHTML = createNoOptionsMessage(gameId);
-      return;
-    }
-
-    // Create the interactive options list
-    const list = createLaunchOptionsList(options);
-    const closeContainer = createCloseButton(gameId);
-
-    // Replace loading state with content
-    cell.innerHTML = '';
-    cell.appendChild(list);
-    cell.appendChild(closeContainer);
-    
-  } catch (error) {
-    console.error('Error loading launch options:', error);
-    
-    // Show user-friendly error
-    const gameId = e.currentTarget?.dataset?.gameId || 'unknown';
-    const optionsRow = document.getElementById(`launch-options-${gameId}`);
-    if (optionsRow) {
-      const cell = optionsRow.querySelector('.launch-options-cell');
-      if (cell) {
-        cell.innerHTML = createErrorMessage(gameId, error);
-      }
-    }
+  .launch-options-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 }
 
-/**
- * Creates a user-friendly message for games with no launch options
- */
-function createNoOptionsMessage(gameId) {
-  return `
-    <div class="no-options">
-      <h4>No Launch Options Found</h4>
-      <p>No launch options are currently available for this game.</p>
-      <details>
-        <summary>Why might this happen?</summary>
-        <ul>
-          <li>• No community members have submitted options yet</li>
-          <li>• This game doesn't benefit from launch options</li>
-          <li>• Database hasn't been populated for this game</li>
-          <li>• Game ID ${gameId} has no associated options in the database</li>
-        </ul>
-      </details>
-      <button onclick="this.closest('.launch-options-row').style.display='none'" 
-              class="btn btn-sm btn-ghost">Close</button>
-    </div>
-  `;
-}
-
-/**
- * Creates an interactive list of launch options with click-to-copy functionality
- */
-function createLaunchOptionsList(options) {
-  const list = document.createElement('ul');
-  list.className = 'launch-options-list';
-
-  options.forEach(opt => {
-    const item = document.createElement('li');
-    item.className = 'launch-option';
-    
-    // Handle missing data gracefully with fallbacks
-    const command = opt.option || opt.command || 'No command';
-    const description = opt.description || 'No description available';
-    const source = opt.source || 'Community';
-    const upvotes = opt.upvotes || 0;
-    
-    // Build the option HTML structure
-    item.innerHTML = `
-      <div class="option-command" title="Click to copy">
-        <code>${command}</code>
-      </div>
-      <div class="option-description">
-        ${description}
-      </div>
-      <div class="option-meta">
-        <span class="option-source" title="Source of this launch option">
-          📝 ${source}
-        </span>
-        ${upvotes > 0 ? `<span class="option-votes" title="${upvotes} community upvotes">👍 ${upvotes}</span>` : ''}
-        ${opt.verified ? '<span class="option-verified" title="Verified by community">✅ Verified</span>' : ''}
-      </div>
-    `;
-    
-    // Add click-to-copy functionality to command elements
-    addCopyFunctionality(item, command);
-    
-    list.appendChild(item);
-  });
-
-  return list;
-}
-
-/**
- * Adds click-to-copy functionality to a launch option item
- * Added proper event prevention to stop bubbling
- */
-function addCopyFunctionality(item, command) {
-  const commandElement = item.querySelector('.option-command code');
-  
-  commandElement.addEventListener('click', async (e) => {
-    // CRITICAL FIX: Prevent event bubbling to avoid search component interference
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    
-    try {
-      await navigator.clipboard.writeText(command);
-      
-      // Provide visual feedback
-      const originalText = commandElement.textContent;
-      commandElement.textContent = 'Copied!';
-      commandElement.classList.add('copied');
-      
-      // Restore original text after delay
-      setTimeout(() => {
-        commandElement.textContent = originalText;
-        commandElement.classList.remove('copied');
-      }, 1000);
-      
-    } catch (err) {
-      console.warn('Copy to clipboard failed:', err);
-      
-      // Fallback feedback for copy failures
-      const originalText = commandElement.textContent;
-      commandElement.textContent = 'Copy failed';
-      commandElement.classList.add('copy-failed');
-      setTimeout(() => {
-        commandElement.textContent = originalText;
-        commandElement.classList.remove('copy-failed');
-      }, 1000);
-    }
-  });
-  
-  // ADDITIONAL FIX: Also prevent bubbling on the parent option-command div
-  const commandDiv = item.querySelector('.option-command');
-  commandDiv.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-  });
-  
-  // ADDITIONAL FIX: Prevent bubbling on the entire launch option item
-  item.addEventListener('click', (e) => {
-    // Only prevent bubbling if clicking within the option area
-    // Allow normal behavior for close buttons, etc.
-    if (e.target.closest('.option-command') || e.target.closest('.option-meta')) {
-      e.stopPropagation();
-    }
-  });
-}
-
-/**
- * Creates a close button container with proper event listener
- */
-function createCloseButton(gameId) {
-  const closeContainer = document.createElement('div');
-  closeContainer.className = 'launch-options-close-container';
-  
-  const closeButton = document.createElement('button');
-  closeButton.className = 'launch-options-close';
-  closeButton.textContent = 'Close Launch Options';
-  closeButton.setAttribute('aria-label', `Close launch options for game ${gameId}`);
-  closeButton.type = 'button';
-  
-  // Add proper event listener with bubbling prevention
-  closeButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Find and hide the launch options row
-    const optionsRow = document.getElementById(`launch-options-${gameId}`);
-    if (optionsRow) {
-      optionsRow.style.display = 'none';
-      
-      // Also update the main button text
-      const mainButton = document.querySelector(`[data-game-id="${gameId}"]`);
-      if (mainButton) {
-        mainButton.textContent = mainButton.textContent.replace('Hide', 'Show');
-      }
-    }
-  });
-  
-  closeContainer.appendChild(closeButton);
-  return closeContainer;
-}
-
-/**
- * Creates a comprehensive error message with troubleshooting information
- */
-function createErrorMessage(gameId, err) {
-  // Analyze error type for user feedback
-  let errorTitle = '❌ Error Loading Launch Options';
-  let errorMessage = err.message || 'Unknown error occurred';
-  let technicalDetails = '';
-  
-  // Provide specific error handling based on error type
-  if (err.message?.includes('Failed to fetch')) {
-    errorTitle = '🌐 Connection Error';
-    errorMessage = 'Unable to connect to the server. Please check that the backend is running on port 8000.';
-    technicalDetails = `Attempted to fetch from: ${window.location.protocol}//${window.location.hostname}:8000/api/games/${gameId}/launch-options`;
-  } else if (err.message?.includes('404')) {
-    errorTitle = '🔍 Game Not Found';
-    errorMessage = `Game with ID ${gameId} was not found in the database.`;
-  } else if (err.message?.includes('500')) {
-    errorTitle = '🏥 Server Error';
-    errorMessage = 'The server encountered an error processing this request.';
+@media (max-width: 768px) {
+  .launch-options-list {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
   }
   
-  return `
-    <div class="error">
-      <h3>${errorTitle}</h3>
-      <p><strong>Game ID:</strong> ${gameId}</p>
-      <p><strong>Error:</strong> ${errorMessage}</p>
-      
-      <details>
-        <summary>🔧 Troubleshooting</summary>
-        <div style="margin-top: 1rem;">
-          <p><strong>Check:</strong></p>
-          <ul>
-            <li>✅ Backend server is running on port 8000</li>
-            <li>✅ Database connection is working</li>
-            <li>✅ Game exists in database</li>
-            <li>✅ Launch options tables are populated</li>
-          </ul>
-          
-          <p><strong>Test API directly:</strong></p>
-          <code>http://localhost:8000/api/games/${gameId}/launch-options</code>
-          
-          ${technicalDetails ? `<p><strong>Technical Details:</strong><br/><code>${technicalDetails}</code></p>` : ''}
-          
-          <p><strong>Full Error:</strong></p>
-          <pre style="padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.8rem;">
-            ${err.stack || err.message || 'No additional details available'}
-          </pre>
-        </div>
-      </details>
-      
-      <div style="margin-top: 1rem;">
-        <button onclick="this.closest('.launch-options-row').style.display='none'" 
-                class="btn btn-sm btn-ghost">Close</button>
-        <button onclick="window.location.reload()" 
-                class="btn btn-sm btn-primary">Reload Page</button>
-      </div>
-    </div>
-  `;
+  .launch-option {
+    padding: var(--space-4);
+  }
+  
+  .option-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+
+/* Mobile Card Layout */
+@media (max-width: 640px) {
+  .games-table,
+  .games-table thead,
+  .games-table tbody,
+  .games-table th,
+  .games-table td,
+  .games-table tr {
+    display: block;
+  }
+  
+  .games-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  
+  .games-table tr {
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-md);
+    position: relative;
+  }
+  
+  .games-table tr::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-accent);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+  
+  .games-table td {
+    border: none;
+    position: relative;
+    padding-left: 35% !important;
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+    padding-right: var(--space-4);
+    min-height: var(--space-12);
+    display: flex;
+    align-items: center;
+  }
+  
+  .games-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: var(--space-4);
+    width: 30%;
+    padding-right: var(--space-3);
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+  
+  .launch-options-btn {
+    width: 100%;
+    padding: var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Dark Theme Adjustments */
+[data-theme="dark"] .games-table th {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .games-table tbody tr:hover {
+  background: var(--color-interactive-hover);
+}
+
+[data-theme="dark"] .launch-options-row {
+  background: var(--gradient-dark) !important;
+}
+
+[data-theme="dark"] .launch-option {
+  background: var(--color-surface-raised);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .option-command {
+  background: var(--color-code-background);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Animation Keyframes */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
