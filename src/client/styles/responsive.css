@@ -140,15 +140,20 @@
     padding: var(--space-4);
   }
   
+  .search-pending-indicator {
+    right: var(--space-4);
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+  
   .suggestions-dropdown {
-    max-height: 12rem;
-    border-radius: var(--radius-lg);
-    margin: 0 -var(--space-1); 
+    max-height: 15rem;
+    margin: 0 -var(--space-2);
+    border-radius: var(--radius-xl);
   }
   
   .suggestion-item {
-    padding: var(--space-2) var(--space-3); 
-    font-size: var(--font-size-xs); 
+    padding: var(--space-3) var(--space-4);
   }
   
   .suggestion-value {
@@ -159,6 +164,8 @@
     padding: var(--space-1) var(--space-3);
     font-size: calc(var(--font-size-xs) * 0.9);
   }
+
+  
   
   /* Theme toggle positioning */
   .theme-toggle,
@@ -306,7 +313,7 @@
   
   .filter-tag {
     font-size: var(--font-size-xs);
-    padding: var(--space-2xs) var(--space-xs);
+    padding: var(--space-1) var(--space-3);
   }
 }
 

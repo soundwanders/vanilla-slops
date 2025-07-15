@@ -102,16 +102,6 @@ function createTableContainer() {
  * and interactive features like click-to-copy functionality
  * 
  * @returns {void}
- * 
- * @description
- * This function:
- * - Finds all launch option buttons in the current table
- * - Attaches click event listeners with async launch option loading
- * - Manages loading states and error handling
- * - Provides detailed user feedback and troubleshooting information
- * - Implements click-to-copy functionality for launch commands
- * - Handles graceful error recovery with user-friendly error messages
- * 
  */
 function setupLaunchOptionListeners() {
   const buttons = document.querySelectorAll('.launch-options-btn');
@@ -269,21 +259,29 @@ function createLaunchOptionsList(options) {
 
 /**
  * Adds click-to-copy functionality to a launch option item
+ * Added proper event prevention to stop bubbling
  */
 function addCopyFunctionality(item, command) {
   const commandElement = item.querySelector('.option-command code');
   
-  commandElement.addEventListener('click', async () => {
+  commandElement.addEventListener('click', async (e) => {
+    // CRITICAL FIX: Prevent event bubbling to avoid search component interference
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    
     try {
       await navigator.clipboard.writeText(command);
       
       // Provide visual feedback
       const originalText = commandElement.textContent;
       commandElement.textContent = 'Copied!';
+      commandElement.classList.add('copied');
       
       // Restore original text after delay
       setTimeout(() => {
         commandElement.textContent = originalText;
+        commandElement.classList.remove('copied');
       }, 1000);
       
     } catch (err) {
@@ -292,9 +290,28 @@ function addCopyFunctionality(item, command) {
       // Fallback feedback for copy failures
       const originalText = commandElement.textContent;
       commandElement.textContent = 'Copy failed';
+      commandElement.classList.add('copy-failed');
       setTimeout(() => {
         commandElement.textContent = originalText;
+        commandElement.classList.remove('copy-failed');
       }, 1000);
+    }
+  });
+  
+  // ADDITIONAL FIX: Also prevent bubbling on the parent option-command div
+  const commandDiv = item.querySelector('.option-command');
+  commandDiv.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  });
+  
+  // ADDITIONAL FIX: Prevent bubbling on the entire launch option item
+  item.addEventListener('click', (e) => {
+    // Only prevent bubbling if clicking within the option area
+    // Allow normal behavior for close buttons, etc.
+    if (e.target.closest('.option-command') || e.target.closest('.option-meta')) {
+      e.stopPropagation();
     }
   });
 }
@@ -312,7 +329,7 @@ function createCloseButton(gameId) {
   closeButton.setAttribute('aria-label', `Close launch options for game ${gameId}`);
   closeButton.type = 'button';
   
-  // Add proper event listener
+  // Add proper event listener with bubbling prevention
   closeButton.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
