@@ -572,7 +572,6 @@ body {
   animation: slideInLeftNoScroll 0.3s ease-out forwards;
 }
 
-
 .games-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
 .games-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
 .games-table tbody tr:nth-child(3) { animation-delay: 0.15s; }
@@ -583,24 +582,6 @@ body {
 .games-table tbody tr:nth-child(8) { animation-delay: 0.4s; }
 .games-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
 .games-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
-
-/* Launch Options */
-.launch-options-list {
-  opacity: 0;
-  animation: launchOptionsFadeIn 0.4s ease-out 0.2s forwards;
-}
-
-.launch-option {
-  opacity: 0;
-  animation: launchOptionSlideIn 0.3s ease-out forwards;
-}
-
-.launch-option:nth-child(1) { animation-delay: 0.1s; }
-.launch-option:nth-child(2) { animation-delay: 0.15s; }
-.launch-option:nth-child(3) { animation-delay: 0.2s; }
-.launch-option:nth-child(4) { animation-delay: 0.25s; }
-.launch-option:nth-child(5) { animation-delay: 0.3s; }
-.launch-option:nth-child(6) { animation-delay: 0.35s; }
 
 /* Copy Success Feedback */
 .option-command.copied {
@@ -770,18 +751,6 @@ body {
    UTILITY CLASSES
    Reusable animation utilities
    ============================================================================= */
-
-/* Stagger Animation Utility */
-.stagger-animation > * {
-  opacity: 0;
-  animation: slideInLeft 0.3s ease-out forwards;
-}
-
-.stagger-animation > *:nth-child(1) { animation-delay: 0.05s; }
-.stagger-animation > *:nth-child(2) { animation-delay: 0.1s; }
-.stagger-animation > *:nth-child(3) { animation-delay: 0.15s; }
-.stagger-animation > *:nth-child(4) { animation-delay: 0.2s; }
-.stagger-animation > *:nth-child(5) { animation-delay: 0.25s; }
 
 /* Interactive Elements Enhancement */
 .interactive-enhance {
