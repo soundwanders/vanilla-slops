@@ -155,6 +155,12 @@
     padding: var(--space-1) var(--space-2);
   }
   
+  .search-pending-indicator {
+    right: var(--space-4);
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+  
   .suggestions-dropdown {
     max-height: 15rem;
     margin: 0 -var(--space-2);
@@ -173,6 +179,8 @@
     padding: var(--space-1) var(--space-3);
     font-size: calc(var(--font-size-xs) * 0.9);
   }
+
+  
   
   .close-all-icon {
     width: var(--space-4);
