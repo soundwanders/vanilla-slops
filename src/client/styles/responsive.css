@@ -67,6 +67,10 @@
   
   .xl\:p-2xl { padding: var(--space-2xl); }
   .xl\:p-3xl { padding: var(--space-3xl); }
+  
+  .close-all-btn {
+    right: 40px;
+  }
 }
 
 /* -----------------------------------------------------------------------------
@@ -139,7 +143,18 @@
   .launch-option {
     padding: var(--space-4);
   }
+
+  .launch-options-list {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
   
+  .option-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
   .suggestions-dropdown {
     max-height: 12rem;
     border-radius: var(--radius-lg);
@@ -159,7 +174,25 @@
     padding: var(--space-1) var(--space-3);
     font-size: calc(var(--font-size-xs) * 0.9);
   }
+
+  .close-all-btn {
+    top: 80px;
+    right: 16px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-xs);
+  }
   
+  .close-all-icon {
+    width: var(--space-4);
+    height: var(--space-4);
+    font-size: var(--font-size-xs);
+  }
+  
+  /* Hide text on very small screens, show only icon */
+  .close-all-text {
+    display: none;
+  }
+
   /* Theme toggle positioning */
   .theme-toggle,
   #theme-toggle {

@@ -41,6 +41,14 @@
   .form-textarea {
     border-width: 2px;
   }
+
+  .close-all-btn {
+    border: 2px solid var(--color-text-inverse);
+  }
+  
+  .close-all-btn:focus-visible {
+    outline-width: 3px;
+  }
 }
 
 /* Reduced Motion Support */
@@ -63,6 +71,20 @@
     animation: none;
     background: var(--color-surface);
   }
+    .close-all-btn,
+  .close-all-feedback,
+  .close-all-icon {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .close-all-btn:hover .close-all-icon {
+    transform: none;
+  }
+  
+  .close-all-btn.clicked {
+    transform: none;
+  }
 }
 
 /* Screen Reader Improvements */
@@ -75,10 +97,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Skip Links */
+/* Skip link for accessibility */
 .skip-link {
   position: absolute;
-  top: -40px;
+  top: -60px;
   left: 6px;
   background: var(--color-accent);
   color: var(--color-text-inverse);
@@ -91,4 +113,17 @@ textarea:focus-visible {
 
 .skip-link:focus {
   top: 6px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

@@ -14,7 +14,6 @@
 @import 'animations.css';
 @import 'base.css';
 @import 'compatible.css';
-@import 'debug.css';
 @import 'dropdown.css';
 @import 'footer.css';
 @import 'hero.css';
@@ -25,5 +24,4 @@
 @import 'slops.css';
 @import 'table.css';
 @import 'tokens.css';
-@import 'typography.css';
 @import 'utilities.css';

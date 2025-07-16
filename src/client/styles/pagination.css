@@ -270,34 +270,3 @@
     transform: translateY(0);
   }
 }
-
-/* Skip link for accessibility */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 6px;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  z-index: var(--z-maximum);
-  transition: top var(--transition-fast);
-}
-
-.skip-link:focus {
-  top: 6px;
-}
-
-/* Screen reader only content */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
