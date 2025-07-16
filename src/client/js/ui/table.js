@@ -1,10 +1,76 @@
 /**
  * @fileoverview Table rendering and launch options management
  * Handles games table display and interactive launch options
+ * 
+ * CLEANED & ORGANIZED VERSION
+ * - Fixed duplicate functions
+ * - Fixed memory leaks
+ * - Proper function organization
+ * - Consistent export strategy
  */
 
-// Track currently open launch options rows
+import { fetchLaunchOptions } from '../api.js';
+
+// ============================================================================
+// CONSTANTS & STATE
+// ============================================================================
+
 const openLaunchOptionsRows = new Set();
+
+// Constants for magic numbers
+const CLOSE_ALL_BUTTON_THRESHOLD = 2;
+const LAUNCH_OPTIONS_ROW_SELECTOR = '.launch-options-row[style*="table-row"]';
+const ANIMATION_DELAY = 300;
+const FEEDBACK_DURATION = 2000;
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Escape HTML to prevent XSS attacks
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Get count of currently open launch options
+ * @returns {number} Number of open launch options
+ */
+function getOpenLaunchOptionsCount() {
+  return document.querySelectorAll(LAUNCH_OPTIONS_ROW_SELECTOR).length;
+}
+
+/**
+ * Format release date consistently
+ * @param {string} dateString - Raw date string
+ * @returns {string} Formatted date
+ */
+function formatReleaseDate(dateString) {
+  if (!dateString) return 'Unknown';
+  
+  try {
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  } catch (error) {
+    console.warn('Invalid date format:', dateString);
+    return 'Unknown';
+  }
+}
+
+// ============================================================================
+// CORE RENDERING FUNCTIONS
+// ============================================================================
 
 /**
  * Render the games table with data
@@ -60,7 +126,7 @@ export function renderTable(games, showLoading = false) {
   container.innerHTML = '';
   container.appendChild(table);
 
-  // Set up launch options event listeners
+  // Set up event listeners (only needs to be done once)
   setupLaunchOptionListeners();
 }
 
@@ -70,16 +136,9 @@ export function renderTable(games, showLoading = false) {
  * @returns {string} HTML string for the game row
  */
 function createGameRow(game) {
-  // Use the correct property names from your API
   const gameId = game.app_id;
   const optionsCount = game.total_options_count || 0;
-
-  const releaseDate = game.release_date ? 
-    new Date(game.release_date).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    }) : 'Unknown';
+  const releaseDate = formatReleaseDate(game.release_date);
 
   return `
     <tr data-game-id="${gameId}">
@@ -106,101 +165,42 @@ function createGameRow(game) {
 }
 
 /**
- * Set up event listeners for launch options buttons
+ * Create HTML for a single launch option card
+ * @param {Object} option - Launch option data
+ * @returns {string} HTML string for the option card
  */
-function setupLaunchOptionListeners() {
-  console.log('🎯 Setting up launch option listeners');
-  
-  // Remove any existing listeners first
-  document.removeEventListener('click', handleLaunchOptionsClick);
-  
-  // Add single delegated event listener
-  document.addEventListener('click', handleLaunchOptionsClick);
+function createLaunchOptionCard(option) {
+  const verifiedBadge = option.verified ? 
+    '<span class="option-verified">Verified</span>' : '';
+    
+  const votesBadge = option.upvotes > 0 ? 
+    `<span class="option-votes">${option.upvotes}</span>` : '';
+
+  // Use either 'command' or 'option' field (api.js returns 'option' for compatibility)
+  const command = option.command || option.option || '';
+
+  return `
+    <li class="launch-option">
+      <div class="option-command" data-command="${escapeHtml(command)}">
+        <code>${escapeHtml(command)}</code>
+      </div>
+      
+      ${option.description ? `<div class="option-description">${escapeHtml(option.description)}</div>` : ''}
+      
+      <div class="option-meta">
+        <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
+        <div>
+          ${verifiedBadge}
+          ${votesBadge}
+        </div>
+      </div>
+    </li>
+  `;
 }
 
-/**
- * Handle launch options button clicks with proper event management
- * @param {Event} e - Click event
- */
-async function handleLaunchOptionsClick(e) {
-  // Only handle launch options buttons
-  const button = e.target.closest('.launch-options-btn');
-  if (!button) return;
-
-  // Prevent event bubbling and default behavior
-  e.preventDefault();
-  e.stopPropagation();
-
-  const gameId = button.dataset.gameId;
-  if (!gameId) {
-    console.error('No game ID found on button');
-    return;
-  }
-
-  console.log(`🚀 Launch options clicked for game ID: ${gameId}`);
-
-  try {
-    // Check if options are already open
-    const existingRow = document.querySelector(`.launch-options-row[data-game-id="${gameId}"]`);
-    
-    if (existingRow && existingRow.style.display !== 'none') {
-      // Close existing options
-      closeLaunchOptions(gameId);
-      return;
-    }
-
-    // Close any other open options first
-    closeAllLaunchOptions();
-
-    // Show loading state
-    button.disabled = true;
-    button.textContent = 'Loading...';
-
-    // Fetch and display launch options
-    await fetchAndDisplayLaunchOptions(gameId, button);
-
-  } catch (error) {
-    console.error('Error handling launch options click:', error);
-    showLaunchOptionsError(gameId, error.message);
-  } finally {
-    // Re-enable button
-    button.disabled = false;
-    updateButtonText(button, true);
-  }
-}
-
-/**
- * Fetch launch options and display them
- * @param {string} gameId - Game ID
- * @param {HTMLElement} button - The clicked button
- */
-async function fetchAndDisplayLaunchOptions(gameId, button) {
-  try {
-    console.log(`📡 Fetching launch options for game ${gameId}`);
-    
-    const response = await fetch(`/api/games/${gameId}/launch-options`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log(`✅ Received ${data.length} launch options for game ${gameId}`);
-
-    // Display the launch options
-    displayLaunchOptions(gameId, data);
-    
-    // Update button state
-    updateButtonText(button, true);
-    
-    // Track that this row is open
-    openLaunchOptionsRows.add(gameId);
-
-  } catch (error) {
-    console.error(`❌ Error fetching launch options for game ${gameId}:`, error);
-    throw error;
-  }
-}
+// ============================================================================
+// LAUNCH OPTIONS MANAGEMENT
+// ============================================================================
 
 /**
  * Display launch options in the table
@@ -228,194 +228,75 @@ function displayLaunchOptions(gameId, launchOptions) {
   const colspan = gameRow.children.length;
   
   if (launchOptions.length === 0) {
-    launchOptionsRow.innerHTML = `
-      <td colspan="${colspan}" class="launch-options-cell">
-        <div class="no-options">
-          <h4>No Launch Options Available</h4>
-          <p>This game doesn't have any community-verified launch options yet.</p>
-          <p>Consider contributing if you know of effective launch options!</p>
-        </div>
-        <div class="launch-options-close-container">
-          <button class="launch-options-close" data-game-id="${gameId}">
-            Close Options
-          </button>
-        </div>
-      </td>
-    `;
+    launchOptionsRow.innerHTML = createNoOptionsContent(colspan, gameId);
   } else {
     const optionsHtml = launchOptions.map(option => createLaunchOptionCard(option)).join('');
-    
-    launchOptionsRow.innerHTML = `
-      <td colspan="${colspan}" class="launch-options-cell">
-        <ul class="launch-options-list">
-          ${optionsHtml}
-        </ul>
-        <div class="launch-options-close-container">
-          <button class="launch-options-close" data-game-id="${gameId}">
-            Close Options
-          </button>
-        </div>
-      </td>
-    `;
+    launchOptionsRow.innerHTML = createOptionsContent(colspan, optionsHtml, gameId);
   }
 
   // Insert the row after the game row
   gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
 
-  // Set up copy functionality and close button
+  // Set up functionality
   addCopyFunctionality(launchOptionsRow);
   setupCloseButton(launchOptionsRow);
 
-  // Show the row with animation and debug
-  console.log('📋 About to show launch options row for game:', gameId);
+  // Check if we should show the Close All button
+  if (getOpenLaunchOptionsCount() >= CLOSE_ALL_BUTTON_THRESHOLD) {
+    showCloseAllButton();
+  }
+
+  // Show the row with animation
   requestAnimationFrame(() => {
     launchOptionsRow.style.display = 'table-row';
-    console.log('✅ Launch options row display set to table-row');
-    
-    // Debug: Check if the row is actually visible
-    setTimeout(() => {
-      const rect = launchOptionsRow.getBoundingClientRect();
-      console.log('📏 Launch options row dimensions:', {
-        width: rect.width,
-        height: rect.height,
-        visible: rect.height > 0
-      });
-    }, 100);
   });
 
   console.log(`✨ Launch options displayed for game ${gameId}`);
 }
 
 /**
- * Create HTML for a single launch option card
- * @param {Object} option - Launch option data
- * @returns {string} HTML string for the option card
+ * Create content for when no options are available
+ * @param {number} colspan - Number of columns to span
+ * @param {string} gameId - Game ID
+ * @returns {string} HTML content
  */
-function createLaunchOptionCard(option) {
-  const verifiedBadge = option.verified ? 
-    '<span class="option-verified">Verified</span>' : '';
-    
-  const votesBadge = option.votes > 0 ? 
-    `<span class="option-votes">${option.votes}</span>` : '';
-
+function createNoOptionsContent(colspan, gameId) {
   return `
-    <li class="launch-option">
-      <div class="option-command" data-command="${escapeHtml(option.command)}">
-        <code>${escapeHtml(option.command)}</code>
+    <td colspan="${colspan}" class="launch-options-cell">
+      <div class="no-options">
+        <h4>No Launch Options Available</h4>
+        <p>This game doesn't have any community-verified launch options yet.</p>
+        <p>Consider contributing if you know of effective launch options!</p>
       </div>
-      
-      ${option.description ? `<div class="option-description">${escapeHtml(option.description)}</div>` : ''}
-      
-      <div class="option-meta">
-        <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
-        <div>
-          ${verifiedBadge}
-          ${votesBadge}
-        </div>
+      <div class="launch-options-close-container">
+        <button class="launch-options-close" data-game-id="${gameId}">
+          Close Options
+        </button>
       </div>
-    </li>
+    </td>
   `;
 }
 
 /**
- * Add copy functionality to launch option commands
- * @param {HTMLElement} container - Container element
+ * Create content for when options are available
+ * @param {number} colspan - Number of columns to span
+ * @param {string} optionsHtml - HTML for options list
+ * @param {string} gameId - Game ID
+ * @returns {string} HTML content
  */
-function addCopyFunctionality(container) {
-  const commandElements = container.querySelectorAll('.option-command');
-  
-  commandElements.forEach(element => {
-    // Remove existing listeners
-    element.removeEventListener('click', handleCommandClick);
-    
-    // Add click listener for copying
-    element.addEventListener('click', handleCommandClick);
-    
-    // Make focusable for accessibility
-    element.tabIndex = 0;
-    
-    // Add keyboard support
-    element.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleCommandClick(e);
-      }
-    });
-  });
-}
-
-/**
- * Handle command click for copying
- * @param {Event} e - Click event
- */
-async function handleCommandClick(e) {
-  e.preventDefault();
-  e.stopPropagation(); // Prevent triggering parent click handlers
-  
-  const element = e.currentTarget;
-  const command = element.dataset.command;
-  
-  if (!command) {
-    console.error('No command found to copy');
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(command);
-    
-    // Visual feedback
-    element.classList.remove('copy-failed');
-    element.classList.add('copied');
-    
-    // Reset after animation
-    setTimeout(() => {
-      element.classList.remove('copied');
-    }, 1000);
-    
-    console.log(`📋 Copied command: ${command}`);
-    
-  } catch (error) {
-    console.error('Failed to copy command:', error);
-    
-    // Error feedback
-    element.classList.remove('copied');
-    element.classList.add('copy-failed');
-    
-    // Reset after animation
-    setTimeout(() => {
-      element.classList.remove('copy-failed');
-    }, 1000);
-    
-    // Fallback: try to select text
-    try {
-      const range = document.createRange();
-      range.selectNodeContents(element);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-    } catch (fallbackError) {
-      console.error('Fallback text selection also failed:', fallbackError);
-    }
-  }
-}
-
-/**
- * Set up close button functionality
- * @param {HTMLElement} container - Container element
- */
-function setupCloseButton(container) {
-  const closeButton = container.querySelector('.launch-options-close');
-  if (!closeButton) return;
-
-  closeButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const gameId = closeButton.dataset.gameId;
-    if (gameId) {
-      closeLaunchOptions(gameId);
-    }
-  });
+function createOptionsContent(colspan, optionsHtml, gameId) {
+  return `
+    <td colspan="${colspan}" class="launch-options-cell">
+      <ul class="launch-options-list">
+        ${optionsHtml}
+      </ul>
+      <div class="launch-options-close-container">
+        <button class="launch-options-close" data-game-id="${gameId}">
+          Close Options
+        </button>
+      </div>
+    </td>
+  `;
 }
 
 /**
@@ -428,48 +309,43 @@ function closeLaunchOptions(gameId) {
   
   if (launchOptionsRow) {
     launchOptionsRow.style.display = 'none';
-    setTimeout(() => launchOptionsRow.remove(), 300);
+    setTimeout(() => launchOptionsRow.remove(), ANIMATION_DELAY);
   }
   
   if (button) {
-    updateButtonText(button, false);
+    updateButtonToShowState(button);
   }
-  
+
+  // Check if we should hide the Close All button
+  if (getOpenLaunchOptionsCount() < CLOSE_ALL_BUTTON_THRESHOLD) {
+    hideCloseAllButton();
+  }
+
   openLaunchOptionsRows.delete(gameId);
   console.log(`❌ Closed launch options for game ${gameId}`);
 }
 
 /**
- * Close all open launch options
+ * Close all open launch options with proper cleanup
+ * @returns {number} Number of options closed
  */
 function closeAllLaunchOptions() {
-  const openRows = document.querySelectorAll('.launch-options-row[style*="table-row"]');
+  const openRows = document.querySelectorAll('.launch-options-row');
+  let closedCount = 0;
+  
   openRows.forEach(row => {
     const gameId = row.dataset.gameId;
-    if (gameId) {
+    if (gameId && row.style.display !== 'none') {
       closeLaunchOptions(gameId);
+      closedCount++;
     }
   });
   
   openLaunchOptionsRows.clear();
-  console.log('🧹 Closed all launch options');
-}
-
-/**
- * Update button text based on state
- * @param {HTMLElement} button - Launch options button
- * @param {boolean} isOpen - Whether options are open
- */
-function updateButtonText(button, isOpen) {
-  if (!button) return;
+  hideCloseAllButton();
   
-  button.setAttribute('aria-expanded', isOpen.toString());
-  
-  if (isOpen) {
-    button.innerHTML = button.innerHTML.replace('Show Options', 'Hide Options');
-  } else {
-    button.innerHTML = button.innerHTML.replace('Hide Options', 'Show Options');
-  }
+  console.log(`🧹 Closed ${closedCount} launch options`);
+  return closedCount;
 }
 
 /**
@@ -516,25 +392,383 @@ function showLaunchOptionsError(gameId, errorMessage) {
   launchOptionsRow.style.display = 'table-row';
 }
 
+// ============================================================================
+// EVENT HANDLERS
+// ============================================================================
+
 /**
- * Escape HTML to prevent XSS attacks
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
+ * Handle launch options button clicks with proper state management
+ * @param {Event} e - Click event
  */
-function escapeHtml(text) {
-  if (typeof text !== 'string') return '';
+async function handleLaunchOptionsClick(e) {
+  const button = e.target.closest('.launch-options-btn');
+  if (!button) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const gameId = button.dataset.gameId;
+  if (!gameId) {
+    console.error('No game ID found on button');
+    return;
+  }
+
+  console.log(`🚀 Launch options clicked for game ID: ${gameId}`);
+
+  const originalButtonContent = button.innerHTML;
   
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  try {
+    const existingRow = document.querySelector(`.launch-options-row[data-game-id="${gameId}"]`);
+    
+    if (existingRow && existingRow.style.display !== 'none') {
+      closeLaunchOptions(gameId);
+      return;
+    }
+
+    closeAllLaunchOptions();
+    showLoadingState(button);
+
+    console.log(`📡 Fetching launch options for game ${gameId} using api.js`);
+    const launchOptions = await fetchLaunchOptions(gameId, true);
+    console.log(`✅ Received ${launchOptions.length} launch options for game ${gameId}`);
+
+    displayLaunchOptions(gameId, launchOptions);
+    updateButtonToHideState(button, originalButtonContent);
+    openLaunchOptionsRows.add(gameId);
+
+  } catch (error) {
+    console.error('Error handling launch options click:', error);
+    showLaunchOptionsError(gameId, error.message);
+    restoreButtonState(button, originalButtonContent);
+  }
 }
 
 /**
- * Clean up when page unloads
+ * Handle command click for copying
+ * @param {Event} e - Click event
  */
-window.addEventListener('beforeunload', () => {
-  closeAllLaunchOptions();
-});
+async function handleCommandClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const element = e.currentTarget;
+  const command = element.dataset.command;
+  
+  if (!command) {
+    console.error('No command found to copy');
+    return;
+  }
 
-// Export for external use
-export { closeAllLaunchOptions };
+  try {
+    await navigator.clipboard.writeText(command);
+    showCopySuccess(element);
+    console.log(`📋 Copied command: ${command}`);
+  } catch (error) {
+    console.error('Failed to copy command:', error);
+    showCopyError(element);
+    attemptTextSelection(element);
+  }
+}
+
+/**
+ * Handle close all button click with proper event handling
+ * @param {Event} e - Click event
+ */
+function handleCloseAllClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  console.log('🎯 Close All button clicked');
+  
+  const button = e.currentTarget;
+  button.classList.add('clicked');
+  
+  const closedCount = closeAllLaunchOptions();
+  
+  if (closedCount > 0) {
+    showCloseAllFeedback(closedCount);
+  }
+  
+  setTimeout(() => button.classList.remove('clicked'), 200);
+}
+
+// ============================================================================
+// BUTTON STATE MANAGEMENT
+// ============================================================================
+
+/**
+ * Show loading state on button
+ * @param {HTMLElement} button - Launch options button
+ */
+function showLoadingState(button) {
+  button.disabled = true;
+  button.innerHTML = `
+    <span class="loading-spinner" style="width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; display: inline-block;"></span>
+    Loading...
+  `;
+}
+
+/**
+ * Update button to "Hide Options" state
+ * @param {HTMLElement} button - Launch options button
+ * @param {string} originalContent - Original button content
+ */
+function updateButtonToHideState(button, originalContent) {
+  const hideContent = originalContent.replace(/Show Options/g, 'Hide Options');
+  button.innerHTML = hideContent;
+  button.disabled = false;
+  button.setAttribute('aria-expanded', 'true');
+}
+
+/**
+ * Update button to "Show Options" state
+ * @param {HTMLElement} button - Launch options button
+ */
+function updateButtonToShowState(button) {
+  const currentContent = button.innerHTML;
+  const showContent = currentContent.replace(/Hide Options/g, 'Show Options');
+  button.innerHTML = showContent;
+  button.disabled = false;
+  button.setAttribute('aria-expanded', 'false');
+}
+
+/**
+ * Restore button to original state
+ * @param {HTMLElement} button - Launch options button
+ * @param {string} originalContent - Original button content
+ */
+function restoreButtonState(button, originalContent) {
+  button.innerHTML = originalContent;
+  button.disabled = false;
+}
+
+// ============================================================================
+// UI MANAGEMENT (CLOSE ALL BUTTON & FEEDBACK)
+// ============================================================================
+
+/**
+ * Create and show the "Close All Launch Options" button
+ */
+function showCloseAllButton() {
+  let closeAllBtn = document.getElementById('close-all-launch-options-btn');
+  
+  if (!closeAllBtn) {
+    closeAllBtn = createCloseAllButton();
+    document.body.appendChild(closeAllBtn);
+    console.log('✅ Close All button created');
+  }
+  
+  closeAllBtn.style.display = 'flex';
+  setTimeout(() => closeAllBtn.classList.add('visible'), 10);
+}
+
+/**
+ * Create the close all button element
+ * @returns {HTMLElement} The close all button
+ */
+function createCloseAllButton() {
+  const closeAllBtn = document.createElement('button');
+  closeAllBtn.id = 'close-all-launch-options-btn';
+  closeAllBtn.className = 'close-all-btn';
+  closeAllBtn.innerHTML = `
+    <span class="close-all-icon" aria-hidden="true">✕</span>
+    <span class="close-all-text">Close All Options</span>
+  `;
+  closeAllBtn.setAttribute('aria-label', 'Close all open launch options');
+  closeAllBtn.setAttribute('title', 'Close all open launch options (Esc key)');
+  closeAllBtn.addEventListener('click', handleCloseAllClick);
+  
+  return closeAllBtn;
+}
+
+/**
+ * Hide the "Close All Launch Options" button
+ */
+function hideCloseAllButton() {
+  const closeAllBtn = document.getElementById('close-all-launch-options-btn');
+  if (closeAllBtn) {
+    closeAllBtn.classList.remove('visible');
+    setTimeout(() => closeAllBtn.style.display = 'none', ANIMATION_DELAY);
+  }
+}
+
+/**
+ * Show feedback when options are closed
+ * @param {number} count - Number of options closed
+ */
+function showCloseAllFeedback(count) {
+  const feedback = document.createElement('div');
+  feedback.className = 'close-all-feedback';
+  feedback.textContent = `${escapeHtml(count.toString())} option${count !== 1 ? 's' : ''} closed`;
+  
+  const closeBtn = document.getElementById('close-all-launch-options-btn');
+  if (closeBtn) {
+    positionFeedbackNearButton(feedback, closeBtn);
+  }
+  
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => feedback.classList.add('visible'), 10);
+  setTimeout(() => {
+    feedback.classList.remove('visible');
+    setTimeout(() => feedback.remove(), ANIMATION_DELAY);
+  }, FEEDBACK_DURATION);
+}
+
+/**
+ * Position feedback element near the close button
+ * @param {HTMLElement} feedback - Feedback element
+ * @param {HTMLElement} closeBtn - Close button element
+ */
+function positionFeedbackNearButton(feedback, closeBtn) {
+  const rect = closeBtn.getBoundingClientRect();
+  feedback.style.position = 'fixed';
+  feedback.style.right = `${window.innerWidth - rect.left + 10}px`;
+  feedback.style.top = `${rect.top + rect.height / 2}px`;
+  feedback.style.transform = 'translateY(-50%)';
+}
+
+// ============================================================================
+// COPY FUNCTIONALITY
+// ============================================================================
+
+/**
+ * Add copy functionality to launch option commands
+ * @param {HTMLElement} container - Container element
+ */
+function addCopyFunctionality(container) {
+  const commandElements = container.querySelectorAll('.option-command');
+  
+  commandElements.forEach(element => {
+    element.removeEventListener('click', handleCommandClick);
+    element.addEventListener('click', handleCommandClick);
+    element.tabIndex = 0;
+    
+    element.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleCommandClick(e);
+      }
+    });
+  });
+}
+
+/**
+ * Show copy success feedback
+ * @param {HTMLElement} element - Command element
+ */
+function showCopySuccess(element) {
+  element.classList.remove('copy-failed');
+  element.classList.add('copied');
+  setTimeout(() => element.classList.remove('copied'), 1000);
+}
+
+/**
+ * Show copy error feedback
+ * @param {HTMLElement} element - Command element
+ */
+function showCopyError(element) {
+  element.classList.remove('copied');
+  element.classList.add('copy-failed');
+  setTimeout(() => element.classList.remove('copy-failed'), 1000);
+}
+
+/**
+ * Attempt text selection as fallback for copy
+ * @param {HTMLElement} element - Command element
+ */
+function attemptTextSelection(element) {
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } catch (fallbackError) {
+    console.error('Fallback text selection also failed:', fallbackError);
+  }
+}
+
+// ============================================================================
+// SETUP & INITIALIZATION
+// ============================================================================
+
+/**
+ * Set up event listeners for launch options buttons
+ */
+function setupLaunchOptionListeners() {
+  console.log('🎯 Setting up launch option listeners');
+  
+  // Remove any existing listeners first to prevent duplicates
+  document.removeEventListener('click', handleLaunchOptionsClick);
+  document.addEventListener('click', handleLaunchOptionsClick);
+}
+
+/**
+ * Set up close button functionality
+ * @param {HTMLElement} container - Container element
+ */
+function setupCloseButton(container) {
+  const closeButton = container.querySelector('.launch-options-close');
+  if (!closeButton) return;
+
+  closeButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const gameId = closeButton.dataset.gameId;
+    if (gameId) {
+      closeLaunchOptions(gameId);
+    }
+  });
+}
+
+/**
+ * Set up keyboard shortcuts (called once during initialization)
+ */
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const openCount = getOpenLaunchOptionsCount();
+      if (openCount > 0) {
+        e.preventDefault();
+        console.log('⌨️ Escape key pressed - closing all launch options');
+        closeAllLaunchOptions();
+      }
+    }
+  });
+  
+  console.log('⌨️ Keyboard shortcuts initialized');
+}
+
+/**
+ * Initialize table features (called once when app starts)
+ */
+function initializeTableFeatures() {
+  setupKeyboardShortcuts();
+  
+  // Add CSS for loading spinner if not already present
+  if (!document.querySelector('style[data-table-spinner]')) {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    style.setAttribute('data-table-spinner', 'true');
+    document.head.appendChild(style);
+  }
+  
+  console.log('✅ Table features initialized');
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+// Initialize features when module loads
+initializeTableFeatures();
+
+// Export public functions
+export { closeAllLaunchOptions, escapeHtml, initializeTableFeatures };

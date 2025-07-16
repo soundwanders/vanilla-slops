@@ -267,6 +267,16 @@
   100% { background-position: right var(--space-3) center, 15px 0; }
 }
 
+/* Close All Button Pulse Animation */
+@keyframes closeAllPulse {
+  0%, 100% {
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    transform: translateX(0) scale(1.05);
+  }
+}
+
 /* Success Feedback Animation */
 @keyframes successPulse {
   0% { transform: scale(1); }
@@ -558,9 +568,10 @@ body {
 
 /* Table Row Stagger */
 .games-table tbody tr {
-  opacity: 0;
-  animation: slideInLeft 0.3s ease-out forwards;
+  opacity: 1;
+  animation: slideInLeftNoScroll 0.3s ease-out forwards;
 }
+
 
 .games-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
 .games-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
