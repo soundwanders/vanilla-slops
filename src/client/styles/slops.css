@@ -1,6 +1,5 @@
 /* -----------------------------------------------------------------------------
    STEAM LAUNCH OPTIONS SPECIFIC COMPONENTS
-   Enhanced with improved search UX and visual feedback
    ----------------------------------------------------------------------------- */
 
 /* Search Container */
@@ -80,7 +79,7 @@
   transition: transform var(--transition-fast);
 }
 
-/* Enhanced Search Input with New States */
+/* Search Input with New States */
 .search-input {
   width: 100%;
   padding: var(--space-4) var(--space-4) var(--space-4) var(--space-14);
@@ -168,7 +167,7 @@
   color: var(--color-warning);
 }
 
-/* Enhanced Suggestions Dropdown */
+/* Suggestions Dropdown */
 .suggestions-dropdown {
   position: absolute;
   top: calc(100% + var(--space-2));
@@ -405,7 +404,7 @@ fieldset {
   border: none;
 }
 
-/* Enhanced Active Filters */
+/* Active Filters */
 .active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -429,17 +428,6 @@ fieldset {
   transition: all var(--transition-fast);
   position: relative;
   overflow: hidden;
-}
-
-@keyframes filterTagSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
 }
 
 .filter-tag:hover {
@@ -510,7 +498,7 @@ fieldset {
   background: var(--gradient-surface);
 }
 
-/* Enhanced Filter and Sort Select Styling */
+/* Filter and Sort Select Styling */
 .filter-select,
 .sort-select {
   padding: var(--space-3) var(--space-4);
@@ -597,7 +585,7 @@ fieldset {
   display: flex;
 }
 
-/* Enhanced Dark Theme Specific Adjustments */
+/* Dark Theme Specific Adjustments */
 [data-theme="dark"] .search-input {
   background-color: var(--color-surface);
   border-color: var(--color-border-strong);
