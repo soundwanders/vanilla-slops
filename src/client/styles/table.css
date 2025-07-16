@@ -154,7 +154,10 @@
   opacity: 0.6;
 }
 
-/* Launch Options Button */
+
+/* ============================================================================
+  LAUNCH OPTIONS BUTTON AND OPTIONS
+   ============================================================================ */
 .launch-options-btn {
   background: var(--gradient-accent);
   color: var(--color-text-inverse);
@@ -450,6 +453,176 @@
   animation: spin 1s linear infinite;
 }
 
+/* ============================================================================
+   CLOSE ALL LAUNCH OPTIONS BUTTON
+   ============================================================================ */
+
+.close-all-btn {
+  position: fixed;
+  top: 120px;
+  right: 20px;
+  z-index: var(--z-fixed);
+  
+  display: none; /* Hidden by default */
+  align-items: center;
+  gap: var(--space-2);
+  
+  padding: var(--space-3) var(--space-4);
+  background: var(--gradient-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  user-select: none;
+  
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(8px);
+}
+
+/* Visible state */
+.close-all-btn.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Hover effects */
+.close-all-btn:hover {
+  background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-800) 100%);
+  transform: translateX(0) translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.close-all-btn:hover .close-all-icon {
+  transform: rotate(90deg);
+}
+
+/* Click feedback */
+.close-all-btn.clicked {
+  transform: translateX(0) scale(0.95);
+  background: var(--color-success);
+}
+
+/* Icon styling */
+.close-all-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  transition: transform var(--transition-fast);
+}
+
+/* Text styling */
+.close-all-text {
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Focus state for accessibility */
+.close-all-btn:focus-visible {
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* Active state */
+.close-all-btn:active {
+  transform: translateX(0) scale(0.92);
+}
+
+/* ============================================================================
+   FEEDBACK TOAST
+   ============================================================================ */
+
+.close-all-feedback {
+  position: fixed;
+  z-index: var(--z-toast);
+  
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-success);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  
+  transform: translateX(20px);
+  opacity: 0;
+  transition: all var(--transition-base);
+  pointer-events: none;
+}
+
+.close-all-feedback.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.close-all-feedback::before {
+  content: '✓';
+  margin-right: var(--space-2);
+  font-weight: var(--font-weight-bold);
+}
+
+[data-theme="dark"] .close-all-btn {
+  background: var(--gradient-accent);
+  box-shadow: 
+    var(--shadow-lg),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .close-all-btn:hover {
+  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-700) 100%);
+}
+
+[data-theme="dark"] .close-all-feedback {
+  background: var(--color-success);
+  box-shadow: 
+    var(--shadow-md),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.close-all-btn.pulse {
+  animation: closeAllPulse 2s ease-in-out infinite;
+}
+
+/* Ripple effect on click */
+.close-all-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+  pointer-events: none;
+}
+
+.close-all-btn:active::after {
+  width: 200px;
+  height: 200px;
+}
+
+/* Print styles - hide button when printing */
+@media print {
+  .close-all-btn,
+  .close-all-feedback {
+    display: none !important;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .games-table th,
@@ -459,23 +632,6 @@
   
   .launch-options-list {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .launch-options-list {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-  }
-  
-  .launch-option {
-    padding: var(--space-4);
-  }
-  
-  .option-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
   }
 }
 
@@ -570,10 +726,4 @@
 [data-theme="dark"] .option-command {
   background: var(--color-code-background);
   border-color: rgba(255, 255, 255, 0.1);
-}
-
-/* Animation Keyframes */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
