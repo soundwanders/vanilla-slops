@@ -240,7 +240,7 @@
   margin-left: var(--space-2);
 }
 
-/* Launch Options Display Row - RESTORED */
+/* Launch Options Display Row */
 .launch-options-row {
   background: var(--gradient-surface) !important;
   border-top: 2px solid var(--color-accent-subtle);
@@ -274,18 +274,12 @@
   background: var(--color-surface-subtle);
   border-radius: var(--radius-xl);
   border: 2px dashed var(--color-border);
-  /* Ensure visibility */
   opacity: 1 !important;
   visibility: visible !important;
   height: auto !important;
   overflow: visible !important;
   display: block !important;
-  /* DEBUG: Add obvious background */
-  background: rgba(0, 255, 0, 0.2) !important;
-  border: 3px solid green !important;
 }
-
-
 
 .launch-options-row:hover {
   background: var(--gradient-surface) !important;
@@ -295,7 +289,6 @@
 .launch-options-cell {
   padding: var(--space-10) !important;
   border-radius: 0;
-  /* Ensure cell is visible */
   height: auto !important;
   overflow: visible !important;
   opacity: 1 !important;
@@ -322,7 +315,7 @@
   animation: spin 1s linear infinite;
 }
 
-/* Launch Options List - FIXED */
+/* Launch Options List */
 .launch-options-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -330,9 +323,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  /* FIXED: Start visible, animation is just enhancement */
   opacity: 1;
-  /* OPTIONAL: Re-enable animation as enhancement only */
   animation: launchOptionsFadeIn 0.6s ease-out;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -340,7 +331,7 @@
   user-select: none;
 }
 
-/* Individual Launch Option Cards - FIXED */
+/* Individual Launch Option Cards */
 .launch-option {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
@@ -350,19 +341,8 @@
   position: relative;
   overflow: hidden;
   cursor: default;
-  /* FIXED: Start visible, animation is just enhancement */
   opacity: 1;
-  /* OPTIONAL: Re-enable animation as enhancement only */
-  animation: launchOptionSlideIn 0.3s ease-out;
 }
-
-/* Individual launch option stagger animation - RESTORED */
-.launch-options-list .launch-option:nth-child(1) { animation-delay: 0.1s; }
-.launch-options-list .launch-option:nth-child(2) { animation-delay: 0.15s; }
-.launch-options-list .launch-option:nth-child(3) { animation-delay: 0.2s; }
-.launch-options-list .launch-option:nth-child(4) { animation-delay: 0.25s; }
-.launch-options-list .launch-option:nth-child(5) { animation-delay: 0.3s; }
-.launch-options-list .launch-option:nth-child(6) { animation-delay: 0.35s; }
 
 .launch-option::before {
   content: '';
@@ -532,7 +512,7 @@
   font-size: var(--font-size-xs);
 }
 
-/* Close Button Container and Button - RESTORED */
+/* Close Button Container and Button */
 .launch-options-close-container {
   margin-top: var(--space-8);
   padding-top: var(--space-6);
@@ -630,7 +610,7 @@
   background-color: var(--color-interactive-hover);
 }
 
-/* No Options State - SIMPLIFIED */
+/* No Options State  */
 .no-options,
 .launch-options-cell .no-options {
   text-align: center;
@@ -814,6 +794,14 @@
   }
 }
 
+/* Performance Optimizations */
+.launch-option,
+.option-command,
+.launch-options-btn {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 /* Dark Theme Adjustments */
 [data-theme="dark"] .games-table th {
   background: var(--color-surface);
@@ -857,12 +845,4 @@
 [data-theme="dark"] .no-options {
   background: var(--color-surface);
   border-color: var(--color-border);
-}
-
-/* Performance Optimizations */
-.launch-option,
-.option-command,
-.launch-options-btn {
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
