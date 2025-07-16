@@ -122,10 +122,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Skip Links */
+/* Skip link for accessibility */
 .skip-link {
   position: absolute;
-  top: -40px;
+  top: -60px;
   left: 6px;
   background: var(--color-accent);
   color: var(--color-text-inverse);

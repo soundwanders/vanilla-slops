@@ -52,7 +52,7 @@ export default class SlopSearch {
     // Callback for filter changes (will be set by main.js)
     this.onFilterChange = null;
 
-    // UX Configuration - optimized for smooth experience
+    // UX Configuration
     this.config = {
       suggestionsDelay: 150,        // Fast suggestions
       searchDelay: 800,             // Slower main search (was 300ms)

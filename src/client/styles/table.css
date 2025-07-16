@@ -159,7 +159,10 @@
   opacity: 0.6;
 }
 
-/* Launch Options Button */
+
+/* ============================================================================
+  LAUNCH OPTIONS BUTTON AND OPTIONS
+   ============================================================================ */
 .launch-options-btn {
   background: var(--gradient-accent);
   color: var(--color-text-inverse);
@@ -739,23 +742,6 @@
   
   .launch-options-list {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .launch-options-list {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-  }
-  
-  .launch-option {
-    padding: var(--space-4);
-  }
-  
-  .option-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
   }
 }
 
