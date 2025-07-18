@@ -73,6 +73,18 @@
   }
 }
 
+/* Games Table Specific for Large screens and up (1020px) */
+@media (min-width: 1020px) {
+  .games-table th,
+  .games-table td {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .launch-options-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
 /* -----------------------------------------------------------------------------
    COMPONENT RESPONSIVE BEHAVIOR
    Specific component adaptations for different screen sizes
@@ -180,8 +192,6 @@
     font-size: calc(var(--font-size-xs) * 0.9);
   }
 
-  
-  
   .close-all-icon {
     width: var(--space-4);
     height: var(--space-4);
@@ -191,6 +201,76 @@
   /* Hide text on very small screens, show only icon */
   .close-all-text {
     display: none;
+  }
+
+  .options-first-toggle {
+    margin: var(--space-4) 0;
+    padding: var(--space-4);
+  }
+  
+  .toggle-label {
+    font-size: var(--font-size-sm);
+  }
+  
+  .toggle-description {
+    padding-left: 0;
+    margin-top: var(--space-3);
+  }
+  
+  .empty-table-state {
+    padding: var(--space-12) var(--space-4);
+    min-height: 20rem;
+  }
+  
+  .empty-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .empty-description {
+    font-size: var(--font-size-base);
+  }
+  
+  .empty-stats {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .stat-card {
+    min-width: 6rem;
+  }
+  
+  .empty-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 16rem;
+    justify-content: center;
+  }
+  
+  .suggestion-chips {
+    gap: var(--space-2);
+  }
+  
+  .suggestion-chip {
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-xs);
+  }
+  
+  .info-modal {
+    margin: var(--space-4);
+    max-height: 90vh;
+  }
+  
+  .info-modal-header {
+    padding: var(--space-4);
+  }
+  
+  .info-modal-body {
+    padding: var(--space-4);
+    max-height: calc(90vh - 4rem);
   }
 
   /* Theme toggle positioning */
@@ -340,6 +420,28 @@
   .filter-tag {
     font-size: var(--font-size-xs);
     padding: var(--space-1) var(--space-3);
+  }
+
+  .toggle-slider {
+    width: 3rem;
+    height: 1.75rem;
+  }
+  
+  .toggle-slider::before {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  .toggle-checkbox:checked + .toggle-slider::before {
+    transform: translateX(1.25rem);
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+  }
+  
+  .stat-number {
+    font-size: var(--font-size-xl);
   }
 }
 

@@ -1,7 +1,5 @@
 /**
- * @fileoverview API client for Steam Launch Options backend
- * Provides intelligent caching, retry logic, and comprehensive error handling
- * Supports all backend endpoints with proper parameter validation
+ * @fileoverview API client with Options-First strategy support
  */
 
 const API_URL = process.env.NODE_ENV === 'production' 
@@ -9,12 +7,7 @@ const API_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:8000/api';
   
 /**
- * Intelligent cache implementation with TTL and size management
- * Prevents memory leaks while maintaining performance benefits
- * 
- * @class SlopCache
- * @param {number} [maxSize=100] - Maximum number of cached entries
- * @param {number} [ttl=300000] - Time to live in milliseconds (5 minutes)
+ * Cache implementation with Options-First metadata
  */
 class SlopCache {
   constructor(maxSize = 100, ttl = 5 * 60 * 1000) { // 5 minutes TTL
@@ -74,17 +67,6 @@ const cache = new SlopCache();
 
 /**
  * Fetch wrapper with exponential backoff retry logic
- * Provides consistent error handling and request formatting
- * 
- * @async
- * @function fetchWrapper
- * @param {string} url - Request URL
- * @param {Object} [options={}] - Fetch options
- * @param {Object} [options.headers] - Request headers
- * @param {string} [options.method='GET'] - HTTP method
- * @param {string} [options.body] - Request body
- * @returns {Promise<Response>} Fetch response object
- * @throws {Error} When all retry attempts fail
  */
 async function fetchWrapper(url, options = {}) {
   const maxRetries = 3;
@@ -108,7 +90,6 @@ async function fetchWrapper(url, options = {}) {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || errorMessage;
         } catch {
-          // If response isn't JSON, use the text
           errorMessage = errorText || errorMessage;
         }
         
@@ -131,14 +112,19 @@ async function fetchWrapper(url, options = {}) {
 }
 
 /**
- * Build query parameters with proper encoding
+ * Build query parameters with proper encoding and Options-First support
  */
 function buildQueryParams(params) {
   const urlParams = new URLSearchParams();
   
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
-      urlParams.set(key, value.toString());
+      // Handle boolean parameters properly
+      if (typeof value === 'boolean') {
+        urlParams.set(key, value.toString());
+      } else {
+        urlParams.set(key, value.toString());
+      }
     }
   });
   
@@ -146,8 +132,7 @@ function buildQueryParams(params) {
 }
 
 /**
- * Main function to fetch games with comprehensive filtering and pagination
- * Supports search, category filters, sorting, and caching
+ * function to fetch games with Options-First strategy support
  * 
  * @async
  * @function fetchGames
@@ -159,18 +144,31 @@ function buildQueryParams(params) {
  * @param {string} [params.developer=''] - Developer name filter
  * @param {string} [params.options=''] - Launch options filter type
  * @param {string} [params.year=''] - Release year filter
- * @param {string} [params.sort='title'] - Sort field
- * @param {string} [params.order='asc'] - Sort order
+ * @param {string} [params.sort='total_options_count'] - Sort field
+ * @param {string} [params.order='desc'] - Sort order
+ * @param {boolean} [params.hasOptions=true] - Filter games with launch options
+ * @param {boolean} [params.showAll=false] - Show all games including those without options
  * @param {boolean} [params.useCache=true] - Whether to use caching
- * @returns {Promise<Object>} Games data with pagination metadata
+ * @returns {Promise<Object>} games data with Options-First metadata
  * @throws {Error} When API request fails or returns invalid data
  * 
  * @example
- * const result = await fetchGames({
+ * // Options-First: Only games with launch options
+ * const optionsOnly = await fetchGames({
  *   search: 'valve',
- *   category: 'fps',
- *   page: 1,
- *   limit: 20
+ *   category: 'fps'
+ * });
+ * 
+ * // Show All: Include games without launch options
+ * const allGames = await fetchGames({
+ *   search: 'valve',
+ *   showAll: true
+ * });
+ * 
+ * // Explicit: Only games without launch options
+ * const noOptions = await fetchGames({
+ *   hasOptions: false,
+ *   showAll: true
  * });
  */
 export async function fetchGames({
@@ -181,11 +179,14 @@ export async function fetchGames({
   developer = '',
   options = '',
   year = '',
-  sort = 'title',
-  order = 'asc',
+  sort = 'total_options_count', // Sort by options count
+  order = 'desc', // Most options first
+  hasOptions = true, // Only show games with options
+  showAll = false, // Progressive disclosure override
   useCache = true
 } = {}) {
   
+  // Create cache key that includes Options-First parameters
   const queryParams = buildQueryParams({
     page,
     limit,
@@ -195,27 +196,36 @@ export async function fetchGames({
     options,
     year,
     sort,
-    order
+    order,
+    hasOptions: showAll ? undefined : hasOptions, // Don't include hasOptions when showAll is true
+    showAll: showAll || undefined // Only include if true
   });
 
-  const cacheKey = `games:${queryParams}`;
+  const cacheKey = `games-v2:${queryParams}`;
   
   // Check cache first
   if (useCache && cache.has(cacheKey)) {
-    console.log('Cache hit:', cacheKey);
+    console.log('📦 Cache hit (Options-First):', cacheKey);
     return cache.get(cacheKey);
   }
 
   const url = `${API_URL}/games${queryParams ? `?${queryParams}` : ''}`;
-  console.log('API Request:', url);
+  console.log('🎯 API Request (Options-First):', url);
+  console.log('📊 Strategy:', { hasOptions, showAll, sort, order });
 
   try {
     const response = await fetchWrapper(url);
     const data = await response.json();
     
-    console.log('API Response:', data);
+    console.log('✅ API Response (Options-First):', {
+      games: data.games?.length || 0,
+      total: data.total || 0,
+      strategy: data.meta?.strategy || 'unknown',
+      showingOptionsOnly: data.meta?.showingOptionsOnly,
+      showingAll: data.meta?.showingAll
+    });
     
-    // Validate response structure
+    // validation for Options-First response
     const result = {
       games: Array.isArray(data.games) ? data.games : [],
       total: typeof data.total === 'number' ? data.total : 0,
@@ -223,7 +233,11 @@ export async function fetchGames({
       currentPage: typeof data.currentPage === 'number' ? data.currentPage : page,
       hasNextPage: typeof data.hasNextPage === 'boolean' ? data.hasNextPage : false,
       hasPrevPage: typeof data.hasPrevPage === 'boolean' ? data.hasPrevPage : false,
-      facets: data.facets || {}
+      facets: data.facets || {},
+      
+      // Options-First strategy metadata
+      stats: data.stats || { withOptions: 0, withoutOptions: 0, total: 0, percentageWithOptions: 0 },
+      meta: data.meta || { showingOptionsOnly: false, showingAll: false, strategy: 'unknown' }
     };
     
     // Cache the response
@@ -233,84 +247,84 @@ export async function fetchGames({
     
     return result;
   } catch (error) {
-    console.error('Failed to fetch games:', error);
+    console.error('❌ Failed to fetch games:', error);
     throw new Error(`Failed to fetch games: ${error.message}`);
   }
 }
 
 /**
- * Retrieves intelligent search suggestions for autocomplete functionality
- * Implements caching to reduce API calls and improve response times
+ * search suggestions with options-first prioritization
  * 
  * @async
  * @function getSearchSuggestions
  * @param {string} query - Search query (minimum 2 characters)
  * @param {number} [limit=10] - Maximum number of suggestions
- * @returns {Promise<Array>} Array of search suggestion objects
+ * @param {boolean} [prioritizeOptions=true] - Prioritize games with launch options
+ * @returns {Promise<Array>} Array of prioritized search suggestion objects
  * @throws {Error} When API request fails (returns empty array as fallback)
- * 
- * @example
- * const suggestions = await getSearchSuggestions('half', 5);
- * // Returns: [
- * //   { type: 'title', value: 'Half-Life', category: 'Games' },
- * //   { type: 'developer', value: 'Valve Corporation', category: 'Developers' }
- * // ]
  */
-export async function getSearchSuggestions(query, limit = 10) {
+export async function getSearchSuggestions(query, limit = 10, prioritizeOptions = true) {
   if (!query || query.length < 2) return [];
   
-  const cacheKey = `suggestions:${query}:${limit}`;
+  const cacheKey = `suggestions-v2:${query}:${limit}:${prioritizeOptions}`;
   
   if (cache.has(cacheKey)) {
     return cache.get(cacheKey);
   }
 
   try {
-    const queryParams = buildQueryParams({ q: query, limit });
+    const queryParams = buildQueryParams({ 
+      q: query, 
+      limit,
+      prioritizeOptions 
+    });
+    
     const response = await fetchWrapper(`${API_URL}/games/suggestions?${queryParams}`);
     const suggestions = await response.json();
     
-    // Validate suggestions format
+    console.log(`🔍 Suggestions (prioritizeOptions: ${prioritizeOptions}):`, suggestions.length);
+    
     const validSuggestions = Array.isArray(suggestions) ? suggestions : [];
     
     cache.set(cacheKey, validSuggestions);
     return validSuggestions;
   } catch (error) {
-    console.error('Failed to fetch suggestions:', error);
+    console.error('❌ Failed to fetch suggestions:', error);
     return [];
   }
 }
 
 /**
- * Fetches available filter options (facets) for dynamic UI generation
- * Used to populate filter dropdowns with current available options
+ * filter facets with Options-First statistics
  * 
  * @async
  * @function getFilterFacets
  * @param {string} [searchQuery=''] - Optional search context for filtering facets
- * @returns {Promise<Object>} Object containing categorized filter options
- * @property {Array} developers - Available developers with counts
- * @property {Array} engines - Available engines with counts
- * @property {Array} publishers - Available publishers with counts
- * @property {Array} genres - Available genres
- * @property {Array} platforms - Available platforms
- * @property {Array} optionsRanges - Launch options count ranges
- * @property {Array} releaseYears - Available release years
- * @throws {Error} When API request fails (returns empty structure as fallback)
+ * @param {boolean} [includeStats=true] - Include options statistics
+ * @returns {Promise<Object>} Object containing categorized filter options and statistics
  */
-export async function getFilterFacets(searchQuery = '') {
-  const cacheKey = `facets:${searchQuery}`;
+export async function getFilterFacets(searchQuery = '', includeStats = true) {
+  const cacheKey = `facets-v2:${searchQuery}:${includeStats}`;
   
   if (cache.has(cacheKey)) {
     return cache.get(cacheKey);
   }
 
   try {
-    const queryParams = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
-    const response = await fetchWrapper(`${API_URL}/games/facets${queryParams}`);
+    const queryParams = buildQueryParams({ 
+      search: searchQuery,
+      includeStats 
+    });
+    
+    const response = await fetchWrapper(`${API_URL}/games/facets${queryParams ? `?${queryParams}` : ''}`);
     const facets = await response.json();
     
-    // Ensure consistent facets structure
+    console.log('📊 Facets loaded:', Object.keys(facets));
+    if (facets.statistics) {
+      console.log('📈 Statistics:', facets.statistics);
+    }
+    
+    // Ensure consistent facets structure with new statistics
     const result = {
       developers: Array.isArray(facets.developers) ? facets.developers : [],
       engines: Array.isArray(facets.engines) ? facets.engines : [],
@@ -318,13 +332,21 @@ export async function getFilterFacets(searchQuery = '') {
       genres: Array.isArray(facets.genres) ? facets.genres : [],
       platforms: Array.isArray(facets.platforms) ? facets.platforms : [],
       optionsRanges: Array.isArray(facets.optionsRanges) ? facets.optionsRanges : [],
-      releaseYears: Array.isArray(facets.releaseYears) ? facets.releaseYears : []
+      releaseYears: Array.isArray(facets.releaseYears) ? facets.releaseYears : [],
+      
+      // Options-First statistics
+      statistics: facets.statistics || { 
+        withOptions: 0, 
+        withoutOptions: 0, 
+        total: 0, 
+        percentageWithOptions: 0 
+      }
     };
     
     cache.set(cacheKey, result);
     return result;
   } catch (error) {
-    console.error('Failed to fetch facets:', error);
+    console.error('❌ Failed to fetch facets:', error);
     return {
       developers: [],
       engines: [],
@@ -332,14 +354,26 @@ export async function getFilterFacets(searchQuery = '') {
       genres: [],
       platforms: [],
       optionsRanges: [],
-      releaseYears: []
+      releaseYears: [],
+      statistics: { withOptions: 0, withoutOptions: 0, total: 0, percentageWithOptions: 0 }
     };
   }
 }
 
-/**
- * Fetch game details
- */
+export async function testOptionsFirstStrategy() {
+  try {
+    const response = await fetchWrapper(`${API_URL}/games/health/strategy`);
+    const health = await response.json();
+    
+    console.log('🏥 Options-First strategy health:', health);
+    return health;
+  } catch (error) {
+    console.error('❌ Strategy health check failed:', error);
+    return { status: 'unhealthy', error: error.message };
+  }
+}
+
+// Keep existing functions with behavior
 export async function fetchGameDetails(gameId, useCache = true) {
   const cacheKey = `game:${gameId}`;
   
@@ -351,7 +385,7 @@ export async function fetchGameDetails(gameId, useCache = true) {
     const response = await fetchWrapper(`${API_URL}/games/${gameId}`);
     const data = await response.json();
     
-    console.log('Game Details Response:', data);
+    console.log('🎮 Game Details Response:', data);
     
     if (useCache) {
       cache.set(cacheKey, data);
@@ -359,14 +393,11 @@ export async function fetchGameDetails(gameId, useCache = true) {
     
     return data;
   } catch (error) {
-    console.error(`Failed to fetch game details for ${gameId}:`, error);
+    console.error(`❌ Failed to fetch game details for ${gameId}:`, error);
     throw new Error(`Failed to fetch details for game ${gameId}: ${error.message}`);
   }
 }
 
-/**
- * Fetch launch options for a specific game
- */
 export async function fetchLaunchOptions(gameId, useCache = true) {
   const cacheKey = `launch_options:${gameId}`;
   
@@ -378,9 +409,8 @@ export async function fetchLaunchOptions(gameId, useCache = true) {
     const response = await fetchWrapper(`${API_URL}/games/${gameId}/launch-options`);
     const data = await response.json();
     
-    console.log('Launch Options Response:', data);
+    console.log('🚀 Launch Options Response:', data);
     
-    // Ensure we return an array
     const launchOptions = Array.isArray(data) ? data : (data.launchOptions || []);
     
     if (useCache) {
@@ -389,14 +419,11 @@ export async function fetchLaunchOptions(gameId, useCache = true) {
     
     return launchOptions;
   } catch (error) {
-    console.error(`Failed to fetch launch options for ${gameId}:`, error);
+    console.error(`❌ Failed to fetch launch options for ${gameId}:`, error);
     throw new Error(`Failed to fetch launch options for game ${gameId}: ${error.message}`);
   }
 }
 
-/**
- * Get popular searches (if backend implements this)
- */
 export async function getPopularSearches(limit = 5) {
   const cacheKey = `popular:${limit}`;
   
@@ -405,7 +432,6 @@ export async function getPopularSearches(limit = 5) {
   }
 
   try {
-    // This endpoint might not exist yet, so handle gracefully
     const response = await fetchWrapper(`${API_URL}/search/popular?limit=${limit}`);
     const popular = await response.json();
     
@@ -413,14 +439,11 @@ export async function getPopularSearches(limit = 5) {
     cache.set(cacheKey, validPopular);
     return validPopular;
   } catch (error) {
-    console.warn('Popular searches endpoint not available:', error);
+    console.warn('❌ Popular searches endpoint not available:', error);
     return [];
   }
 }
 
-/**
- * Batch fetch multiple games (if needed)
- */
 export async function fetchGamesInBatch(gameIds) {
   if (!Array.isArray(gameIds) || gameIds.length === 0) {
     return [];
@@ -433,7 +456,6 @@ export async function fetchGamesInBatch(gameIds) {
   }
 
   try {
-    // For now, fetch games individually since batch endpoint might not exist
     const gamePromises = gameIds.map(id => fetchGameDetails(id));
     const games = await Promise.allSettled(gamePromises);
     
@@ -444,37 +466,37 @@ export async function fetchGamesInBatch(gameIds) {
     cache.set(cacheKey, validGames);
     return validGames;
   } catch (error) {
-    console.error('Failed to batch fetch games:', error);
+    console.error('❌ Failed to batch fetch games:', error);
     throw new Error('Failed to fetch games in batch');
   }
 }
 
-/**
- * Advanced search
- */
 export async function advancedSearch({
   query = '',
   filters = {},
-  sort = { field: 'title', order: 'asc' },
+  sort = { field: 'total_options_count', order: 'desc' },
   page = 1,
   limit = 20,
   fuzzy = false,
-  exactMatch = false
+  exactMatch = false,
+  hasOptions = true, // Options-First default
+  showAll = false // Progressive disclosure
 } = {}) {
   
-  // For now, map to regular fetchGames
   return fetchGames({
     page,
     limit,
     search: query,
     sort: sort.field,
     order: sort.order,
+    hasOptions,
+    showAll,
     ...filters
   });
 }
 
 /**
- * Cache management functions
+ * cache management with Options-First considerations
  */
 export function clearCache(pattern) {
   if (pattern) {
@@ -482,10 +504,12 @@ export function clearCache(pattern) {
   } else {
     cache.clear();
   }
+  console.log('🧹 Cache cleared:', pattern || 'all');
 }
 
 export function invalidateSearchCache() {
-  cache.clearPattern('^(games|suggestions|facets|popular):');
+  cache.clearPattern('^(games|suggestions|facets|popular|statistics)');
+  console.log('🔄 Search cache invalidated');
 }
 
 export function invalidateGameCache(gameId) {
@@ -495,45 +519,53 @@ export function invalidateGameCache(gameId) {
   } else {
     cache.clearPattern('^(game|launch_options):');
   }
+  console.log('🎮 Game cache invalidated:', gameId || 'all');
 }
 
 /**
- * Preloads frequently accessed content
- * Caches first page of games and filter facets in background
- * 
- * @async
- * @function preloadPopularContent
- * @returns {Promise<void>} Resolves when preloading is complete
- * @throws {Error} Logs warnings but doesn't throw to prevent app initialization failure
+ * preloading with Options-First strategy
  */
 export async function preloadPopularContent() {
   try {
-    // Preload first page with default sorting
-    await fetchGames({ page: 1, useCache: true });
+    console.log('🚀 Preloading content with Options-First strategy...');
     
-    // Preload filter facets
-    await getFilterFacets();
+    // Preload first page with Options-First defaults
+    await fetchGames({ 
+      page: 1, 
+      useCache: true,
+      hasOptions: true,
+      sort: 'total_options_count',
+      order: 'desc'
+    });
     
-    console.log('Popular content preloaded');
+    // Preload filter facets with statistics
+    await getFilterFacets('', true);
+    
+    // Preload game statistics
+    await getGameStatistics();
+    
+    console.log('✅ Options-First content preloaded');
   } catch (error) {
-    console.warn('Failed to preload content:', error);
+    console.warn('⚠️ Failed to preload content:', error);
   }
 }
 
-/**
- * Performs API health check to verify backend connectivity
- * Used for monitoring and graceful degradation
- * 
- * @async
- * @function checkAPIHealth
- * @returns {Promise<boolean>} True if API is responsive, false otherwise
- */
 export async function checkAPIHealth() {
   try {
-    const response = await fetch(`${API_URL}/games?limit=1`);
-    return response.ok;
+    // Test both Options-First and traditional endpoints
+    const [optionsFirstTest, healthTest] = await Promise.all([
+      fetch(`${API_URL}/games?limit=1&hasOptions=true`).then(r => r.json()),
+      fetch(`${API_URL}/games/test`).then(r => r.json())
+    ]);
+    
+    console.log('🏥 API Health:', {
+      optionsFirst: optionsFirstTest.meta?.strategy === 'options-first',
+      traditional: healthTest.message?.includes('API is working')
+    });
+    
+    return true;
   } catch (error) {
-    console.error('API health check failed:', error);
+    console.error('❌ API health check failed:', error);
     return false;
   }
 }

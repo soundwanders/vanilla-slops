@@ -447,6 +447,50 @@ async function getFacetValues(field, searchQuery = '') {
 }
 
 /**
+ * Get game statistics for progressive disclosure UI
+ * 
+ * @async
+ * @function getGameStatistics
+ * @param {string} [searchQuery=''] - Search term to scope statistics
+ * @param {Object} [filters={}] - Additional filters to scope statistics
+ * @returns {Promise<Object>} Statistics object with counts and percentages
+ */
+export async function getGameStatistics(searchQuery = '', filters = {}) {
+  const cacheKey = `statistics-v2:${searchQuery}:${JSON.stringify(filters)}`;
+  
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey);
+  }
+
+  try {
+    const queryParams = buildQueryParams({
+      search: searchQuery,
+      ...filters
+    });
+    
+    const response = await fetchWrapper(`${API_URL}/games/statistics${queryParams ? `?${queryParams}` : ''}`);
+    const statistics = await response.json();
+    
+    console.log('📊 Statistics fetched:', statistics);
+    
+    const result = {
+      withOptions: statistics.withOptions || 0,
+      withoutOptions: statistics.withoutOptions || 0,
+      total: statistics.total || 0,
+      percentageWithOptions: statistics.percentageWithOptions || 0,
+      strategy: statistics.strategy || 'options-first',
+      timestamp: statistics.timestamp || new Date().toISOString()
+    };
+    
+    cache.set(cacheKey, result);
+    return result;
+  } catch (error) {
+    console.error('❌ Failed to fetch statistics:', error);
+    return { withOptions: 0, withoutOptions: 0, total: 0, percentageWithOptions: 0 };
+  }
+}
+
+/**
  * Get launch options count ranges for filtering
  */
 async function getOptionsCountRanges() {
@@ -567,6 +611,7 @@ export async function fetchGameWithLaunchOptions(gameId) {
     throw error;
   }
 }
+
 
 /**
  * Fetches launch options for a specific game with popularity ordering

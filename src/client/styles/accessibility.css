@@ -110,6 +110,19 @@
   .launch-options-row[style*="none"] {
     animation: none;
   }
+
+  .empty-icon {
+    animation: none;
+  }
+  
+  .info-modal-overlay,
+  .info-modal {
+    animation: none;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Screen Reader Improvements */
