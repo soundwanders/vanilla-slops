@@ -1,9 +1,13 @@
 /**
- * Render pagination controls with proper theming
- * 
+ * @fileoverview Table.js
+ * Handles pagination rendering for games table
+ * Provides a responsive and accessible pagination UI
+ * @module Pagination
  * @param {number} currentPage - The current page number
  * @param {number} totalPages - The total number of pages
  * @param {Function} onPageChange - Callback function to handle page changes
+ * @requires utils.js
+
  */
 export function renderPagination(currentPage, totalPages, onPageChange) {
   // Remove existing pagination

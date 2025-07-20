@@ -145,7 +145,7 @@
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 }
 
@@ -320,7 +320,7 @@
   50% { transform: translateY(-6px); }
 }
 
-/* Search Input Focus Enhancement */
+/* Search Input Focus */
 @keyframes searchInputFocusGlow {
   from {
     box-shadow: var(--shadow-sm);
@@ -387,7 +387,7 @@
   animation: bounceIn 0.5s ease-out;
 }
 
-/* NEW: UX Animation Classes */
+/* UX Animation Classes */
 .animate-searchPending {
   animation: searchPendingPulse 2s infinite ease-in-out;
 }
