@@ -1,112 +1,112 @@
 /**
- * @fileoverview Table rendering and launch options management
- * Handles games table display and interactive launch options
- * 
- * CLEANED & ORGANIZED VERSION
- * - Fixed duplicate functions
- * - Fixed memory leaks
- * - Proper function organization
- * - Consistent export strategy
+ * @fileoverview Table.js
+ * Handles games table display, launch options, and empty states
+ * Includes intelligent empty states based on search context and strategy
+ * @module Table
+ * @requires api.js
+ * @requires styles/animations.css
+ * @requires styles/table.css
+ * @requires utils.js
+ * @requires constants.js
  */
 
 import { fetchLaunchOptions } from '../api.js';
 
 // ============================================================================
-// CONSTANTS & STATE
+// CONSTANTS & CONFIGURATION
 // ============================================================================
 
-const openLaunchOptionsRows = new Set();
-
-// Constants for magic numbers
-const CLOSE_ALL_BUTTON_THRESHOLD = 2;
-const LAUNCH_OPTIONS_ROW_SELECTOR = '.launch-options-row[style*="table-row"]';
-const ANIMATION_DELAY = 300;
-const FEEDBACK_DURATION = 2000;
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Escape HTML to prevent XSS attacks
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
- */
-function escapeHtml(text) {
-  if (typeof text !== 'string') return '';
-  
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-/**
- * Get count of currently open launch options
- * @returns {number} Number of open launch options
- */
-function getOpenLaunchOptionsCount() {
-  return document.querySelectorAll(LAUNCH_OPTIONS_ROW_SELECTOR).length;
-}
-
-/**
- * Format release date consistently
- * @param {string} dateString - Raw date string
- * @returns {string} Formatted date
- */
-function formatReleaseDate(dateString) {
-  if (!dateString) return 'Unknown';
-  
-  try {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  } catch (error) {
-    console.warn('Invalid date format:', dateString);
-    return 'Unknown';
+const CONFIG = {
+  CLOSE_ALL_THRESHOLD: 2,
+  ANIMATION_DELAY: 300,
+  FEEDBACK_DURATION: 2000,
+  SELECTORS: {
+    tableContainer: '#table-container',
+    launchOptionsRow: '.launch-options-row[style*="table-row"]',
+    launchOptionsBtn: '.launch-options-btn',
+    closeAllBtn: '#close-all-launch-options-btn'
+  },
+  CLASSES: {
+    gamesTable: 'games-table',
+    launchOptionsRow: 'launch-options-row',
+    launchOptionsCell: 'launch-options-cell',
+    launchOption: 'launch-option',
+    optionCommand: 'option-command',
+    closeAllBtn: 'close-all-btn',
+    emptyTableState: 'empty-table-state'
   }
-}
+};
 
 // ============================================================================
-// CORE RENDERING FUNCTIONS
+// STATE MANAGEMENT
+// ============================================================================
+
+const TableState = {
+  openLaunchOptionsRows: new Set(),
+  currentStats: { withOptions: 0, withoutOptions: 0, total: 0 },
+  currentFilters: {},
+  isInitialized: false
+};
+
+// ============================================================================
+// MAIN RENDER FUNCTIONS
 // ============================================================================
 
 /**
- * Render the games table with data
+ * Main table render function - entry point for all table rendering
  * @param {Array} games - Array of game objects
  * @param {boolean} showLoading - Whether to show loading state
  */
 export function renderTable(games, showLoading = false) {
-  const container = document.getElementById('table-container');
-  if (!container) {
-    console.error('Table container not found');
-    return;
-  }
+  const container = getTableContainer();
+  if (!container) return;
 
   if (showLoading) {
-    container.innerHTML = `
-      <div class="table-loading">
-        <div class="loading-spinner"></div>
-        <span>Loading games...</span>
-      </div>
-    `;
+    renderLoadingState(container);
     return;
   }
 
   if (!games || games.length === 0) {
-    container.innerHTML = `
-      <div class="no-results">
-        <h3>🎮 No games found</h3>
-        <p>Try adjusting your search criteria or filters.</p>
-      </div>
-    `;
+    renderBasicEmptyState(container);
     return;
   }
 
-  // Create table structure
+  renderGamesTable(container, games);
+  setupTableEventListeners();
+}
+
+/**
+ * Render empty state with Options-First context
+ * @param {Object} filters - Current filter state
+ * @param {Object} stats - Game statistics
+ */
+export function renderEmptyState(filters = {}, stats = {}) {
+  const container = getTableContainer();
+  if (!container) return;
+
+  TableState.currentStats = stats;
+  TableState.currentFilters = filters;
+
+  const emptyStateType = determineEmptyStateType(filters, stats);
+  const emptyStateHTML = createEmptyStateHTML(emptyStateType, filters, stats);
+  
+  container.innerHTML = emptyStateHTML;
+  setupEmptyStateEventListeners();
+  
+  console.log('Empty state rendered:', emptyStateType);
+}
+
+// ============================================================================
+// TABLE RENDERING
+// ============================================================================
+
+/**
+ * Render the actual games table
+ */
+function renderGamesTable(container, games) {
   const table = document.createElement('table');
-  table.className = 'games-table';
+  table.className = CONFIG.CLASSES.gamesTable;
+  
   table.innerHTML = `
     <thead>
       <tr>
@@ -119,26 +119,23 @@ export function renderTable(games, showLoading = false) {
       </tr>
     </thead>
     <tbody>
-      ${games.map(game => createGameRow(game)).join('')}
+      ${games.map(game => createGameRowHTML(game)).join('')}
     </tbody>
   `;
 
   container.innerHTML = '';
   container.appendChild(table);
-
-  // Set up event listeners (only needs to be done once)
-  setupLaunchOptionListeners();
+  
+  console.log(`✅ Table rendered with ${games.length} games`);
 }
 
 /**
- * Create a single game row HTML
- * @param {Object} game - Game data object
- * @returns {string} HTML string for the game row
+ * Create HTML for a single game row
  */
-function createGameRow(game) {
+function createGameRowHTML(game) {
   const gameId = game.app_id;
   const optionsCount = game.total_options_count || 0;
-  const releaseDate = formatReleaseDate(game.release_date);
+  const releaseDate = formatDate(game.release_date);
 
   return `
     <tr data-game-id="${gameId}">
@@ -164,24 +161,361 @@ function createGameRow(game) {
   `;
 }
 
-/**
- * Create HTML for a single launch option card
- * @param {Object} option - Launch option data
- * @returns {string} HTML string for the option card
- */
-function createLaunchOptionCard(option) {
-  const verifiedBadge = option.verified ? 
-    '<span class="option-verified">Verified</span>' : '';
-    
-  const votesBadge = option.upvotes > 0 ? 
-    `<span class="option-votes">${option.upvotes}</span>` : '';
+// ============================================================================
+// LOADING & BASIC EMPTY STATES
+// ============================================================================
 
-  // Use either 'command' or 'option' field (api.js returns 'option' for compatibility)
+/**
+ * Render loading state
+ */
+function renderLoadingState(container) {
+  container.innerHTML = `
+    <div class="table-loading">
+      <div class="loading-spinner"></div>
+      <span>Loading games...</span>
+    </div>
+  `;
+}
+
+/**
+ * Render basic empty state (fallback)
+ */
+function renderBasicEmptyState(container) {
+  container.innerHTML = `
+    <div class="no-results">
+      <h3>🎮 No games found</h3>
+      <p>Try adjusting your search criteria or filters.</p>
+    </div>
+  `;
+}
+
+// ============================================================================
+// EMPTY STATES (OPTIONS-FIRST)
+// ============================================================================
+
+/**
+ * Determine what type of empty state to show
+ */
+function determineEmptyStateType(filters, stats) {
+  const hasSearch = filters.search && filters.search.trim();
+  const hasFilters = Object.entries(filters).some(([key, val]) => 
+    key !== 'showAll' && key !== 'hasOptions' && val && val.toString().trim()
+  );
+  
+  if (stats.total === 0) return 'database-empty';
+  if (hasSearch && stats.total === 0) return 'search-no-results';
+  if (!filters.showAll && stats.withOptions === 0) {
+    return hasSearch || hasFilters ? 'search-no-results' : 'no-options-found';
+  }
+  if (hasFilters) return 'all-games-filtered';
+  return 'default';
+}
+
+/**
+ * Create HTML for different empty state types
+ */
+function createEmptyStateHTML(type, filters, stats) {
+  const emptyStates = {
+    'no-options-found': () => createNoOptionsFoundHTML(stats),
+    'search-no-results': () => createSearchNoResultsHTML(filters, stats),
+    'all-games-filtered': () => createAllFilteredHTML(filters, stats),
+    'database-empty': () => createDatabaseEmptyHTML(),
+    'default': () => createDefaultEmptyHTML(stats)
+  };
+  
+  const createHTML = emptyStates[type] || emptyStates.default;
+  return `<div class="${CONFIG.CLASSES.emptyTableState} ${type}">${createHTML()}</div>`;
+}
+
+/**
+ * No options found state
+ */
+function createNoOptionsFoundHTML(stats) {
+  const suggestions = ['Counter-Strike', 'Half-Life', 'Portal', 'Cyberpunk', 'Witcher', 'GTA'];
+  
+  return `
+    <div class="empty-icon">🎮</div>
+    <h3 class="empty-title">Looking for games with launch options?</h3>
+    <p class="empty-description">
+      We're showing games that have community-verified launch options for the best experience.
+    </p>
+    
+    <div class="empty-stats">
+      <div class="stat-card">
+        <span class="stat-number">${stats.withOptions || 0}</span>
+        <span class="stat-label">Games with options</span>
+      </div>
+      <div class="stat-card muted">
+        <span class="stat-number">${stats.withoutOptions || 0}</span>
+        <span class="stat-label">Games without options</span>
+      </div>
+    </div>
+    
+    <div class="empty-suggestions">
+      <h4>Try searching for popular games:</h4>
+      <div class="suggestion-chips">
+        ${suggestions.map(search => 
+          `<button class="suggestion-chip" data-search="${search}">${search}</button>`
+        ).join('')}
+      </div>
+    </div>
+    
+    <div class="empty-actions">
+      <button class="btn btn-primary" data-action="show-all">
+        Show all ${stats.total || 0} games
+      </button>
+      <button class="btn btn-secondary" data-action="learn-more">
+        Learn about launch options
+      </button>
+    </div>
+  `;
+}
+
+/**
+ * Search no results state
+ */
+function createSearchNoResultsHTML(filters, stats) {
+  const searchTerm = filters.search || '';
+  
+  return `
+    <div class="empty-icon">🔍</div>
+    <h3 class="empty-title">No results found${searchTerm ? ` for "${searchTerm}"` : ''}</h3>
+    <p class="empty-description">
+      ${filters.showAll 
+        ? 'No games match your search criteria.' 
+        : 'No games with launch options match your search criteria.'
+      }
+    </p>
+    
+    ${!filters.showAll && stats.withoutOptions > 0 ? `
+      <div class="empty-suggestion">
+        <p>💡 Try <button class="inline-btn" data-action="show-all">showing all games</button> 
+        to see ${stats.withoutOptions} more results without launch options.</p>
+      </div>
+    ` : ''}
+    
+    <div class="empty-actions">
+      <button class="btn btn-secondary" data-action="clear-search">Clear search</button>
+      <button class="btn btn-secondary" data-action="clear-filters">Clear all filters</button>
+    </div>
+    
+    <div class="search-tips">
+      <h4>Search tips:</h4>
+      <ul>
+        <li>Try different keywords or shorter terms</li>
+        <li>Check for typos in game names</li>
+        <li>Search by developer (e.g., "Valve", "id Software")</li>
+        <li>Use partial game titles (e.g., "Half" for Half-Life)</li>
+      </ul>
+    </div>
+  `;
+}
+
+/**
+ * All games filtered state
+ */
+function createAllFilteredHTML(filters, stats) {
+  const activeFilters = getActiveFiltersDescription(filters);
+  
+  return `
+    <div class="empty-icon">🎛️</div>
+    <h3 class="empty-title">No games match your filters</h3>
+    <p class="empty-description">
+      Your current filters are too restrictive. Try adjusting them to see more results.
+    </p>
+    
+    <div class="active-filters-summary">
+      <h4>Active filters:</h4>
+      <div class="filter-summary">${activeFilters}</div>
+    </div>
+    
+    <div class="empty-actions">
+      <button class="btn btn-primary" data-action="clear-filters">Clear all filters</button>
+      ${!filters.showAll ? `
+        <button class="btn btn-secondary" data-action="show-all">Show all games</button>
+      ` : ''}
+    </div>
+  `;
+}
+
+/**
+ * Database empty state
+ */
+function createDatabaseEmptyHTML() {
+  return `
+    <div class="empty-icon">🗄️</div>
+    <h3 class="empty-title">No games in database</h3>
+    <p class="empty-description">
+      The game database appears to be empty. This might be a temporary issue.
+    </p>
+    <div class="empty-actions">
+      <button class="btn btn-primary" onclick="location.reload()">Refresh page</button>
+    </div>
+  `;
+}
+
+/**
+ * Default empty state
+ */
+function createDefaultEmptyHTML(stats) {
+  return `
+    <div class="empty-icon">🎮</div>
+    <h3 class="empty-title">Ready to find games?</h3>
+    <p class="empty-description">
+      Search through ${stats.total || 0} games to find the perfect launch options.
+    </p>
+    <div class="empty-stats">
+      <div class="stat-card">
+        <span class="stat-number">${stats.withOptions || 0}</span>
+        <span class="stat-label">Games with launch options</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">${stats.percentageWithOptions || 0}%</span>
+        <span class="stat-label">Have launch options</span>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// LAUNCH OPTIONS FUNCTIONALITY
+// ============================================================================
+
+/**
+ * Handle launch options button clicks
+ */
+async function handleLaunchOptionsClick(e) {
+  const button = e.target.closest(CONFIG.SELECTORS.launchOptionsBtn);
+  if (!button) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const gameId = button.dataset.gameId;
+  if (!gameId) {
+    console.error('No game ID found on button');
+    return;
+  }
+
+  console.log(`🚀 Launch options clicked for game ID: ${gameId}`);
+
+  const originalContent = button.innerHTML;
+  
+  try {
+    const existingRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
+    
+    if (existingRow && existingRow.style.display !== 'none') {
+      closeLaunchOptions(gameId);
+      return;
+    }
+
+    closeAllLaunchOptions();
+    setButtonLoadingState(button);
+
+    const launchOptions = await fetchLaunchOptions(gameId, true);
+    console.log(`✅ Received ${launchOptions.length} launch options for game ${gameId}`);
+
+    displayLaunchOptions(gameId, launchOptions);
+    setButtonHideState(button, originalContent);
+    TableState.openLaunchOptionsRows.add(gameId);
+    
+    updateCloseAllButton();
+
+  } catch (error) {
+    console.error('Error handling launch options click:', error);
+    showLaunchOptionsError(gameId, error.message);
+    setButtonShowState(button, originalContent);
+  }
+}
+
+/**
+ * Display launch options in table
+ */
+function displayLaunchOptions(gameId, launchOptions) {
+  const gameRow = document.querySelector(`tr[data-game-id="${gameId}"]`);
+  if (!gameRow) {
+    console.error(`Game row not found for ID: ${gameId}`);
+    return;
+  }
+
+  // Remove existing row
+  const existingRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
+  if (existingRow) existingRow.remove();
+
+  // Create new row
+  const launchOptionsRow = document.createElement('tr');
+  launchOptionsRow.className = CONFIG.CLASSES.launchOptionsRow;
+  launchOptionsRow.dataset.gameId = gameId;
+
+  const colspan = gameRow.children.length;
+  
+  if (launchOptions.length === 0) {
+    launchOptionsRow.innerHTML = createNoOptionsHTML(colspan, gameId);
+  } else {
+    launchOptionsRow.innerHTML = createOptionsHTML(colspan, launchOptions, gameId);
+  }
+
+  gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
+  setupLaunchOptionsRowEvents(launchOptionsRow);
+  
+  requestAnimationFrame(() => {
+    launchOptionsRow.style.display = 'table-row';
+  });
+
+  console.log(`✨ Launch options displayed for game ${gameId}`);
+}
+
+/**
+ * Create HTML for launch options content
+ */
+function createOptionsHTML(colspan, launchOptions, gameId) {
+  const optionsHTML = launchOptions.map(option => createLaunchOptionHTML(option)).join('');
+  
+  return `
+    <td colspan="${colspan}" class="${CONFIG.CLASSES.launchOptionsCell}">
+      <ul class="launch-options-list">
+        ${optionsHTML}
+      </ul>
+      <div class="launch-options-close-container">
+        <button class="launch-options-close" data-game-id="${gameId}">
+          Close Options
+        </button>
+      </div>
+    </td>
+  `;
+}
+
+/**
+ * Create HTML for no options content
+ */
+function createNoOptionsHTML(colspan, gameId) {
+  return `
+    <td colspan="${colspan}" class="${CONFIG.CLASSES.launchOptionsCell}">
+      <div class="no-options">
+        <h4>No Launch Options Available</h4>
+        <p>This game doesn't have any community-verified launch options yet.</p>
+        <p>Consider contributing if you know of effective launch options!</p>
+      </div>
+      <div class="launch-options-close-container">
+        <button class="launch-options-close" data-game-id="${gameId}">
+          Close Options
+        </button>
+      </div>
+    </td>
+  `;
+}
+
+/**
+ * Create HTML for individual launch option
+ */
+function createLaunchOptionHTML(option) {
+  const verifiedBadge = option.verified ? '<span class="option-verified">Verified</span>' : '';
+  const votesBadge = option.upvotes > 0 ? `<span class="option-votes">${option.upvotes}</span>` : '';
   const command = option.command || option.option || '';
 
   return `
-    <li class="launch-option">
-      <div class="option-command" data-command="${escapeHtml(command)}">
+    <li class="${CONFIG.CLASSES.launchOption}">
+      <div class="${CONFIG.CLASSES.optionCommand}" data-command="${escapeHtml(command)}">
         <code>${escapeHtml(command)}</code>
       </div>
       
@@ -198,139 +532,33 @@ function createLaunchOptionCard(option) {
   `;
 }
 
-// ============================================================================
-// LAUNCH OPTIONS MANAGEMENT
-// ============================================================================
-
 /**
- * Display launch options in the table
- * @param {string} gameId - Game ID
- * @param {Array} launchOptions - Array of launch option objects
- */
-function displayLaunchOptions(gameId, launchOptions) {
-  const gameRow = document.querySelector(`tr[data-game-id="${gameId}"]`);
-  if (!gameRow) {
-    console.error(`Game row not found for ID: ${gameId}`);
-    return;
-  }
-
-  // Remove existing launch options row if it exists
-  const existingRow = document.querySelector(`.launch-options-row[data-game-id="${gameId}"]`);
-  if (existingRow) {
-    existingRow.remove();
-  }
-
-  // Create the launch options row
-  const launchOptionsRow = document.createElement('tr');
-  launchOptionsRow.className = 'launch-options-row';
-  launchOptionsRow.dataset.gameId = gameId;
-
-  const colspan = gameRow.children.length;
-  
-  if (launchOptions.length === 0) {
-    launchOptionsRow.innerHTML = createNoOptionsContent(colspan, gameId);
-  } else {
-    const optionsHtml = launchOptions.map(option => createLaunchOptionCard(option)).join('');
-    launchOptionsRow.innerHTML = createOptionsContent(colspan, optionsHtml, gameId);
-  }
-
-  // Insert the row after the game row
-  gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
-
-  // Set up functionality
-  addCopyFunctionality(launchOptionsRow);
-  setupCloseButton(launchOptionsRow);
-
-  // Check if we should show the Close All button
-  if (getOpenLaunchOptionsCount() >= CLOSE_ALL_BUTTON_THRESHOLD) {
-    showCloseAllButton();
-  }
-
-  // Show the row with animation
-  requestAnimationFrame(() => {
-    launchOptionsRow.style.display = 'table-row';
-  });
-
-  console.log(`✨ Launch options displayed for game ${gameId}`);
-}
-
-/**
- * Create content for when no options are available
- * @param {number} colspan - Number of columns to span
- * @param {string} gameId - Game ID
- * @returns {string} HTML content
- */
-function createNoOptionsContent(colspan, gameId) {
-  return `
-    <td colspan="${colspan}" class="launch-options-cell">
-      <div class="no-options">
-        <h4>No Launch Options Available</h4>
-        <p>This game doesn't have any community-verified launch options yet.</p>
-        <p>Consider contributing if you know of effective launch options!</p>
-      </div>
-      <div class="launch-options-close-container">
-        <button class="launch-options-close" data-game-id="${gameId}">
-          Close Options
-        </button>
-      </div>
-    </td>
-  `;
-}
-
-/**
- * Create content for when options are available
- * @param {number} colspan - Number of columns to span
- * @param {string} optionsHtml - HTML for options list
- * @param {string} gameId - Game ID
- * @returns {string} HTML content
- */
-function createOptionsContent(colspan, optionsHtml, gameId) {
-  return `
-    <td colspan="${colspan}" class="launch-options-cell">
-      <ul class="launch-options-list">
-        ${optionsHtml}
-      </ul>
-      <div class="launch-options-close-container">
-        <button class="launch-options-close" data-game-id="${gameId}">
-          Close Options
-        </button>
-      </div>
-    </td>
-  `;
-}
-
-/**
- * Close launch options for a specific game
- * @param {string} gameId - Game ID
+ * Close launch options for specific game
  */
 function closeLaunchOptions(gameId) {
-  const launchOptionsRow = document.querySelector(`.launch-options-row[data-game-id="${gameId}"]`);
+  const launchOptionsRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
   const button = document.querySelector(`.launch-options-btn[data-game-id="${gameId}"]`);
   
   if (launchOptionsRow) {
     launchOptionsRow.style.display = 'none';
-    setTimeout(() => launchOptionsRow.remove(), ANIMATION_DELAY);
+    setTimeout(() => launchOptionsRow.remove(), CONFIG.ANIMATION_DELAY);
   }
   
   if (button) {
-    updateButtonToShowState(button);
+    setButtonShowState(button);
   }
 
-  // Check if we should hide the Close All button
-  if (getOpenLaunchOptionsCount() < CLOSE_ALL_BUTTON_THRESHOLD) {
-    hideCloseAllButton();
-  }
-
-  openLaunchOptionsRows.delete(gameId);
+  TableState.openLaunchOptionsRows.delete(gameId);
+  updateCloseAllButton();
+  
   console.log(`❌ Closed launch options for game ${gameId}`);
 }
 
 /**
- * Close all open launch options with proper cleanup
- * @returns {number} Number of options closed
+ * Close all open launch options
  */
 function closeAllLaunchOptions() {
-  const openRows = document.querySelectorAll('.launch-options-row');
+  const openRows = document.querySelectorAll(CONFIG.SELECTORS.launchOptionsRow);
   let closedCount = 0;
   
   openRows.forEach(row => {
@@ -341,112 +569,169 @@ function closeAllLaunchOptions() {
     }
   });
   
-  openLaunchOptionsRows.clear();
-  hideCloseAllButton();
+  TableState.openLaunchOptionsRows.clear();
+  updateCloseAllButton();
   
   console.log(`🧹 Closed ${closedCount} launch options`);
   return closedCount;
 }
 
 /**
- * Show error message for launch options
- * @param {string} gameId - Game ID
- * @param {string} errorMessage - Error message
+ * Show launch options error
  */
 function showLaunchOptionsError(gameId, errorMessage) {
   const gameRow = document.querySelector(`tr[data-game-id="${gameId}"]`);
   if (!gameRow) return;
 
-  const existingRow = document.querySelector(`.launch-options-row[data-game-id="${gameId}"]`);
-  if (existingRow) {
-    existingRow.remove();
-  }
+  const existingRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
+  if (existingRow) existingRow.remove();
 
   const launchOptionsRow = document.createElement('tr');
-  launchOptionsRow.className = 'launch-options-row';
+  launchOptionsRow.className = CONFIG.CLASSES.launchOptionsRow;
   launchOptionsRow.dataset.gameId = gameId;
 
   const colspan = gameRow.children.length;
   
   launchOptionsRow.innerHTML = `
-    <td colspan="${colspan}" class="launch-options-cell">
+    <td colspan="${colspan}" class="${CONFIG.CLASSES.launchOptionsCell}">
       <div class="error">
         <h3>❌ Error Loading Launch Options</h3>
         <p>Failed to load launch options: ${escapeHtml(errorMessage)}</p>
-        <details>
-          <summary>Technical Details</summary>
-          <p>Error occurred while fetching data from the server. Please try again or contact support if the issue persists.</p>
-        </details>
         <div class="launch-options-close-container">
-          <button class="launch-options-close" data-game-id="${gameId}">
-            Close
-          </button>
+          <button class="launch-options-close" data-game-id="${gameId}">Close</button>
         </div>
       </div>
     </td>
   `;
 
   gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
-  setupCloseButton(launchOptionsRow);
+  setupLaunchOptionsRowEvents(launchOptionsRow);
   
   launchOptionsRow.style.display = 'table-row';
 }
 
 // ============================================================================
-// EVENT HANDLERS
+// BUTTON STATE MANAGEMENT
 // ============================================================================
 
-/**
- * Handle launch options button clicks with proper state management
- * @param {Event} e - Click event
- */
-async function handleLaunchOptionsClick(e) {
-  const button = e.target.closest('.launch-options-btn');
-  if (!button) return;
+function setButtonLoadingState(button) {
+  button.disabled = true;
+  button.innerHTML = `
+    <span class="loading-spinner" style="width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; display: inline-block;"></span>
+    Loading...
+  `;
+}
 
-  e.preventDefault();
-  e.stopPropagation();
+function setButtonHideState(button, originalContent) {
+  const hideContent = originalContent.replace(/Show Options/g, 'Hide Options');
+  button.innerHTML = hideContent;
+  button.disabled = false;
+  button.setAttribute('aria-expanded', 'true');
+}
 
-  const gameId = button.dataset.gameId;
-  if (!gameId) {
-    console.error('No game ID found on button');
-    return;
+function setButtonShowState(button, originalContent = null) {
+  if (originalContent) {
+    button.innerHTML = originalContent;
+  } else {
+    const currentContent = button.innerHTML;
+    const showContent = currentContent.replace(/Hide Options/g, 'Show Options');
+    button.innerHTML = showContent;
   }
+  button.disabled = false;
+  button.setAttribute('aria-expanded', 'false');
+}
 
-  console.log(`🚀 Launch options clicked for game ID: ${gameId}`);
+// ============================================================================
+// CLOSE ALL FUNCTIONALITY
+// ============================================================================
 
-  const originalButtonContent = button.innerHTML;
+function updateCloseAllButton() {
+  const openCount = getOpenLaunchOptionsCount();
   
-  try {
-    const existingRow = document.querySelector(`.launch-options-row[data-game-id="${gameId}"]`);
-    
-    if (existingRow && existingRow.style.display !== 'none') {
-      closeLaunchOptions(gameId);
-      return;
-    }
-
-    closeAllLaunchOptions();
-    showLoadingState(button);
-
-    console.log(`📡 Fetching launch options for game ${gameId} using api.js`);
-    const launchOptions = await fetchLaunchOptions(gameId, true);
-    console.log(`✅ Received ${launchOptions.length} launch options for game ${gameId}`);
-
-    displayLaunchOptions(gameId, launchOptions);
-    updateButtonToHideState(button, originalButtonContent);
-    openLaunchOptionsRows.add(gameId);
-
-  } catch (error) {
-    console.error('Error handling launch options click:', error);
-    showLaunchOptionsError(gameId, error.message);
-    restoreButtonState(button, originalButtonContent);
+  if (openCount >= CONFIG.CLOSE_ALL_THRESHOLD) {
+    showCloseAllButton();
+  } else {
+    hideCloseAllButton();
   }
 }
 
-/**
- * Handle command click for copying
- * @param {Event} e - Click event
- */
+function showCloseAllButton() {
+  let closeAllBtn = document.getElementById('close-all-launch-options-btn');
+  
+  if (!closeAllBtn) {
+    closeAllBtn = createCloseAllButton();
+    document.body.appendChild(closeAllBtn);
+  }
+  
+  closeAllBtn.style.display = 'flex';
+  setTimeout(() => closeAllBtn.classList.add('visible'), 10);
+}
+
+function hideCloseAllButton() {
+  const closeAllBtn = document.getElementById('close-all-launch-options-btn');
+  if (closeAllBtn) {
+    closeAllBtn.classList.remove('visible');
+    setTimeout(() => closeAllBtn.style.display = 'none', CONFIG.ANIMATION_DELAY);
+  }
+}
+
+function createCloseAllButton() {
+  const closeAllBtn = document.createElement('button');
+  closeAllBtn.id = 'close-all-launch-options-btn';
+  closeAllBtn.className = CONFIG.CLASSES.closeAllBtn;
+  closeAllBtn.innerHTML = `
+    <span class="close-all-icon" aria-hidden="true">✕</span>
+    <span class="close-all-text">Close All Options</span>
+  `;
+  closeAllBtn.setAttribute('aria-label', 'Close all open launch options');
+  closeAllBtn.setAttribute('title', 'Close all open launch options (Esc key)');
+  
+  return closeAllBtn;
+}
+
+function handleCloseAllClick(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const button = e.currentTarget;
+  button.classList.add('clicked');
+  
+  const closedCount = closeAllLaunchOptions();
+  
+  if (closedCount > 0) {
+    showCloseAllFeedback(closedCount);
+  }
+  
+  setTimeout(() => button.classList.remove('clicked'), 200);
+}
+
+function showCloseAllFeedback(count) {
+  const feedback = document.createElement('div');
+  feedback.className = 'close-all-feedback';
+  feedback.textContent = `${count} option${count !== 1 ? 's' : ''} closed`;
+  
+  const closeBtn = document.getElementById('close-all-launch-options-btn');
+  if (closeBtn) {
+    const rect = closeBtn.getBoundingClientRect();
+    feedback.style.position = 'fixed';
+    feedback.style.right = `${window.innerWidth - rect.left + 10}px`;
+    feedback.style.top = `${rect.top + rect.height / 2}px`;
+    feedback.style.transform = 'translateY(-50%)';
+  }
+  
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => feedback.classList.add('visible'), 10);
+  setTimeout(() => {
+    feedback.classList.remove('visible');
+    setTimeout(() => feedback.remove(), CONFIG.ANIMATION_DELAY);
+  }, CONFIG.FEEDBACK_DURATION);
+}
+
+// ============================================================================
+// COPY FUNCTIONALITY
+// ============================================================================
+
 async function handleCommandClick(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -470,213 +755,18 @@ async function handleCommandClick(e) {
   }
 }
 
-/**
- * Handle close all button click with proper event handling
- * @param {Event} e - Click event
- */
-function handleCloseAllClick(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  console.log('🎯 Close All button clicked');
-  
-  const button = e.currentTarget;
-  button.classList.add('clicked');
-  
-  const closedCount = closeAllLaunchOptions();
-  
-  if (closedCount > 0) {
-    showCloseAllFeedback(closedCount);
-  }
-  
-  setTimeout(() => button.classList.remove('clicked'), 200);
-}
-
-// ============================================================================
-// BUTTON STATE MANAGEMENT
-// ============================================================================
-
-/**
- * Show loading state on button
- * @param {HTMLElement} button - Launch options button
- */
-function showLoadingState(button) {
-  button.disabled = true;
-  button.innerHTML = `
-    <span class="loading-spinner" style="width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; display: inline-block;"></span>
-    Loading...
-  `;
-}
-
-/**
- * Update button to "Hide Options" state
- * @param {HTMLElement} button - Launch options button
- * @param {string} originalContent - Original button content
- */
-function updateButtonToHideState(button, originalContent) {
-  const hideContent = originalContent.replace(/Show Options/g, 'Hide Options');
-  button.innerHTML = hideContent;
-  button.disabled = false;
-  button.setAttribute('aria-expanded', 'true');
-}
-
-/**
- * Update button to "Show Options" state
- * @param {HTMLElement} button - Launch options button
- */
-function updateButtonToShowState(button) {
-  const currentContent = button.innerHTML;
-  const showContent = currentContent.replace(/Hide Options/g, 'Show Options');
-  button.innerHTML = showContent;
-  button.disabled = false;
-  button.setAttribute('aria-expanded', 'false');
-}
-
-/**
- * Restore button to original state
- * @param {HTMLElement} button - Launch options button
- * @param {string} originalContent - Original button content
- */
-function restoreButtonState(button, originalContent) {
-  button.innerHTML = originalContent;
-  button.disabled = false;
-}
-
-// ============================================================================
-// UI MANAGEMENT (CLOSE ALL BUTTON & FEEDBACK)
-// ============================================================================
-
-/**
- * Create and show the "Close All Launch Options" button
- */
-function showCloseAllButton() {
-  let closeAllBtn = document.getElementById('close-all-launch-options-btn');
-  
-  if (!closeAllBtn) {
-    closeAllBtn = createCloseAllButton();
-    document.body.appendChild(closeAllBtn);
-    console.log('✅ Close All button created');
-  }
-  
-  closeAllBtn.style.display = 'flex';
-  setTimeout(() => closeAllBtn.classList.add('visible'), 10);
-}
-
-/**
- * Create the close all button element
- * @returns {HTMLElement} The close all button
- */
-function createCloseAllButton() {
-  const closeAllBtn = document.createElement('button');
-  closeAllBtn.id = 'close-all-launch-options-btn';
-  closeAllBtn.className = 'close-all-btn';
-  closeAllBtn.innerHTML = `
-    <span class="close-all-icon" aria-hidden="true">✕</span>
-    <span class="close-all-text">Close All Options</span>
-  `;
-  closeAllBtn.setAttribute('aria-label', 'Close all open launch options');
-  closeAllBtn.setAttribute('title', 'Close all open launch options (Esc key)');
-  closeAllBtn.addEventListener('click', handleCloseAllClick);
-  
-  return closeAllBtn;
-}
-
-/**
- * Hide the "Close All Launch Options" button
- */
-function hideCloseAllButton() {
-  const closeAllBtn = document.getElementById('close-all-launch-options-btn');
-  if (closeAllBtn) {
-    closeAllBtn.classList.remove('visible');
-    setTimeout(() => closeAllBtn.style.display = 'none', ANIMATION_DELAY);
-  }
-}
-
-/**
- * Show feedback when options are closed
- * @param {number} count - Number of options closed
- */
-function showCloseAllFeedback(count) {
-  const feedback = document.createElement('div');
-  feedback.className = 'close-all-feedback';
-  feedback.textContent = `${escapeHtml(count.toString())} option${count !== 1 ? 's' : ''} closed`;
-  
-  const closeBtn = document.getElementById('close-all-launch-options-btn');
-  if (closeBtn) {
-    positionFeedbackNearButton(feedback, closeBtn);
-  }
-  
-  document.body.appendChild(feedback);
-  
-  setTimeout(() => feedback.classList.add('visible'), 10);
-  setTimeout(() => {
-    feedback.classList.remove('visible');
-    setTimeout(() => feedback.remove(), ANIMATION_DELAY);
-  }, FEEDBACK_DURATION);
-}
-
-/**
- * Position feedback element near the close button
- * @param {HTMLElement} feedback - Feedback element
- * @param {HTMLElement} closeBtn - Close button element
- */
-function positionFeedbackNearButton(feedback, closeBtn) {
-  const rect = closeBtn.getBoundingClientRect();
-  feedback.style.position = 'fixed';
-  feedback.style.right = `${window.innerWidth - rect.left + 10}px`;
-  feedback.style.top = `${rect.top + rect.height / 2}px`;
-  feedback.style.transform = 'translateY(-50%)';
-}
-
-// ============================================================================
-// COPY FUNCTIONALITY
-// ============================================================================
-
-/**
- * Add copy functionality to launch option commands
- * @param {HTMLElement} container - Container element
- */
-function addCopyFunctionality(container) {
-  const commandElements = container.querySelectorAll('.option-command');
-  
-  commandElements.forEach(element => {
-    element.removeEventListener('click', handleCommandClick);
-    element.addEventListener('click', handleCommandClick);
-    element.tabIndex = 0;
-    
-    element.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleCommandClick(e);
-      }
-    });
-  });
-}
-
-/**
- * Show copy success feedback
- * @param {HTMLElement} element - Command element
- */
 function showCopySuccess(element) {
   element.classList.remove('copy-failed');
   element.classList.add('copied');
   setTimeout(() => element.classList.remove('copied'), 1000);
 }
 
-/**
- * Show copy error feedback
- * @param {HTMLElement} element - Command element
- */
 function showCopyError(element) {
   element.classList.remove('copied');
   element.classList.add('copy-failed');
   setTimeout(() => element.classList.remove('copy-failed'), 1000);
 }
 
-/**
- * Attempt text selection as fallback for copy
- * @param {HTMLElement} element - Command element
- */
 function attemptTextSelection(element) {
   try {
     const range = document.createRange();
@@ -690,85 +780,297 @@ function attemptTextSelection(element) {
 }
 
 // ============================================================================
-// SETUP & INITIALIZATION
+// EVENT MANAGEMENT
 // ============================================================================
 
 /**
- * Set up event listeners for launch options buttons
+ * Set up main table event listeners
  */
-function setupLaunchOptionListeners() {
-  console.log('🎯 Setting up launch option listeners');
+function setupTableEventListeners() {
+  if (TableState.isInitialized) return;
   
-  // Remove any existing listeners first to prevent duplicates
-  document.removeEventListener('click', handleLaunchOptionsClick);
+  // Launch options buttons
   document.addEventListener('click', handleLaunchOptionsClick);
-}
-
-/**
- * Set up close button functionality
- * @param {HTMLElement} container - Container element
- */
-function setupCloseButton(container) {
-  const closeButton = container.querySelector('.launch-options-close');
-  if (!closeButton) return;
-
-  closeButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const gameId = closeButton.dataset.gameId;
-    if (gameId) {
-      closeLaunchOptions(gameId);
+  
+  // Close all button
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#close-all-launch-options-btn')) {
+      handleCloseAllClick(e);
     }
   });
-}
-
-/**
- * Set up keyboard shortcuts (called once during initialization)
- */
-function setupKeyboardShortcuts() {
+  
+  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const openCount = getOpenLaunchOptionsCount();
       if (openCount > 0) {
         e.preventDefault();
-        console.log('⌨️ Escape key pressed - closing all launch options');
         closeAllLaunchOptions();
       }
     }
   });
   
-  console.log('⌨️ Keyboard shortcuts initialized');
+  TableState.isInitialized = true;
+  console.log('🎯 Table event listeners initialized');
 }
 
 /**
- * Initialize table features (called once when app starts)
+ * Set up events for launch options row
  */
-function initializeTableFeatures() {
-  setupKeyboardShortcuts();
+function setupLaunchOptionsRowEvents(container) {
+  // Copy functionality
+  const commandElements = container.querySelectorAll(`.${CONFIG.CLASSES.optionCommand}`);
+  commandElements.forEach(element => {
+    element.addEventListener('click', handleCommandClick);
+    element.tabIndex = 0;
+    
+    element.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleCommandClick(e);
+      }
+    });
+  });
   
-  // Add CSS for loading spinner if not already present
-  if (!document.querySelector('style[data-table-spinner]')) {
+  // Close button
+  const closeButton = container.querySelector('.launch-options-close');
+  if (closeButton) {
+    closeButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const gameId = closeButton.dataset.gameId;
+      if (gameId) {
+        closeLaunchOptions(gameId);
+      }
+    });
+  }
+}
+
+/**
+ * Set up empty state event listeners
+ */
+function setupEmptyStateEventListeners() {
+  // Action buttons
+  document.addEventListener('click', (e) => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+    
+    e.preventDefault();
+    
+    switch (action) {
+      case 'show-all':
+        triggerShowAllGames();
+        break;
+      case 'clear-search':
+        triggerClearSearch();
+        break;
+      case 'clear-filters':
+        triggerClearFilters();
+        break;
+      case 'learn-more':
+        showLaunchOptionsInfo();
+        break;
+    }
+  });
+  
+  // Suggestion chips
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('suggestion-chip')) {
+      const searchTerm = e.target.dataset.search;
+      if (searchTerm) {
+        triggerSearch(searchTerm);
+      }
+    }
+  });
+}
+
+// ============================================================================
+// INTEGRATION TRIGGERS
+// ============================================================================
+
+function triggerShowAllGames() {
+  const toggle = document.getElementById('showAllGamesToggle');
+  if (toggle) {
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change'));
+  } else {
+    // Fallback: dispatch custom event
+    document.dispatchEvent(new CustomEvent('showAllGames'));
+  }
+}
+
+function triggerClearSearch() {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input'));
+  }
+}
+
+function triggerClearFilters() {
+  // Clear search
+  triggerClearSearch();
+  
+  // Clear filter selects
+  const filterSelects = document.querySelectorAll('.filter-select');
+  filterSelects.forEach(select => {
+    select.selectedIndex = 0;
+    select.dispatchEvent(new Event('change'));
+  });
+  
+  // Dispatch custom event for app to handle
+  document.dispatchEvent(new CustomEvent('clearAllFilters'));
+}
+
+function triggerSearch(searchTerm) {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.value = searchTerm;
+    searchInput.dispatchEvent(new Event('input'));
+  }
+}
+
+function showLaunchOptionsInfo() {
+  const modal = document.createElement('div');
+  modal.className = 'info-modal-overlay';
+  modal.innerHTML = `
+    <div class="info-modal">
+      <div class="info-modal-header">
+        <h3>What are Steam Launch Options?</h3>
+        <button class="info-modal-close">&times;</button>
+      </div>
+      <div class="info-modal-body">
+        <p>Steam launch options are special commands that modify how games start and run.</p>
+        <h4>Common uses:</h4>
+        <ul>
+          <li><strong>Performance:</strong> Improve FPS and reduce stuttering</li>
+          <li><strong>Graphics:</strong> Force specific resolutions or disable effects</li>
+          <li><strong>Audio:</strong> Fix sound issues or force audio drivers</li>
+          <li><strong>Compatibility:</strong> Resolve crashes and stability issues</li>
+        </ul>
+        <h4>How to use them:</h4>
+        <ol>
+          <li>Right-click the game in your Steam library</li>
+          <li>Select "Properties"</li>
+          <li>Find "Launch Options" field</li>
+          <li>Copy and paste the launch options</li>
+        </ol>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  const closeModal = () => document.body.removeChild(modal);
+  modal.querySelector('.info-modal-close').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+function getTableContainer() {
+  const container = document.querySelector(CONFIG.SELECTORS.tableContainer);
+  if (!container) {
+    console.error('Table container not found');
+  }
+  return container;
+}
+
+function getOpenLaunchOptionsCount() {
+  return document.querySelectorAll(CONFIG.SELECTORS.launchOptionsRow).length;
+}
+
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatDate(dateString) {
+  if (!dateString) return 'Unknown';
+  try {
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  } catch (error) {
+    console.warn('Invalid date format:', dateString);
+    return 'Unknown';
+  }
+}
+
+function getActiveFiltersDescription(filters) {
+  const activeFilters = [];
+  
+  if (filters.search) activeFilters.push(`Search: "${filters.search}"`);
+  if (filters.developer) activeFilters.push(`Developer: ${filters.developer}`);
+  if (filters.category) activeFilters.push(`Category: ${filters.category}`);
+  if (filters.year) activeFilters.push(`Year: ${filters.year}`);
+  if (filters.options) activeFilters.push(`Options: ${filters.options}`);
+  if (!filters.showAll) activeFilters.push('Only games with launch options');
+  
+  return activeFilters.length > 0 
+    ? activeFilters.map(filter => `<span class="filter-tag">${filter}</span>`).join('')
+    : '<span class="no-filters">No specific filters</span>';
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+/**
+ * Initialize table features
+ */
+function initializeTable() {
+  // Add required CSS if not present
+  if (!document.querySelector('style[data-table-styles]')) {
     const style = document.createElement('style');
+    style.setAttribute('data-table-styles', 'true');
     style.textContent = `
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
     `;
-    style.setAttribute('data-table-spinner', 'true');
     document.head.appendChild(style);
   }
   
-  console.log('✅ Table features initialized');
+  setupTableEventListeners();
+  console.log('✅ Table initialized');
 }
 
+// Auto-initialize when module loads
+initializeTable();
+
 // ============================================================================
-// EXPORTS
+// PUBLIC API
 // ============================================================================
 
-// Initialize features when module loads
-initializeTableFeatures();
-
-// Export public functions
-export { closeAllLaunchOptions, escapeHtml, initializeTableFeatures };
+export {
+  // Launch options management
+  closeAllLaunchOptions,
+  
+  // Utility functions
+  escapeHtml,
+  formatDate,
+  
+  // For external control
+  triggerShowAllGames,
+  triggerClearSearch,
+  triggerClearFilters
+};
