@@ -34,34 +34,91 @@ import {
  */
 export async function gamesController(req, res) {
   try {
-    // Map frontend filter names to backend expectations
+    console.log('🔍 RAW REQUEST:', {
+      url: req.url,
+      query: req.query,
+      queryKeys: Object.keys(req.query),
+      hasOptionsRaw: req.query.hasOptions,
+      showAllRaw: req.query.showAll
+    });
+
+    // Parameter extraction and conversion
+    const hasOptionsParam = req.query.hasOptions;
+    const showAllParam = req.query.showAll;
+    
+    // Convert string parameters to proper booleans
+    let hasOptions;
+    let showAll;
+    
+    if (hasOptionsParam === 'true') {
+      hasOptions = true;
+    } else if (hasOptionsParam === 'false') {
+      hasOptions = false;
+    } else {
+      hasOptions = undefined;
+    }
+    
+    if (showAllParam === 'true') {
+      showAll = true;
+    } else if (showAllParam === 'false') {
+      showAll = false;
+    } else {
+      showAll = undefined;
+    }
+
+    console.log('🎯 PARSED PARAMETERS:', {
+      hasOptions,
+      showAll,
+      hasOptionsType: typeof hasOptions,
+      showAllType: typeof showAll
+    });
+
+    // Build filters object
     const filters = {
       search: req.query.search || '',
-      searchQuery: req.query.search || '', // Support both formats
+      searchQuery: req.query.search || '',
       genre: req.query.genre || req.query.category || '',
       engine: req.query.engine || '',
       platform: req.query.platform || '',
       developer: req.query.developer || '',
       category: req.query.category || '',
-      options: req.query.options || '', // 'has-options', 'no-options', 'performance', 'graphics'
+      options: req.query.options || '',
       year: req.query.year || '',
       releaseYear: req.query.year || '',
       sort: req.query.sort || 'title',
       order: req.query.order || 'asc',
       page: parseInt(req.query.page, 10) || 1,
       limit: parseInt(req.query.limit, 10) || 20,
+      showAll: showAll,
+      hasOptions: hasOptions
     };
 
-    // Handle special filter cases
-    if (filters.options === 'has-options') {
+    // Map to hasLaunchOptions for the service layer
+    if (showAll === true) {
+      filters.hasLaunchOptions = undefined; // Show all games
+      console.log('🌍 SHOW ALL MODE - no filtering');
+    } else if (hasOptions === true) {
+      filters.hasLaunchOptions = true; // Only games with options
+      console.log('🎯 OPTIONS-FIRST MODE - games with options only');
+    } else if (hasOptions === false) {
+      filters.hasLaunchOptions = false; // Only games without options
+      console.log('🚫 NO-OPTIONS MODE - games without options only');
+    } else {
+      // DEFAULT BEHAVIOR: Show games with options first
       filters.hasLaunchOptions = true;
-    } else if (filters.options === 'no-options') {
-      filters.hasLaunchOptions = false;
+      console.log('⚡ DEFAULT MODE - defaulting to OPTIONS-FIRST');
     }
+
+    console.log('📋 FINAL FILTERS:', {
+      hasLaunchOptions: filters.hasLaunchOptions,
+      showAll: filters.showAll,
+      hasOptions: filters.hasOptions
+    });
 
     const result = await fetchGames(filters);
     
-    // Ensure consistent response format
+    console.log(`📊 RESULT: ${result.total} total games found`);
+    
     res.json({
       games: result.games || [],
       total: result.total || 0,
