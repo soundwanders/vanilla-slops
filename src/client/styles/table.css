@@ -403,7 +403,7 @@
   right: var(--space-3);
   padding: var(--space-1) var(--space-2);
   background: rgba(0, 0, 0, 0.8);
-  color: white;
+  color: var(--color-primary);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   opacity: 0;
@@ -1149,7 +1149,7 @@
 .year-select {
   flex: 1;
   min-width: 120px;
-  max-width: 160px;
+  max-width: 180px;
 }
 
 .year-divider {
@@ -1167,7 +1167,7 @@
   border: 1px solid var(--color-border, #d1d5db);
   border-radius: 0.375rem;
   font-size: 0.875rem;
-  background: var(--color-bg-input, white);
+  background: var(--color-bg-input, #f9fafb);
   color: var(--color-text, #1f2937);
   transition: all 0.2s ease;
   font-family: inherit;
@@ -1177,7 +1177,7 @@
   outline: none;
   border-color: var(--color-primary, #3b82f6);
   box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(59, 130, 246, 0.1));
-  background: var(--color-bg-input-focus, white);
+  background: var(--color-bg-input-focus, f9fafb);
 }
 
 .year-input::placeholder {
@@ -1301,7 +1301,7 @@
   background: var(--color-bg-loading-dark, #374151);
 }
 
-/* Enhanced focus indicators for accessibility */
+/* Focus indicators for accessibility */
 .year-select:focus-visible,
 .year-input:focus-visible {
   outline: 2px solid var(--color-focus, #3b82f6);

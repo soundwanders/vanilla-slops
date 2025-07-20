@@ -197,13 +197,13 @@ async function populateYearFilter(releaseYears) {
       <select class="filter-select year-select" id="yearFilterSelect" name="year-select">
         <option value="">All Years</option>
       </select>
-      <span class="year-divider">or</span>
+      <span class="year-filter-separator"></span>
       <input 
         type="number" 
         class="filter-input year-input" 
         id="yearFilterInput" 
         name="year-input"
-        placeholder="Enter year..."
+        placeholder="Year"
         min="1980"
         max="${new Date().getFullYear() + 1}"
         title="Enter a specific year (1980-${new Date().getFullYear() + 1})"
@@ -349,84 +349,6 @@ async function initializeFallbackFilters() {
   } catch (error) {
     console.error('💥 Even fallback filter initialization failed:', error);
   }
-}
-
-/**
- * Add CSS styles for the year filter
- */
-function addYearFilterStyles() {
-  if (document.querySelector('style[data-year-filter-styles]')) return;
-  
-  const style = document.createElement('style');
-  style.setAttribute('data-year-filter-styles', 'true');
-  style.textContent = `
-    .year-filter-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    
-    .year-select {
-      flex: 1;
-      min-width: 120px;
-    }
-    
-    .year-divider {
-      color: var(--color-text-muted, #666);
-      font-size: 0.875rem;
-      font-style: italic;
-      white-space: nowrap;
-    }
-    
-    .year-input {
-      flex: 0 0 100px;
-      padding: 0.5rem;
-      border: 1px solid var(--color-border, #d1d5db);
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      background: var(--color-bg-input, white);
-      color: var(--color-text, black);
-    }
-    
-    .year-input:focus {
-      outline: none;
-      border-color: var(--color-primary, #3b82f6);
-      box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(59, 130, 246, 0.1));
-    }
-    
-    .year-input::placeholder {
-      color: var(--color-text-placeholder, #9ca3af);
-    }
-    
-    /* Dark theme support */
-    [data-theme="dark"] .year-input {
-      background: var(--color-bg-input-dark, #374151);
-      border-color: var(--color-border-dark, #4b5563);
-      color: var(--color-text-dark, white);
-    }
-    
-    [data-theme="dark"] .year-divider {
-      color: var(--color-text-muted-dark, #9ca3af);
-    }
-    
-    /* Responsive design */
-    @media (max-width: 640px) {
-      .year-filter-container {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .year-divider {
-        align-self: center;
-      }
-      
-      .year-input {
-        flex: 1;
-      }
-    }
-  `;
-  document.head.appendChild(style);
 }
 
 /**
