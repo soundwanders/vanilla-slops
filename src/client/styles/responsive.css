@@ -127,7 +127,7 @@
   .filter-group {
     min-width: auto;
   }
-  
+
   /* Results header improvements */
   .results-header,
   .slops-results-header {
@@ -442,6 +442,35 @@
   
   .stat-number {
     font-size: var(--font-size-xl);
+  }
+}
+
+
+/* =============================================================================
+   FILTER GRID ADJUSTMENTS
+   ============================================================================= */
+
+/* On larger screens, fit 5 filters per row */
+@media (min-width: 1200px) {
+  .filters-container,
+  .hero-filters .filters-container {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* On medium screens, 3-4 filters per row */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .filters-container,
+  .hero-filters .filters-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* On small screens, stack them */
+@media (max-width: 767px) {
+  .filters-container,
+  .hero-filters .filters-container {
+    grid-template-columns: 1fr;
   }
 }
 
