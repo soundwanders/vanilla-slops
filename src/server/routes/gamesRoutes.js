@@ -4,8 +4,7 @@ import {
   querySchema, 
   suggestionQuerySchema, 
   facetsQuerySchema,
-  statisticsQuerySchema,
-  gameIdSchema 
+  statisticsQuerySchema
 } from '../schemas/gameQuerySchema.js';
 import { 
   gamesController, 

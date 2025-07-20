@@ -534,6 +534,73 @@ async function getReleaseYears(searchQuery = '') {
 }
 
 /**
+ * Get game statistics for progressive disclosure UI
+ * Counts games with and without launch options, optionally filtered
+ * 
+ * @async
+ * @function getGameStatistics
+ * @param {Object} filters - Filter parameters to scope statistics
+ * @param {string} [filters.search] - Search term
+ * @param {string} [filters.searchQuery] - Alternative search parameter
+ * @param {string} [filters.developer] - Developer filter
+ * @param {string} [filters.category] - Category filter
+ * @param {string} [filters.year] - Year filter
+ * @param {string} [filters.engine] - Engine filter
+ * @returns {Promise<Object>} Statistics object with counts and percentages
+ * @property {number} withOptions - Count of games with launch options
+ * @property {number} withoutOptions - Count of games without launch options
+ * @property {number} total - Total games matching filters
+ * @property {number} percentageWithOptions - Percentage of games with options
+ * @throws {Error} When database queries fail
+ */
+export async function getGameStatistics(filters = {}) {
+  try {
+    console.log('📊 Calculating game statistics with filters:', filters);
+
+    let query = supabase
+      .from('games')
+      .select('total_options_count', { count: 'exact' });
+
+    // Apply same filters as main games query
+    query = applySearchFilters(query, {
+      searchTerm: filters.search || filters.searchQuery || '',
+      developer: filters.developer || '',
+      genre: filters.category || '',
+      engine: filters.engine || '',
+      yearFilter: filters.year || ''
+    });
+
+    const { data, count, error } = await query;
+    
+    if (error) {
+      console.error('Statistics query error:', error);
+      throw new Error('Failed to fetch game statistics from database');
+    }
+
+    const gamesWithOptions = data?.filter(game => 
+      game.total_options_count && game.total_options_count > 0
+    ).length || 0;
+    
+    const total = count || 0;
+    const gamesWithoutOptions = total - gamesWithOptions;
+    const percentageWithOptions = total > 0 ? (gamesWithOptions / total) * 100 : 0;
+
+    const statistics = {
+      withOptions: gamesWithOptions,
+      withoutOptions: gamesWithoutOptions,
+      total: total,
+      percentageWithOptions: Math.round(percentageWithOptions * 10) / 10
+    };
+
+    console.log('✅ Statistics calculated:', statistics);
+    return statistics;
+  } catch (error) {
+    console.error('Error in getGameStatistics:', error);
+    throw error;
+  }
+}
+
+/**
  * Retrieves complete game information including associated launch options
  * Combines game metadata with launch options in a single response
  * 
