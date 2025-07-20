@@ -222,7 +222,23 @@ function applySearchFilters(query, filters) {
 
   // Release year filter
   if (yearFilter) {
-    query = query.like('release_date', `%${yearFilter}%`);
+    console.log(`📅 Year filter: ${yearFilter}`);
+    const year = yearFilter.trim();
+    
+    try {
+      const yearInt = parseInt(year, 10);
+      
+      if (!isNaN(yearInt) && yearInt >= 1980 && yearInt <= new Date().getFullYear() + 1) {
+        // Multiple fallback strategies for timestamp compatibility
+        query = query.or(`extract(year from release_date)::text.eq.${yearInt},release_date.ilike.%${year}%`);
+      } else {
+        console.warn(`⚠️ Invalid year format: ${year}`);
+      }
+    } catch (error) {
+      console.error(`❌ Year filter error: ${error.message}`);
+      // Fallback to simple string matching
+      query = query.ilike('release_date', `%${year}%`);
+    }
   }
 
   // Has launch options filter
