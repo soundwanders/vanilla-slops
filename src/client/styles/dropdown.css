@@ -3,9 +3,23 @@
    Fix invisible text in select dropdown options
    ----------------------------------------------------------------------------- */
 
-/* Target all option elements specifically */
+.filter-select,
+.sort-select,
+#categoryFilter,
+#developerFilter,
+#optionsFilter,
+#yearFilter,
+#yearFilterSelect,
+#sortSelect {
+  height: 2.75rem !important;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.25rem !important;
+}
+
 .filter-select option,
-select option,
+.select option,
 #categoryFilter option,
 #developerFilter option,
 #optionsFilter option,

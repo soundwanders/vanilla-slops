@@ -68,6 +68,61 @@ async function initializeFilters() {
   }
 }
 
+function addOptionsFirstToggle() {
+  // Remove existing toggle if present
+  const existingToggle = document.getElementById('options-first-toggle');
+  if (existingToggle) existingToggle.remove();
+  
+  // Create toggle container
+  const toggleContainer = document.createElement('div');
+  toggleContainer.id = 'options-first-toggle';
+  toggleContainer.className = 'options-first-toggle';
+  
+  // Find insertion point (after filters)
+  const filtersContainer = document.querySelector('.filters-container, .hero-filters');
+  if (filtersContainer) {
+    filtersContainer.parentElement.insertBefore(toggleContainer, filtersContainer.nextSibling);
+  }
+  
+  // Add toggle HTML
+  const stats = AppState.gameStats || { withOptions: 146, withoutOptions: 129, total: 275 };
+  const isShowingAll = AppState.filters.showAll || false;
+  
+  toggleContainer.innerHTML = `
+    <div class="toggle-container">
+      <label class="toggle-label" for="showAllGamesToggle">
+        <input type="checkbox" id="showAllGamesToggle" class="toggle-checkbox" ${isShowingAll ? 'checked' : ''}>
+        <span class="toggle-slider"></span>
+        <div class="toggle-content">
+          <span class="toggle-text">Show games without launch options</span>
+          <span class="toggle-stats">${isShowingAll ? `+${stats.withoutOptions} more games` : `${stats.withoutOptions} hidden`}</span>
+        </div>
+      </label>
+      <div class="toggle-description">
+        <span class="toggle-hint ${isShowingAll ? 'showing-all' : 'options-first'}">
+          ${isShowingAll ? `✅ Showing all ${stats.total} games` : `🎯 Showing ${stats.withOptions} games with launch options`}
+        </span>
+      </div>
+    </div>
+  `;
+  
+  // Add event listener
+  const checkbox = document.getElementById('showAllGamesToggle');
+  checkbox.addEventListener('change', (e) => {
+    const showAll = e.target.checked;
+    AppState.filters.showAll = showAll;
+    AppState.filters.hasOptions = !showAll;
+    AppState.currentPage = 1;
+    
+    // Trigger filter change
+    handleFilterChange({
+      ...AppState.filters,
+      showAll,
+      hasOptions: !showAll || undefined
+    }, 'options-strategy-change');
+  });
+}
+
 /**
  * Populate a filter dropdown with data from the API
  */
@@ -503,6 +558,9 @@ async function initializeApp() {
     setupThemeToggle();
     setupScrollTracking(); // NEW: Set up scroll position tracking
     
+    // Ensure required options DOM elements exist
+    addOptionsFirstToggle();
+
     // Initialize filters before loading data
     await initializeFilters();
     
