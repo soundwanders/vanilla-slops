@@ -1,4 +1,4 @@
-import { fetchGames, preloadPopularContent } from './api.js';
+import { fetchGames, preloadPopularContent, fetchGameStatistics} from './api.js';
 import { renderTable } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
@@ -72,38 +72,54 @@ async function initializeFilters() {
   }
 }
 
-function addShowAllGamesFilter() {
-  console.log('Adding Show All Games filter...');
+async function addShowAllGamesFilter() {
+  console.log('🔧 Adding Show All Games filter...');
   
-  // Find the filters container
   const filtersContainer = document.querySelector('.filters-container fieldset, .filters-container');
   if (!filtersContainer) {
     console.error('❌ Filters container not found');
     return;
   }
   
-  // Remove existing show-all filter if present
   const existingFilter = filtersContainer.querySelector('.show-all-filter');
   if (existingFilter) {
     existingFilter.remove();
-    console.log('🗑️ Removed existing filter');
   }
   
-  // Create the new filter group
   const filterGroup = document.createElement('div');
   filterGroup.className = 'filter-group show-all-filter';
   
-  // Get current stats for display
-  const stats = AppState.gameStats || { withOptions: 146, withoutOptions: 129, total: 275 };
+  // FETCH REAL STATISTICS using api.js function
+  const currentFilters = {
+    search: AppState.filters?.search || '',
+    developer: AppState.filters?.developer || '',
+    category: AppState.filters?.category || '',
+    year: AppState.filters?.year || ''
+  };
+  
+  try {
+    console.log('📊 Fetching real statistics for filter...');
+    const stats = await fetchGameStatistics(currentFilters);
+    
+    // Update AppState with real statistics
+    AppState.gameStats = {
+      withOptions: stats.withOptions,
+      withoutOptions: stats.withoutOptions,
+      total: stats.total,
+      percentageWithOptions: stats.percentageWithOptions
+    };
+    
+    console.log('📈 Using real statistics:', stats);
+  } catch (error) {
+    console.error('Failed to fetch statistics, using fallback:', error);
+    // Fallback statistics if API fails
+    AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275, percentageWithOptions: 53.1 };
+  }
+  
+  const stats = AppState.gameStats;
   const isShowingAll = AppState.filters?.showAll || false;
   
-  console.log('📊 Current filter state:', {
-    showAll: isShowingAll,
-    hasOptions: AppState.filters?.hasOptions,
-    stats: stats
-  });
-  
-  // Create the filter HTML
+  // Create the filter HTML with real numbers
   filterGroup.innerHTML = `
     <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
     <input 
@@ -121,41 +137,64 @@ function addShowAllGamesFilter() {
       </span>
     </label>
     <div id="showAllGamesHelp" class="sr-only">
-      ${isShowingAll ? 'Currently showing all games including those without launch options' : 'Currently showing only games with launch options'}
+      ${isShowingAll ? `Currently showing all ${stats.total} games` : `Currently showing ${stats.withOptions} games with launch options`}
     </div>
   `;
   
-  // Add to filters container
   filtersContainer.appendChild(filterGroup);
   
-  // Set up event listeners
   const checkbox = filterGroup.querySelector('#showAllGamesFilter');
   const container = filterGroup.querySelector('.show-all-checkbox-container');
   
   if (checkbox && container) {
-    // Remove any existing event listeners first
-    checkbox.removeEventListener('change', handleShowAllFilterChange);
-    
-    // Add the change event listener
-    checkbox.addEventListener('change', handleShowAllFilterChange);
-    
-    // Handle container clicks for better UX
-    container.addEventListener('click', (e) => {
-      // Prevent double-firing when clicking the checkbox directly
-      if (e.target === checkbox) return;
-      
-      console.log('📱 Container clicked, toggling checkbox');
-      checkbox.checked = !checkbox.checked;
-      
-      // Trigger the change event manually
-      const changeEvent = new Event('change', { bubbles: true });
-      checkbox.dispatchEvent(changeEvent);
+    checkbox.addEventListener('click', function(e) {
+      console.log('🖱️ CHECKBOX CLICKED!', {
+        checked: e.target.checked,
+        timestamp: new Date().toISOString()
+      });
     });
     
-    console.log('✅ Show All Games filter added successfully');
-    console.log('🎯 Checkbox initial state:', checkbox.checked);
+    checkbox.addEventListener('change', handleShowAllFilterChange);
+    
+    container.addEventListener('click', (e) => {
+      if (e.target === checkbox) return;
+      
+      console.log('📱 CONTAINER CLICKED!');
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    
+    console.log('✅ Show All Games filter added with real statistics');
+    
   } else {
     console.error('❌ Failed to set up Show All Games filter event listeners');
+  }
+}
+
+// Refresh filter statistics periodically
+/** * Refreshes the filter statistics based on current AppState filters
+ *  * This function is called periodically to keep the UI in sync with the latest data
+ * * @returns {Promise<void>} 
+ * */
+async function refreshFilterStatistics() {
+  try {
+    const currentFilters = {
+      search: AppState.filters?.search || '',
+      developer: AppState.filters?.developer || '',
+      category: AppState.filters?.category || '',
+      year: AppState.filters?.year || ''
+    };
+    
+    console.log('🔄 Refreshing filter statistics...');
+    const stats = await fetchGameStatistics(currentFilters);
+    AppState.gameStats = stats;
+    
+    // Update the filter display
+    updateShowAllFilterStats(stats);
+    
+    console.log('📊 Refreshed filter statistics:', stats);
+  } catch (error) {
+    console.error('Failed to refresh statistics:', error);
   }
 }
 
@@ -512,6 +551,8 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
 
     // Sync the Show All checkbox with the current state
     syncShowAllCheckboxWithState();
+    
+    await refreshFilterStatistics();
 
     // Feedback logic
     if (response.games?.length > 0) {
@@ -765,9 +806,7 @@ async function initializeApp() {
     // Initialize components in sequence
     AppState.searchInstance = initializeSearchComponent();
     setupThemeToggle();
-    setupScrollTracking(); // NEW: Set up scroll position tracking
-    
-    addShowAllGamesFilter();
+    setupScrollTracking(); // Set up scroll position tracking
 
     // Initialize filters before loading data
     await initializeFilters();
