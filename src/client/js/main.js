@@ -13,7 +13,6 @@ const AppState = {
   currentPage: 1,
   isLoading: false,
   filters: {
-    // Options-First defaults
     hasOptions: true,  // Show games with options by default
     showAll: false     // Progressive disclosure toggle
   },
@@ -34,11 +33,14 @@ const AppState = {
 
 /**
  * Initialize and populate filter dropdowns with real data
+ * Includes fallback options and better error handling
  */
 async function initializeFilters() {
   if (AppState.filtersInitialized) return;
   
   try {
+    console.log('🔧 Initializing filters...');
+    
     // Show loading state on filters
     const filterSelects = document.querySelectorAll('.filter-select');
     filterSelects.forEach(select => {
@@ -46,13 +48,28 @@ async function initializeFilters() {
       select.style.opacity = '0.6';
     });
     
-    // Fetch facets from the API
-    const response = await fetch('/api/games/facets?includeStats=true');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch facets: ${response.status}`);
+    // Fetch facets from the API with error handling
+    let facets = {};
+    try {
+      const response = await fetch('/api/games/facets?includeStats=true');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      facets = await response.json();
+      console.log('✅ Facets loaded successfully:', Object.keys(facets));
+    } catch (fetchError) {
+      console.error('❌ Failed to fetch facets:', fetchError);
+      // Continue with empty facets - we'll create fallbacks
+      facets = {
+        developers: [],
+        engines: [],
+        publishers: [],
+        genres: [],
+        releaseYears: [],
+        statistics: { withOptions: 0, withoutOptions: 0, total: 0, percentageWithOptions: 0 }
+      };
     }
-    
-    const facets = await response.json();
     
     // Store statistics for UI feedback
     if (facets.statistics) {
@@ -60,11 +77,11 @@ async function initializeFilters() {
       console.log('📊 Game statistics loaded:', AppState.gameStats);
     }
     
-    // Populate each filter dropdown
-    populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
-    populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
-    populateYearFilter(facets.releaseYears);
-    populateOptionsFilter();
+    // Populate each filter dropdown with fallback support
+    await populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
+    await populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
+    await populateYearFilter(facets.releaseYears);
+    await populateOptionsFilter();
     
     // Initialize Options-First toggle
     initializeOptionsFirstToggle();
@@ -76,9 +93,10 @@ async function initializeFilters() {
     });
     
     AppState.filtersInitialized = true;
+    console.log('✅ Filter initialization completed');
     
   } catch (error) {
-    console.error('Failed to initialize filters:', error);
+    console.error('💥 Filter initialization failed:', error);
     
     // Remove loading state and provide fallback
     const filterSelects = document.querySelectorAll('.filter-select');
@@ -86,7 +104,329 @@ async function initializeFilters() {
       select.disabled = false;
       select.style.opacity = '';
     });
+    
+    // Initialize with minimal fallback data
+    await initializeFallbackFilters();
   }
+}
+
+/**
+ * Populate filter dropdown with fallback support for empty data
+ */
+async function populateFilterDropdown(elementId, data, defaultText) {
+  console.log(`📋 Populating ${elementId} with ${data?.length || 0} options...`);
+  
+  const selectElement = document.getElementById(elementId);
+  if (!selectElement) {
+    console.warn(`Filter element ${elementId} not found`);
+    return;
+  }
+  
+  const currentValue = selectElement.value;
+  
+  // Clear existing options except the first (default)
+  while (selectElement.children.length > 1) {
+    selectElement.removeChild(selectElement.lastChild);
+  }
+  
+  // Update default option text
+  if (selectElement.firstElementChild) {
+    selectElement.firstElementChild.textContent = defaultText;
+  }
+  
+  if (Array.isArray(data) && data.length > 0) {
+    data.forEach(item => {
+      const option = document.createElement('option');
+      
+      if (typeof item === 'string') {
+        option.value = item;
+        option.textContent = item;
+      } else if (item && typeof item === 'object') {
+        option.value = item.value || item.name || item;
+        const count = item.count ? ` (${item.count})` : '';
+        option.textContent = `${item.value || item.name || item}${count}`;
+      }
+      
+      selectElement.appendChild(option);
+    });
+    
+    console.log(`✅ ${elementId} populated with ${data.length} options`);
+  } else {
+    console.warn(`⚠️ No data available for ${elementId}, using fallbacks if available`);
+    
+    // Add fallback options for categories
+    if (elementId === 'categoryFilter') {
+      const fallbackCategories = [
+        'Action', 'RPG', 'Strategy', 'FPS', 'Racing', 'Sports', 
+        'Simulation', 'Puzzle', 'Horror', 'Survival', 'Indie'
+      ];
+      
+      fallbackCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.toLowerCase();
+        option.textContent = category;
+        selectElement.appendChild(option);
+      });
+      console.log('🎮 Category filter populated with fallback options');
+    }
+  }
+  
+  // Restore previous selection
+  if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
+    selectElement.value = currentValue;
+  }
+}
+
+/**
+ * Populate year filter with both dropdown and input field
+ * Supports flexible year entry when dropdown data is limited
+ */
+async function populateYearFilter(releaseYears) {
+  console.log('📅 Setting up year filter...');
+  
+  const yearFilterGroup = document.querySelector('#yearFilter')?.closest('.filter-group');
+  if (!yearFilterGroup) {
+    console.warn('Year filter group not found');
+    return;
+  }
+  
+  // Replace the existing year filter with a more flexible one
+  yearFilterGroup.innerHTML = `
+    <label class="filter-label" for="yearFilter">Release Year</label>
+    <div class="year-filter-container">
+      <select class="filter-select year-select" id="yearFilterSelect" name="year-select">
+        <option value="">All Years</option>
+      </select>
+      <span class="year-divider">or</span>
+      <input 
+        type="number" 
+        class="filter-input year-input" 
+        id="yearFilterInput" 
+        name="year-input"
+        placeholder="Enter year..."
+        min="1980"
+        max="${new Date().getFullYear() + 1}"
+        title="Enter a specific year (1980-${new Date().getFullYear() + 1})"
+      >
+    </div>
+  `;
+  
+  // Add CSS for the year filter layout
+  addYearFilterStyles();
+  
+  const yearSelect = document.getElementById('yearFilterSelect');
+  const yearInput = document.getElementById('yearFilterInput');
+  
+  // Populate dropdown with available years
+  if (Array.isArray(releaseYears) && releaseYears.length > 0) {
+    releaseYears.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year.toString();
+      option.textContent = year.toString();
+      yearSelect.appendChild(option);
+    });
+    console.log(`✅ Year dropdown populated with ${releaseYears.length} years`);
+  } else {
+    // Fallback: create common years
+    const currentYear = new Date().getFullYear();
+    const commonYears = [];
+    for (let year = currentYear; year >= 2000; year -= 1) {
+      commonYears.push(year);
+    }
+    // Add some older landmark years
+    commonYears.push(1999, 1998, 1997, 1996, 1995, 1990, 1985, 1980);
+    
+    commonYears.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year.toString();
+      option.textContent = year.toString();
+      yearSelect.appendChild(option);
+    });
+    console.log('📅 Year dropdown populated with fallback years');
+  }
+  
+  // Set up event handlers for both select and input
+  const updateYearFilter = () => {
+    const selectValue = yearSelect.value;
+    const inputValue = yearInput.value;
+    
+    // Use input value if provided, otherwise use select value
+    const yearValue = inputValue || selectValue;
+    
+    // Update the other control to stay in sync
+    if (inputValue && selectValue !== inputValue) {
+      // Find matching option or clear select
+      const matchingOption = Array.from(yearSelect.options).find(opt => opt.value === inputValue);
+      yearSelect.value = matchingOption ? inputValue : '';
+    } else if (selectValue && yearInput.value !== selectValue) {
+      yearInput.value = selectValue;
+    }
+    
+    // Store the year value
+    AppState.filters.year = yearValue;
+    
+    // Trigger filter change
+    if (AppState.searchInstance && AppState.searchInstance.onFilterChange) {
+      AppState.searchInstance.onFilterChange({ year: yearValue }, 'year-filter-change');
+    }
+  };
+  
+  yearSelect.addEventListener('change', updateYearFilter);
+  yearInput.addEventListener('input', debounce(updateYearFilter, 500));
+  yearInput.addEventListener('blur', updateYearFilter);
+  
+  // Handle Enter key in input
+  yearInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      updateYearFilter();
+    }
+  });
+}
+
+/**
+ * Populate options filter with comprehensive launch option filters
+ */
+async function populateOptionsFilter() {
+  console.log('🚀 Setting up options filter...');
+  
+  const optionsFilter = document.getElementById('optionsFilter');
+  if (!optionsFilter) {
+    console.warn('Options filter not found');
+    return;
+  }
+  
+  const currentValue = optionsFilter.value;
+  optionsFilter.innerHTML = '';
+  
+  const optionsData = [
+    { value: '', label: 'Any Launch Options', description: 'Show all games regardless of launch options' },
+    { value: 'has-options', label: 'Has Launch Options', description: 'Games with community-verified launch options' },
+    { value: 'no-options', label: 'No Launch Options', description: 'Games without any launch options' },
+    { value: 'many-options', label: '5+ Launch Options', description: 'Games with many launch options' },
+    { value: 'few-options', label: '1-4 Launch Options', description: 'Games with few launch options' },
+    { value: 'performance', label: 'Performance Options', description: 'Options that improve game performance' },
+    { value: 'graphics', label: 'Graphics Options', description: 'Options that modify graphics settings' }
+  ];
+  
+  optionsData.forEach(item => {
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.label;
+    option.title = item.description;
+    optionsFilter.appendChild(option);
+  });
+  
+  // Restore previous selection
+  if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
+    optionsFilter.value = currentValue;
+  }
+  
+  console.log('✅ Options filter populated');
+}
+
+/**
+ * Initialize fallback filters when API fails
+ */
+async function initializeFallbackFilters() {
+  console.log('🔧 Initializing fallback filters...');
+  
+  try {
+    await populateFilterDropdown('developerFilter', [
+      'Valve Corporation', 'id Software', 'Bethesda Game Studios', 'CD Projekt RED',
+      'Rockstar Games', 'Ubisoft', 'Electronic Arts', 'Activision'
+    ], 'All Developers');
+    
+    await populateFilterDropdown('categoryFilter', [
+      'Action', 'RPG', 'Strategy', 'FPS', 'Racing', 'Sports', 
+      'Simulation', 'Puzzle', 'Horror', 'Survival'
+    ], 'All Categories');
+    
+    await populateYearFilter([]); // Will use fallback years
+    await populateOptionsFilter();
+    
+    console.log('✅ Fallback filters initialized');
+  } catch (error) {
+    console.error('💥 Even fallback filter initialization failed:', error);
+  }
+}
+
+/**
+ * Add CSS styles for the year filter
+ */
+function addYearFilterStyles() {
+  if (document.querySelector('style[data-year-filter-styles]')) return;
+  
+  const style = document.createElement('style');
+  style.setAttribute('data-year-filter-styles', 'true');
+  style.textContent = `
+    .year-filter-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .year-select {
+      flex: 1;
+      min-width: 120px;
+    }
+    
+    .year-divider {
+      color: var(--color-text-muted, #666);
+      font-size: 0.875rem;
+      font-style: italic;
+      white-space: nowrap;
+    }
+    
+    .year-input {
+      flex: 0 0 100px;
+      padding: 0.5rem;
+      border: 1px solid var(--color-border, #d1d5db);
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      background: var(--color-bg-input, white);
+      color: var(--color-text, black);
+    }
+    
+    .year-input:focus {
+      outline: none;
+      border-color: var(--color-primary, #3b82f6);
+      box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(59, 130, 246, 0.1));
+    }
+    
+    .year-input::placeholder {
+      color: var(--color-text-placeholder, #9ca3af);
+    }
+    
+    /* Dark theme support */
+    [data-theme="dark"] .year-input {
+      background: var(--color-bg-input-dark, #374151);
+      border-color: var(--color-border-dark, #4b5563);
+      color: var(--color-text-dark, white);
+    }
+    
+    [data-theme="dark"] .year-divider {
+      color: var(--color-text-muted-dark, #9ca3af);
+    }
+    
+    /* Responsive design */
+    @media (max-width: 640px) {
+      .year-filter-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .year-divider {
+        align-self: center;
+      }
+      
+      .year-input {
+        flex: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 /**
@@ -230,6 +570,79 @@ function getToggleStatsText() {
 }
 
 /**
+ * Filter change handling with Options-First support
+ * Validates filters and handles conflicts between different filter types
+ */
+function handleFilterChange(newFilters, reason = 'user-filter') {
+  console.log('🎯 Filter change with Options-First strategy:', {
+    filters: newFilters,
+    reason,
+    currentState: AppState.filters
+  });
+  
+  // Determine if this is likely a user interaction with launch options
+  const isLaunchOptionsInteraction = document.querySelector('.launch-options-row[style*="table-row"]') !== null;
+  
+  if (isLaunchOptionsInteraction && reason !== 'options-strategy-change') {
+    reason = 'launch-options-interaction';
+  }
+  
+  // Validate filters before applying
+  const validatedFilters = validateFilters(newFilters);
+  
+  // Handle special cases for options filter
+  if (validatedFilters.options === 'no-options') {
+    // Force showAll when filtering for games without options
+    validatedFilters.showAll = true;
+    validatedFilters.hasOptions = false;
+    console.log('🔧 Auto-enabled showAll for no-options filter');
+  }
+  
+  // Update app state
+  AppState.filters = { ...AppState.filters, ...validatedFilters };
+  AppState.currentPage = 1; // Reset to first page on filter change
+  
+  // Log the final state for debugging
+  console.log('📊 Final filter state:', AppState.filters);
+  
+  // Load new results with context
+  loadPage(1, true, reason);
+}
+
+/**
+ * Validate and clean filter values
+ */
+function validateFilters(filters) {
+  const validated = {};
+  
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed) {
+          validated[key] = trimmed;
+        }
+      } else if (typeof value === 'boolean') {
+        validated[key] = value;
+      } else if (typeof value === 'number' && !isNaN(value)) {
+        validated[key] = value;
+      }
+    }
+  });
+  
+  // Special validation for year
+  if (validated.year) {
+    const year = parseInt(validated.year, 10);
+    if (isNaN(year) || year < 1980 || year > new Date().getFullYear() + 1) {
+      console.warn(`⚠️ Invalid year: ${validated.year}, removing from filters`);
+      delete validated.year;
+    }
+  }
+  
+  return validated;
+}
+
+/**
  * Load page with Options-First strategy support
  */
 async function loadPage(page = 1, replace = true, reason = 'search') {
@@ -255,8 +668,8 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
       developer: AppState.filters.developer || '',
       options: AppState.filters.options || '',
       year: AppState.filters.year || '',
-      sort: AppState.filters.sort || 'total_options_count', // NEW DEFAULT
-      order: AppState.filters.order || 'desc', // NEW DEFAULT
+      sort: AppState.filters.sort || 'total_options_count',
+      order: AppState.filters.order || 'desc',
       
       // Options-First parameters
       hasOptions: AppState.filters.showAll ? undefined : AppState.filters.hasOptions,
@@ -401,7 +814,138 @@ function parseURLParams() {
   });
 }
 
-// Keep existing helper functions with logging
+/**
+ * Search component initialization with Options-First support
+ */
+function initializeSearchComponent() {
+  const container = document.querySelector('.search-container, .hero-search');
+  if (!container) {
+    console.error('Search container not found in DOM');
+    return null;
+  }
+
+  try {
+    const searchConfig = {
+      inputId: 'searchInput',
+      suggestionsId: 'suggestionsDropdown', 
+      resultsId: 'resultsList',
+      resultsCountId: 'resultsCount',
+      activeFiltersId: 'activeFilters',
+      sortId: 'sortSelect',
+      filters: {
+        category: 'categoryFilter',
+        developer: 'developerFilter', 
+        options: 'optionsFilter',
+        year: 'yearFilterSelect' // Update to use the new year select
+      }
+    };
+
+    const searchInstance = new SlopSearch(searchConfig);
+    
+    // Configuration for Options-First strategy
+    searchInstance.configure({
+      suggestionsDelay: 150,
+      searchDelay: 800,
+      minCharsForSearch: 3,
+      enableSearchOnEnter: true,
+      enableProgressiveDebounce: true,
+      enableClickOutsideSearch: true,
+      prioritizeOptionsInSuggestions: true
+    });
+    
+    // Set the callback for filter changes
+    searchInstance.onFilterChange = handleFilterChange;
+    
+    return searchInstance;
+  } catch (error) {
+    console.error('Failed to initialize search component:', error);
+    return null;
+  }
+}
+
+/**
+ * App initialization with Options-First strategy
+ */
+async function initializeApp() {
+  try {
+    console.log('🚀 Initializing Vanilla Slops with Options-First strategy');
+    
+    // Parse URL params first (with new defaults)
+    parseURLParams();
+    
+    // Initialize components in sequence
+    AppState.searchInstance = initializeSearchComponent();
+    setupThemeToggle();
+    setupScrollTracking();
+    
+    // Initialize filters (including Options-First toggle)
+    await initializeFilters();
+    
+    // Apply URL params to search component
+    if (AppState.searchInstance && Object.keys(AppState.filters).some(key => AppState.filters[key])) {
+      if (AppState.filters.search && AppState.searchInstance.searchInput) {
+        AppState.searchInstance.searchInput.value = AppState.filters.search;
+        AppState.searchInstance.currentQuery = AppState.filters.search;
+      }
+      
+      Object.entries(AppState.filters).forEach(([key, value]) => {
+        if (value && AppState.searchInstance.filterElements[key]) {
+          AppState.searchInstance.filterElements[key].value = value;
+          AppState.searchInstance.currentFilters[key] = value;
+        }
+      });
+      
+      if (AppState.filters.sort) {
+        AppState.searchInstance.currentSort = AppState.filters.sort;
+      }
+      if (AppState.filters.order) {
+        AppState.searchInstance.currentOrder = AppState.filters.order;
+      }
+      
+      AppState.searchInstance.renderActiveFilters();
+    }
+    
+    // Preload popular content
+    preloadPopularContent().catch(err => 
+      console.warn('Failed to preload popular content:', err)
+    );
+    
+    // Load initial page with Options-First strategy
+    await loadPage(AppState.currentPage, true, 'initial-load');
+    
+    document.body.classList.add('app-ready');
+    
+    console.log('✅ Vanilla Slops initialized with Options-First strategy');
+    console.log('🎯 Current strategy:', {
+      showAll: AppState.filters.showAll,
+      hasOptions: AppState.filters.hasOptions
+    });
+    
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    showErrorState('Failed to initialize application. Please refresh the page.');
+  }
+}
+
+// Helper functions
+function setupScrollTracking() {
+  let scrollTimer;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      if (!AppState.isLoading && !AppState.preventNextScroll) {
+        AppState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+      }
+    }, 100);
+  });
+  
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.launch-options-btn')) {
+      storeScrollPosition();
+    }
+  });
+}
+
 function storeScrollPosition() {
   AppState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 }
@@ -486,257 +1030,6 @@ function clearResults() {
   }
 }
 
-/**
- * Filter change handling with Options-First support
- */
-function handleFilterChange(newFilters, reason = 'user-filter') {
-  console.log('🎯 Filter change with Options-First strategy:', newFilters, reason);
-  
-  // Determine if this is likely a user interaction with launch options
-  const isLaunchOptionsInteraction = document.querySelector('.launch-options-row[style*="table-row"]') !== null;
-  
-  if (isLaunchOptionsInteraction && reason !== 'options-strategy-change') {
-    reason = 'launch-options-interaction';
-  }
-  
-  // Update app state
-  AppState.filters = { ...AppState.filters, ...newFilters };
-  AppState.currentPage = 1; // Reset to first page on filter change
-  
-  // Load new results with context
-  loadPage(1, true, reason);
-}
-
-/**
- * Search component initialization with Options-First support
- */
-function initializeSearchComponent() {
-  const container = document.querySelector('.search-container, .hero-search');
-  if (!container) {
-    console.error('Search container not found in DOM');
-    return null;
-  }
-
-  try {
-    const searchConfig = {
-      inputId: 'searchInput',
-      suggestionsId: 'suggestionsDropdown', 
-      resultsId: 'resultsList',
-      resultsCountId: 'resultsCount',
-      activeFiltersId: 'activeFilters',
-      sortId: 'sortSelect',
-      filters: {
-        category: 'categoryFilter',
-        developer: 'developerFilter', 
-        options: 'optionsFilter',
-        year: 'yearFilter'
-      }
-    };
-
-    const searchInstance = new SlopSearch(searchConfig);
-    
-    // Configuration for Options-First strategy
-    searchInstance.configure({
-      suggestionsDelay: 150,
-      searchDelay: 800,
-      minCharsForSearch: 3,
-      enableSearchOnEnter: true,
-      enableProgressiveDebounce: true,
-      enableClickOutsideSearch: true,
-      prioritizeOptionsInSuggestions: true // Prioritize games with options in suggestions
-    });
-    
-    // Set the callback for filter changes
-    searchInstance.onFilterChange = handleFilterChange;
-    
-    return searchInstance;
-  } catch (error) {
-    console.error('Failed to initialize search component:', error);
-    return null;
-  }
-}
-
-function setupScrollTracking() {
-  let scrollTimer;
-  window.addEventListener('scroll', () => {
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      if (!AppState.isLoading && !AppState.preventNextScroll) {
-        AppState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-      }
-    }, 100);
-  });
-  
-  document.addEventListener('click', (e) => {
-    if (e.target.closest('.launch-options-btn')) {
-      storeScrollPosition();
-    }
-  });
-}
-
-function populateFilterDropdown(elementId, data, defaultText) {
-  const selectElement = document.getElementById(elementId);
-  if (!selectElement) {
-    console.warn(`Filter element ${elementId} not found`);
-    return;
-  }
-  
-  const currentValue = selectElement.value;
-  selectElement.innerHTML = '';
-  
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = defaultText;
-  selectElement.appendChild(defaultOption);
-  
-  if (Array.isArray(data) && data.length > 0) {
-    data.forEach(item => {
-      const option = document.createElement('option');
-      
-      if (typeof item === 'string') {
-        option.value = item;
-        option.textContent = item;
-      } else if (item && typeof item === 'object') {
-        option.value = item.value || item.name || item;
-        const count = item.count ? ` (${item.count})` : '';
-        option.textContent = `${item.value || item.name || item}${count}`;
-      }
-      
-      selectElement.appendChild(option);
-    });
-    
-    if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
-      selectElement.value = currentValue;
-    }
-  }
-}
-
-function populateYearFilter(releaseYears) {
-  const yearFilter = document.getElementById('yearFilter');
-  if (!yearFilter) return;
-  
-  const currentValue = yearFilter.value;
-  yearFilter.innerHTML = '';
-  
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = 'All Years';
-  yearFilter.appendChild(defaultOption);
-  
-  if (Array.isArray(releaseYears) && releaseYears.length > 0) {
-    const years = releaseYears
-      .map(year => parseInt(year, 10))
-      .filter(year => !isNaN(year) && year > 1990 && year <= new Date().getFullYear() + 1)
-      .sort((a, b) => b - a);
-    
-    const uniqueYears = [...new Set(years)];
-    
-    uniqueYears.forEach(year => {
-      const option = document.createElement('option');
-      option.value = year.toString();
-      option.textContent = year.toString();
-      yearFilter.appendChild(option);
-    });
-    
-    if (currentValue && [...yearFilter.options].some(opt => opt.value === currentValue)) {
-      yearFilter.value = currentValue;
-    }
-  }
-}
-
-function populateOptionsFilter() {
-  const optionsFilter = document.getElementById('optionsFilter');
-  if (!optionsFilter) return;
-  
-  const currentValue = optionsFilter.value;
-  optionsFilter.innerHTML = '';
-  
-  const optionsData = [
-    { value: '', label: 'Any Options' },
-    { value: 'has-options', label: 'Has Launch Options' },
-    { value: 'no-options', label: 'No Launch Options' },
-    { value: 'many-options', label: '5+ Launch Options' },
-    { value: 'few-options', label: '1-4 Launch Options' },
-    { value: 'performance', label: 'Performance Options' },
-    { value: 'graphics', label: 'Graphics Options' }
-  ];
-  
-  optionsData.forEach(item => {
-    const option = document.createElement('option');
-    option.value = item.value;
-    option.textContent = item.label;
-    optionsFilter.appendChild(option);
-  });
-  
-  if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
-    optionsFilter.value = currentValue;
-  }
-}
-
-/**
- * App initialization with Options-First strategy
- */
-async function initializeApp() {
-  try {
-    console.log('🚀 Initializing Vanilla Slops with Options-First strategy');
-    
-    // Parse URL params first (with new defaults)
-    parseURLParams();
-    
-    // Initialize components in sequence
-    AppState.searchInstance = initializeSearchComponent();
-    setupThemeToggle();
-    setupScrollTracking();
-    
-    // Initialize filters (including Options-First toggle)
-    await initializeFilters();
-    
-    // Apply URL params to search component
-    if (AppState.searchInstance && Object.keys(AppState.filters).some(key => AppState.filters[key])) {
-      if (AppState.filters.search && AppState.searchInstance.searchInput) {
-        AppState.searchInstance.searchInput.value = AppState.filters.search;
-        AppState.searchInstance.currentQuery = AppState.filters.search;
-      }
-      
-      Object.entries(AppState.filters).forEach(([key, value]) => {
-        if (value && AppState.searchInstance.filterElements[key]) {
-          AppState.searchInstance.filterElements[key].value = value;
-          AppState.searchInstance.currentFilters[key] = value;
-        }
-      });
-      
-      if (AppState.filters.sort) {
-        AppState.searchInstance.currentSort = AppState.filters.sort;
-      }
-      if (AppState.filters.order) {
-        AppState.searchInstance.currentOrder = AppState.filters.order;
-      }
-      
-      AppState.searchInstance.renderActiveFilters();
-    }
-    
-    // Preload popular content
-    preloadPopularContent().catch(err => 
-      console.warn('Failed to preload popular content:', err)
-    );
-    
-    // Load initial page with Options-First strategy
-    await loadPage(AppState.currentPage, true, 'initial-load');
-    
-    document.body.classList.add('app-ready');
-    
-    console.log('✅ Vanilla Slops initialized with Options-First strategy');
-    console.log('🎯 Current strategy:', {
-      showAll: AppState.filters.showAll,
-      hasOptions: AppState.filters.hasOptions
-    });
-    
-  } catch (error) {
-    console.error('Failed to initialize app:', error);
-    showErrorState('Failed to initialize application. Please refresh the page.');
-  }
-}
-
 function setupEventListeners() {
   window.addEventListener('popstate', () => {
     parseURLParams();
@@ -766,6 +1059,17 @@ function ensureRequiredDOMElements() {
     resultsCount.className = 'results-count';
     appContainer.insertBefore(resultsCount, tableContainer);
   }
+}
+
+/**
+ * Utility function for debouncing input events
+ */
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
 }
 
 // Initialize when DOM is ready

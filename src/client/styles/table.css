@@ -1134,6 +1134,234 @@
   color: var(--color-text-primary);
 }
 
+/* =============================================================================
+   YEAR FILTER STYLES
+   ============================================================================= */
+
+.year-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.year-select {
+  flex: 1;
+  min-width: 120px;
+  max-width: 160px;
+}
+
+.year-divider {
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.75rem;
+  font-style: italic;
+  white-space: nowrap;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.year-input {
+  flex: 0 0 100px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background: var(--color-bg-input, white);
+  color: var(--color-text, #1f2937);
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.year-input:focus {
+  outline: none;
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: 0 0 0 2px var(--color-primary-alpha, rgba(59, 130, 246, 0.1));
+  background: var(--color-bg-input-focus, white);
+}
+
+.year-input::placeholder {
+  color: var(--color-text-placeholder, #9ca3af);
+  font-style: italic;
+}
+
+.year-input:hover {
+  border-color: var(--color-border-hover, #9ca3af);
+}
+
+/* Invalid year styling */
+.year-input:invalid {
+  border-color: var(--color-error, #ef4444);
+  box-shadow: 0 0 0 2px var(--color-error-alpha, rgba(239, 68, 68, 0.1));
+}
+
+/* Enhanced filter group styling */
+.filter-group:has(.year-filter-container) {
+  min-width: 280px;
+}
+
+.filter-group:has(.year-filter-container) .filter-label {
+  margin-bottom: 0.5rem;
+  display: block;
+  font-weight: 500;
+  color: var(--color-text-secondary, #374151);
+}
+
+/* Dark theme support */
+[data-theme="dark"] .year-input {
+  background: var(--color-bg-input-dark, #374151);
+  border-color: var(--color-border-dark, #4b5563);
+  color: var(--color-text-dark, #f9fafb);
+}
+
+[data-theme="dark"] .year-input:focus {
+  background: var(--color-bg-input-focus-dark, #4b5563);
+  border-color: var(--color-primary-dark, #60a5fa);
+  box-shadow: 0 0 0 2px var(--color-primary-alpha-dark, rgba(96, 165, 250, 0.2));
+}
+
+[data-theme="dark"] .year-divider {
+  color: var(--color-text-muted-dark, #9ca3af);
+}
+
+[data-theme="dark"] .year-input::placeholder {
+  color: var(--color-text-placeholder-dark, #6b7280);
+}
+
+[data-theme="dark"] .year-input:invalid {
+  border-color: var(--color-error-dark, #f87171);
+  box-shadow: 0 0 0 2px var(--color-error-alpha-dark, rgba(248, 113, 113, 0.2));
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .year-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .year-select {
+    flex: none;
+    max-width: none;
+  }
+  
+  .year-divider {
+    align-self: center;
+    margin: -0.25rem 0;
+  }
+  
+  .year-input {
+    flex: none;
+    max-width: none;
+  }
+  
+  .filter-group:has(.year-filter-container) {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .year-filter-container {
+    gap: 0.5rem;
+  }
+  
+  .year-input {
+    padding: 0.625rem 0.75rem;
+    font-size: 1rem; /* Prevent zoom on mobile */
+  }
+}
+
+/* Animation for year input validation feedback */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.year-input.invalid-year {
+  animation: shake 0.3s ease-in-out;
+  border-color: var(--color-error, #ef4444);
+}
+
+/* Loading state for year filter */
+.year-filter-container.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.year-filter-container.loading .year-select,
+.year-filter-container.loading .year-input {
+  background: var(--color-bg-loading, #f3f4f6);
+  cursor: wait;
+}
+
+[data-theme="dark"] .year-filter-container.loading .year-select,
+[data-theme="dark"] .year-filter-container.loading .year-input {
+  background: var(--color-bg-loading-dark, #374151);
+}
+
+/* Enhanced focus indicators for accessibility */
+.year-select:focus-visible,
+.year-input:focus-visible {
+  outline: 2px solid var(--color-focus, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Success state when year is selected */
+.year-input.has-value {
+  border-color: var(--color-success, #10b981);
+  background: var(--color-bg-success, #f0fdf4);
+}
+
+[data-theme="dark"] .year-input.has-value {
+  border-color: var(--color-success-dark, #34d399);
+  background: var(--color-bg-success-dark, #064e3b);
+}
+
+/* Improved filter label spacing */
+.filter-group .filter-label {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-label, #374151);
+  display: block;
+}
+
+[data-theme="dark"] .filter-group .filter-label {
+  color: var(--color-text-label-dark, #d1d5db);
+}
+
+/* Enhanced filter dropdown consistency */
+.filter-select,
+.year-input {
+  height: 2.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border, #d1d5db);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Year filter hint text */
+.year-filter-container::after {
+  content: attr(data-hint);
+  font-size: 0.75rem;
+  color: var(--color-text-hint, #6b7280);
+  grid-column: span 2;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Year range validation visual feedback */
+.year-input[data-validation="out-of-range"] {
+  border-color: var(--color-warning, #f59e0b);
+  background: var(--color-bg-warning, #fffbeb);
+}
+
+[data-theme="dark"] .year-input[data-validation="out-of-range"] {
+  border-color: var(--color-warning-dark, #fbbf24);
+  background: var(--color-bg-warning-dark, #451a03);
+}
 
 /* =============================================================================
    INFORMATION MODAL
