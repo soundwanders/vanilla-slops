@@ -53,19 +53,6 @@ One of the core philosophies of this project is to recreate some of the function
 - **Database**: Supabase (PostgreSQL) with optimized queries and indexing
 - **Data Collection**: Python-based scraper with Steam API integration
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Frontend      │───▶│   Express API    │───▶│   Supabase DB   │
-│   (Port 3000)   │    │   (Port 8000)    │    │   PostgreSQL    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│ • Smart Caching │    │ • Route Handling │    │ • Optimized     │
-│ • Real-time UI  │    │ • Validation     │    │   Queries       │
-│ • Accessibility │    │ • Error Handling │    │ • Relationships │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
 
 ---
 
