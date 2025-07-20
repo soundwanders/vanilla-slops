@@ -3,7 +3,8 @@ import {
   getSearchSuggestions, 
   getFacets,
   fetchGameWithLaunchOptions,
-  fetchLaunchOptionsForGame
+  fetchLaunchOptionsForGame,
+  getGameStatistics
 } from '../services/gamesService.js';
 
 /**
@@ -265,6 +266,50 @@ export async function gameLaunchOptionsController(req, res) {
     console.error('Error in gameLaunchOptionsController:', err.message);
     res.status(500).json({ 
       error: 'Failed to fetch launch options',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+}
+
+/**
+ * Retrieves game statistics for progressive disclosure UI
+ * Provides counts of games with/without launch options for Show All Games filter
+ * 
+ * @async
+ * @function gameStatisticsController
+ * @param {Object} req - Express request object
+ * @param {Object} [req.query] - Optional query parameters for scoped statistics
+ * @param {string} [req.query.search] - Search term to scope statistics
+ * @param {string} [req.query.developer] - Developer filter
+ * @param {string} [req.query.category] - Category filter
+ * @param {string} [req.query.year] - Year filter
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>} JSON response with game statistics
+ * @throws {Error} 500 - When database query fails
+ */
+export async function gameStatisticsController(req, res) {
+  try {
+    console.log('📊 Fetching game statistics with filters:', req.query);
+
+    // Map filters similar to main games controller
+    const filters = {
+      search: req.query.search || '',
+      searchQuery: req.query.search || '',
+      developer: req.query.developer || '',
+      category: req.query.category || '',
+      year: req.query.year || '',
+      engine: req.query.engine || ''
+    };
+
+    const statistics = await fetchGameStatistics(filters);
+    
+    console.log('📈 Game statistics result:', statistics);
+    
+    res.json(statistics);
+  } catch (err) {
+    console.error('Error in gameStatisticsController:', err.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch game statistics',
       details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
