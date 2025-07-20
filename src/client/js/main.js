@@ -1,5 +1,5 @@
 import { fetchGames, preloadPopularContent } from './api.js';
-import { renderTable } from './ui/table.js';
+import { renderTable, renderEmptyState } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
 import SlopSearch from './ui/search.js';
@@ -7,26 +7,40 @@ import SlopSearch from './ui/search.js';
 const PAGE_SIZE = 20;
 
 /**
- * Centralized application state management
+ * Application state management with Options-First strategy
  */
 const AppState = {
   currentPage: 1,
   isLoading: false,
-  filters: {},
+  filters: {
+    hasOptions: true,  // Show games with options by default
+    showAll: false     // Progressive disclosure toggle
+  },
   totalPages: 0,
   searchInstance: null,
   filtersInitialized: false,
   lastScrollPosition: 0, 
-  preventNextScroll: false 
+  preventNextScroll: false,
+  
+  // Statistics for progressive disclosure UI
+  gameStats: {
+    withOptions: 0,
+    withoutOptions: 0,
+    total: 0,
+    percentageWithOptions: 0
+  }
 };
 
 /**
  * Initialize and populate filter dropdowns with real data
+ * Includes fallback options and better error handling
  */
 async function initializeFilters() {
   if (AppState.filtersInitialized) return;
   
   try {
+    console.log('🔧 Initializing filters...');
+    
     // Show loading state on filters
     const filterSelects = document.querySelectorAll('.filter-select');
     filterSelects.forEach(select => {
@@ -34,19 +48,43 @@ async function initializeFilters() {
       select.style.opacity = '0.6';
     });
     
-    // Fetch facets from the API
-    const response = await fetch('/api/games/facets');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch facets: ${response.status}`);
+    // Fetch facets from the API with error handling
+    let facets = {};
+    try {
+      const response = await fetch('/api/games/facets?includeStats=true');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      facets = await response.json();
+      console.log('✅ Facets loaded successfully:', Object.keys(facets));
+    } catch (fetchError) {
+      console.error('❌ Failed to fetch facets:', fetchError);
+      // Continue with empty facets - we'll create fallbacks
+      facets = {
+        developers: [],
+        engines: [],
+        publishers: [],
+        genres: [],
+        releaseYears: [],
+        statistics: { withOptions: 0, withoutOptions: 0, total: 0, percentageWithOptions: 0 }
+      };
     }
     
-    const facets = await response.json();
+    // Store statistics for UI feedback
+    if (facets.statistics) {
+      AppState.gameStats = facets.statistics;
+      console.log('📊 Game statistics loaded:', AppState.gameStats);
+    }
     
-    // Populate each filter dropdown
-    populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
-    populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
-    populateYearFilter(facets.releaseYears);
-    populateOptionsFilter();
+    // Populate each filter dropdown with fallback support
+    await populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
+    await populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
+    await populateYearFilter(facets.releaseYears);
+    await populateOptionsFilter();
+    
+    // Initialize Options-First toggle
+    initializeOptionsFirstToggle();
     
     // Remove loading state
     filterSelects.forEach(select => {
@@ -55,9 +93,10 @@ async function initializeFilters() {
     });
     
     AppState.filtersInitialized = true;
+    console.log('✅ Filter initialization completed');
     
   } catch (error) {
-    console.error('Failed to initialize filters:', error);
+    console.error('💥 Filter initialization failed:', error);
     
     // Remove loading state and provide fallback
     const filterSelects = document.querySelectorAll('.filter-select');
@@ -65,32 +104,36 @@ async function initializeFilters() {
       select.disabled = false;
       select.style.opacity = '';
     });
+    
+    // Initialize with minimal fallback data
+    await initializeFallbackFilters();
   }
 }
 
 /**
- * Populate a filter dropdown with data from the API
+ * Populate filter dropdown with fallback support for empty data
  */
-function populateFilterDropdown(elementId, data, defaultText) {
+async function populateFilterDropdown(elementId, data, defaultText) {
+  console.log(`📋 Populating ${elementId} with ${data?.length || 0} options...`);
+  
   const selectElement = document.getElementById(elementId);
   if (!selectElement) {
     console.warn(`Filter element ${elementId} not found`);
     return;
   }
   
-  // Store current value
   const currentValue = selectElement.value;
   
-  // Clear existing options
-  selectElement.innerHTML = '';
+  // Clear existing options except the first (default)
+  while (selectElement.children.length > 1) {
+    selectElement.removeChild(selectElement.lastChild);
+  }
   
-  // Add default option
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = defaultText;
-  selectElement.appendChild(defaultOption);
+  // Update default option text
+  if (selectElement.firstElementChild) {
+    selectElement.firstElementChild.textContent = defaultText;
+  }
   
-  // Add data options
   if (Array.isArray(data) && data.length > 0) {
     data.forEach(item => {
       const option = document.createElement('option');
@@ -107,108 +150,422 @@ function populateFilterDropdown(elementId, data, defaultText) {
       selectElement.appendChild(option);
     });
     
-    // Restore previous value if it still exists
-    if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
-      selectElement.value = currentValue;
+    console.log(`✅ ${elementId} populated with ${data.length} options`);
+  } else {
+    console.warn(`⚠️ No data available for ${elementId}, using fallbacks if available`);
+    
+    // Add fallback options for categories
+    if (elementId === 'categoryFilter') {
+      const fallbackCategories = [
+        'Action', 'RPG', 'Strategy', 'FPS', 'Racing', 'Sports', 
+        'Simulation', 'Puzzle', 'Horror', 'Survival', 'Indie'
+      ];
+      
+      fallbackCategories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.toLowerCase();
+        option.textContent = category;
+        selectElement.appendChild(option);
+      });
+      console.log('🎮 Category filter populated with fallback options');
     }
+  }
+  
+  // Restore previous selection
+  if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
+    selectElement.value = currentValue;
   }
 }
 
 /**
- * Populate year filter with extracted years
+ * Populate year filter with both dropdown and input field
+ * Supports flexible year entry when dropdown data is limited
  */
-function populateYearFilter(releaseYears) {
-  const yearFilter = document.getElementById('yearFilter');
-  if (!yearFilter) return;
+async function populateYearFilter(releaseYears) {
+  console.log('📅 Setting up year filter...');
   
-  const currentValue = yearFilter.value;
-  yearFilter.innerHTML = '';
+  const yearFilterGroup = document.querySelector('#yearFilter')?.closest('.filter-group');
+  if (!yearFilterGroup) {
+    console.warn('Year filter group not found');
+    return;
+  }
   
-  // Add default option
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = 'All Years';
-  yearFilter.appendChild(defaultOption);
+  // Replace the existing year filter with a more flexible one
+  yearFilterGroup.innerHTML = `
+    <label class="filter-label" for="yearFilter">Release Year</label>
+    <div class="year-filter-container">
+      <select class="filter-select year-select" id="yearFilterSelect" name="year-select">
+        <option value="">All Years</option>
+      </select>
+      <span class="year-filter-separator"></span>
+      <input 
+        type="number" 
+        class="filter-input year-input" 
+        id="yearFilterInput" 
+        name="year-input"
+        placeholder="Year"
+        min="1980"
+        max="${new Date().getFullYear() + 1}"
+        title="Enter a specific year (1980-${new Date().getFullYear() + 1})"
+      >
+    </div>
+  `;
   
+  // Add CSS for the year filter layout
+  addYearFilterStyles();
+  
+  const yearSelect = document.getElementById('yearFilterSelect');
+  const yearInput = document.getElementById('yearFilterInput');
+  
+  // Populate dropdown with available years
   if (Array.isArray(releaseYears) && releaseYears.length > 0) {
-    // Extract and sort years
-    const years = releaseYears
-      .map(year => parseInt(year, 10))
-      .filter(year => !isNaN(year) && year > 1990 && year <= new Date().getFullYear() + 1)
-      .sort((a, b) => b - a);
-    
-    // Remove duplicates
-    const uniqueYears = [...new Set(years)];
-    
-    uniqueYears.forEach(year => {
+    releaseYears.forEach(year => {
       const option = document.createElement('option');
       option.value = year.toString();
       option.textContent = year.toString();
-      yearFilter.appendChild(option);
+      yearSelect.appendChild(option);
     });
-    
-    // Restore value
-    if (currentValue && [...yearFilter.options].some(opt => opt.value === currentValue)) {
-      yearFilter.value = currentValue;
+    console.log(`✅ Year dropdown populated with ${releaseYears.length} years`);
+  } else {
+    // Fallback: create common years
+    const currentYear = new Date().getFullYear();
+    const commonYears = [];
+    for (let year = currentYear; year >= 2000; year -= 1) {
+      commonYears.push(year);
     }
+    // Add some older landmark years
+    commonYears.push(1999, 1998, 1997, 1996, 1995, 1990, 1985, 1980);
+    
+    commonYears.forEach(year => {
+      const option = document.createElement('option');
+      option.value = year.toString();
+      option.textContent = year.toString();
+      yearSelect.appendChild(option);
+    });
+    console.log('📅 Year dropdown populated with fallback years');
   }
+  
+  // Set up event handlers for both select and input
+  const updateYearFilter = () => {
+    const selectValue = yearSelect.value;
+    const inputValue = yearInput.value;
+    
+    // Use input value if provided, otherwise use select value
+    const yearValue = inputValue || selectValue;
+    
+    // Update the other control to stay in sync
+    if (inputValue && selectValue !== inputValue) {
+      // Find matching option or clear select
+      const matchingOption = Array.from(yearSelect.options).find(opt => opt.value === inputValue);
+      yearSelect.value = matchingOption ? inputValue : '';
+    } else if (selectValue && yearInput.value !== selectValue) {
+      yearInput.value = selectValue;
+    }
+    
+    // Store the year value
+    AppState.filters.year = yearValue;
+    
+    // Trigger filter change
+    if (AppState.searchInstance && AppState.searchInstance.onFilterChange) {
+      AppState.searchInstance.onFilterChange({ year: yearValue }, 'year-filter-change');
+    }
+  };
+  
+  yearSelect.addEventListener('change', updateYearFilter);
+  yearInput.addEventListener('input', debounce(updateYearFilter, 500));
+  yearInput.addEventListener('blur', updateYearFilter);
+  
+  // Handle Enter key in input
+  yearInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      updateYearFilter();
+    }
+  });
 }
 
 /**
- * Populate options filter with predefined options
+ * Populate options filter with comprehensive launch option filters
  */
-function populateOptionsFilter() {
+async function populateOptionsFilter() {
+  console.log('🚀 Setting up options filter...');
+  
   const optionsFilter = document.getElementById('optionsFilter');
-  if (!optionsFilter) return;
+  if (!optionsFilter) {
+    console.warn('Options filter not found');
+    return;
+  }
   
   const currentValue = optionsFilter.value;
   optionsFilter.innerHTML = '';
   
   const optionsData = [
-    { value: '', label: 'Any Options' },
-    { value: 'has-options', label: 'Has Launch Options' },
-    { value: 'no-options', label: 'No Launch Options' },
-    { value: 'many-options', label: '5+ Launch Options' },
-    { value: 'few-options', label: '1-4 Launch Options' },
-    { value: 'performance', label: 'Performance Options' },
-    { value: 'graphics', label: 'Graphics Options' }
+    { value: '', label: 'Any Launch Options', description: 'Show all games regardless of launch options' },
+    { value: 'has-options', label: 'Has Launch Options', description: 'Games with community-verified launch options' },
+    { value: 'no-options', label: 'No Launch Options', description: 'Games without any launch options' },
+    { value: 'many-options', label: '5+ Launch Options', description: 'Games with many launch options' },
+    { value: 'few-options', label: '1-4 Launch Options', description: 'Games with few launch options' },
+    { value: 'performance', label: 'Performance Options', description: 'Options that improve game performance' },
+    { value: 'graphics', label: 'Graphics Options', description: 'Options that modify graphics settings' }
   ];
   
   optionsData.forEach(item => {
     const option = document.createElement('option');
     option.value = item.value;
     option.textContent = item.label;
+    option.title = item.description;
     optionsFilter.appendChild(option);
   });
   
-  // Restore value
+  // Restore previous selection
   if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
     optionsFilter.value = currentValue;
   }
+  
+  console.log('✅ Options filter populated');
 }
 
 /**
- * Store current scroll position before page operations
+ * Initialize fallback filters when API fails
  */
-function storeScrollPosition() {
-  AppState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-}
-
-/**
- * Restore scroll position with debouncing
- */
-function restoreScrollPosition() {
-  if (AppState.preventNextScroll) {
-    // Restore the previous scroll position instead of scrolling to top
-    setTimeout(() => {
-      window.scrollTo(0, AppState.lastScrollPosition);
-      AppState.preventNextScroll = false;
-    }, 50);
+async function initializeFallbackFilters() {
+  console.log('🔧 Initializing fallback filters...');
+  
+  try {
+    await populateFilterDropdown('developerFilter', [
+      'Valve Corporation', 'id Software', 'Bethesda Game Studios', 'CD Projekt RED',
+      'Rockstar Games', 'Ubisoft', 'Electronic Arts', 'Activision'
+    ], 'All Developers');
+    
+    await populateFilterDropdown('categoryFilter', [
+      'Action', 'RPG', 'Strategy', 'FPS', 'Racing', 'Sports', 
+      'Simulation', 'Puzzle', 'Horror', 'Survival'
+    ], 'All Categories');
+    
+    await populateYearFilter([]); // Will use fallback years
+    await populateOptionsFilter();
+    
+    console.log('✅ Fallback filters initialized');
+  } catch (error) {
+    console.error('💥 Even fallback filter initialization failed:', error);
   }
 }
 
 /**
- * Load page with games data - called by search component
+ * Initialize the Options-First toggle UI component
+ */
+function initializeOptionsFirstToggle() {
+  // Find or create the toggle container
+  let toggleContainer = document.getElementById('options-first-toggle');
+  
+  if (!toggleContainer) {
+    // Create the toggle container
+    toggleContainer = document.createElement('div');
+    toggleContainer.id = 'options-first-toggle';
+    toggleContainer.className = 'options-first-toggle';
+    
+    // Find the best place to insert it (after filters)
+    const filtersContainer = document.querySelector('.filters-container, .hero-filters');
+    if (filtersContainer) {
+      filtersContainer.insertAdjacentElement('afterend', toggleContainer);
+    } else {
+      // Fallback: add to active filters area
+      const activeFilters = document.getElementById('activeFilters');
+      if (activeFilters) {
+        activeFilters.insertAdjacentElement('beforebegin', toggleContainer);
+      }
+    }
+  }
+  
+  // Create toggle HTML
+  toggleContainer.innerHTML = createOptionsFirstToggleHTML();
+  
+  // Add event listener
+  const checkbox = toggleContainer.querySelector('#showAllGamesToggle');
+  if (checkbox) {
+    checkbox.addEventListener('change', handleOptionsFirstToggle);
+    
+    // Set initial state
+    checkbox.checked = AppState.filters.showAll;
+    
+    // Update the label with current stats
+    updateToggleLabel();
+  }
+}
+
+/**
+ * Create HTML for the Options-First toggle
+ */
+function createOptionsFirstToggleHTML() {
+  return `
+    <div class="toggle-container">
+      <label class="toggle-label" for="showAllGamesToggle">
+        <input 
+          type="checkbox" 
+          id="showAllGamesToggle" 
+          class="toggle-checkbox"
+          ${AppState.filters.showAll ? 'checked' : ''}
+        >
+        <span class="toggle-slider"></span>
+        <span class="toggle-text" id="toggleText">
+          Show games without launch options
+        </span>
+        <span class="toggle-stats" id="toggleStats">
+          ${getToggleStatsText()}
+        </span>
+      </label>
+      <div class="toggle-description">
+        <span class="toggle-hint">
+          ${AppState.filters.showAll 
+            ? '✅ Showing all games in database' 
+            : '🎯 Showing games with launch options (recommended)'
+          }
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Handle Options-First toggle changes
+ */
+function handleOptionsFirstToggle(event) {
+  const isChecked = event.target.checked;
+  
+  console.log(`🎯 Options-First toggle changed: showAll=${isChecked}`);
+  
+  // Update app state
+  AppState.filters.showAll = isChecked;
+  AppState.filters.hasOptions = !isChecked; // Inverse relationship for clarity
+  
+  // Update UI feedback
+  updateToggleLabel();
+  
+  // Trigger search with new parameters
+  const newFilters = {
+    ...AppState.filters,
+    showAll: isChecked,
+    hasOptions: !isChecked || undefined // Don't send hasOptions when showAll is true
+  };
+  
+  // Reset to first page when changing strategy
+  AppState.currentPage = 1;
+  
+  // Execute search
+  handleFilterChange(newFilters, 'options-strategy-change');
+}
+
+/**
+ * Update toggle label with current statistics
+ */
+function updateToggleLabel() {
+  const toggleText = document.getElementById('toggleText');
+  const toggleStats = document.getElementById('toggleStats');
+  const toggleHint = document.querySelector('.toggle-hint');
+  
+  if (!toggleText || !toggleStats || !toggleHint) return;
+  
+  const stats = AppState.gameStats;
+  const isShowingAll = AppState.filters.showAll;
+  
+  if (isShowingAll) {
+    toggleStats.textContent = `(+${stats.withoutOptions} more games)`;
+    toggleHint.innerHTML = '✅ Showing all games in database';
+    toggleHint.className = 'toggle-hint showing-all';
+  } else {
+    toggleStats.textContent = `(${stats.withoutOptions} hidden)`;
+    toggleHint.innerHTML = '🎯 Showing games with launch options (recommended)';
+    toggleHint.className = 'toggle-hint options-first';
+  }
+}
+
+/**
+ * Get toggle statistics text
+ */
+function getToggleStatsText() {
+  const stats = AppState.gameStats;
+  if (AppState.filters.showAll) {
+    return `(+${stats.withoutOptions} more games)`;
+  } else {
+    return `(${stats.withoutOptions} hidden)`;
+  }
+}
+
+/**
+ * Filter change handling with Options-First support
+ * Validates filters and handles conflicts between different filter types
+ */
+function handleFilterChange(newFilters, reason = 'user-filter') {
+  console.log('🎯 Filter change with Options-First strategy:', {
+    filters: newFilters,
+    reason,
+    currentState: AppState.filters
+  });
+  
+  // Determine if this is likely a user interaction with launch options
+  const isLaunchOptionsInteraction = document.querySelector('.launch-options-row[style*="table-row"]') !== null;
+  
+  if (isLaunchOptionsInteraction && reason !== 'options-strategy-change') {
+    reason = 'launch-options-interaction';
+  }
+  
+  // Validate filters before applying
+  const validatedFilters = validateFilters(newFilters);
+  
+  // Handle special cases for options filter
+  if (validatedFilters.options === 'no-options') {
+    // Force showAll when filtering for games without options
+    validatedFilters.showAll = true;
+    validatedFilters.hasOptions = false;
+    console.log('🔧 Auto-enabled showAll for no-options filter');
+  }
+  
+  // Update app state
+  AppState.filters = { ...AppState.filters, ...validatedFilters };
+  AppState.currentPage = 1; // Reset to first page on filter change
+  
+  // Log the final state for debugging
+  console.log('📊 Final filter state:', AppState.filters);
+  
+  // Load new results with context
+  loadPage(1, true, reason);
+}
+
+/**
+ * Validate and clean filter values
+ */
+function validateFilters(filters) {
+  const validated = {};
+  
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed) {
+          validated[key] = trimmed;
+        }
+      } else if (typeof value === 'boolean') {
+        validated[key] = value;
+      } else if (typeof value === 'number' && !isNaN(value)) {
+        validated[key] = value;
+      }
+    }
+  });
+  
+  // Special validation for year
+  if (validated.year) {
+    const year = parseInt(validated.year, 10);
+    if (isNaN(year) || year < 1980 || year > new Date().getFullYear() + 1) {
+      console.warn(`⚠️ Invalid year: ${validated.year}, removing from filters`);
+      delete validated.year;
+    }
+  }
+  
+  return validated;
+}
+
+/**
+ * Load page with Options-First strategy support
  */
 async function loadPage(page = 1, replace = true, reason = 'search') {
   if (AppState.isLoading) return;
@@ -224,6 +581,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
   showLoadingState(replace);
 
   try {
+    // Query parameters with Options-First strategy
     const queryParams = {
       page,
       limit: PAGE_SIZE,
@@ -232,28 +590,53 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
       developer: AppState.filters.developer || '',
       options: AppState.filters.options || '',
       year: AppState.filters.year || '',
-      sort: AppState.filters.sort || 'title',
-      order: AppState.filters.order || 'asc'
+      sort: AppState.filters.sort || 'total_options_count',
+      order: AppState.filters.order || 'desc',
+      
+      // Options-First parameters
+      hasOptions: AppState.filters.showAll ? undefined : AppState.filters.hasOptions,
+      showAll: AppState.filters.showAll || undefined
     };
+
+    console.log('🎯 Loading page with Options-First strategy:', {
+      page,
+      hasOptions: queryParams.hasOptions,
+      showAll: queryParams.showAll,
+      reason
+    });
 
     const response = await fetchGames(queryParams);
     
     // Update application state
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
+    
+    // Update game statistics
+    if (response.stats) {
+      AppState.gameStats = response.stats;
+      updateToggleLabel(); // Update toggle with fresh stats
+    }
 
     // Update UI with smooth transitions
-    updateResultsCount(response.total || 0);
+    updateResultsCount(response.total || 0, response.stats);
     clearResults();
-    renderTable(response.games || [], false);
+    
+    // Table rendering with empty state support
+    if (response.games?.length > 0) {
+      renderTable(response.games || [], false);
+    } else {
+      // Empty state with Options-First context
+      renderEmptyState(AppState.filters, AppState.gameStats);
+    }
+    
     renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
-
     updateURL();
 
     // Feedback logic
     if (response.games?.length > 0) {
       if (reason !== 'launch-options-interaction') {
-        showSuccessFeedback(`Loaded ${response.games.length} games`);
+        const strategyInfo = response.meta?.showingOptionsOnly ? ' (with launch options)' : '';
+        showSuccessFeedback(`Loaded ${response.games.length} games${strategyInfo}`);
       }
     }
 
@@ -265,7 +648,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
   } catch (error) {
     console.error('Error loading page:', error);
     showErrorState(error.message);
-    AppState.preventNextScroll = false; // Reset flag on error
+    AppState.preventNextScroll = false;
   } finally {
     AppState.isLoading = false;
     hideLoadingState();
@@ -273,104 +656,43 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
 }
 
 /**
- * Show subtle success feedback
+ * Results count with strategy information
  */
-function showSuccessFeedback(message) {
+function updateResultsCount(total, stats) {
   const resultsCount = document.getElementById('resultsCount');
   if (resultsCount) {
-    resultsCount.style.color = 'var(--color-success)';
-    resultsCount.style.fontWeight = 'var(--font-weight-semibold)';
+    let resultText = `${total} result${total !== 1 ? 's' : ''} found`;
     
-    setTimeout(() => {
-      resultsCount.style.color = '';
-      resultsCount.style.fontWeight = '';
-    }, 2000);
-  }
-}
-
-/**
- * Loading state with UX
- */
-function showLoadingState(clearContent = false) {
-  const tableContainer = document.getElementById('table-container');
-  if (tableContainer && clearContent) {
-    // Only show loading spinner for actual searches, not interactions
-    if (!AppState.preventNextScroll) {
-      tableContainer.innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          <span>Loading games...</span>
-        </div>
-      `;
+    // Add strategy context
+    if (stats && !AppState.filters.showAll) {
+      resultText += ` • ${stats.withoutOptions} without options hidden`;
     }
+    
+    resultsCount.textContent = resultText;
   }
-  
-  // Disable form elements during loading (but not search input - handled by search component)
-  const formElements = document.querySelectorAll('.filter-select, .sort-select');
-  formElements.forEach(el => {
-    el.disabled = true;
-    el.style.opacity = '0.6';
-  });
 }
 
 /**
- * Hide loading state and re-enable UI
+ * URL management with Options-First parameters
  */
-function hideLoadingState() {
-  const loadingElements = document.querySelectorAll('.loading');
-  loadingElements.forEach(el => el.remove());
-  
-  // Re-enable form elements
-  const formElements = document.querySelectorAll('.filter-select, .sort-select');
-  formElements.forEach(el => {
-    el.disabled = false;
-    el.style.opacity = '';
-  });
-}
-
-/**
- * Error state
- */
-function showErrorState(message) {
-  const tableContainer = document.getElementById('table-container');
-  if (tableContainer) {
-    tableContainer.innerHTML = `
-      <div class="error">
-        <h3>❌ Error Loading Games</h3>
-        <p>${message}</p>
-        <button onclick="location.reload()" class="retry-btn">
-          🔄 Try Again
-        </button>
-      </div>
-    `;
-  }
-}
-
-function updateResultsCount(total) {
-  const resultsCount = document.getElementById('resultsCount');
-  if (resultsCount) {
-    resultsCount.textContent = `${total} result${total !== 1 ? 's' : ''} found`;
-  }
-}
-
-function clearResults() {
-  const tableContainer = document.getElementById('table-container');
-  if (tableContainer) {
-    tableContainer.innerHTML = '';
-  }
-  
-  const existingPagination = document.querySelector('.pagination-container');
-  if (existingPagination) {
-    existingPagination.remove();
-  }
-}
-
 function updateURL() {
   const params = new URLSearchParams();
 
   Object.entries(AppState.filters).forEach(([key, value]) => {
     if (value && value.toString().trim()) {
-      params.set(key, value);
+      // Handle boolean parameters properly
+      if (key === 'showAll' && value === true) {
+        params.set(key, 'true');
+      } else if (key === 'hasOptions' && AppState.filters.showAll) {
+        // Don't include hasOptions when showAll is true
+        return;
+      } else if (typeof value === 'boolean') {
+        if (value !== false) { // Only include non-default boolean values
+          params.set(key, value.toString());
+        }
+      } else {
+        params.set(key, value);
+      }
     }
   });
 
@@ -382,10 +704,17 @@ function updateURL() {
   window.history.replaceState(null, '', newURL);
 }
 
+/**
+ * URL parameter parsing with Options-First defaults
+ */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
 
   AppState.currentPage = parseInt(params.get('page')) || 1;
+  
+  // Parse Options-First parameters
+  const showAll = params.get('showAll') === 'true';
+  const hasOptions = params.get('hasOptions') !== 'false'; // Default true
   
   AppState.filters = {
     search: params.get('search') || '',
@@ -393,34 +722,22 @@ function parseURLParams() {
     developer: params.get('developer') || '', 
     options: params.get('options') || '',
     year: params.get('year') || '',
-    sort: params.get('sort') || 'title',
-    order: params.get('order') || 'asc'
+    sort: params.get('sort') || 'total_options_count', 
+    order: params.get('order') || 'desc', 
+    
+    // Options-First strategy parameters
+    showAll: showAll,
+    hasOptions: showAll ? true : hasOptions // If showAll, hasOptions doesn't matter
   };
+  
+  console.log('🔗 Parsed URL with Options-First strategy:', {
+    showAll: AppState.filters.showAll,
+    hasOptions: AppState.filters.hasOptions
+  });
 }
 
 /**
- * Handle filter changes from search component - SINGLE SOURCE OF TRUTH
- * This is called by the search component when filters change
- */
-function handleFilterChange(newFilters, reason = 'user-filter') {
-  // Determine if this is likely a user interaction with launch options
-  const isLaunchOptionsInteraction = document.querySelector('.launch-options-row[style*="table-row"]') !== null;
-  
-  if (isLaunchOptionsInteraction) {
-    // User is viewing launch options, preserve their scroll position
-    reason = 'launch-options-interaction';
-  }
-  
-  // Update app state
-  AppState.filters = { ...AppState.filters, ...newFilters };
-  AppState.currentPage = 1; // Reset to first page on filter change
-  
-  // Load new results with context
-  loadPage(1, true, reason);
-}
-
-/**
- * Initialize search component
+ * Search component initialization with Options-First support
  */
 function initializeSearchComponent() {
   const container = document.querySelector('.search-container, .hero-search');
@@ -441,22 +758,24 @@ function initializeSearchComponent() {
         category: 'categoryFilter',
         developer: 'developerFilter', 
         options: 'optionsFilter',
-        year: 'yearFilter'
+        year: 'yearFilterSelect' // Update to use the new year select
       }
     };
 
     const searchInstance = new SlopSearch(searchConfig);
     
+    // Configuration for Options-First strategy
     searchInstance.configure({
-      suggestionsDelay: 150,        // Keep suggestions fast and responsive
-      searchDelay: 800,             // Much slower main search (was 300ms)
-      minCharsForSearch: 3,         // Only search after 3 characters
-      enableSearchOnEnter: true,    // Allow Enter key for immediate search
-      enableProgressiveDebounce: true, // Longer delays for rapid typing
-      enableClickOutsideSearch: true   // Search when clicking outside (now with safe zones)
+      suggestionsDelay: 150,
+      searchDelay: 800,
+      minCharsForSearch: 3,
+      enableSearchOnEnter: true,
+      enableProgressiveDebounce: true,
+      enableClickOutsideSearch: true,
+      prioritizeOptionsInSuggestions: true
     });
     
-    // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER
+    // Set the callback for filter changes
     searchInstance.onFilterChange = handleFilterChange;
     
     return searchInstance;
@@ -467,10 +786,71 @@ function initializeSearchComponent() {
 }
 
 /**
- * Scroll position preservation / tracking
+ * App initialization with Options-First strategy
  */
+async function initializeApp() {
+  try {
+    console.log('🚀 Initializing Vanilla Slops with Options-First strategy');
+    
+    // Parse URL params first (with new defaults)
+    parseURLParams();
+    
+    // Initialize components in sequence
+    AppState.searchInstance = initializeSearchComponent();
+    setupThemeToggle();
+    setupScrollTracking();
+    
+    // Initialize filters (including Options-First toggle)
+    await initializeFilters();
+    
+    // Apply URL params to search component
+    if (AppState.searchInstance && Object.keys(AppState.filters).some(key => AppState.filters[key])) {
+      if (AppState.filters.search && AppState.searchInstance.searchInput) {
+        AppState.searchInstance.searchInput.value = AppState.filters.search;
+        AppState.searchInstance.currentQuery = AppState.filters.search;
+      }
+      
+      Object.entries(AppState.filters).forEach(([key, value]) => {
+        if (value && AppState.searchInstance.filterElements[key]) {
+          AppState.searchInstance.filterElements[key].value = value;
+          AppState.searchInstance.currentFilters[key] = value;
+        }
+      });
+      
+      if (AppState.filters.sort) {
+        AppState.searchInstance.currentSort = AppState.filters.sort;
+      }
+      if (AppState.filters.order) {
+        AppState.searchInstance.currentOrder = AppState.filters.order;
+      }
+      
+      AppState.searchInstance.renderActiveFilters();
+    }
+    
+    // Preload popular content
+    preloadPopularContent().catch(err => 
+      console.warn('Failed to preload popular content:', err)
+    );
+    
+    // Load initial page with Options-First strategy
+    await loadPage(AppState.currentPage, true, 'initial-load');
+    
+    document.body.classList.add('app-ready');
+    
+    console.log('✅ Vanilla Slops initialized with Options-First strategy');
+    console.log('🎯 Current strategy:', {
+      showAll: AppState.filters.showAll,
+      hasOptions: AppState.filters.hasOptions
+    });
+    
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+    showErrorState('Failed to initialize application. Please refresh the page.');
+  }
+}
+
+// Helper functions
 function setupScrollTracking() {
-  // Track scroll position changes
   let scrollTimer;
   window.addEventListener('scroll', () => {
     clearTimeout(scrollTimer);
@@ -481,80 +861,98 @@ function setupScrollTracking() {
     }, 100);
   });
   
-  // Track when users click on launch options buttons
   document.addEventListener('click', (e) => {
     if (e.target.closest('.launch-options-btn')) {
-      // User is about to interact with launch options, store position
       storeScrollPosition();
     }
   });
 }
 
-/**
- * App initialization
- */
-async function initializeApp() {
-  try {
-    // Parse URL params first
-    parseURLParams();
-    
-    // Initialize components in sequence
-    AppState.searchInstance = initializeSearchComponent();
-    setupThemeToggle();
-    setupScrollTracking(); // NEW: Set up scroll position tracking
-    
-    // Initialize filters before loading data
-    await initializeFilters();
-    
-    // Apply URL params to search component if it exists and has values
-    if (AppState.searchInstance && Object.keys(AppState.filters).some(key => AppState.filters[key])) {
-      // Set the search input value from URL
-      if (AppState.filters.search && AppState.searchInstance.searchInput) {
-        AppState.searchInstance.searchInput.value = AppState.filters.search;
-        AppState.searchInstance.currentQuery = AppState.filters.search;
-      }
-      
-      // Set filter values from URL
-      Object.entries(AppState.filters).forEach(([key, value]) => {
-        if (value && AppState.searchInstance.filterElements[key]) {
-          AppState.searchInstance.filterElements[key].value = value;
-          AppState.searchInstance.currentFilters[key] = value;
-        }
-      });
-      
-      // Set sort values from URL
-      if (AppState.filters.sort) {
-        AppState.searchInstance.currentSort = AppState.filters.sort;
-      }
-      if (AppState.filters.order) {
-        AppState.searchInstance.currentOrder = AppState.filters.order;
-      }
-      
-      // Update active filters display
-      AppState.searchInstance.renderActiveFilters();
-    }
-    
-    // Preload popular content
-    preloadPopularContent().catch(err => 
-      console.warn('Failed to preload popular content:', err)
-    );
-    
-    await loadPage(AppState.currentPage, true, 'initial-load');
-    
-    // Add visual feedback that app is ready
-    document.body.classList.add('app-ready');
-    
-  } catch (error) {
-    console.error('Failed to initialize app:', error);
-    showErrorState('Failed to initialize application. Please refresh the page.');
+function storeScrollPosition() {
+  AppState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+}
+
+function restoreScrollPosition() {
+  if (AppState.preventNextScroll) {
+    setTimeout(() => {
+      window.scrollTo(0, AppState.lastScrollPosition);
+      AppState.preventNextScroll = false;
+    }, 50);
   }
 }
 
-/**
- * Setup event listeners
- */
+function showSuccessFeedback(message) {
+  const resultsCount = document.getElementById('resultsCount');
+  if (resultsCount) {
+    resultsCount.style.color = 'var(--color-success)';
+    resultsCount.style.fontWeight = 'var(--font-weight-semibold)';
+    
+    setTimeout(() => {
+      resultsCount.style.color = '';
+      resultsCount.style.fontWeight = '';
+    }, 2000);
+  }
+}
+
+function showLoadingState(clearContent = false) {
+  const tableContainer = document.getElementById('table-container');
+  if (tableContainer && clearContent) {
+    if (!AppState.preventNextScroll) {
+      tableContainer.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Loading games...</span>
+        </div>
+      `;
+    }
+  }
+  
+  const formElements = document.querySelectorAll('.filter-select, .sort-select');
+  formElements.forEach(el => {
+    el.disabled = true;
+    el.style.opacity = '0.6';
+  });
+}
+
+function hideLoadingState() {
+  const loadingElements = document.querySelectorAll('.loading');
+  loadingElements.forEach(el => el.remove());
+  
+  const formElements = document.querySelectorAll('.filter-select, .sort-select');
+  formElements.forEach(el => {
+    el.disabled = false;
+    el.style.opacity = '';
+  });
+}
+
+function showErrorState(message) {
+  const tableContainer = document.getElementById('table-container');
+  if (tableContainer) {
+    tableContainer.innerHTML = `
+      <div class="error">
+        <h3>❌ Error Loading Games</h3>
+        <p>${message}</p>
+        <button onclick="location.reload()" class="retry-btn">
+          🔄 Try Again
+        </button>
+      </div>
+    `;
+  }
+}
+
+function clearResults() {
+  const tableContainer = document.getElementById('table-container');
+  if (tableContainer) {
+    tableContainer.innerHTML = '';
+  }
+  
+  const existingPagination = document.querySelector('.pagination-container');
+  if (existingPagination) {
+    existingPagination.remove();
+  }
+}
+
 function setupEventListeners() {
-  // Browser navigation
   window.addEventListener('popstate', () => {
     parseURLParams();
     loadPage(AppState.currentPage, true, 'navigation');
@@ -576,7 +974,6 @@ function ensureRequiredDOMElements() {
     appContainer.appendChild(tableContainer);
   }
 
-  // Ensure results count element exists
   let resultsCount = document.getElementById('resultsCount');
   if (!resultsCount) {
     resultsCount = document.createElement('div');
@@ -586,6 +983,17 @@ function ensureRequiredDOMElements() {
   }
 }
 
+/**
+ * Utility function for debouncing input events
+ */
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   ensureRequiredDOMElements();
@@ -593,5 +1001,4 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeApp();
 });
 
-// Export the handleFilterChange function for potential external use
 export { handleFilterChange };
