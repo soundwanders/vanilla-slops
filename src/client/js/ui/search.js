@@ -2,6 +2,17 @@
  * @fileoverview Search component
  * Single source of truth for all search interactions
  * Eliminates duplicate event listeners and implements smart debouncing
+ * Supports click-outside detection to prevent unnecessary searches
+ * Handles both fast suggestions and deliberate search with progressive debouncing
+ * @module SlopSearch
+ * @requires api.js
+ * @requires styles/animations.css
+ * @requires styles/search.css
+ * @requires utils.js
+ * @requires constants.js
+ * @requires SlopSearchConfig.js
+ * @requires SlopSearchUtils.js
+ * 
  */
 
 export default class SlopSearch {
@@ -69,17 +80,17 @@ export default class SlopSearch {
       '.search-input-wrapper',
       '.search-field', 
       '.suggestions-dropdown',
-      '.launch-options-row',        // NEW: Launch options area
-      '.launch-options-cell',       // NEW: Launch options cell
-      '.launch-option',             // NEW: Individual launch options
-      '.option-command',            // NEW: Command areas
-      '.option-meta',               // NEW: Meta information areas
-      '.launch-options-btn',        // NEW: Launch options buttons
-      '.launch-options-close',      // NEW: Close buttons
-      '.filter-select',             // Existing: Filter dropdowns
-      '.active-filters',            // Existing: Active filter tags
-      '.pagination-container',      // Existing: Pagination
-      '.theme-toggle'               // Existing: Theme toggle
+      '.launch-options-row',        // Launch options area
+      '.launch-options-cell',       // Launch options cell
+      '.launch-option',             // Individual launch options
+      '.option-command',            // Command areas
+      '.option-meta',               // Meta information areas
+      '.launch-options-btn',        // Launch options buttons
+      '.launch-options-close',      // Close buttons
+      '.filter-select',             // Filter dropdowns
+      '.active-filters',            // Active filter tags
+      '.pagination-container',      // Pagination
+      '.theme-toggle'               // Theme toggle
     ];
 
     // Initialize
