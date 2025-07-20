@@ -137,8 +137,14 @@ function buildQueryParams(params) {
   const urlParams = new URLSearchParams();
   
   Object.entries(params).forEach(([key, value]) => {
+    // Handle boolean values correctly
     if (value !== undefined && value !== null && value !== '') {
-      urlParams.set(key, value.toString());
+      // Special handling for boolean parameters
+      if (typeof value === 'boolean') {
+        urlParams.set(key, value.toString());
+      } else {
+        urlParams.set(key, value.toString());
+      }
     }
   });
   
@@ -183,7 +189,9 @@ export async function fetchGames({
   year = '',
   sort = 'title',
   order = 'asc',
-  useCache = true
+  useCache = true,
+  hasOptions,
+  showAll
 } = {}) {
   
   const queryParams = buildQueryParams({
@@ -195,7 +203,9 @@ export async function fetchGames({
     options,
     year,
     sort,
-    order
+    order,
+    hasOptions,
+    showAll
   });
 
   const cacheKey = `games:${queryParams}`;
