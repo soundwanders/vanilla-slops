@@ -236,7 +236,7 @@
   min-width: var(--space-6);
   height: var(--space-6);
   background: var(--color-accent-subtle);
-  color: var(--color-accent);
+  color: var(--color-launch-options);
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: 700;
