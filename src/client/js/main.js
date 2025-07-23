@@ -20,7 +20,7 @@ const AppState = {
   searchInstance: null,
   filtersInitialized: false,
   lastScrollPosition: 0, 
-  preventNextScroll: false 
+  preventNextScroll: false
 };
 
 /**
@@ -81,15 +81,13 @@ async function addShowAllGamesFilter() {
     return;
   }
   
+  // Remove existing filter
   const existingFilter = filtersContainer.querySelector('.show-all-filter');
   if (existingFilter) {
     existingFilter.remove();
   }
   
-  const filterGroup = document.createElement('div');
-  filterGroup.className = 'filter-group show-all-filter';
-  
-  // FETCH REAL STATISTICS using api.js function
+  // Get statistics
   const currentFilters = {
     search: AppState.filters?.search || '',
     developer: AppState.filters?.developer || '',
@@ -100,75 +98,99 @@ async function addShowAllGamesFilter() {
   try {
     console.log('📊 Fetching real statistics for filter...');
     const stats = await fetchGameStatistics(currentFilters);
-    
-    // Update AppState with real statistics
     AppState.gameStats = {
       withOptions: stats.withOptions,
       withoutOptions: stats.withoutOptions,
       total: stats.total,
       percentageWithOptions: stats.percentageWithOptions
     };
-    
     console.log('📈 Using real statistics:', stats);
   } catch (error) {
     console.error('Failed to fetch statistics, using fallback:', error);
-    // Fallback statistics if API fails
     AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275, percentageWithOptions: 53.1 };
   }
   
   const stats = AppState.gameStats;
   const isShowingAll = AppState.filters?.showAll || false;
   
-  // Create the filter HTML with real numbers
-  filterGroup.innerHTML = `
-    <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
-    <input 
-      type="checkbox" 
-      id="showAllGamesFilter" 
-      class="show-all-checkbox"
-      ${isShowingAll ? 'checked' : ''}
-      aria-describedby="showAllGamesHelp"
-    >
-    <label for="showAllGamesFilter" class="show-all-checkbox-container ${isShowingAll ? 'checked' : ''}">
-      <span class="custom-checkbox" aria-hidden="true"></span>
-      <span class="checkbox-label-text">Include games without launch options</span>
-      <span class="checkbox-stats" id="showAllStats">
-        ${isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`}
-      </span>
-    </label>
-    <div id="showAllGamesHelp" class="sr-only">
-      ${isShowingAll ? `Currently showing all ${stats.total} games` : `Currently showing ${stats.withOptions} games with launch options`}
-    </div>
-  `;
+  // Create the filter group
+  const filterGroup = document.createElement('div');
+  filterGroup.className = 'filter-group show-all-filter';
+  
+  // Create label
+  const label = document.createElement('label');
+  label.className = 'filter-label';
+  label.textContent = 'Show All Games';
+  label.setAttribute('for', 'showAllGamesFilter');
+  
+  // Create checkbox container (this will be the clickable area)
+  const checkboxContainer = document.createElement('label');
+  checkboxContainer.className = `show-all-checkbox-container ${isShowingAll ? 'checked' : ''}`;
+  checkboxContainer.setAttribute('for', 'showAllGamesFilter');
+  checkboxContainer.style.cursor = 'pointer';
+  
+  // Create the actual hidden checkbox
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.id = 'showAllGamesFilter';
+  checkbox.className = 'show-all-checkbox';
+  checkbox.checked = isShowingAll;
+  checkbox.setAttribute('aria-describedby', 'showAllGamesHelp');
+  // Make it visually hidden but still accessible
+  checkbox.style.position = 'absolute';
+  checkbox.style.left = '-9999px';
+  checkbox.style.opacity = '0';
+  
+  // Create visual elements
+  const customCheckbox = document.createElement('span');
+  customCheckbox.className = 'custom-checkbox';
+  customCheckbox.setAttribute('aria-hidden', 'true');
+  
+  const labelText = document.createElement('span');
+  labelText.className = 'checkbox-label-text';
+  labelText.textContent = 'Include games without launch options';
+  
+  const statsSpan = document.createElement('span');
+  statsSpan.className = 'checkbox-stats';
+  statsSpan.id = 'showAllStats';
+  statsSpan.textContent = isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`;
+  
+  // Create help text
+  const helpDiv = document.createElement('div');
+  helpDiv.id = 'showAllGamesHelp';
+  helpDiv.className = 'sr-only';
+  helpDiv.textContent = isShowingAll 
+    ? `Currently showing all ${stats.total} games` 
+    : `Currently showing ${stats.withOptions} games with launch options`;
+  
+  // Assemble the DOM
+  checkboxContainer.appendChild(customCheckbox);
+  checkboxContainer.appendChild(labelText);
+  checkboxContainer.appendChild(statsSpan);
+  
+  filterGroup.appendChild(label);
+  filterGroup.appendChild(checkbox); // Hidden checkbox
+  filterGroup.appendChild(checkboxContainer); // Clickable container
+  filterGroup.appendChild(helpDiv);
   
   filtersContainer.appendChild(filterGroup);
   
-  const checkbox = filterGroup.querySelector('#showAllGamesFilter');
-  const container = filterGroup.querySelector('.show-all-checkbox-container');
+  checkbox.addEventListener('change', function(e) {
+    console.log('🖱️ CHECKBOX CHANGED!', {
+      checked: e.target.checked,
+      timestamp: new Date().toISOString(),
+      triggered: 'change-event'
+    });
+    
+    handleShowAllFilterChange(e);
+  });
   
-  if (checkbox && container) {
-    checkbox.addEventListener('click', function(e) {
-      console.log('🖱️ CHECKBOX CLICKED!', {
-        checked: e.target.checked,
-        timestamp: new Date().toISOString()
-      });
-    });
-    
-    checkbox.addEventListener('change', handleShowAllFilterChange);
-    
-    container.addEventListener('click', (e) => {
-      if (e.target === checkbox) return;
-      
-      console.log('📱 CONTAINER CLICKED!');
-      checkbox.checked = !checkbox.checked;
-      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    
-    console.log('✅ Show All Games filter added with real statistics');
-    
-  } else {
-    console.error('❌ Failed to set up Show All Games filter event listeners');
-  }
+  console.log('✅ Show All Games filter added successfully');
+  console.log('🔍 Checkbox state:', { 
+    id: checkbox.id, 
+    checked: checkbox.checked,
+    visible: checkbox.offsetParent !== null 
+  });
 }
 
 // Refresh filter statistics periodically
@@ -178,6 +200,7 @@ async function addShowAllGamesFilter() {
  * */
 async function refreshFilterStatistics() {
   try {
+    // Use current AppState filters for statistics
     const currentFilters = {
       search: AppState.filters?.search || '',
       developer: AppState.filters?.developer || '',
@@ -185,14 +208,15 @@ async function refreshFilterStatistics() {
       year: AppState.filters?.year || ''
     };
     
-    console.log('🔄 Refreshing filter statistics...');
+    console.log('🔄 Refreshing filter statistics with current filters:', currentFilters);
     const stats = await fetchGameStatistics(currentFilters);
-    AppState.gameStats = stats;
     
-    // Update the filter display
+    AppState.gameStats = { ...AppState.gameStats, ...stats };
+    
     updateShowAllFilterStats(stats);
     
     console.log('📊 Refreshed filter statistics:', stats);
+    console.log('🔍 AppState.filters after stats refresh:', AppState.filters); // Debug logging
   } catch (error) {
     console.error('Failed to refresh statistics:', error);
   }
@@ -250,37 +274,43 @@ function handleShowAllFilterChange(event) {
   // Update visual state FIRST
   updateShowAllFilterUI(isChecked, container);
   
-  // Update AppState
   AppState.filters = AppState.filters || {};
-  AppState.filters.showAll = isChecked;
   
   if (isChecked) {
-    // Show all games - remove hasOptions filter
+    // Show All mode: show all games including those without options
+    AppState.filters.showAll = true;
     AppState.filters.hasOptions = undefined;
+    console.log('🌍 Switching to SHOW ALL mode');
   } else {
-    // Options-First mode - only show games with options
+    // Options-First mode: show only games with options
+    AppState.filters.showAll = false;
     AppState.filters.hasOptions = true;
+    console.log('🎯 Switching to OPTIONS-FIRST mode');
   }
   
-  AppState.currentPage = 1; // Reset to first page
+  AppState.currentPage = 1;
   
-  // Create new filters object
-  const newFilters = {
+  console.log('🔄 New AppState.filters:', AppState.filters);
+  
+  updateURL();
+  
+  // Create filters object for API call
+  const apiFilters = {
     search: AppState.filters?.search || '',
     category: AppState.filters?.category || '',
     developer: AppState.filters?.developer || '',
     options: AppState.filters?.options || '',
     year: AppState.filters?.year || '',
-    sort: AppState.filters?.sort || 'total_options_count',
-    order: AppState.filters?.order || 'desc',
-    showAll: isChecked,
-    hasOptions: isChecked ? undefined : true
+    sort: AppState.filters?.sort || 'title',
+    order: AppState.filters?.order || 'asc',
+    showAll: AppState.filters.showAll,
+    hasOptions: AppState.filters.hasOptions
   };
   
-  console.log('🔄 New filter state:', newFilters);
+  console.log('📡 API filters:', apiFilters);
   
   // Trigger filter change through the existing system
-  handleFilterChange(newFilters, 'show-all-filter-change');
+  handleFilterChange(apiFilters, 'show-all-filter-change');
 }
 
 /** Handle Show All Games filter change */
@@ -529,29 +559,31 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
       showAll: queryParams.showAll,
       mode: queryParams.showAll ? 'SHOW ALL' : 'OPTIONS-FIRST'
     });
-    console.log('🔍 Loading with filters:', {
-      hasOptions: queryParams.hasOptions,
-      showAll: queryParams.showAll,
-      mode: queryParams.showAll ? 'SHOW ALL' : 'OPTIONS-FIRST'
-    });
 
     const response = await fetchGames(queryParams);
-    
-    // Update application state
+
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
 
-    // Update UI with smooth transitions
+    // Update UI
     updateResultsCount(response.total || 0);
     clearResults();
     renderTable(response.games || [], false);
     renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
-
-    updateURL();
-
-    // Sync the Show All checkbox with the current state
-    syncShowAllCheckboxWithState();
     
+    const checkbox = document.getElementById('showAllGamesFilter');
+    if (checkbox && checkbox.checked !== (AppState.filters?.showAll === true)) {
+      console.log('🔄 Syncing checkbox with AppState (mismatch detected):', {
+        checkboxState: checkbox.checked,
+        appStateShowAll: AppState.filters?.showAll,
+        willUpdate: true
+      });
+      // Only update the checkbox to match AppState, don't reset AppState
+      checkbox.checked = AppState.filters?.showAll === true;
+      updateShowAllFilterUI(checkbox.checked);
+    }
+    
+    // Refresh statistics with current filters (don't reset filters)
     await refreshFilterStatistics();
 
     // Feedback logic
@@ -568,7 +600,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
   } catch (error) {
     console.error('Error loading page:', error);
     showErrorState(error.message);
-    AppState.preventNextScroll = false; // Reset flag on error
+    AppState.preventNextScroll = false;
   } finally {
     AppState.isLoading = false;
     hideLoadingState();
@@ -671,18 +703,32 @@ function clearResults() {
 function updateURL() {
   const params = new URLSearchParams();
 
+  if (AppState.filters.showAll === true) {
+    params.set('showAll', 'true');
+  } else if (AppState.filters.hasOptions === true) {
+    params.set('hasOptions', 'true');
+  }
+
   Object.entries(AppState.filters).forEach(([key, value]) => {
-    if (value && value.toString().trim()) {
+    // Skip the parameters we've already handled
+    if (key === 'showAll' || key === 'hasOptions') {
+      return;
+    }
+    
+    if (value !== undefined && value !== null && value !== '' && value.toString().trim()) {
       params.set(key, value);
     }
   });
 
+  // Add page parameter if not first page
   if (AppState.currentPage > 1) {
     params.set('page', AppState.currentPage);
   }
 
   const newURL = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
   window.history.replaceState(null, '', newURL);
+  
+  console.log('🔗 URL updated:', newURL);
 }
 
 function parseURLParams() {
@@ -690,17 +736,61 @@ function parseURLParams() {
 
   AppState.currentPage = parseInt(params.get('page')) || 1;
   
-  AppState.filters = {
-    search: params.get('search') || '',
-    category: params.get('category') || '',
-    developer: params.get('developer') || '', 
-    options: params.get('options') || '',
-    year: params.get('year') || '',
-    sort: params.get('sort') || 'title',
-    order: params.get('order') || 'asc',
-    showAll: params.get('showAll') === 'true',  // Only true if explicitly set
-    hasOptions: params.get('showAll') === 'true' ? undefined : true  // Options-First unless showAll
-  };
+  // Handle Show All vs Options-First logic
+  const showAllParam = params.get('showAll');
+  const hasOptionsParam = params.get('hasOptions');
+  
+  console.log('🔍 Parsing URL params:', {
+    showAll: showAllParam,
+    hasOptions: hasOptionsParam,
+    url: window.location.search
+  });
+  
+  if (showAllParam === 'true') {
+    // Show All mode
+    AppState.filters = {
+      search: params.get('search') || '',
+      category: params.get('category') || '',
+      developer: params.get('developer') || '', 
+      options: params.get('options') || '',
+      year: params.get('year') || '',
+      sort: params.get('sort') || 'title',
+      order: params.get('order') || 'asc',
+      showAll: true,
+      hasOptions: undefined
+    };
+    console.log('🌍 URL indicates SHOW ALL mode');
+  } else if (hasOptionsParam === 'true') {
+    // Explicit Options-First mode
+    AppState.filters = {
+      search: params.get('search') || '',
+      category: params.get('category') || '',
+      developer: params.get('developer') || '', 
+      options: params.get('options') || '',
+      year: params.get('year') || '',
+      sort: params.get('sort') || 'title',
+      order: params.get('order') || 'asc',
+      showAll: false,
+      hasOptions: true
+    };
+    console.log('🎯 URL indicates explicit OPTIONS-FIRST mode');
+  } else {
+    // Default Options-First mode (no parameters needed)
+    AppState.filters = {
+      search: params.get('search') || '',
+      category: params.get('category') || '',
+      developer: params.get('developer') || '', 
+      options: params.get('options') || '',
+      year: params.get('year') || '',
+      sort: params.get('sort') || 'title',
+      order: params.get('order') || 'asc',
+      showAll: false,
+      hasOptions: true
+    };
+    console.log('⚡ URL indicates default OPTIONS-FIRST mode');
+  }
+  
+  console.log('📋 Parsed AppState.filters:', AppState.filters);
 }
 
 /**
