@@ -301,7 +301,7 @@ export async function gameStatisticsController(req, res) {
       engine: req.query.engine || ''
     };
 
-    const statistics = await fetchGameStatistics(filters);
+    const statistics = await getGameStatistics(filters);
     
     console.log('📈 Game statistics result:', statistics);
     
