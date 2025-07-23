@@ -202,6 +202,12 @@
   --color-text-placeholder: var(--gray-400);
   --color-text-disabled: var(--gray-300);
   --color-text-inverse: var(--color-white);
+
+  --color-launch-options: var(--brand-300);
+  --color-launch-options-hover: var(--brand-400);
+  --color-launch-options-active: var(--brand-500);
+  --color-launch-options-subtle: var(--brand-50);
+  --color-launch-options-muted: var(--brand-100);
   
   --color-accent: var(--brand-600);
   --color-accent-hover: var(--brand-700);
@@ -289,7 +295,7 @@
   --color-interactive-focus: var(--brand-400);
 
 
-  /* Update shadows for dark theme */
+  /* Shadows for dark theme */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
