@@ -9,7 +9,7 @@
  * @requires utils.js
 
  */
-export function renderPagination(currentPage, totalPages, onPageChange) {
+export function renderPagination(currentPage, totalPages, onPageChange, shouldScroll = false) {
   // Remove existing pagination
   const existingPagination = document.querySelector('.pagination-container');
   if (existingPagination) {
@@ -41,11 +41,11 @@ export function renderPagination(currentPage, totalPages, onPageChange) {
   
   // Previous button
   if (currentPage > 1) {
-    const prevBtn = createPaginationButton('‹ Previous', () => onPageChange(currentPage - 1));
+    const prevBtn = createPaginationButton('‹ Previous', () => onPageChange(currentPage - 1, true, 'pagination'));
     prevBtn.classList.add('pagination-btn-prev');
     paginationControls.appendChild(prevBtn);
   }
-  
+
   // Page number buttons
   const pageNumbers = generatePageNumbers(currentPage, totalPages);
   pageNumbers.forEach(pageInfo => {
@@ -56,7 +56,7 @@ export function renderPagination(currentPage, totalPages, onPageChange) {
       ellipsis.setAttribute('aria-hidden', 'true');
       paginationControls.appendChild(ellipsis);
     } else {
-      const pageBtn = createPaginationButton(pageInfo.page, () => onPageChange(pageInfo.page));
+      const pageBtn = createPaginationButton(pageInfo.page, () => onPageChange(pageInfo.page, true, 'pagination'));
       pageBtn.classList.add('pagination-btn-page');
       if (pageInfo.page === currentPage) {
         pageBtn.classList.add('pagination-btn-active');
@@ -68,7 +68,7 @@ export function renderPagination(currentPage, totalPages, onPageChange) {
   
   // Next button
   if (currentPage < totalPages) {
-    const nextBtn = createPaginationButton('Next ›', () => onPageChange(currentPage + 1));
+    const nextBtn = createPaginationButton('Next ›', () => onPageChange(currentPage + 1, true, 'pagination'));
     nextBtn.classList.add('pagination-btn-next');
     paginationControls.appendChild(nextBtn);
   }
@@ -87,12 +87,14 @@ export function renderPagination(currentPage, totalPages, onPageChange) {
   app.appendChild(paginationContainer);
   
   // Add smooth scroll to top after page change
-  setTimeout(() => {
-    const tableContainer = document.getElementById('table-container');
-    if (tableContainer) {
-      tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, 100);
+  if (shouldScroll) {
+    setTimeout(() => {
+      const tableContainer = document.getElementById('table-container');
+      if (tableContainer) {
+        tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  }
 }
 
 /**
