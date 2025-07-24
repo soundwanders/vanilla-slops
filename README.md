@@ -44,7 +44,6 @@ One of the core philosophies of this project is to recreate some of the function
 
 ---
 
-
 ## 🏗️ Architecture
 
 #### **A Look Under the Hood**
@@ -82,6 +81,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NODE_ENV=development
 PORT=8000
 CORS_ORIGIN=http://localhost:3000
+DOMAIN_URL=vanilla-slops-placeholder.com
 ```
 
 ### Development & npm Scripts
@@ -101,17 +101,29 @@ CORS_ORIGIN=http://localhost:3000
 
 ## 📚 API Documentation
 
-### Core Endpoints
+**Base URL:** `https://your-api-domain.com/api`  
+**Tech Stack:** Node.js + Express.js + Supabase (PostgreSQL)
 
-### `GET /api/games`
+### Quick Reference
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/games` | List games with filtering & search |
+| `GET /api/games/suggestions` | Search autocomplete suggestions |
+| `GET /api/games/{id}` | Get game details with launch options |
+| `GET /api/games/{id}/launch-options` | Get launch options only |
+| `GET /api/games/facets` | Get available filter options |
+| `GET /health` | API health check |
+
+### **`GET /api/games`**
 Retrieve games with advanced filtering and pagination.
 
 **Query Parameters:**
 - `search` - Search term for games, developers, publishers
-- `category` - Filter by game category
 - `developer` - Filter by developer name
-- `options` - Filter by launch options availability
-- `sort` - Sort field (`title`, `year`, `options`)
+- `options` - Filter by launch options (`has-options`, `no-options`, `performance`, `graphics`)
+- `year` - Filter by release year
+- `sort` - Sort field (`title`, `year`, `options`, `relevance`)
 - `order` - Sort direction (`asc`, `desc`)
 - `page` - Page number (default: 1)
 - `limit` - Items per page (default: 20, max: 100)
@@ -119,24 +131,64 @@ Retrieve games with advanced filtering and pagination.
 **Response:**
 ```json
 {
-  "games": [...],
+  "games": [
+    {
+      "app_id": 440,
+      "title": "Team Fortress 2",
+      "developer": "Valve",
+      "total_options_count": 15
+    }
+  ],
   "total": 1250,
   "totalPages": 63,
   "currentPage": 1,
   "hasNextPage": true,
-  "facets": { "developers": [...], "engines": [...] }
+  "facets": {
+    "developers": [{"value": "Valve", "count": 12}],
+    "engines": [{"value": "Source", "count": 5}]
+  }
 }
 ```
 
-### `GET /api/games/suggestions`
-Get intelligent search suggestions for autocomplete.
-
-### `GET /api/games/:id/launch-options`
+### **`GET /api/games/{id}/launch-options`**
 Retrieve launch options for a specific game.
 
-### Coming Soon...
-[📖 **Full API Documentation**](./docs/api.md)
+**Response:**
+```json
+[
+  {
+    "id": "uuid-here",
+    "command": "-windowed",
+    "description": "Runs the game in windowed mode",
+    "upvotes": 245,
+    "verified": true
+  }
+]
+```
 
+### Example Usage
+
+```bash
+# Search for Valve games
+curl "https://your-api-domain.com/api/games?search=valve&sort=year&order=desc"
+
+# Get Team Fortress 2 launch options
+curl "https://your-api-domain.com/api/games/440/launch-options"
+
+# Search suggestions for autocomplete
+curl "https://your-api-domain.com/api/games/suggestions?q=half&limit=5"
+```
+
+### Rate Limiting & CORS
+- **Rate Limit:** 1,000 requests per 15 minutes per IP
+- **CORS:** Enabled for web applications
+- **Authentication:** Currently public (no auth required)
+
+### 📖 Complete Documentation
+
+For detailed information including authentication, error handling, data models, SDKs, and comprehensive examples:
+
+**👉 [Full API Documentation](./docs/api.md)**
 ---
 
 

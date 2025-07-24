@@ -35,43 +35,38 @@ import {
  */
 export async function gamesController(req, res) {
   try {
+    console.log('🔍 === BACKEND DEBUG SESSION ===');
     console.log('🔍 RAW REQUEST:', {
       url: req.url,
       query: req.query,
       queryKeys: Object.keys(req.query),
       hasOptionsRaw: req.query.hasOptions,
-      showAllRaw: req.query.showAll
+      showAllRaw: req.query.showAll,
+      hasOptionsType: typeof req.query.hasOptions,
+      showAllType: typeof req.query.showAll
     });
 
     // Parameter extraction and conversion
     const hasOptionsParam = req.query.hasOptions;
     const showAllParam = req.query.showAll;
     
-    // Convert string parameters to proper booleans
-    let hasOptions;
-    let showAll;
-    
-    if (hasOptionsParam === 'true') {
-      hasOptions = true;
-    } else if (hasOptionsParam === 'false') {
-      hasOptions = false;
-    } else {
-      hasOptions = undefined;
+    // Helper function to parse boolean parameters
+    function parseBoolean(value) {
+      if (value === true || value === 'true') return true;
+      if (value === false || value === 'false') return false;
+      return undefined;
     }
     
-    if (showAllParam === 'true') {
-      showAll = true;
-    } else if (showAllParam === 'false') {
-      showAll = false;
-    } else {
-      showAll = undefined;
-    }
+    const hasOptions = parseBoolean(hasOptionsParam);
+    const showAll = parseBoolean(showAllParam);
 
-    console.log('🎯 PARSED PARAMETERS:', {
+    console.log('🎯 PARSED PARAMETERS (FIXED):', {
       hasOptions,
       showAll,
       hasOptionsType: typeof hasOptions,
-      showAllType: typeof showAll
+      showAllType: typeof showAll,
+      hasOptionsRaw: hasOptionsParam,
+      showAllRaw: showAllParam
     });
 
     // Build filters object
@@ -97,7 +92,7 @@ export async function gamesController(req, res) {
     // Map to hasLaunchOptions for the service layer
     if (showAll === true) {
       filters.hasLaunchOptions = undefined; // Show all games
-      console.log('🌍 SHOW ALL MODE - no filtering');
+      console.log('🌍 SHOW ALL MODE - no hasLaunchOptions filtering');
     } else if (hasOptions === true) {
       filters.hasLaunchOptions = true; // Only games with options
       console.log('🎯 OPTIONS-FIRST MODE - games with options only');
@@ -110,15 +105,34 @@ export async function gamesController(req, res) {
       console.log('⚡ DEFAULT MODE - defaulting to OPTIONS-FIRST');
     }
 
-    console.log('📋 FINAL FILTERS:', {
+    console.log('📋 FINAL FILTERS SENT TO SERVICE:', {
       hasLaunchOptions: filters.hasLaunchOptions,
       showAll: filters.showAll,
-      hasOptions: filters.hasOptions
+      hasOptions: filters.hasOptions,
+      search: filters.search,
+      developer: filters.developer,
+      sort: filters.sort,
+      order: filters.order
     });
 
     const result = await fetchGames(filters);
     
-    console.log(`📊 RESULT: ${result.total} total games found`);
+    console.log(`📊 BACKEND RESULT SUMMARY:`, {
+      totalGames: result.total,
+      gamesReturned: result.games?.length,
+      showAllMode: showAll === true,
+      hasLaunchOptionsFilter: filters.hasLaunchOptions,
+      expectedBehavior: showAll === true ? 'Should show ALL games including those without options' : 'Should show only games WITH options'
+    });
+
+    // Log some sample games to verify filtering
+    if (result.games?.length > 0) {
+      const sampleGames = result.games.slice(0, 3).map(game => ({
+        title: game.title,
+        optionsCount: game.total_options_count || 0
+      }));
+      console.log('📝 SAMPLE GAMES RETURNED:', sampleGames);
+    }
     
     res.json({
       games: result.games || [],
@@ -127,10 +141,17 @@ export async function gamesController(req, res) {
       currentPage: result.currentPage || 1,
       hasNextPage: result.hasNextPage || false,
       hasPrevPage: result.hasPrevPage || false,
-      facets: result.facets || {}
+      facets: result.facets || {},
+      // Add debug info to response (remove in production)
+      debug: {
+        receivedShowAll: showAll,
+        receivedHasOptions: hasOptions,
+        appliedHasLaunchOptions: filters.hasLaunchOptions,
+        mode: showAll === true ? 'SHOW_ALL' : 'OPTIONS_FIRST'
+      }
     });
   } catch (err) {
-    console.error('Error in gamesController:', err.message);
+    console.error('❌ Error in gamesController:', err.message);
     res.status(500).json({ 
       error: 'Failed to fetch games',
       details: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -301,7 +322,7 @@ export async function gameStatisticsController(req, res) {
       engine: req.query.engine || ''
     };
 
-    const statistics = await fetchGameStatistics(filters);
+    const statistics = await getGameStatistics(filters);
     
     console.log('📈 Game statistics result:', statistics);
     
@@ -314,3 +335,7 @@ export async function gameStatisticsController(req, res) {
     });
   }
 }
+
+
+
+
