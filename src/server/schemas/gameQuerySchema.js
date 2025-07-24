@@ -167,15 +167,14 @@ export function validateAndLogQuery(query, schema) {
  * Preset query configurations for common use cases
  */
 export const queryPresets = {
-  // Options-First: Default behavior (only games with launch options)
+  // Default behavior (only games with launch options)
   optionsFirst: {
     hasOptions: 'true',
     showAll: 'false',
     sort: 'total_options_count',
     order: 'desc'
   },
-  
-  // Show All: Traditional behavior (all games)
+
   showAll: {
     hasOptions: 'true', // doesn't matter when showAll is true
     showAll: 'true',
