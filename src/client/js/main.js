@@ -20,11 +20,14 @@ const AppState = {
   searchInstance: null,
   filtersInitialized: false,
   lastScrollPosition: 0, 
-  preventNextScroll: false 
+  preventNextScroll: false
 };
 
 /**
  * Initialize and populate filter dropdowns with real data
+ * Fetches facets from the API and populates the filter dropdowns
+ * It also handles loading states and error handling
+ * * @returns {Promise<void>}
  */
 async function initializeFilters() {
   if (AppState.filtersInitialized) return;
@@ -72,6 +75,12 @@ async function initializeFilters() {
   }
 }
 
+/** Adds a "Show All Games" filter to the filters container
+ * This filter allows users to toggle between showing all games
+ * and only those with launch options
+ * * @returns {Promise<void>}
+ */
+
 async function addShowAllGamesFilter() {
   console.log('🔧 Adding Show All Games filter...');
   
@@ -81,56 +90,45 @@ async function addShowAllGamesFilter() {
     return;
   }
   
+  // Remove existing filter
   const existingFilter = filtersContainer.querySelector('.show-all-filter');
   if (existingFilter) {
     existingFilter.remove();
   }
   
-  const filterGroup = document.createElement('div');
-  filterGroup.className = 'filter-group show-all-filter';
-  
-  // FETCH REAL STATISTICS using api.js function
-  const currentFilters = {
-    search: AppState.filters?.search || '',
-    developer: AppState.filters?.developer || '',
-    category: AppState.filters?.category || '',
-    year: AppState.filters?.year || ''
-  };
-  
+  // Get statistics
   try {
     console.log('📊 Fetching real statistics for filter...');
-    const stats = await fetchGameStatistics(currentFilters);
-    
-    // Update AppState with real statistics
+    const stats = await fetchGameStatistics();
     AppState.gameStats = {
       withOptions: stats.withOptions,
       withoutOptions: stats.withoutOptions,
       total: stats.total,
       percentageWithOptions: stats.percentageWithOptions
     };
-    
     console.log('📈 Using real statistics:', stats);
   } catch (error) {
     console.error('Failed to fetch statistics, using fallback:', error);
-    // Fallback statistics if API fails
-    AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275, percentageWithOptions: 53.1 };
+    AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275 };
   }
   
   const stats = AppState.gameStats;
   const isShowingAll = AppState.filters?.showAll || false;
   
-  // Create the filter HTML with real numbers
+  // Create filter group with correct HTML structure for CSS
+  const filterGroup = document.createElement('div');
+  filterGroup.className = 'filter-group show-all-filter';
+  
+  // Create the HTML structure that matches our CSS selectors
   filterGroup.innerHTML = `
     <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
     <input 
       type="checkbox" 
       id="showAllGamesFilter" 
-      class="show-all-checkbox"
       ${isShowingAll ? 'checked' : ''}
       aria-describedby="showAllGamesHelp"
-    >
-    <label for="showAllGamesFilter" class="show-all-checkbox-container ${isShowingAll ? 'checked' : ''}">
-      <span class="custom-checkbox" aria-hidden="true"></span>
+    />
+    <label for="showAllGamesFilter" class="show-all-checkbox-container">
       <span class="checkbox-label-text">Include games without launch options</span>
       <span class="checkbox-stats" id="showAllStats">
         ${isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`}
@@ -143,31 +141,26 @@ async function addShowAllGamesFilter() {
   
   filtersContainer.appendChild(filterGroup);
   
+  // Add single event listener to the hidden checkbox
   const checkbox = filterGroup.querySelector('#showAllGamesFilter');
-  const container = filterGroup.querySelector('.show-all-checkbox-container');
-  
-  if (checkbox && container) {
-    checkbox.addEventListener('click', function(e) {
-      console.log('🖱️ CHECKBOX CLICKED!', {
+  if (checkbox) {
+    checkbox.addEventListener('change', function(e) {
+      console.log('🖱️ CHECKBOX CHANGED!', {
         checked: e.target.checked,
         timestamp: new Date().toISOString()
       });
-    });
-    
-    checkbox.addEventListener('change', handleShowAllFilterChange);
-    
-    container.addEventListener('click', (e) => {
-      if (e.target === checkbox) return;
       
-      console.log('📱 CONTAINER CLICKED!');
-      checkbox.checked = !checkbox.checked;
-      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      handleShowAllFilterChange(e);
     });
     
-    console.log('✅ Show All Games filter added with real statistics');
-    
+    console.log('✅ Show All Games filter added successfully');
+    console.log('🔍 Checkbox state:', { 
+      id: checkbox.id, 
+      checked: checkbox.checked,
+      hidden: checkbox.offsetParent === null 
+    });
   } else {
-    console.error('❌ Failed to set up Show All Games filter event listeners');
+    console.error('❌ Failed to find checkbox element');
   }
 }
 
@@ -178,6 +171,7 @@ async function addShowAllGamesFilter() {
  * */
 async function refreshFilterStatistics() {
   try {
+    // Use current AppState filters for statistics
     const currentFilters = {
       search: AppState.filters?.search || '',
       developer: AppState.filters?.developer || '',
@@ -185,30 +179,129 @@ async function refreshFilterStatistics() {
       year: AppState.filters?.year || ''
     };
     
-    console.log('🔄 Refreshing filter statistics...');
+    console.log('🔄 Refreshing filter statistics with current filters:', currentFilters);
     const stats = await fetchGameStatistics(currentFilters);
-    AppState.gameStats = stats;
     
-    // Update the filter display
+    AppState.gameStats = { ...AppState.gameStats, ...stats };
+    
     updateShowAllFilterStats(stats);
     
     console.log('📊 Refreshed filter statistics:', stats);
+    console.log('🔍 AppState.filters after stats refresh:', AppState.filters); // Debug logging
   } catch (error) {
     console.error('Failed to refresh statistics:', error);
   }
 }
 
 /**
- * Sync the Show All filter checkbox with the current AppState
- * Ensures the UI always reflects the actual filter state
+ * Handle changes to the Show All Games filter
+ * This function updates the AppState and UI based on the checkbox state
+ * * @param {Event} event - The change event from the checkbox
+ * * @returns {void}
+ */
+function handleShowAllFilterChange(event) {
+  const isChecked = event.target.checked;
+  const container = document.querySelector('.show-all-checkbox-container');
+  
+  console.log(`🎯 Show All Games filter changed: ${isChecked ? 'SHOW ALL' : 'OPTIONS-FIRST'}`);
+  console.log('📋 Event details:', {
+    checked: isChecked,
+    target: event.target.id,
+    container: container ? 'found' : 'not found'
+  });
+  
+  // Update visual state FIRST
+  updateShowAllFilterUI(isChecked, container);
+  
+  AppState.filters = AppState.filters || {};
+  
+  if (isChecked) {
+    // Show All mode: show all games including those without options
+    AppState.filters.showAll = true;
+    AppState.filters.hasOptions = undefined;
+    console.log('🌍 Switching to SHOW ALL mode');
+  } else {
+    // Options-First mode: show only games with options
+    AppState.filters.showAll = false;
+    AppState.filters.hasOptions = true;
+    console.log('🎯 Switching to OPTIONS-FIRST mode');
+  }
+  
+  AppState.currentPage = 1;
+  
+  console.log('🔄 New AppState.filters:', AppState.filters);
+  
+  updateURL();
+  
+  // Create filters object for API call
+  const apiFilters = {
+    search: AppState.filters?.search || '',
+    category: AppState.filters?.category || '',
+    developer: AppState.filters?.developer || '',
+    options: AppState.filters?.options || '',
+    year: AppState.filters?.year || '',
+    sort: AppState.filters?.sort || 'title',
+    order: AppState.filters?.order || 'asc',
+    showAll: AppState.filters.showAll,
+    hasOptions: AppState.filters.hasOptions
+  };
+  
+  console.log('📡 API filters:', apiFilters);
+  
+  // Trigger filter change through the existing system
+  handleFilterChange(apiFilters, 'show-all-filter-change');
+}
+
+/** Handle Show All Games filter change
+ * This function updates the UI and AppState based on the checkbox state
+ * * @param {boolean} isChecked 
+ * * @param {HTMLElement|null} container 
+ * * @returns {void}
+ */
+function updateShowAllFilterUI(isChecked, container = null) {
+  const stats = AppState.gameStats || { withOptions: 146, withoutOptions: 129, total: 275 };
+  
+  console.log(`📊 Updating UI: ${isChecked ? 'CHECKED' : 'UNCHECKED'}`, {
+    stats: stats
+  });
+  
+  // Find elements if not provided
+  const statsElement = document.querySelector('#showAllStats');
+  const helpElement = document.getElementById('showAllGamesHelp');
+  const checkbox = document.getElementById('showAllGamesFilter');
+  
+  // Update checkbox state
+  if (checkbox && checkbox.checked !== isChecked) {
+    checkbox.checked = isChecked;
+    console.log('🔄 Synced checkbox state:', isChecked);
+  }
+  
+  // Update stats text
+  if (statsElement) {
+    const newText = isChecked ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`;
+    statsElement.textContent = newText;
+    console.log('📊 Updated stats text:', newText);
+  }
+  
+  // Update accessibility description
+  if (helpElement) {
+    const newHelp = isChecked 
+      ? `Currently showing all ${stats.total} games including those without launch options`
+      : `Currently showing ${stats.withOptions} games with launch options`;
+    helpElement.textContent = newHelp;
+    console.log('♿ Updated help text');
+  }
+  
+  console.log(`✅ UI update complete: ${isChecked ? 'showing all' : 'options only'}`);
+}
+
+/**
+ * Sync checkbox with AppState
  */
 function syncShowAllCheckboxWithState() {
   const checkbox = document.getElementById('showAllGamesFilter');
-  const container = document.querySelector('.show-all-checkbox-container');
-  
   if (!checkbox) {
-    // Checkbox hasn't been created yet, skip sync
-    return;
+    return; // Checkbox hasn't been created yet
   }
   
   const currentAppState = AppState.filters?.showAll === true;
@@ -225,7 +318,7 @@ function syncShowAllCheckboxWithState() {
     console.log(`🔧 Syncing checkbox: ${currentCheckboxState} → ${currentAppState}`);
     
     checkbox.checked = currentAppState;
-    updateShowAllFilterUI(currentAppState, container);
+    // The CSS will automatically handle the visual state change
     
     console.log('✅ Checkbox synced with AppState');
   } else {
@@ -234,128 +327,31 @@ function syncShowAllCheckboxWithState() {
 }
 
 /**
- * Handle changes to the Show All Games filter
- */
-function handleShowAllFilterChange(event) {
-  const isChecked = event.target.checked;
-  const container = document.querySelector('.show-all-checkbox-container');
-  
-  console.log(`🎯 Show All Games filter changed: ${isChecked ? 'SHOW ALL' : 'OPTIONS-FIRST'}`);
-  console.log('📋 Event details:', {
-    checked: isChecked,
-    target: event.target.id,
-    container: container ? 'found' : 'not found'
-  });
-  
-  // Update visual state FIRST
-  updateShowAllFilterUI(isChecked, container);
-  
-  // Update AppState
-  AppState.filters = AppState.filters || {};
-  AppState.filters.showAll = isChecked;
-  
-  if (isChecked) {
-    // Show all games - remove hasOptions filter
-    AppState.filters.hasOptions = undefined;
-  } else {
-    // Options-First mode - only show games with options
-    AppState.filters.hasOptions = true;
-  }
-  
-  AppState.currentPage = 1; // Reset to first page
-  
-  // Create new filters object
-  const newFilters = {
-    search: AppState.filters?.search || '',
-    category: AppState.filters?.category || '',
-    developer: AppState.filters?.developer || '',
-    options: AppState.filters?.options || '',
-    year: AppState.filters?.year || '',
-    sort: AppState.filters?.sort || 'total_options_count',
-    order: AppState.filters?.order || 'desc',
-    showAll: isChecked,
-    hasOptions: isChecked ? undefined : true
-  };
-  
-  console.log('🔄 New filter state:', newFilters);
-  
-  // Trigger filter change through the existing system
-  handleFilterChange(newFilters, 'show-all-filter-change');
-}
-
-/** Handle Show All Games filter change */
-function updateShowAllFilterUI(isChecked, container) {
-  const stats = AppState.gameStats || { withOptions: 146, withoutOptions: 129, total: 275 };
-  
-  console.log(`📊 Updating UI: ${isChecked ? 'CHECKED' : 'UNCHECKED'}`, {
-    container: container ? 'found' : 'not found',
-    stats: stats
-  });
-  
-  // Find elements if container wasn't passed
-  if (!container) {
-    container = document.querySelector('.show-all-checkbox-container');
-  }
-  
-  const statsElement = document.querySelector('#showAllStats');
-  const helpElement = document.getElementById('showAllGamesHelp');
-  const checkbox = document.getElementById('showAllGamesFilter');
-  
-  // Update checkbox state (in case it's out of sync)
-  if (checkbox && checkbox.checked !== isChecked) {
-    checkbox.checked = isChecked;
-    console.log('🔄 Synced checkbox state:', isChecked);
-  }
-  
-  // Update container styling
-  if (container) {
-    if (isChecked) {
-      container.classList.add('checked');
-    } else {
-      container.classList.remove('checked');
-    }
-    console.log('✅ Updated container classes');
-  }
-  
-  // Update stats text
-  if (statsElement) {
-    const newText = isChecked ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`;
-    statsElement.textContent = newText;
-    console.log('📊 Updated stats text:', newText);
-  }
-  
-  // Update accessibility description
-  if (helpElement) {
-    const newHelp = isChecked 
-      ? 'Currently showing all games including those without launch options'
-      : 'Currently showing only games with launch options';
-    helpElement.textContent = newHelp;
-    console.log('♿ Updated help text');
-  }
-  
-  console.log(`✅ UI update complete: ${isChecked ? 'showing all' : 'options only'}`);
-}
-
-/**
  * Update the filter when statistics change (called from main app)
+ * This function updates the AppState and UI based on new statistics
+ * * @param {Object} newStats - The new statistics object
+ * * * @returns {void}
  */
 function updateShowAllFilterStats(newStats) {
   if (!newStats) return;
   
-  // Update AppState with new statistics
+  // Update AppState
   AppState.gameStats = { ...AppState.gameStats, ...newStats };
   
   const checkbox = document.getElementById('showAllGamesFilter');
-  const container = document.querySelector('.show-all-checkbox-container');
-  
-  if (checkbox && container) {
-    updateShowAllFilterUI(checkbox.checked, container);
+  if (checkbox) {
+    updateShowAllFilterUI(checkbox.checked);
     console.log('📊 Show All filter stats updated:', newStats);
   }
 }
 
 /**
  * Populate a filter dropdown with data from the API
+ * This function handles both string and object data formats
+ * * @param {string} elementId - The ID of the select element to populate
+ * * @param {Array} data - The data to populate the dropdown with
+ * * @param {string} defaultText - The default text for the dropdown
+ * * * @returns {void}
  */
 function populateFilterDropdown(elementId, data, defaultText) {
   const selectElement = document.getElementById(elementId);
@@ -442,6 +438,8 @@ function populateYearFilter(releaseYears) {
 
 /**
  * Populate options filter with predefined options
+ * This function creates a dropdown with various options
+ * * @returns {void}
  */
 function populateOptionsFilter() {
   const optionsFilter = document.getElementById('optionsFilter');
@@ -495,6 +493,11 @@ function restoreScrollPosition() {
 
 /**
  * Load page with games data - called by search component
+ * This function handles loading games based on filters, pagination, and user interactions
+ * * @param {number} page - The page number to load (default is 1)
+ * * @param {boolean} replace - Whether to replace the current page state (default is true)
+ * * * @param {string} reason - The reason for loading the page (default is 'search')
+ * * * @returns {Promise<void>} - Resolves when the page is loaded
  */
 async function loadPage(page = 1, replace = true, reason = 'search') {
   if (AppState.isLoading) return;
@@ -529,29 +532,31 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
       showAll: queryParams.showAll,
       mode: queryParams.showAll ? 'SHOW ALL' : 'OPTIONS-FIRST'
     });
-    console.log('🔍 Loading with filters:', {
-      hasOptions: queryParams.hasOptions,
-      showAll: queryParams.showAll,
-      mode: queryParams.showAll ? 'SHOW ALL' : 'OPTIONS-FIRST'
-    });
 
     const response = await fetchGames(queryParams);
-    
-    // Update application state
+
     AppState.currentPage = page;
     AppState.totalPages = response.totalPages || 0;
 
-    // Update UI with smooth transitions
+    // Update UI
     updateResultsCount(response.total || 0);
     clearResults();
     renderTable(response.games || [], false);
     renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
-
-    updateURL();
-
-    // Sync the Show All checkbox with the current state
-    syncShowAllCheckboxWithState();
     
+    const checkbox = document.getElementById('showAllGamesFilter');
+    if (checkbox && checkbox.checked !== (AppState.filters?.showAll === true)) {
+      console.log('🔄 Syncing checkbox with AppState (mismatch detected):', {
+        checkboxState: checkbox.checked,
+        appStateShowAll: AppState.filters?.showAll,
+        willUpdate: true
+      });
+      // Only update the checkbox to match AppState, don't reset AppState
+      checkbox.checked = AppState.filters?.showAll === true;
+      updateShowAllFilterUI(checkbox.checked);
+    }
+    
+    // Refresh statistics with current filters (don't reset filters)
     await refreshFilterStatistics();
 
     // Feedback logic
@@ -568,7 +573,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
   } catch (error) {
     console.error('Error loading page:', error);
     showErrorState(error.message);
-    AppState.preventNextScroll = false; // Reset flag on error
+    AppState.preventNextScroll = false;
   } finally {
     AppState.isLoading = false;
     hideLoadingState();
@@ -671,36 +676,99 @@ function clearResults() {
 function updateURL() {
   const params = new URLSearchParams();
 
+  if (AppState.filters.showAll === true) {
+    params.set('showAll', 'true');
+  } else if (AppState.filters.hasOptions === true) {
+    params.set('hasOptions', 'true');
+  }
+
   Object.entries(AppState.filters).forEach(([key, value]) => {
-    if (value && value.toString().trim()) {
+    // Skip the parameters we've already handled
+    if (key === 'showAll' || key === 'hasOptions') {
+      return;
+    }
+    
+    if (value !== undefined && value !== null && value !== '' && value.toString().trim()) {
       params.set(key, value);
     }
   });
 
+  // Add page parameter if not first page
   if (AppState.currentPage > 1) {
     params.set('page', AppState.currentPage);
   }
 
   const newURL = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
   window.history.replaceState(null, '', newURL);
+  
+  console.log('🔗 URL updated:', newURL);
 }
 
+/** * Parse URL parameters and initialize AppState.filters
+ * This function reads the URL parameters and sets the AppState.filters accordingly
+ * It handles Show All vs Options-First logic based on the parameters
+ * * @returns {void}
+ */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
 
   AppState.currentPage = parseInt(params.get('page')) || 1;
   
-  AppState.filters = {
-    search: params.get('search') || '',
-    category: params.get('category') || '',
-    developer: params.get('developer') || '', 
-    options: params.get('options') || '',
-    year: params.get('year') || '',
-    sort: params.get('sort') || 'title',
-    order: params.get('order') || 'asc',
-    showAll: params.get('showAll') === 'true',  // Only true if explicitly set
-    hasOptions: params.get('showAll') === 'true' ? undefined : true  // Options-First unless showAll
-  };
+  // Handle Show All vs Options-First logic
+  const showAllParam = params.get('showAll');
+  const hasOptionsParam = params.get('hasOptions');
+  
+  console.log('🔍 Parsing URL params:', {
+    showAll: showAllParam,
+    hasOptions: hasOptionsParam,
+    url: window.location.search
+  });
+  
+  if (showAllParam === 'true') {
+    // Show All mode
+    AppState.filters = {
+      search: params.get('search') || '',
+      category: params.get('category') || '',
+      developer: params.get('developer') || '', 
+      options: params.get('options') || '',
+      year: params.get('year') || '',
+      sort: params.get('sort') || 'title',
+      order: params.get('order') || 'asc',
+      showAll: true,
+      hasOptions: undefined
+    };
+    console.log('🌍 URL indicates SHOW ALL mode');
+  } else if (hasOptionsParam === 'true') {
+    // Explicit Options-First mode
+    AppState.filters = {
+      search: params.get('search') || '',
+      category: params.get('category') || '',
+      developer: params.get('developer') || '', 
+      options: params.get('options') || '',
+      year: params.get('year') || '',
+      sort: params.get('sort') || 'title',
+      order: params.get('order') || 'asc',
+      showAll: false,
+      hasOptions: true
+    };
+    console.log('🎯 URL indicates explicit OPTIONS-FIRST mode');
+  } else {
+    // Default Options-First mode (no parameters needed)
+    AppState.filters = {
+      search: params.get('search') || '',
+      category: params.get('category') || '',
+      developer: params.get('developer') || '', 
+      options: params.get('options') || '',
+      year: params.get('year') || '',
+      sort: params.get('sort') || 'title',
+      order: params.get('order') || 'asc',
+      showAll: false,
+      hasOptions: true
+    };
+    console.log('⚡ URL indicates default OPTIONS-FIRST mode');
+  }
+  
+  console.log('📋 Parsed AppState.filters:', AppState.filters);
 }
 
 /**
