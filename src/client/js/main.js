@@ -25,6 +25,9 @@ const AppState = {
 
 /**
  * Initialize and populate filter dropdowns with real data
+ * Fetches facets from the API and populates the filter dropdowns
+ * It also handles loading states and error handling
+ * * @returns {Promise<void>}
  */
 async function initializeFilters() {
   if (AppState.filtersInitialized) return;
@@ -72,6 +75,12 @@ async function initializeFilters() {
   }
 }
 
+/** Adds a "Show All Games" filter to the filters container
+ * This filter allows users to toggle between showing all games
+ * and only those with launch options
+ * * @returns {Promise<void>}
+ */
+
 async function addShowAllGamesFilter() {
   console.log('🔧 Adding Show All Games filter...');
   
@@ -88,16 +97,9 @@ async function addShowAllGamesFilter() {
   }
   
   // Get statistics
-  const currentFilters = {
-    search: AppState.filters?.search || '',
-    developer: AppState.filters?.developer || '',
-    category: AppState.filters?.category || '',
-    year: AppState.filters?.year || ''
-  };
-  
   try {
     console.log('📊 Fetching real statistics for filter...');
-    const stats = await fetchGameStatistics(currentFilters);
+    const stats = await fetchGameStatistics();
     AppState.gameStats = {
       withOptions: stats.withOptions,
       withoutOptions: stats.withoutOptions,
@@ -107,90 +109,59 @@ async function addShowAllGamesFilter() {
     console.log('📈 Using real statistics:', stats);
   } catch (error) {
     console.error('Failed to fetch statistics, using fallback:', error);
-    AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275, percentageWithOptions: 53.1 };
+    AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275 };
   }
   
   const stats = AppState.gameStats;
   const isShowingAll = AppState.filters?.showAll || false;
   
-  // Create the filter group
+  // Create filter group with correct HTML structure for CSS
   const filterGroup = document.createElement('div');
   filterGroup.className = 'filter-group show-all-filter';
   
-  // Create label
-  const label = document.createElement('label');
-  label.className = 'filter-label';
-  label.textContent = 'Show All Games';
-  label.setAttribute('for', 'showAllGamesFilter');
-  
-  // Create checkbox container (this will be the clickable area)
-  const checkboxContainer = document.createElement('label');
-  checkboxContainer.className = `show-all-checkbox-container ${isShowingAll ? 'checked' : ''}`;
-  checkboxContainer.setAttribute('for', 'showAllGamesFilter');
-  checkboxContainer.style.cursor = 'pointer';
-  
-  // Create the actual hidden checkbox
-  const checkbox = document.createElement('input');
-  checkbox.type = 'checkbox';
-  checkbox.id = 'showAllGamesFilter';
-  checkbox.className = 'show-all-checkbox';
-  checkbox.checked = isShowingAll;
-  checkbox.setAttribute('aria-describedby', 'showAllGamesHelp');
-  // Make it visually hidden but still accessible
-  checkbox.style.position = 'absolute';
-  checkbox.style.left = '-9999px';
-  checkbox.style.opacity = '0';
-  
-  // Create visual elements
-  const customCheckbox = document.createElement('span');
-  customCheckbox.className = 'custom-checkbox';
-  customCheckbox.setAttribute('aria-hidden', 'true');
-  
-  const labelText = document.createElement('span');
-  labelText.className = 'checkbox-label-text';
-  labelText.textContent = 'Include games without launch options';
-  
-  const statsSpan = document.createElement('span');
-  statsSpan.className = 'checkbox-stats';
-  statsSpan.id = 'showAllStats';
-  statsSpan.textContent = isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`;
-  
-  // Create help text
-  const helpDiv = document.createElement('div');
-  helpDiv.id = 'showAllGamesHelp';
-  helpDiv.className = 'sr-only';
-  helpDiv.textContent = isShowingAll 
-    ? `Currently showing all ${stats.total} games` 
-    : `Currently showing ${stats.withOptions} games with launch options`;
-  
-  // Assemble the DOM
-  checkboxContainer.appendChild(customCheckbox);
-  checkboxContainer.appendChild(labelText);
-  checkboxContainer.appendChild(statsSpan);
-  
-  filterGroup.appendChild(label);
-  filterGroup.appendChild(checkbox); // Hidden checkbox
-  filterGroup.appendChild(checkboxContainer); // Clickable container
-  filterGroup.appendChild(helpDiv);
+  // Create the HTML structure that matches our CSS selectors
+  filterGroup.innerHTML = `
+    <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
+    <input 
+      type="checkbox" 
+      id="showAllGamesFilter" 
+      ${isShowingAll ? 'checked' : ''}
+      aria-describedby="showAllGamesHelp"
+    />
+    <label for="showAllGamesFilter" class="show-all-checkbox-container">
+      <span class="checkbox-label-text">Include games without launch options</span>
+      <span class="checkbox-stats" id="showAllStats">
+        ${isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`}
+      </span>
+    </label>
+    <div id="showAllGamesHelp" class="sr-only">
+      ${isShowingAll ? `Currently showing all ${stats.total} games` : `Currently showing ${stats.withOptions} games with launch options`}
+    </div>
+  `;
   
   filtersContainer.appendChild(filterGroup);
   
-  checkbox.addEventListener('change', function(e) {
-    console.log('🖱️ CHECKBOX CHANGED!', {
-      checked: e.target.checked,
-      timestamp: new Date().toISOString(),
-      triggered: 'change-event'
+  // Add single event listener to the hidden checkbox
+  const checkbox = filterGroup.querySelector('#showAllGamesFilter');
+  if (checkbox) {
+    checkbox.addEventListener('change', function(e) {
+      console.log('🖱️ CHECKBOX CHANGED!', {
+        checked: e.target.checked,
+        timestamp: new Date().toISOString()
+      });
+      
+      handleShowAllFilterChange(e);
     });
     
-    handleShowAllFilterChange(e);
-  });
-  
-  console.log('✅ Show All Games filter added successfully');
-  console.log('🔍 Checkbox state:', { 
-    id: checkbox.id, 
-    checked: checkbox.checked,
-    visible: checkbox.offsetParent !== null 
-  });
+    console.log('✅ Show All Games filter added successfully');
+    console.log('🔍 Checkbox state:', { 
+      id: checkbox.id, 
+      checked: checkbox.checked,
+      hidden: checkbox.offsetParent === null 
+    });
+  } else {
+    console.error('❌ Failed to find checkbox element');
+  }
 }
 
 // Refresh filter statistics periodically
@@ -223,42 +194,10 @@ async function refreshFilterStatistics() {
 }
 
 /**
- * Sync the Show All filter checkbox with the current AppState
- * Ensures the UI always reflects the actual filter state
- */
-function syncShowAllCheckboxWithState() {
-  const checkbox = document.getElementById('showAllGamesFilter');
-  const container = document.querySelector('.show-all-checkbox-container');
-  
-  if (!checkbox) {
-    // Checkbox hasn't been created yet, skip sync
-    return;
-  }
-  
-  const currentAppState = AppState.filters?.showAll === true;
-  const currentCheckboxState = checkbox.checked;
-  
-  console.log('🔄 Syncing checkbox with AppState:', {
-    appStateShowAll: currentAppState,
-    checkboxChecked: currentCheckboxState,
-    needsSync: currentAppState !== currentCheckboxState
-  });
-  
-  // Only update if there's a mismatch
-  if (currentCheckboxState !== currentAppState) {
-    console.log(`🔧 Syncing checkbox: ${currentCheckboxState} → ${currentAppState}`);
-    
-    checkbox.checked = currentAppState;
-    updateShowAllFilterUI(currentAppState, container);
-    
-    console.log('✅ Checkbox synced with AppState');
-  } else {
-    console.log('✅ Checkbox already in sync');
-  }
-}
-
-/**
  * Handle changes to the Show All Games filter
+ * This function updates the AppState and UI based on the checkbox state
+ * * @param {Event} event - The change event from the checkbox
+ * * @returns {void}
  */
 function handleShowAllFilterChange(event) {
   const isChecked = event.target.checked;
@@ -313,38 +252,28 @@ function handleShowAllFilterChange(event) {
   handleFilterChange(apiFilters, 'show-all-filter-change');
 }
 
-/** Handle Show All Games filter change */
-function updateShowAllFilterUI(isChecked, container) {
+/** Handle Show All Games filter change
+ * This function updates the UI and AppState based on the checkbox state
+ * * @param {boolean} isChecked 
+ * * @param {HTMLElement|null} container 
+ * * @returns {void}
+ */
+function updateShowAllFilterUI(isChecked, container = null) {
   const stats = AppState.gameStats || { withOptions: 146, withoutOptions: 129, total: 275 };
   
   console.log(`📊 Updating UI: ${isChecked ? 'CHECKED' : 'UNCHECKED'}`, {
-    container: container ? 'found' : 'not found',
     stats: stats
   });
   
-  // Find elements if container wasn't passed
-  if (!container) {
-    container = document.querySelector('.show-all-checkbox-container');
-  }
-  
+  // Find elements if not provided
   const statsElement = document.querySelector('#showAllStats');
   const helpElement = document.getElementById('showAllGamesHelp');
   const checkbox = document.getElementById('showAllGamesFilter');
   
-  // Update checkbox state (in case it's out of sync)
+  // Update checkbox state
   if (checkbox && checkbox.checked !== isChecked) {
     checkbox.checked = isChecked;
     console.log('🔄 Synced checkbox state:', isChecked);
-  }
-  
-  // Update container styling
-  if (container) {
-    if (isChecked) {
-      container.classList.add('checked');
-    } else {
-      container.classList.remove('checked');
-    }
-    console.log('✅ Updated container classes');
   }
   
   // Update stats text
@@ -357,8 +286,8 @@ function updateShowAllFilterUI(isChecked, container) {
   // Update accessibility description
   if (helpElement) {
     const newHelp = isChecked 
-      ? 'Currently showing all games including those without launch options'
-      : 'Currently showing only games with launch options';
+      ? `Currently showing all ${stats.total} games including those without launch options`
+      : `Currently showing ${stats.withOptions} games with launch options`;
     helpElement.textContent = newHelp;
     console.log('♿ Updated help text');
   }
@@ -367,25 +296,62 @@ function updateShowAllFilterUI(isChecked, container) {
 }
 
 /**
+ * Sync checkbox with AppState
+ */
+function syncShowAllCheckboxWithState() {
+  const checkbox = document.getElementById('showAllGamesFilter');
+  if (!checkbox) {
+    return; // Checkbox hasn't been created yet
+  }
+  
+  const currentAppState = AppState.filters?.showAll === true;
+  const currentCheckboxState = checkbox.checked;
+  
+  console.log('🔄 Syncing checkbox with AppState:', {
+    appStateShowAll: currentAppState,
+    checkboxChecked: currentCheckboxState,
+    needsSync: currentAppState !== currentCheckboxState
+  });
+  
+  // Only update if there's a mismatch
+  if (currentCheckboxState !== currentAppState) {
+    console.log(`🔧 Syncing checkbox: ${currentCheckboxState} → ${currentAppState}`);
+    
+    checkbox.checked = currentAppState;
+    // The CSS will automatically handle the visual state change
+    
+    console.log('✅ Checkbox synced with AppState');
+  } else {
+    console.log('✅ Checkbox already in sync');
+  }
+}
+
+/**
  * Update the filter when statistics change (called from main app)
+ * This function updates the AppState and UI based on new statistics
+ * * @param {Object} newStats - The new statistics object
+ * * * @returns {void}
  */
 function updateShowAllFilterStats(newStats) {
   if (!newStats) return;
   
-  // Update AppState with new statistics
+  // Update AppState
   AppState.gameStats = { ...AppState.gameStats, ...newStats };
   
   const checkbox = document.getElementById('showAllGamesFilter');
-  const container = document.querySelector('.show-all-checkbox-container');
-  
-  if (checkbox && container) {
-    updateShowAllFilterUI(checkbox.checked, container);
+  if (checkbox) {
+    updateShowAllFilterUI(checkbox.checked);
     console.log('📊 Show All filter stats updated:', newStats);
   }
 }
 
 /**
  * Populate a filter dropdown with data from the API
+ * This function handles both string and object data formats
+ * * @param {string} elementId - The ID of the select element to populate
+ * * @param {Array} data - The data to populate the dropdown with
+ * * @param {string} defaultText - The default text for the dropdown
+ * * * @returns {void}
  */
 function populateFilterDropdown(elementId, data, defaultText) {
   const selectElement = document.getElementById(elementId);
@@ -472,6 +438,8 @@ function populateYearFilter(releaseYears) {
 
 /**
  * Populate options filter with predefined options
+ * This function creates a dropdown with various options
+ * * @returns {void}
  */
 function populateOptionsFilter() {
   const optionsFilter = document.getElementById('optionsFilter');
@@ -525,6 +493,11 @@ function restoreScrollPosition() {
 
 /**
  * Load page with games data - called by search component
+ * This function handles loading games based on filters, pagination, and user interactions
+ * * @param {number} page - The page number to load (default is 1)
+ * * @param {boolean} replace - Whether to replace the current page state (default is true)
+ * * * @param {string} reason - The reason for loading the page (default is 'search')
+ * * * @returns {Promise<void>} - Resolves when the page is loaded
  */
 async function loadPage(page = 1, replace = true, reason = 'search') {
   if (AppState.isLoading) return;
@@ -731,6 +704,11 @@ function updateURL() {
   console.log('🔗 URL updated:', newURL);
 }
 
+/** * Parse URL parameters and initialize AppState.filters
+ * This function reads the URL parameters and sets the AppState.filters accordingly
+ * It handles Show All vs Options-First logic based on the parameters
+ * * @returns {void}
+ */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
 

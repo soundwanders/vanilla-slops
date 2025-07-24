@@ -1196,7 +1196,7 @@
   box-shadow: 0 0 0 2px var(--color-error-alpha, rgba(239, 68, 68, 0.1));
 }
 
-/* Enhanced filter group styling */
+/* FIlter group styling */
 .filter-group:has(.year-filter-container) {
   min-width: 280px;
 }
@@ -1320,7 +1320,7 @@
   background: var(--color-bg-success-dark, #064e3b);
 }
 
-/* Improved filter label spacing */
+/* Filter label */
 .filter-group .filter-label {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
@@ -1333,7 +1333,7 @@
   color: var(--color-text-label-dark, #d1d5db);
 }
 
-/* Enhanced filter dropdown consistency */
+/* Filter dropdown consistency */
 .filter-select,
 .year-input {
   height: 2.5rem;
