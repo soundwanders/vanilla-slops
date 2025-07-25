@@ -2,12 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <title>Vanilla Slops</title>
 
     <link rel="stylesheet" href="styles/main.css" />
     <link rel="icon" href="/favicon.ico" />
     <link rel="modulepreload" href="js/main.js" />
+    
+    <!-- Preload critical resources for mobile performance -->
+    <link rel="preload" href="/slops-logo.png" as="image" />
   </head>
 
   <body>
@@ -16,33 +19,33 @@
 
     <!-- Hero Section -->
     <header class="hero-section">
-    <!-- Background Elements -->
-    <div class="hero-background">
+      <!-- Background Elements -->
+      <div class="hero-background">
         <div class="hero-gradient"></div>
         <div class="hero-pattern"></div>
-    </div>
+      </div>
 
-    <!-- Main Hero Content -->
-    <div class="hero-content">
+      <!-- Main Hero Content -->
+      <div class="hero-content">
         <!-- Logo and Branding -->
         <div class="hero-branding">
-        <div class="logo-container">
+          <div class="logo-container">
             <img src="/slops-logo.png" alt="Vanilla Slops Logo" class="hero-logo">
-        </div>
-        <div class="hero-text">
+          </div>
+          <div class="hero-text">
             <h1 class="hero-title">
-                <span class="hero-title-main">Vanilla Slops</span>
-                <span class="hero-title-accent">Steam Launch Options</span>
+              <span class="hero-title-main">Vanilla Slops</span>
+              <span class="hero-title-accent">Steam Launch Options</span>
             </h1>
-        </div>
+          </div>
         </div>
 
         <!-- Search Section -->
         <div class="hero-search">
-        <div class="search-input-wrapper">
+          <div class="search-input-wrapper">
             <div class="search-field">
-            <div class="search-icon" aria-hidden="true">🔍</div>
-            <input 
+              <div class="search-icon" aria-hidden="true">🔍</div>
+              <input 
                 type="text" 
                 class="search-input" 
                 placeholder="Search games..."
@@ -53,183 +56,282 @@
                 aria-describedby="search-description"
                 aria-expanded="false"
                 aria-owns="suggestionsDropdown"
-            >
+              >
             </div>
             <div id="search-description" class="sr-only">
-            Search by game titles. Use arrow keys to navigate suggestions when available.
+              Search by game titles. Use arrow keys to navigate suggestions when available.
             </div>
             <div class="suggestions-dropdown" id="suggestionsDropdown" role="listbox" aria-label="Search suggestions"></div>
-        </div>
+          </div>
         </div>
 
         <!-- Quick Stats or Features -->
         <div class="hero-stats">
-        <div class="stat-item">
+          <div class="stat-item">
             <span class="stat-number" data-count="1000+">1000+</span>
             <span class="stat-label">Games</span>
-        </div>
-        <div class="stat-item">
+          </div>
+          <div class="stat-item">
             <span class="stat-number" data-count="5000+">5000+</span>
             <span class="stat-label">Launch Options</span>
-        </div>
-        <div class="stat-item">
+          </div>
+          <div class="stat-item">
             <span class="stat-number" data-count="100%">100%</span>
             <span class="stat-label">Community Verified</span>
+          </div>
         </div>
-        </div>
-    </div>
+      </div>
 
-    <!-- Filters Section -->
-    <div class="hero-filters">
+      <!-- Filters Section -->
+      <div class="hero-filters">
         <form class="filters-container" role="region" aria-label="Filter options">
-        <fieldset class="filter-fieldset">
+          <fieldset class="filter-fieldset">
             <legend class="sr-only">Filter games by various criteria</legend>
             
-            <div class="filter-group">
-            <label class="filter-label" for="categoryFilter">Category</label>
-                <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
-                    <option value="">All Categories</option>
-                    
-                    <!-- Core Popular Genres -->
-                    <option value="action">Action</option>
-                    <option value="adventure">Adventure</option>
-                    <option value="rpg">RPG</option>
-                    <option value="strategy">Strategy</option>
-                    <option value="simulation">Simulation</option>
-                    <option value="fps">FPS</option>
-                    <option value="indie">Indie</option>
-                      
-                    <!-- Specific Action Subgenres -->
-                    <option value="platformer">Platformer</option>
-                    <option value="fighting">Fighting</option>
-                    <option value="battle-royale">Battle Royale</option>
-                    <option value="survival">Survival</option>
-                    <option value="horror">Horror</option>
-                    <option value="stealth">Stealth</option>
-                    
-                    <!-- Strategy Subgenres -->
-                    <option value="rts">Real-Time Strategy</option>
-                    <option value="turn-based">Turn-Based Strategy</option>
-                    <option value="tower-defense">Tower Defense</option>
-                    <option value="4x">4X Strategy</option>
-                    
-                    <!-- RPG Subgenres -->
-                    <option value="mmorpg">MMORPG</option>
-                    <option value="roguelike">Roguelike</option>
-                    <option value="roguelite">Roguelite</option>
-                    <option value="dungeon-crawler">Dungeon Crawler</option>
-                    
-                    <!-- Multiplayer Categories -->
-                    <option value="multiplayer">Multiplayer</option>
-                    <option value="co-op">Co-op</option>
-                    <option value="moba">MOBA</option>
-                    <option value="mmo">MMO</option>
-                    
-                    <!-- Sports & Racing -->
-                    <option value="sports">Sports</option>
-                    <option value="racing">Racing</option>
-                    <option value="soccer">Soccer</option>
-                    <option value="basketball">Basketball</option>
-                    
-                    <!-- Casual & Puzzle -->
-                    <option value="puzzle">Puzzle</option>
-                    <option value="casual">Casual</option>
-                    <option value="arcade">Arcade</option>
-                    <option value="match-3">Match-3</option>
-                    <option value="hidden-object">Hidden Object</option>
-                    
-                    <!-- Creative & Sandbox -->
-                    <option value="sandbox">Sandbox</option>
-                    <option value="city-builder">City Builder</option>
-                    <option value="building">Building</option>
-                    <option value="crafting">Crafting</option>
-                    
-                    <!-- Narrative & Visual -->
-                    <option value="visual-novel">Visual Novel</option>
-                    <option value="interactive-fiction">Interactive Fiction</option>
-                    <option value="walking-simulator">Walking Simulator</option>
-                    <option value="story-rich">Story Rich</option>
-                    
-                    <!-- Card & Board Games -->
-                    <option value="card-game">Card Game</option>
-                    <option value="board-game">Board Game</option>
-                    <option value="deck-building">Deck Building</option>
-                    <option value="trading-card-game">Trading Card Game</option>
-                    
-                    <!-- Specialized Categories -->
-                    <option value="educational">Educational</option>
-                    <option value="programming">Programming</option>
-                    <option value="typing">Typing</option>
-                    <option value="music">Music</option>
-                    <option value="rhythm">Rhythm</option>
-                    
-                    <!-- Style/Setting Categories -->
-                    <option value="retro">Retro</option>
-                    <option value="pixel-art">Pixel Art</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="medieval">Medieval</option>
-                    <option value="sci-fi">Sci-Fi</option>
-                    <option value="fantasy">Fantasy</option>
-                    <option value="historical">Historical</option>
-                    <option value="post-apocalyptic">Post-Apocalyptic</option>
-                    
-                    <!-- Gameplay Mechanics -->
-                    <option value="open-world">Open World</option>
-                    <option value="metroidvania">Metroidvania</option>
-                    <option value="bullet-hell">Bullet Hell</option>
-                    <option value="auto-battler">Auto Battler</option>
-                    <option value="idle">Idle</option>
-                </select>
+            <!-- Show All Games Filter - Will be inserted here by JavaScript -->
+            <div class="filter-group show-all-filter" id="showAllFilterGroup" style="display: none;">
+              <label class="filter-label" for="showAllGamesFilter">Display Mode</label>
+              <input type="checkbox" id="showAllGamesFilter" class="sr-only">
+              <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="false">
+                <span class="checkbox-label-text">Games with options</span>
+                <span class="checkbox-stats">151 more</span>
+              </label>
             </div>
             
             <div class="filter-group">
-            <label class="filter-label" for="developerFilter">Developer</label>
-            <select class="filter-select" id="developerFilter" aria-label="Filter by developer" name="developer">
+              <label class="filter-label" for="categoryFilter">Category</label>
+              <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
+                <option value="">All Categories</option>
+                
+                <!-- Core Popular Genres -->
+                <option value="action">Action</option>
+                <option value="adventure">Adventure</option>
+                <option value="rpg">RPG</option>
+                <option value="strategy">Strategy</option>
+                <option value="simulation">Simulation</option>
+                <option value="fps">FPS</option>
+                <option value="indie">Indie</option>
+                  
+                <!-- Specific Action Subgenres -->
+                <option value="platformer">Platformer</option>
+                <option value="fighting">Fighting</option>
+                <option value="battle-royale">Battle Royale</option>
+                <option value="survival">Survival</option>
+                <option value="horror">Horror</option>
+                <option value="stealth">Stealth</option>
+                
+                <!-- Strategy Subgenres -->
+                <option value="rts">Real-Time Strategy</option>
+                <option value="turn-based">Turn-Based Strategy</option>
+                <option value="tower-defense">Tower Defense</option>
+                <option value="4x">4X Strategy</option>
+                
+                <!-- RPG Subgenres -->
+                <option value="mmorpg">MMORPG</option>
+                <option value="roguelike">Roguelike</option>
+                <option value="roguelite">Roguelite</option>
+                <option value="dungeon-crawler">Dungeon Crawler</option>
+                
+                <!-- Multiplayer Categories -->
+                <option value="multiplayer">Multiplayer</option>
+                <option value="co-op">Co-op</option>
+                <option value="moba">MOBA</option>
+                <option value="mmo">MMO</option>
+                
+                <!-- Sports & Racing -->
+                <option value="sports">Sports</option>
+                <option value="racing">Racing</option>
+                <option value="soccer">Soccer</option>
+                <option value="basketball">Basketball</option>
+                
+                <!-- Casual & Puzzle -->
+                <option value="puzzle">Puzzle</option>
+                <option value="casual">Casual</option>
+                <option value="arcade">Arcade</option>
+                <option value="match-3">Match-3</option>
+                <option value="hidden-object">Hidden Object</option>
+                
+                <!-- Creative & Sandbox -->
+                <option value="sandbox">Sandbox</option>
+                <option value="city-builder">City Builder</option>
+                <option value="building">Building</option>
+                <option value="crafting">Crafting</option>
+                
+                <!-- Narrative & Visual -->
+                <option value="visual-novel">Visual Novel</option>
+                <option value="interactive-fiction">Interactive Fiction</option>
+                <option value="walking-simulator">Walking Simulator</option>
+                <option value="story-rich">Story Rich</option>
+                
+                <!-- Card & Board Games -->
+                <option value="card-game">Card Game</option>
+                <option value="board-game">Board Game</option>
+                <option value="deck-building">Deck Building</option>
+                <option value="trading-card-game">Trading Card Game</option>
+                
+                <!-- Specialized Categories -->
+                <option value="educational">Educational</option>
+                <option value="programming">Programming</option>
+                <option value="typing">Typing</option>
+                <option value="music">Music</option>
+                <option value="rhythm">Rhythm</option>
+                
+                <!-- Style/Setting Categories -->
+                <option value="retro">Retro</option>
+                <option value="pixel-art">Pixel Art</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="medieval">Medieval</option>
+                <option value="sci-fi">Sci-Fi</option>
+                <option value="fantasy">Fantasy</option>
+                <option value="historical">Historical</option>
+                <option value="post-apocalyptic">Post-Apocalyptic</option>
+                
+                <!-- Gameplay Mechanics -->
+                <option value="open-world">Open World</option>
+                <option value="metroidvania">Metroidvania</option>
+                <option value="bullet-hell">Bullet Hell</option>
+                <option value="auto-battler">Auto Battler</option>
+                <option value="idle">Idle</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label class="filter-label" for="developerFilter">Developer</label>
+              <select class="filter-select" id="developerFilter" aria-label="Filter by developer" name="developer">
                 <option value="">All Developers</option>
-            </select>
+              </select>
             </div>
             
             <div class="filter-group">
-            <label class="filter-label" for="optionsFilter">Launch Options</label>
-            <select class="filter-select" id="optionsFilter" aria-label="Filter by launch options" name="launch-options">
+              <label class="filter-label" for="optionsFilter">Launch Options</label>
+              <select class="filter-select" id="optionsFilter" aria-label="Filter by launch options" name="launch-options">
                 <option value="">Any Options</option>
                 <option value="has-options">Has Launch Options</option>
                 <option value="no-options">No Launch Options</option>
                 <option value="performance">Performance Options</option>
                 <option value="graphics">Graphics Options</option>
-            </select>
+              </select>
             </div>
             
             <div class="filter-group">
-            <label class="filter-label" for="yearFilter">Release Year</label>
-            <select class="filter-select" id="yearFilter" aria-label="Filter by release year" name="year">
+              <label class="filter-label" for="yearFilter">Release Year</label>
+              <select class="filter-select" id="yearFilter" aria-label="Filter by release year" name="year">
                 <option value="">All Years</option>
-            </select>
+              </select>
             </div>
-        </fieldset>
+          </fieldset>
         </form>
 
         <!-- Active Filters Display -->
         <section class="active-filters" id="activeFilters" role="region" aria-label="Active filters">
-        <h2 class="sr-only">Currently Applied Filters</h2> 
+          <h2 class="sr-only">Currently Applied Filters</h2> 
         </section>
-    </div>
+      </div>
     </header>
 
     <!-- Main app container for games table and pagination -->
     <main id="app" role="main">
-        <section id="table-container" role="region" aria-label="Games table">
-            <h2 class="sr-only">Games Table</h2>
-            <!-- Table will be rendered here -->
-        </section>
+      <section id="main-content" class="table-container" role="region" aria-label="Games table">
+        <h2 class="sr-only">Games Table</h2>
+        
+        <!-- Results Header -->
+        <div class="results-header" id="resultsHeader">
+          <span class="results-count" id="resultsCount">Loading games...</span>
+        </div>
+        
+        <!-- Table will be rendered here with proper data-label attributes -->
+        <div id="table-container" class="mobile-responsive-table">
+          <!-- 
+            IMPORTANT: When your JavaScript generates the table, 
+            ensure each <td> has a data-label attribute like this:
+            
+            <table class="games-table">
+              <thead>
+                <tr>
+                  <th>Game Title</th>
+                  <th>Developer</th>
+                  <th>Publisher</th>
+                  <th>Release Date</th>
+                  <th>Engine</th>
+                  <th>Launch Options</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td data-label="Game Title">Example Game</td>
+                  <td data-label="Developer">Example Developer</td>
+                  <td data-label="Publisher">Example Publisher</td>
+                  <td data-label="Release Date">2023-01-01</td>
+                  <td data-label="Engine">Unity</td>
+                  <td data-label="Launch Options">
+                    <button class="launch-options-btn">Show Options</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          -->
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="table-loading" style="display: none;">
+          <div class="loading-spinner"></div>
+          <span>Loading games...</span>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-table-state" style="display: none;">
+          <div class="empty-icon">🎮</div>
+          <h3 class="empty-title">No games found</h3>
+          <p class="empty-description">Try adjusting your search criteria or filters to find more games.</p>
+          
+          <div class="empty-stats">
+            <div class="stat-card">
+              <span class="stat-number">487</span>
+              <span class="stat-label">Total Games</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-number">336</span>
+              <span class="stat-label">With Options</span>
+            </div>
+          </div>
+          
+          <div class="empty-actions">
+            <button class="btn btn-primary" onclick="clearAllFilters()">Clear All Filters</button>
+            <button class="btn btn-secondary" onclick="showAllGames()">Show All Games</button>
+          </div>
+        </div>
+        
         <!-- Pagination will be rendered here -->
+        <div id="pagination-container"></div>
+      </section>
     </main>
 
+    <!-- Theme Toggle Button -->
     <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
       <span aria-hidden="true">🌓</span>
       <span class="sr-only">Toggle Theme</span>
     </button>
 
+    <!-- Scripts -->
     <script src="./js/main.js" type="module" defer></script>
+    
+    <!-- Mobile Performance Optimization -->
+    <script>
+      // Prevent zoom on input focus for iOS
+      document.addEventListener('touchstart', function() {
+        document.querySelector('meta[name="viewport"]').setAttribute('content', 
+          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+        );
+      }, { once: true });
+      
+      // Restore zooming after interaction
+      document.addEventListener('touchend', function() {
+        setTimeout(function() {
+          document.querySelector('meta[name="viewport"]').setAttribute('content', 
+            'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes'
+          );
+        }, 500);
+      }, { once: true });
+    </script>
   </body>
 </html>

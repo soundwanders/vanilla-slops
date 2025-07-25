@@ -1,7 +1,7 @@
 /* =============================================================================
    RESPONSIVE DESIGN SYSTEM
    Mobile-first responsive design with utilities and breakpoints
-   Merged the layout and responsive style improvements
+   Merged the layout and responsive style
    ============================================================================= */
 
 /* Small screens and up (640px+) */
@@ -92,12 +92,37 @@
 
 /* Tablet and below (768px and down) */
 @media (max-width: 768px) {
-  /* Body and main container adjustments */
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+
   body {
     padding: var(--space-md) var(--space-sm);
   }
   
-  /* Search container improvements */
+  /* Global container */
+  #app {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Table container */
+  #table-container,
+  .table-container {
+    width: 100% !important;
+    max-width: 100vw !important;
+    margin: var(--space-4) 0 !important;
+    padding: 0 1rem !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Search container */
   .search-container,
   .slops-search {
     margin-bottom: var(--space-8);
@@ -128,7 +153,7 @@
     min-width: auto;
   }
 
-  /* Results header improvements */
+  /* Results header */
   .results-header,
   .slops-results-header {
     flex-direction: column;
@@ -379,7 +404,7 @@
     background-color: var(--color-surface-raised);
     box-shadow: var(--shadow-sm);
   }
-  
+
   /* Table cell styling with labels */
   .games-table td {
     border: none;
@@ -459,27 +484,20 @@
    FILTER GRID ADJUSTMENTS
    ============================================================================= */
 
-/* On larger screens, fit 5 filters per row */
-@media (min-width: 1200px) {
-  .filters-container,
-  .hero-filters .filters-container {
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
 /* On medium screens, 3-4 filters per row */
 @media (min-width: 768px) and (max-width: 1199px) {
   .filters-container,
   .hero-filters .filters-container {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* On small screens, stack them */
-@media (max-width: 767px) {
-  .filters-container,
-  .hero-filters .filters-container {
-    grid-template-columns: 1fr;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: var(--space-6) var(--space-4) !important;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    
+    /* Stack filters vertically with proper spacing */
+    grid-template-columns: 1fr !important;
+    gap: var(--space-4) !important;
   }
 }
 
@@ -715,7 +733,6 @@
    ----------------------------------------------------------------------------- */
 
 @media (max-width: 768px) {
-  /* Optimize scrolling performance */
   body {
     -webkit-overflow-scrolling: touch;
   }
@@ -765,3 +782,1561 @@
     font-size: 10px;
   }
 }
+
+/* Global Mobile Container Fix */
+@media (max-width: 768px) {
+  /* Ensure no horizontal overflow */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  body {
+    padding: var(--space-md) var(--space-sm);
+    line-height: 1.5; 
+  }
+  
+  /* Global container */
+  .container,
+  #app {
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  
+  /* Typography for mobile */
+  h1, h2, h3, h4, h5, h6 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.3;
+  }
+  
+  p, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+}
+
+/* Small Mobile Fixes */
+@media (max-width: 480px) {
+  body {
+    padding: var(--space-sm) var(--space-xs);
+    font-size: var(--font-size-sm);
+  }
+  
+  /* Prevent text zoom on inputs for iOS */
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevent zoom */
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Button sizing for small screens */
+  button,
+  .btn,
+  .launch-options-btn {
+    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Main App Container Mobile */
+@media (max-width: 768px) {
+  #app {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  
+  /* Table container mobile */
+  #table-container,
+  .table-container {
+    margin: var(--space-4) 0;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    max-width: 100%;
+  }
+  
+  /* Ensure sections don't overflow */
+  section {
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+}
+
+/* Theme Toggle Mobile Positioning */
+@media (max-width: 768px) {
+  .theme-toggle,
+  #theme-toggle {
+    top: var(--space-4);
+    right: var(--space-4);
+    padding: var(--space-2);
+    min-width: var(--space-10);
+    height: var(--space-10);
+    font-size: var(--font-size-base);
+    border-radius: var(--radius-lg);
+    z-index: var(--z-fixed);
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle,
+  #theme-toggle {
+    top: var(--space-3);
+    right: var(--space-3);
+    padding: var(--space-1);
+    min-width: var(--space-8);
+    height: var(--space-8);
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Skip Link Mobile Enhancement */
+@media (max-width: 768px) {
+  .skip-link {
+    left: var(--space-2);
+    top: -50px;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-lg);
+  }
+  
+  .skip-link:focus {
+    top: var(--space-2);
+  }
+}
+
+/* Accessibility for Mobile */
+@media (max-width: 768px) {
+  /* Focus indicators */
+  *:focus-visible {
+    outline: 2px solid var(--color-interactive-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  
+  /* Screen reader */
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animations for better performance */
+  * {
+    transition-duration: 0.2s !important;
+  }
+  
+  /* Optimize scrolling */
+  body {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Reduce box shadows on mobile for performance */
+  .card,
+  .games-table,
+  .filters-container,
+  .hero-section {
+    box-shadow: var(--shadow-sm) !important;
+  }
+  
+  /* Contain layouts to improve performance */
+  .filters-container,
+  .table-container,
+  .hero-section {
+    contain: layout;
+  }
+}
+
+/* Mobile-Specific Utility Classes */
+@media (max-width: 768px) {
+  /* Text utilities */
+  .mobile-text-sm { font-size: var(--font-size-sm) !important; }
+  .mobile-text-xs { font-size: var(--font-size-xs) !important; }
+  .mobile-text-wrap { 
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+  }
+  
+  /* Spacing utilities */
+  .mobile-p-2 { padding: var(--space-2) !important; }
+  .mobile-p-3 { padding: var(--space-3) !important; }
+  .mobile-p-4 { padding: var(--space-4) !important; }
+  .mobile-m-2 { margin: var(--space-2) !important; }
+  .mobile-m-3 { margin: var(--space-3) !important; }
+  .mobile-m-4 { margin: var(--space-4) !important; }
+  
+  /* Layout utilities */
+  .mobile-stack { 
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-3) !important;
+  }
+  
+  .mobile-full-width { 
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .mobile-hidden { display: none !important; }
+  .mobile-visible { display: block !important; }
+}
+
+/* Touch Device Enhancements */
+@media (pointer: coarse) {
+  /* Ensure all interactive elements meet touch target requirements */
+  button,
+  select,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  .btn,
+  .filter-select,
+  .launch-options-btn,
+  [role="button"],
+  [tabindex="0"] {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Enhance tap feedback */
+  button:active,
+  .btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+  
+  /* Remove hover effects on touch devices */
+  @media (hover: none) {
+    .hover-lift:hover,
+    .hover-scale:hover,
+    .hover-rotate:hover {
+      transform: none;
+    }
+    
+    .games-table tbody tr:hover {
+      transform: none;
+      background: var(--color-surface-raised);
+    }
+  }
+}
+
+/* Landscape Mobile Specific Fixes */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Reduce vertical spacing in landscape */
+  .hero-section {
+    min-height: 90vh;
+    padding: var(--space-2) 0;
+  }
+  
+  .filters-container,
+  .slops-filters {
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  
+  .games-table tr {
+    margin-bottom: var(--space-2);
+  }
+  
+  /* Compact modals */
+  .info-modal {
+    max-height: 85vh;
+  }
+  
+  .info-modal-body {
+    max-height: calc(85vh - 3rem);
+  }
+}
+
+/* iOS Safari Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+  .hero-section {
+    min-height: -webkit-fill-available;
+  }
+  
+  input[type="text"],
+  input[type="search"],
+  select {
+    font-size: 16px;
+    transform: translateZ(0); /* Force hardware acceleration */
+  }
+  
+  /* Fix sticky positioning */
+  .games-table thead {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+  
+  /* Remove tap highlights */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* High Contrast Mode Mobile Support */
+@media (prefers-contrast: high) and (max-width: 768px) {
+  .games-table tr {
+    border-width: 2px;
+  }
+  
+  .filter-select,
+  .launch-options-btn,
+  .btn {
+    border-width: 2px;
+  }
+  
+  .filter-tag {
+    border: 2px solid;
+  }
+}
+
+/* Reduced Motion Mobile Support */
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+  /* Remove all transforms and animations on mobile for users who prefer reduced motion */
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+  
+  .games-table tbody tr:hover {
+    transform: none !important;
+  }
+  
+  .launch-option:hover,
+  .option-command:hover {
+    transform: none !important;
+  }
+  
+  /* Keep essential focus states */
+  *:focus-visible {
+    outline: 2px solid var(--color-interactive-focus) !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* Print Styles for Mobile */
+@media print and (max-width: 768px) {
+  /* Optimize print layout for mobile devices */
+  body {
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+  
+  .games-table {
+    font-size: 8pt;
+  }
+  
+  .games-table td {
+    padding: 4pt !important;
+  }
+  
+  .games-table td:before {
+    font-size: 7pt !important;
+  }
+  
+  /* Hide mobile-only elements when printing */
+  .mobile-hidden-print {
+    display: none !important;
+  }
+}
+
+/* Very Large Phones (iPhone 14 Pro Max, etc.) */
+@media (min-width: 428px) and (max-width: 768px) {
+  .filters-container,
+  .hero-filters .filters-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+  
+  .hero-stats {
+    flex-direction: row;
+    gap: var(--space-4);
+    justify-content: center;
+  }
+  
+  .stat-item {
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 100px;
+  }
+}
+
+/* Small Phones (iPhone SE, etc.) */
+@media (max-width: 374px) {
+  body {
+    padding: var(--space-xs);
+  }
+  
+  .hero-content {
+    padding: var(--space-3) var(--space-2);
+  }
+  
+  .filters-container,
+  .slops-filters {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+  
+  .games-table td {
+    padding: var(--space-2) var(--space-2) var(--space-2) 50% !important;
+  }
+  
+  .games-table td:before {
+    width: 45%;
+    font-size: 0.6875rem;
+  }
+}
+
+/* Mobile-First Container Query Support */
+@container (max-width: 768px) {
+  .filters-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .launch-options-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVE FOR GAMES TABLE
+   ============================================================================= */
+
+/* Mobile Card Layout */
+@media (max-width: 640px) {
+  /* Convert table to card layout */
+  .games-table,
+  .games-table thead,
+  .games-table tbody,
+  .games-table th,
+  .games-table td,
+  .games-table tr {
+    display: block;
+  }
+  
+  /* Hide table headers */
+  .games-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  
+  /* Game card styling */
+  .games-table tr {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 var(--space-4) 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Accent border for each game card */
+  .games-table tr::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-accent);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+  
+  /* Remove hover effects on mobile for performance */
+  .games-table tbody tr:hover {
+    background: var(--color-surface-raised);
+    transform: none;
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Mobile table cell layout */
+  .games-table td {
+    border: none;
+    min-height: var(--space-10);
+    align-items: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: relative;
+    display: flex;
+    padding: var(--space-3) var(--space-4) var(--space-3) 40% !important;
+    box-sizing: border-box !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Data labels for each cell
+  .games-table td:before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: var(--space-4);
+    top: var(--space-3);
+    width: 35%;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  } */
+
+  .games-table td:before {
+    left: var(--space-4) !important;
+    width: 35% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  
+  /* Game title mobile styling */
+  .game-title {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+  
+  .game-title::before {
+    display: none; /* Remove emoji on mobile */
+  }
+  
+  /* Launch options button mobile optimization */
+  .launch-options-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px; /* Touch target */
+    margin: var(--space-2) 0 0 0;
+    padding: var(--space-3) var(--space-4);
+    box-sizing: border-box;
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+  }
+
+  .launch-options-btn::before {
+    font-size: var(--font-size-sm);
+  }
+  
+  /* Options count badge mobile */
+  .options-count {
+    min-width: var(--space-5);
+    height: var(--space-5);
+    font-size: var(--font-size-xs);
+    margin-left: var(--space-2);
+  }
+}
+
+/* Very Small Mobile Devices */
+@media (max-width: 375px) {
+  .games-table tr {
+    margin-bottom: var(--space-3);
+    border-radius: var(--radius-lg);
+  }
+  
+  .games-table td {
+    padding: var(--space-2) var(--space-3) var(--space-2) 45% !important;
+    min-height: var(--space-8);
+  }
+  
+  .games-table td:before {
+    left: var(--space-3);
+    top: var(--space-2);
+    width: 40%;
+    font-size: var(--font-size-xs);
+  }
+  
+  .game-title {
+    font-size: var(--font-size-sm);
+  }
+  
+  .launch-options-btn {
+    min-height: 44px;
+    font-size: var(--font-size-xs);
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* Launch Options Mobile */
+@media (max-width: 768px) {
+  /* Launch options row mobile */
+  .launch-options-row {
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    margin-top: 0;
+  }
+  
+  .launch-options-cell {
+    padding: var(--space-4) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  
+  .launch-options-list {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: visible;
+  }
+
+  /* Individual launch option cards mobile */
+  .launch-option {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-4);
+    margin: 0;
+    box-sizing: border-box;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .launch-option:hover {
+    transform: none;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Fix option command containers */
+  .option-command {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    box-sizing: border-box;
+    /* Allow horizontal scroll for long commands instead of hiding */
+    overflow-x: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    font-size: var(--font-size-sm);
+  }
+  
+  
+  .option-command:hover {
+    transform: none; /* Remove transform on mobile */
+  }
+  
+  .option-command::after {
+    content: '📋 Tap to copy';
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+    top: var(--space-1);
+    right: var(--space-2);
+  }
+  
+  .option-description {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: var(--space-3);
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+  }
+  
+  /* option meta information */
+  .option-meta {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    box-sizing: border-box;
+  }
+
+  .launch-options-close-container {
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    padding: var(--space-4) 0;
+    margin-top: var(--space-4);
+    box-sizing: border-box;
+  }
+  
+  /* SAFER close button */
+  .launch-options-close {
+    padding: var(--space-3) var(--space-6);
+    min-height: 44px;
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-lg);
+    max-width: 280px;
+    width: auto;
+    box-sizing: border-box;
+  }
+}
+
+/* Table Loading State Mobile */
+@media (max-width: 768px) {
+  .table-loading {
+    padding: var(--space-12) var(--space-4);
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .loading-spinner {
+    width: var(--space-5);
+    height: var(--space-5);
+  }
+}
+
+/* Empty States Mobile */
+@media (max-width: 768px) {
+  .empty-table-state {
+    padding: var(--space-12) var(--space-4);
+    margin: var(--space-6) 0;
+    border-radius: var(--radius-xl);
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+  }
+  
+  .empty-title {
+    font-size: var(--font-size-xl);
+    margin-bottom: var(--space-3);
+  }
+  
+  .empty-description {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--space-6);
+  }
+  
+  .empty-stats {
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  
+  .stat-card {
+    min-width: auto;
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  
+  .stat-number {
+    font-size: var(--font-size-xl);
+  }
+  
+  .empty-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 280px;
+    min-height: 44px;
+    justify-content: center;
+  }
+  
+  .suggestion-chips {
+    gap: var(--space-2);
+    justify-content: center;
+  }
+  
+  .suggestion-chip {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+    min-height: 36px;
+  }
+  
+  .search-tips {
+    text-align: center;
+  }
+  
+  .search-tips li {
+    padding: var(--space-2) 0;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Options-First Toggle Mobile */
+@media (max-width: 768px) {
+  .options-first-toggle {
+    margin: var(--space-4) 0;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+  
+  .toggle-container {
+    gap: var(--space-3);
+  }
+  
+  .toggle-label {
+    font-size: var(--font-size-base);
+    gap: var(--space-3);
+  }
+  
+  .toggle-slider {
+    width: 3rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+  }
+  
+  .toggle-slider::before {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  .toggle-checkbox:checked + .toggle-slider::before {
+    transform: translateX(1.25rem);
+  }
+  
+  .toggle-description {
+    padding-left: 0;
+    margin-top: var(--space-2);
+  }
+  
+  .toggle-hint {
+    font-size: var(--font-size-sm);
+  }
+  
+  .toggle-stats {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+}
+
+/* Information Modal Mobile */
+@media (max-width: 768px) {
+  .info-modal-overlay {
+    padding: var(--space-4);
+  }
+  
+  .info-modal {
+    margin: 0;
+    max-height: 90vh;
+    border-radius: var(--radius-xl);
+  }
+  
+  .info-modal-header {
+    padding: var(--space-4);
+  }
+  
+  .info-modal-header h3 {
+    font-size: var(--font-size-lg);
+  }
+  
+  .info-modal-close {
+    padding: var(--space-2);
+    font-size: var(--font-size-xl);
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .info-modal-body {
+    padding: var(--space-4);
+    max-height: calc(90vh - 4rem);
+  }
+  
+  .info-modal-body p {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-3);
+  }
+  
+  .info-modal-body h4 {
+    font-size: var(--font-size-base);
+    margin: var(--space-4) 0 var(--space-2) 0;
+  }
+}
+
+/* Performance Optimizations for Mobile */
+@media (max-width: 768px) {
+  .games-table tbody tr,
+  .launch-option,
+  .option-command {
+    will-change: auto; /* Remove will-change for mobile performance */
+  }
+  
+  /* Optimize animations */
+  .launch-option:hover,
+  .option-command:hover {
+    transition: box-shadow var(--transition-fast);
+  }
+  
+  /* Contain repaints */
+  .games-table {
+    contain: layout;
+  }
+  
+  .launch-options-list {
+    contain: layout;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (pointer: coarse) {
+  .launch-options-btn,
+  .launch-options-close,
+  .option-command {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* active states for touch feedback */
+  .launch-options-btn:active {
+    transform: scale(0.95);
+    background: var(--color-accent-hover);
+  }
+  
+  .option-command:active {
+    transform: scale(0.98);
+    background: var(--color-interactive-hover);
+  }
+  
+  .suggestion-chip:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Landscape Mobile Optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .empty-table-state {
+    padding: var(--space-8) var(--space-4);
+    min-height: 20rem;
+  }
+  
+  .empty-stats {
+    flex-direction: row;
+    gap: var(--space-4);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .stat-card {
+    min-width: 100px;
+    max-width: 120px;
+  }
+  
+  .empty-actions {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .btn {
+    width: auto;
+    min-width: 120px;
+  }
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVE FOR FILTERS
+   ============================================================================= */
+   
+@media (max-width: 768px) {
+  /* Filter container mobile */
+  .filters-container,
+  .slops-filters,
+  .hero-filters .filters-container {
+    grid-template-columns: 1fr; /* Stack all filters vertically */
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-4);
+    margin-bottom: var(--space-6);
+    border-radius: var(--radius-xl);
+  }
+  
+  /* Filter group mobile layout */
+  .filter-group {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  
+  /* Filter labels mobile styling */
+  .filter-label {
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+  }
+  
+  /* Dropdown filters mobile optimization */
+  .filter-select,
+  .sort-select {
+    min-height: 44px; /* Touch target */
+    padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+    font-size: 16px; 
+    border-radius: var(--radius-lg);
+    background-size: 1em 1em;
+    background-position: right var(--space-3) center;
+  }
+
+  .filter-select,
+  .show-all-checkbox-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    min-height: 44px;
+    font-size: 16px !important;
+    overflow: hidden;
+  }
+  
+  /* Show All Games checkbox mobile fixes */
+  .show-all-checkbox-container {
+    min-height: 44px; 
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  
+  .checkbox-label-text {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .checkbox-stats {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  /* Active filters mobile layout */
+  .active-filters {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  
+  .filter-tag {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .filter-remove {
+    width: var(--space-4);
+    height: var(--space-4);
+    font-size: var(--font-size-xs);
+    flex-shrink: 0;
+  }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .filters-container,
+  .slops-filters,
+  .hero-filters .filters-container {
+    padding: var(--space-4) var(--space-3);
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  
+  .filter-group {
+    gap: var(--space-1);
+  }
+  
+  .filter-label {
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--space-1);
+  }
+
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: 44px;
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
+  }
+  
+  .show-all-checkbox-container {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+  
+  .checkbox-label-text {
+    font-size: var(--font-size-xs);
+  }
+  
+  .checkbox-stats {
+    font-size: 0.6875rem;
+    padding: 2px 6px;
+  }
+  
+  /* Active filters mobile optimization */
+  .active-filters {
+    padding: 0 var(--space-3);
+    gap: var(--space-1);
+  }
+  
+  .filter-tag {
+    font-size: 0.6875rem;
+    padding: var(--space-1) var(--space-2);
+    max-width: 150px;
+  }
+  
+  .filter-remove {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    margin-left: var(--space-1);
+  }
+}
+
+/* Year Filter Mobile */
+@media (max-width: 768px) {
+  .year-filter-container {
+    flex-direction: column;
+    gap: var(--space-3);
+    align-items: stretch;
+  }
+  
+  .year-select {
+    flex: none;
+    max-width: none;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  .year-divider {
+    text-align: center;
+    margin: var(--space-1) 0;
+  }
+  
+  .year-input {
+    flex: none;
+    max-width: none;
+    min-height: 44px;
+    font-size: 16px;
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .filter-group:has(.year-filter-container) {
+    min-width: auto;
+  }
+}
+
+/* Landscape Mobile Optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .filters-container,
+  .slops-filters,
+  .hero-filters .filters-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+  
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: 40px;
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Fix for Dropdown Options on Mobile */
+@media (max-width: 768px) {
+  .filter-select option,
+  .sort-select option {
+    padding: 12px 16px !important;
+    min-height: 44px !important;
+    font-size: 16px !important;
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
+  }
+  
+  /* dropdown styling for mobile */
+  .filter-select:focus,
+  .sort-select:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: none;
+  }
+}
+
+/* Touch Device Optimizations */
+@media (pointer: coarse) {
+  /* Larger touch targets for all interactive filter elements */
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: 44px;
+    min-width: 44px;
+    cursor: pointer;
+  }
+  
+  .filter-tag {
+    min-height: 32px;
+    padding: var(--space-2) var(--space-4);
+  }
+  
+  .filter-remove {
+    min-width: 24px;
+    min-height: 24px;
+    touch-action: manipulation;
+  }
+  
+  /* Enhance hover states for touch */
+  .filter-select:active,
+  .sort-select:active {
+    background-color: var(--color-interactive-hover);
+    transform: scale(0.98);
+  }
+  
+  .show-all-checkbox-container:active {
+    background-color: var(--color-interactive-hover);
+    transform: scale(0.98);
+  }
+}
+
+/* Performance Optimizations for Mobile */
+@media (max-width: 768px) {
+  .filter-tag {
+    transition: background-color var(--transition-fast);
+  }
+  
+  .filter-tag::before {
+    display: none; 
+  }
+  
+  .filter-select,
+  .sort-select {
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  }
+  
+  /* Optimize repaints */
+  .filters-container,
+  .slops-filters {
+    contain: layout;
+  }
+}
+
+/* Results Header Mobile */
+@media (max-width: 768px) {
+  .results-header,
+  .slops-results-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4);
+    text-align: center;
+  }
+  
+  .results-count {
+    font-size: var(--font-size-sm);
+    order: -1; /* Show count first */
+  }
+}
+
+/* Fix for Safari Mobile */
+@supports (-webkit-touch-callout: none) {
+  .filter-select,
+  .sort-select {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  .show-all-checkbox-container {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Accessibility for Mobile */
+@media (max-width: 768px) {
+  .filter-select:focus-visible,
+  .sort-select:focus-visible,
+  #showAllGamesFilter:focus + .show-all-checkbox-container {
+    outline: 2px solid var(--color-interactive-focus);
+    outline-offset: 2px;
+  }
+  
+  .filter-label {
+    position: relative;
+  }
+  
+  .checkbox-label-text {
+    cursor: pointer;
+  }
+}
+
+/* =============================================================================
+   MOBILE RESPONSIVE FOR HERO SECTION
+   ============================================================================= */
+
+/* Mobile Breakpoints */
+@media (max-width: 768px) {
+  .hero-section {
+    min-height: 60vh;
+    margin-bottom: var(--space-8);
+    padding: var(--space-4) 0; 
+  }
+  
+  .hero-content {
+    padding: var(--space-6) var(--space-4);
+  }
+  
+  .hero-branding {
+    gap: var(--space-4);
+    margin-bottom: var(--space-4); 
+  }
+  
+  .hero-logo {
+    width: 70px;
+    height: 70px;
+  }
+  
+  /* Fix title overflow issues */
+  .hero-title-main {
+    font-size: clamp(2rem, 8vw, 3rem); 
+    line-height: 1.1;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  .hero-title-accent {
+    font-size: clamp(1.125rem, 4vw, 1.5rem);
+    line-height: 1.2;
+  }
+  
+  /* Search section mobile fixes */
+  .hero-search {
+    margin-bottom: var(--space-6);
+  }
+  
+  .hero-search .search-input {
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-12);
+    font-size: var(--font-size-base);
+    min-height: 44px; /* Ensure touch target */
+  }
+  
+  .hero-search .search-icon {
+    left: var(--space-3);
+    font-size: var(--font-size-lg);
+  }
+  
+  /* Stats section mobile layout */
+  .hero-stats {
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
+    padding: 0 var(--space-4);
+  }
+  
+  .stat-item {
+    flex-direction: row;
+    gap: var(--space-3);
+    min-width: auto;
+    width: 100%;
+    max-width: 280px;
+    padding: var(--space-3) var(--space-4);
+    margin: 0 auto;
+  }
+  
+  .stat-number {
+    font-size: var(--font-size-xl);
+  }
+  
+  /* Filter container mobile */
+  .hero-filters {
+    padding: 0 0.75rem !important; 
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .filters-container,
+  .hero-filters .filters-container {
+    padding: var(--space-4) var(--space-3) !important;
+    gap: var(--space-3) !important;
+  }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .hero-section {
+    min-height: 50vh;
+    margin-bottom: var(--space-6);
+  }
+  
+  .hero-content {
+    padding: var(--space-4) var(--space-3);
+  }
+  
+  .hero-logo {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .hero-title-main {
+    font-size: clamp(1.75rem, 10vw, 2.5rem);
+  }
+  
+  .hero-title-accent {
+    font-size: clamp(1rem, 5vw, 1.25rem);
+  }
+  
+  /* Search input mobile optimization */
+  .hero-search .search-input {
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-10);
+    font-size: 16px;
+  }
+  
+  .hero-search .search-icon {
+    left: var(--space-2);
+    font-size: var(--font-size-base);
+  }
+  
+  /* Stats mobile stacking */
+  .hero-stats {
+    gap: var(--space-2);
+  }
+  
+  .stat-item {
+    padding: var(--space-2) var(--space-3);
+    max-width: 240px;
+  }
+  
+  .stat-number {
+    font-size: var(--font-size-lg);
+  }
+  
+  .stat-label {
+    font-size: var(--font-size-xs);
+  }
+  
+  /* Filters mobile stacking */
+  .hero-filters .filters-container {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+  
+  .filter-label {
+    font-size: var(--font-size-sm);
+  }
+}
+
+/* Landscape Mobile Optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero-section {
+    min-height: 90vh;
+    padding: var(--space-2) 0;
+  }
+  
+  .hero-content {
+    padding: var(--space-4) var(--space-4);
+  }
+  
+  .hero-branding {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-3);
+  }
+  
+  .hero-logo {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .hero-stats {
+    flex-direction: row;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+  
+  .stat-item {
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 80px;
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* Search Pending Indicator Mobile Fix */
+@media (max-width: 768px) {
+  .search-pending-indicator {
+    right: var(--space-3);
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Suggestions Dropdown Mobile */
+@media (max-width: 768px) {
+  .hero-search .suggestions-dropdown {
+    left: -var(--space-4);
+    right: -var(--space-4);
+    border-radius: var(--radius-lg);
+    max-height: 12rem; 
+  }
+  
+  .suggestion-item {
+    padding: var(--space-3) var(--space-4);
+    min-height: 44px; /* Touch target */
+  }
+  
+  .suggestion-value {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .hero-section {
+    min-height: -webkit-fill-available;
+  }
+}
+
