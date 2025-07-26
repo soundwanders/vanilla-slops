@@ -129,7 +129,7 @@ async function addShowAllGamesFilter() {
       aria-describedby="showAllGamesHelp"
     />
     <label for="showAllGamesFilter" class="show-all-checkbox-container">
-      <span class="checkbox-label-text">Include games without launch options</span>
+      <span class="checkbox-label-text">Show All</span>
       <span class="checkbox-stats" id="showAllStats">
         ${isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`}
       </span>
