@@ -124,7 +124,7 @@ export async function fetchGames({
       throw new Error('Failed to fetch games from database');
     }
 
-    // Get facets for better filtering UI
+    // Fetch facets for dynamic UI generation
     const facets = await getFacets(searchTerm);
     
     return {
@@ -222,7 +222,23 @@ function applySearchFilters(query, filters) {
 
   // Release year filter
   if (yearFilter) {
-    query = query.like('release_date', `%${yearFilter}%`);
+    console.log(`📅 Year filter: ${yearFilter}`);
+    const year = yearFilter.trim();
+    
+    try {
+      const yearInt = parseInt(year, 10);
+      
+      if (!isNaN(yearInt) && yearInt >= 1980 && yearInt <= new Date().getFullYear() + 1) {
+        // Multiple fallback strategies for timestamp compatibility
+        query = query.or(`extract(year from release_date)::text.eq.${yearInt},release_date.ilike.%${year}%`);
+      } else {
+        console.warn(`⚠️ Invalid year format: ${year}`);
+      }
+    } catch (error) {
+      console.error(`❌ Year filter error: ${error.message}`);
+      // Fallback to simple string matching
+      query = query.ilike('release_date', `%${year}%`);
+    }
   }
 
   // Has launch options filter
@@ -264,7 +280,7 @@ function applySorting(query, sort, order) {
       sortField = 'total_options_count';
       break;
     case 'relevance':
-      // For relevance, we'll use title for now, but could implement more complex scoring
+      // For relevance, we use title, but could implement more complex scoring
       sortField = 'title';
       break;
   }
@@ -514,6 +530,73 @@ async function getReleaseYears(searchQuery = '') {
   } catch (error) {
     console.error('Error in getReleaseYears:', error);
     return [];
+  }
+}
+
+/**
+ * Get game statistics for progressive disclosure UI
+ * Counts games with and without launch options, optionally filtered
+ * 
+ * @async
+ * @function getGameStatistics
+ * @param {Object} filters - Filter parameters to scope statistics
+ * @param {string} [filters.search] - Search term
+ * @param {string} [filters.searchQuery] - Alternative search parameter
+ * @param {string} [filters.developer] - Developer filter
+ * @param {string} [filters.category] - Category filter
+ * @param {string} [filters.year] - Year filter
+ * @param {string} [filters.engine] - Engine filter
+ * @returns {Promise<Object>} Statistics object with counts and percentages
+ * @property {number} withOptions - Count of games with launch options
+ * @property {number} withoutOptions - Count of games without launch options
+ * @property {number} total - Total games matching filters
+ * @property {number} percentageWithOptions - Percentage of games with options
+ * @throws {Error} When database queries fail
+ */
+export async function getGameStatistics(filters = {}) {
+  try {
+    console.log('📊 Calculating game statistics with filters:', filters);
+
+    let query = supabase
+      .from('games')
+      .select('total_options_count', { count: 'exact' });
+
+    // Apply same filters as main games query
+    query = applySearchFilters(query, {
+      searchTerm: filters.search || filters.searchQuery || '',
+      developer: filters.developer || '',
+      genre: filters.category || '',
+      engine: filters.engine || '',
+      yearFilter: filters.year || ''
+    });
+
+    const { data, count, error } = await query;
+    
+    if (error) {
+      console.error('Statistics query error:', error);
+      throw new Error('Failed to fetch game statistics from database');
+    }
+
+    const gamesWithOptions = data?.filter(game => 
+      game.total_options_count && game.total_options_count > 0
+    ).length || 0;
+    
+    const total = count || 0;
+    const gamesWithoutOptions = total - gamesWithOptions;
+    const percentageWithOptions = total > 0 ? (gamesWithOptions / total) * 100 : 0;
+
+    const statistics = {
+      withOptions: gamesWithOptions,
+      withoutOptions: gamesWithoutOptions,
+      total: total,
+      percentageWithOptions: Math.round(percentageWithOptions * 10) / 10
+    };
+
+    console.log('✅ Statistics calculated:', statistics);
+    return statistics;
+  } catch (error) {
+    console.error('Error in getGameStatistics:', error);
+    throw error;
   }
 }
 

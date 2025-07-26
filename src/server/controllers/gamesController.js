@@ -3,7 +3,8 @@ import {
   getSearchSuggestions, 
   getFacets,
   fetchGameWithLaunchOptions,
-  fetchLaunchOptionsForGame
+  fetchLaunchOptionsForGame,
+  getGameStatistics
 } from '../services/gamesService.js';
 
 /**
@@ -34,34 +35,105 @@ import {
  */
 export async function gamesController(req, res) {
   try {
-    // Map frontend filter names to backend expectations
+    console.log('🔍 === BACKEND DEBUG SESSION ===');
+    console.log('🔍 RAW REQUEST:', {
+      url: req.url,
+      query: req.query,
+      queryKeys: Object.keys(req.query),
+      hasOptionsRaw: req.query.hasOptions,
+      showAllRaw: req.query.showAll,
+      hasOptionsType: typeof req.query.hasOptions,
+      showAllType: typeof req.query.showAll
+    });
+
+    // Parameter extraction and conversion
+    const hasOptionsParam = req.query.hasOptions;
+    const showAllParam = req.query.showAll;
+    
+    // Helper function to parse boolean parameters
+    function parseBoolean(value) {
+      if (value === true || value === 'true') return true;
+      if (value === false || value === 'false') return false;
+      return undefined;
+    }
+    
+    const hasOptions = parseBoolean(hasOptionsParam);
+    const showAll = parseBoolean(showAllParam);
+
+    console.log('🎯 PARSED PARAMETERS (FIXED):', {
+      hasOptions,
+      showAll,
+      hasOptionsType: typeof hasOptions,
+      showAllType: typeof showAll,
+      hasOptionsRaw: hasOptionsParam,
+      showAllRaw: showAllParam
+    });
+
+    // Build filters object
     const filters = {
       search: req.query.search || '',
-      searchQuery: req.query.search || '', // Support both formats
+      searchQuery: req.query.search || '',
       genre: req.query.genre || req.query.category || '',
       engine: req.query.engine || '',
       platform: req.query.platform || '',
       developer: req.query.developer || '',
       category: req.query.category || '',
-      options: req.query.options || '', // 'has-options', 'no-options', 'performance', 'graphics'
+      options: req.query.options || '',
       year: req.query.year || '',
       releaseYear: req.query.year || '',
       sort: req.query.sort || 'title',
       order: req.query.order || 'asc',
       page: parseInt(req.query.page, 10) || 1,
       limit: parseInt(req.query.limit, 10) || 20,
+      showAll: showAll,
+      hasOptions: hasOptions
     };
 
-    // Handle special filter cases
-    if (filters.options === 'has-options') {
+    // Map to hasLaunchOptions for the service layer
+    if (showAll === true) {
+      filters.hasLaunchOptions = undefined; // Show all games
+      console.log('🌍 SHOW ALL MODE - no hasLaunchOptions filtering');
+    } else if (hasOptions === true) {
+      filters.hasLaunchOptions = true; // Only games with options
+      console.log('🎯 OPTIONS-FIRST MODE - games with options only');
+    } else if (hasOptions === false) {
+      filters.hasLaunchOptions = false; // Only games without options
+      console.log('🚫 NO-OPTIONS MODE - games without options only');
+    } else {
+      // DEFAULT BEHAVIOR: Show games with options first
       filters.hasLaunchOptions = true;
-    } else if (filters.options === 'no-options') {
-      filters.hasLaunchOptions = false;
+      console.log('⚡ DEFAULT MODE - defaulting to OPTIONS-FIRST');
     }
+
+    console.log('📋 FINAL FILTERS SENT TO SERVICE:', {
+      hasLaunchOptions: filters.hasLaunchOptions,
+      showAll: filters.showAll,
+      hasOptions: filters.hasOptions,
+      search: filters.search,
+      developer: filters.developer,
+      sort: filters.sort,
+      order: filters.order
+    });
 
     const result = await fetchGames(filters);
     
-    // Ensure consistent response format
+    console.log(`📊 BACKEND RESULT SUMMARY:`, {
+      totalGames: result.total,
+      gamesReturned: result.games?.length,
+      showAllMode: showAll === true,
+      hasLaunchOptionsFilter: filters.hasLaunchOptions,
+      expectedBehavior: showAll === true ? 'Should show ALL games including those without options' : 'Should show only games WITH options'
+    });
+
+    // Log some sample games to verify filtering
+    if (result.games?.length > 0) {
+      const sampleGames = result.games.slice(0, 3).map(game => ({
+        title: game.title,
+        optionsCount: game.total_options_count || 0
+      }));
+      console.log('📝 SAMPLE GAMES RETURNED:', sampleGames);
+    }
+    
     res.json({
       games: result.games || [],
       total: result.total || 0,
@@ -69,10 +141,17 @@ export async function gamesController(req, res) {
       currentPage: result.currentPage || 1,
       hasNextPage: result.hasNextPage || false,
       hasPrevPage: result.hasPrevPage || false,
-      facets: result.facets || {}
+      facets: result.facets || {},
+      // Add debug info to response (remove in production)
+      debug: {
+        receivedShowAll: showAll,
+        receivedHasOptions: hasOptions,
+        appliedHasLaunchOptions: filters.hasLaunchOptions,
+        mode: showAll === true ? 'SHOW_ALL' : 'OPTIONS_FIRST'
+      }
     });
   } catch (err) {
-    console.error('Error in gamesController:', err.message);
+    console.error('❌ Error in gamesController:', err.message);
     res.status(500).json({ 
       error: 'Failed to fetch games',
       details: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -212,3 +291,51 @@ export async function gameLaunchOptionsController(req, res) {
     });
   }
 }
+
+/**
+ * Retrieves game statistics for progressive disclosure UI
+ * Provides counts of games with/without launch options for Show All Games filter
+ * 
+ * @async
+ * @function gameStatisticsController
+ * @param {Object} req - Express request object
+ * @param {Object} [req.query] - Optional query parameters for scoped statistics
+ * @param {string} [req.query.search] - Search term to scope statistics
+ * @param {string} [req.query.developer] - Developer filter
+ * @param {string} [req.query.category] - Category filter
+ * @param {string} [req.query.year] - Year filter
+ * @param {Object} res - Express response object
+ * @returns {Promise<void>} JSON response with game statistics
+ * @throws {Error} 500 - When database query fails
+ */
+export async function gameStatisticsController(req, res) {
+  try {
+    console.log('📊 Fetching game statistics with filters:', req.query);
+
+    // Map filters similar to main games controller
+    const filters = {
+      search: req.query.search || '',
+      searchQuery: req.query.search || '',
+      developer: req.query.developer || '',
+      category: req.query.category || '',
+      year: req.query.year || '',
+      engine: req.query.engine || ''
+    };
+
+    const statistics = await getGameStatistics(filters);
+    
+    console.log('📈 Game statistics result:', statistics);
+    
+    res.json(statistics);
+  } catch (err) {
+    console.error('Error in gameStatisticsController:', err.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch game statistics',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+}
+
+
+
+
