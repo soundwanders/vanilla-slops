@@ -1,0 +1,169 @@
+/* -----------------------------------------------------------------------------
+   DROPDOWN OPTION STYLING
+   ----------------------------------------------------------------------------- */
+
+.filter-select,
+.sort-select,
+#categoryFilter,
+#developerFilter,
+#optionsFilter,
+#yearFilter,
+#yearFilterSelect,
+#sortSelect {
+  height: 2.75rem !important;
+  padding: 0.5rem 2.5rem 0.5rem 0.75rem !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.25rem !important;
+}
+
+.filter-select option,
+.select option,
+#categoryFilter option,
+#developerFilter option,
+#optionsFilter option,
+#yearFilter option,
+#sortSelect option {
+  /* Force dark background for options */
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  
+  /* Ensure proper styling */
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 500 !important;
+  
+  /* Remove any browser defaults */
+  border: none !important;
+  outline: none !important;
+}
+
+/* Hover state for options */
+.filter-select option:hover,
+select option:hover {
+  background-color: var(--color-interactive-hover) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Selected option styling */
+.filter-select option:checked,
+select option:checked {
+  background-color: var(--color-accent) !important;
+  color: var(--color-text-inverse) !important;
+  font-weight: 600 !important;
+}
+
+/* Dark theme specific option styling */
+[data-theme="dark"] .filter-select option,
+[data-theme="dark"] select option {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .filter-select option:hover,
+[data-theme="dark"] select option:hover {
+  background-color: var(--color-interactive-hover) !important;
+}
+
+[data-theme="dark"] .filter-select option:checked,
+[data-theme="dark"] select option:checked {
+  background-color: var(--color-accent) !important;
+  color: var(--color-text-inverse) !important;
+}
+
+/* Browser-specific fixes */
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+@supports (-webkit-appearance: none) {
+  .filter-select option,
+  select option {
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
+  }
+  
+  /* WebKit dropdown background fix */
+  .filter-select,
+  select {
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
+  }
+}
+
+/* Firefox specific fixes */
+@-moz-document url-prefix() {
+  .filter-select option,
+  select option {
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
+  }
+}
+
+/* Alternative approach - more aggressive styling */
+.filters-container select option,
+.hero-filters select option,
+.slops-filters select option {
+  background: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  padding: 8px 12px !important;
+}
+
+/* Ensure the select dropdown itself has proper background */
+.filter-select:focus,
+select:focus {
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Nuclear option - if above doesn't work in all browsers */
+.filter-select,
+.sort-select,
+#categoryFilter,
+#developerFilter,
+#optionsFilter,
+#yearFilter,
+#sortSelect {
+  /* Ensure select element has dark background */
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  
+  /* Remove any conflicting styling */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Style the dropdown when it's open */
+.filter-select[aria-expanded="true"],
+select[aria-expanded="true"] {
+  background-color: var(--color-surface-raised) !important;
+}
+
+/* Try to style the dropdown list itself (browser dependent) */
+.filter-select optgroup,
+select optgroup {
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Alternative fix using CSS variables directly */
+:root {
+  color-scheme: dark; /* Tell browser we prefer dark styling */
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Force styling for all option elements globally */
+option {
+  background-color: var(--color-surface-raised, #1e293b) !important;
+  color: var(--color-text-primary, #f1f5f9) !important;
+}
+
+/* Last resort - inline styling override */
+.filter-select option[style],
+select option[style] {
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+}

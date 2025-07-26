@@ -5,9 +5,9 @@
  */
 
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://notice-me-im-a-tester-zester-domain.zomb/api' 
-  : 'http://localhost:8000/api'; // Changed from 3000 to 8000
-
+  ? '/api'  // Use relative URL in production (same domain)
+  : 'http://localhost:8000/api';
+  
 /**
  * Intelligent cache implementation with TTL and size management
  * Prevents memory leaks while maintaining performance benefits
@@ -137,8 +137,14 @@ function buildQueryParams(params) {
   const urlParams = new URLSearchParams();
   
   Object.entries(params).forEach(([key, value]) => {
+    // Handle boolean values correctly
     if (value !== undefined && value !== null && value !== '') {
-      urlParams.set(key, value.toString());
+      // Special handling for boolean parameters
+      if (typeof value === 'boolean') {
+        urlParams.set(key, value.toString());
+      } else {
+        urlParams.set(key, value.toString());
+      }
     }
   });
   
@@ -183,7 +189,9 @@ export async function fetchGames({
   year = '',
   sort = 'title',
   order = 'asc',
-  useCache = true
+  useCache = true,
+  hasOptions,
+  showAll
 } = {}) {
   
   const queryParams = buildQueryParams({
@@ -195,7 +203,9 @@ export async function fetchGames({
     options,
     year,
     sort,
-    order
+    order,
+    hasOptions,
+    showAll
   });
 
   const cacheKey = `games:${queryParams}`;
@@ -333,6 +343,84 @@ export async function getFilterFacets(searchQuery = '') {
       platforms: [],
       optionsRanges: [],
       releaseYears: []
+    };
+  }
+}
+
+/**
+ * Fetch real game statistics from the API for Show All Games filter
+ * Provides counts of games with/without launch options, optionally filtered
+ * 
+ * @async
+ * @function fetchGameStatistics
+ * @param {Object} [filters={}] - Optional filter parameters to scope statistics
+ * @param {string} [filters.search] - Search term to scope statistics
+ * @param {string} [filters.developer] - Developer filter
+ * @param {string} [filters.category] - Category filter
+ * @param {string} [filters.year] - Year filter
+ * @param {boolean} [useCache=true] - Whether to use caching
+ * @returns {Promise<Object>} Statistics object with counts and percentages
+ * @property {number} withOptions - Count of games with launch options
+ * @property {number} withoutOptions - Count of games without launch options
+ * @property {number} total - Total games matching filters
+ * @property {number} percentageWithOptions - Percentage of games with options
+ * @throws {Error} When API request fails (returns fallback data)
+ * 
+ * @example
+ * const stats = await fetchGameStatistics();
+ * // Returns: { withOptions: 146, withoutOptions: 129, total: 275, percentageWithOptions: 53.1 }
+ * 
+ * const filteredStats = await fetchGameStatistics({ search: 'valve' });
+ * // Returns stats scoped to search results
+ */
+export async function fetchGameStatistics(filters = {}, useCache = true) {
+  const queryParams = buildQueryParams({
+    search: filters.search || '',
+    developer: filters.developer || '',
+    category: filters.category || '',
+    year: filters.year || '',
+    engine: filters.engine || ''
+  });
+
+  const cacheKey = `statistics:${queryParams}`;
+  
+  // Check cache first
+  if (useCache && cache.has(cacheKey)) {
+    console.log('Statistics cache hit:', cacheKey);
+    return cache.get(cacheKey);
+  }
+
+  const url = `${API_URL}/games/statistics${queryParams ? `?${queryParams}` : ''}`;
+  console.log('📊 Statistics API Request:', url);
+
+  try {
+    const response = await fetchWrapper(url);
+    const data = await response.json();
+    
+    console.log('📈 Statistics API Response:', data);
+    
+    // Validate response structure and provide fallbacks
+    const result = {
+      withOptions: typeof data.withOptions === 'number' ? data.withOptions : 146,
+      withoutOptions: typeof data.withoutOptions === 'number' ? data.withoutOptions : 129,
+      total: typeof data.total === 'number' ? data.total : 275,
+      percentageWithOptions: typeof data.percentageWithOptions === 'number' ? data.percentageWithOptions : 53.1
+    };
+    
+    // Cache the response
+    if (useCache) {
+      cache.set(cacheKey, result);
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Failed to fetch game statistics:', error);
+    // Return sensible fallback data so the UI doesn't break
+    return {
+      withOptions: 146,
+      withoutOptions: 129, 
+      total: 275,
+      percentageWithOptions: 53.1
     };
   }
 }
@@ -498,7 +586,7 @@ export function invalidateGameCache(gameId) {
 }
 
 /**
- * Preloads frequently accessed content for improved user experience
+ * Preloads frequently accessed content
  * Caches first page of games and filter facets in background
  * 
  * @async

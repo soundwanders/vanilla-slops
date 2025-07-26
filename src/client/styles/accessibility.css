@@ -41,6 +41,19 @@
   .form-textarea {
     border-width: 2px;
   }
+
+    .option-command {
+    border-width: 2px;
+  }
+  
+  .option-command:hover,
+  .option-command:focus {
+    border-width: 3px;
+  }
+  
+  .launch-option {
+    border-width: 2px;
+  }
 }
 
 /* Reduced Motion Support */
@@ -63,6 +76,53 @@
     animation: none;
     background: var(--color-surface);
   }
+
+  .option-command,
+  .launch-option,
+  .launch-options-btn,
+  .launch-options-close {
+    transition: none;
+    animation: none;
+  }
+  
+  .option-command:hover {
+    transform: none;
+  }
+  
+  .launch-option:hover {
+    transform: none;
+  }
+  
+  .launch-options-btn:hover {
+    transform: none;
+  }
+  
+  .launch-options-close:hover {
+    transform: none;
+  }
+  
+  .option-command.copied,
+  .option-command.copy-failed {
+    animation: none;
+  }
+  
+  .launch-options-row[style*="table-row"],
+  .launch-options-row[style*="none"] {
+    animation: none;
+  }
+
+  .empty-icon {
+    animation: none;
+  }
+  
+  .info-modal-overlay,
+  .info-modal {
+    animation: none;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Screen Reader Improvements */
@@ -75,10 +135,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Skip Links */
+/* Skip link for accessibility */
 .skip-link {
   position: absolute;
-  top: -40px;
+  top: -60px;
   left: 6px;
   background: var(--color-accent);
   color: var(--color-text-inverse);
@@ -91,4 +151,10 @@ textarea:focus-visible {
 
 .skip-link:focus {
   top: 6px;
+}
+
+.skip-link:focus-visible {
+  top: 6px;
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
 }

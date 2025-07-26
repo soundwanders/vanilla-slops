@@ -1,39 +1,20 @@
 /**
- * @fileoverview Search component with backend integration
- * Provides real-time search suggestions, filter management, and keyboard navigation
- * Integrates with Steam Launch Options API for dynamic results rendering
+ * @fileoverview Search component
+ * Single source of truth for all search interactions
+ * Eliminates duplicate event listeners and implements smart debouncing
+ * Supports click-outside detection to prevent unnecessary searches
+ * Handles both fast suggestions and deliberate search with progressive debouncing
+ * @module SlopSearch
+ * @requires api.js
+ * @requires styles/animations.css
+ * @requires styles/search.css
+ * @requires utils.js
+ * @requires constants.js
+ * @requires SlopSearchConfig.js
+ * @requires SlopSearchUtils.js
+ * 
  */
 
-/**
- * @typedef {Object} SlopSearchConfig
- * @property {string} [inputId='searchInput'] - ID of search input element
- * @property {string} [suggestionsId='suggestionsDropdown'] - ID of suggestions dropdown
- * @property {string} [resultsId='resultsList'] - ID of results container
- * @property {string} [resultsCountId='resultsCount'] - ID of results count display
- * @property {string} [activeFiltersId='activeFilters'] - ID of active filters container
- * @property {string} [sortId='sortSelect'] - ID of sort selection dropdown
- * @property {Object} [filters={}] - Map of filter keys to element IDs
- */
-
-/**
- * Advanced search component with autocomplete, filtering, and sorting capabilities
- * Manages search state, communicates with backend APIs, and provides rich UI interactions
- * 
- * @class SlopSearch
- * @param {SlopSearchConfig} config - Configuration object for component initialization
- * 
- * @example
- * const searchComponent = new SlopSearch({
- *   inputId: 'searchInput',
- *   filters: {
- *     category: 'categoryFilter',
- *     developer: 'developerFilter'
- *   }
- * });
- * searchComponent.onFilterChange = (filters) => {
- *   console.log('Filters changed:', filters);
- * };
- */
 export default class SlopSearch {
   constructor({
     inputId = 'searchInput',
@@ -71,47 +52,80 @@ export default class SlopSearch {
     this.currentOrder = 'asc';
     this.suggestions = [];
     this.selectedSuggestionIndex = -1;
-    this.searchTimeout = null;
+    
+    // Timing controls
     this.suggestionsTimeout = null;
+    this.searchTimeout = null;
+    this.keystrokeCount = 0;
+    this.lastKeystrokeTime = 0;
     this.isLoading = false;
 
-    // Callback for filter changes
+    // Callback for filter changes (will be set by main.js)
     this.onFilterChange = null;
+
+    // UX Configuration
+    this.config = {
+      suggestionsDelay: 150,        // Fast suggestions
+      searchDelay: 800,             // Slower main search (was 300ms)
+      minCharsForSuggestions: 2,    // Start suggestions after 2 chars
+      minCharsForSearch: 3,         // Only search after 3 chars
+      maxSearchDelay: 2000,         // Max delay for progressive debounce
+      enableSearchOnEnter: true,    // Allow Enter key to trigger immediate search
+      enableProgressiveDebounce: true, // Longer delays for rapid typing
+      enableClickOutsideSearch: true  // Search when clicking outside
+    };
+
+    // Define safe zones where clicks shouldn't trigger searches
+    this.safeZones = [
+      '.search-input-wrapper',
+      '.search-field', 
+      '.suggestions-dropdown',
+      '.launch-options-row',        // Launch options area
+      '.launch-options-cell',       // Launch options cell
+      '.launch-option',             // Individual launch options
+      '.option-command',            // Command areas
+      '.option-meta',               // Meta information areas
+      '.launch-options-btn',        // Launch options buttons
+      '.launch-options-close',      // Close buttons
+      '.filter-select',             // Filter dropdowns
+      '.active-filters',            // Active filter tags
+      '.pagination-container',      // Pagination
+      '.theme-toggle'               // Theme toggle
+    ];
 
     // Initialize
     this.initializeEventListeners();
     this.loadInitialData();
     
-    console.log('SlopSearch initialized with elements:', {
-      searchInput: !!this.searchInput,
-      suggestionsDropdown: !!this.suggestionsDropdown,
-      filterElements: Object.keys(this.filterElements)
-    });
+    console.log('🎯 SlopSearch initialized with click-outside detection');
   }
 
   /**
-   * Set up all event listeners
+   * Set up all event listeners with debouncing
+   * This is the ONLY place that listens to search input
    */
   initializeEventListeners() {
-    // Search input events
+    // Search input events with smart debouncing - SINGLE SOURCE OF TRUTH
     if (this.searchInput) {
       this.searchInput.addEventListener('input', (e) => this.handleSearchInput(e.target.value));
       this.searchInput.addEventListener('keydown', (e) => this.handleKeyNavigation(e));
       this.searchInput.addEventListener('focus', () => this.showSuggestions());
       this.searchInput.addEventListener('blur', () => {
-        // Delay hiding to allow suggestion clicks
         setTimeout(() => this.hideSuggestions(), 150);
       });
+
+      // Add additional search triggers
+      this.addSearchTriggers();
     }
 
-    // Filter element events
+    // Filter element events (immediate response for deliberate actions)
     Object.entries(this.filterElements).forEach(([filterKey, element]) => {
       element.addEventListener('change', (e) => {
         this.handleFilterChange(filterKey, e.target.value);
       });
     });
 
-    // Sort element events
+    // Sort element events (immediate response)
     if (this.sortSelect) {
       this.sortSelect.addEventListener('change', (e) => {
         this.handleSortChange(e.target.value);
@@ -120,46 +134,245 @@ export default class SlopSearch {
   }
 
   /**
-   * Handles search input with intelligent debouncing
-   * Triggers both search execution and suggestions fetching
-   * 
-   * @method handleSearchInput
-   * @param {string} query - User input query string
-   * @returns {void} Initiates debounced search and suggestions
+   * Search input handling with two-tier approach
+   * TIER 1: Fast suggestions (150ms)
+   * TIER 2: Deliberate search (800ms with progressive debouncing)
    */
   handleSearchInput(query) {
+    const now = Date.now();
     this.currentQuery = query.trim();
+    this.keystrokeCount++;
+    this.lastKeystrokeTime = now;
     
     // Clear existing timeouts
     clearTimeout(this.searchTimeout);
     clearTimeout(this.suggestionsTimeout);
     
-    // Debounced search
-    this.searchTimeout = setTimeout(() => {
-      this.notifyFilterChange();
-    }, 300);
-
-    // Fetch suggestions if query is long enough
-    if (query.length >= 2) {
+    // TIER 1: Fast suggestions (always quick and responsive)
+    if (query.length >= this.config.minCharsForSuggestions) {
       this.suggestionsTimeout = setTimeout(() => {
-        this.fetchSuggestions(query);
-      }, 150);
+        if (this.currentQuery === query.trim()) { // Only fetch if still current
+          this.fetchSuggestions(query);
+        }
+      }, this.config.suggestionsDelay);
     } else {
       this.hideSuggestions();
+    }
+
+    // TIER 2: Deliberate search (smart debouncing)
+    if (query.length >= this.config.minCharsForSearch) {
+      const searchDelay = this.calculateSearchDelay();
+      
+      this.searchTimeout = setTimeout(() => {
+        // Only search if this is still the current query
+        if (this.currentQuery === query.trim()) {
+          console.log(`🔍 Executing search after ${searchDelay}ms delay for: "${query}"`);
+          this.executeSearch();
+        }
+      }, searchDelay);
+      
+      // Show visual feedback that search is pending
+      this.showSearchPending();
+    } else if (query.length === 0) {
+      // Immediate search when clearing the field
+      this.executeSearch();
     }
   }
 
   /**
-   * Fetches search suggestions from backend API with error handling
-   * Implements intelligent caching and displays categorized results
+   * Calculate dynamic search delay based on user typing behavior
+   */
+  calculateSearchDelay() {
+    if (!this.config.enableProgressiveDebounce) {
+      return this.config.searchDelay;
+    }
+
+    const timeSinceLastKeystroke = Date.now() - this.lastKeystrokeTime;
+    const isRapidTyping = this.keystrokeCount > 3 && timeSinceLastKeystroke < 100;
+    
+    if (isRapidTyping) {
+      // User is typing rapidly, use longer delay
+      const progressiveDelay = Math.min(
+        this.config.searchDelay * 1.5,
+        this.config.maxSearchDelay
+      );
+      console.log(`⌨️ Rapid typing detected, using ${progressiveDelay}ms delay`);
+      return progressiveDelay;
+    }
+    
+    // Reset keystroke count after a pause
+    setTimeout(() => {
+      this.keystrokeCount = 0;
+    }, 1000);
+    
+    return this.config.searchDelay;
+  }
+
+  /**
+   * Add additional search triggers for better UX
+   * click-outside detection to respect safe zones
+   */
+  addSearchTriggers() {
+    // Search on Enter key (immediate)
+    if (this.config.enableSearchOnEnter) {
+      this.searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && this.selectedSuggestionIndex === -1) {
+          e.preventDefault();
+          clearTimeout(this.searchTimeout);
+          console.log('⚡ Immediate search triggered by Enter key');
+          this.executeSearch();
+        }
+      });
+    }
+
+    // click-outside detection with safe zones
+    if (this.config.enableClickOutsideSearch) {
+      document.addEventListener('click', (e) => {
+        // Check if click is in a safe zone
+        if (this.isClickInSafeZone(e.target)) {
+          return; // Don't trigger search for safe zone clicks
+        }
+        
+        // Only trigger search if we have a pending search timeout
+        if (this.searchTimeout) {
+          clearTimeout(this.searchTimeout);
+          console.log('⚡ Search triggered by clicking outside safe zones');
+          this.executeSearch();
+        }
+      });
+    }
+  }
+
+  /**
+   * New method to check if a click is in a safe zone
+   * Prevents search triggers when interacting with launch options and other UI elements
    * 
-   * @async
-   * @method fetchSuggestions
-   * @param {string} query - Search query (minimum 2 characters)
-   * @returns {Promise<void>} Updates suggestions state and renders dropdown
+   * @param {Element} target - The clicked element
+   * @returns {boolean} True if click is in a safe zone
+   */
+  isClickInSafeZone(target) {
+    // Check if the target or any of its parents match a safe zone selector
+    for (const selector of this.safeZones) {
+      if (target.closest(selector)) {
+        return true;
+      }
+    }
+    
+    // Special case: Check for launch options related elements by data attributes
+    const clickedElement = target.closest('[data-game-id]') || 
+                           target.closest('.launch-options-row') ||
+                           target.closest('.games-table tbody tr');
+    
+    if (clickedElement) {
+      return true;
+    }
+    
+    // Special case: Check if we're inside a table row that might contain launch options
+    const tableRow = target.closest('tr');
+    if (tableRow && tableRow.classList.contains('launch-options-row')) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Execute the actual search (separated from input handling)
+   */
+  executeSearch() {
+    this.hideSearchPending();
+    this.notifyFilterChange();
+  }
+
+  /**
+   * Show visual feedback that search is pending
+   */
+  showSearchPending() {
+    if (this.searchInput) {
+      this.searchInput.classList.add('search-pending');
+      
+      // Add a subtle indicator if it doesn't exist
+      if (!document.querySelector('.search-pending-indicator')) {
+        const indicator = document.createElement('div');
+        indicator.className = 'search-pending-indicator';
+        indicator.innerHTML = '⏱️';
+        indicator.title = 'Search pending... (press Enter for immediate search)';
+        
+        const searchWrapper = this.searchInput.closest('.search-input-wrapper, .search-field');
+        if (searchWrapper) {
+          searchWrapper.appendChild(indicator);
+        }
+      }
+    }
+  }
+
+  /**
+   * Hide search pending indicator
+   */
+  hideSearchPending() {
+    if (this.searchInput) {
+      this.searchInput.classList.remove('search-pending');
+    }
+    
+    const indicator = document.querySelector('.search-pending-indicator');
+    if (indicator) {
+      indicator.remove();
+    }
+  }
+
+  /**
+   * Keyboard navigation with immediate search on Enter
+   */
+  handleKeyNavigation(e) {
+    if (!this.suggestions || this.suggestions.length === 0) {
+      // If no suggestions, Enter should trigger immediate search
+      if (e.key === 'Enter' && this.config.enableSearchOnEnter) {
+        e.preventDefault();
+        clearTimeout(this.searchTimeout);
+        this.executeSearch();
+      }
+      return;
+    }
+
+    const maxIndex = this.suggestions.length - 1;
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        this.selectedSuggestionIndex = Math.min(this.selectedSuggestionIndex + 1, maxIndex);
+        this.renderSuggestions();
+        break;
+        
+      case 'ArrowUp':
+        e.preventDefault();
+        this.selectedSuggestionIndex = Math.max(this.selectedSuggestionIndex - 1, -1);
+        this.renderSuggestions();
+        break;
+        
+      case 'Enter':
+        e.preventDefault();
+        if (this.selectedSuggestionIndex >= 0) {
+          this.selectSuggestion(this.selectedSuggestionIndex);
+        } else {
+          // No suggestion selected, do immediate search
+          clearTimeout(this.searchTimeout);
+          this.executeSearch();
+        }
+        break;
+        
+      case 'Escape':
+        e.preventDefault();
+        this.hideSuggestions();
+        this.searchInput.blur();
+        break;
+    }
+  }
+
+  /**
+   * Fast suggestions fetching (keeps autocomplete snappy)
    */
   async fetchSuggestions(query) {
-    if (!query || query.length < 2) {
+    if (!query || query.length < this.config.minCharsForSuggestions) {
       this.hideSuggestions();
       return;
     }
@@ -184,23 +397,17 @@ export default class SlopSearch {
     }
   }
 
-  /**
-   * Renders search suggestions with categorization and highlighting
-   * Groups suggestions by type and highlights matching text
-   * 
-   * @method renderSuggestions
-   * @returns {void} Updates suggestions dropdown HTML
-   */
+  /** Render search suggestions */
   renderSuggestions() {
     if (!this.suggestionsDropdown) return;
 
+    // Simply hide dropdown when no suggestions - no indicator at all
     if (!this.suggestions || this.suggestions.length === 0) {
-      this.suggestionsDropdown.innerHTML = '<div class="suggestion-item no-suggestions">No suggestions found</div>';
-      this.showSuggestions();
+      this.hideSuggestions();
       return;
     }
 
-    // Group suggestions by category
+    // Rest of the existing code stays the same...
     const groupedSuggestions = this.suggestions.reduce((groups, suggestion, index) => {
       const category = suggestion.category || 'Other';
       if (!groups[category]) groups[category] = [];
@@ -215,8 +422,8 @@ export default class SlopSearch {
         const isSelected = item.originalIndex === this.selectedSuggestionIndex;
         html += `
           <div class="suggestion-item ${isSelected ? 'highlighted' : ''}" 
-               data-index="${item.originalIndex}"
-               data-value="${this.escapeHtml(item.value)}">
+              data-index="${item.originalIndex}"
+              data-value="${this.escapeHtml(item.value)}">
             <span class="suggestion-value">${this.highlightMatch(item.value, this.currentQuery)}</span>
           </div>
         `;
@@ -259,51 +466,7 @@ export default class SlopSearch {
   }
 
   /**
-   * Handles keyboard navigation within suggestions dropdown
-   * Supports arrow keys, Enter, and Escape for accessibility
-   * 
-   * @method handleKeyNavigation
-   * @param {KeyboardEvent} e - Keyboard event object
-   * @returns {void} Updates suggestion selection or executes actions
-   */
-  handleKeyNavigation(e) {
-    if (!this.suggestions || this.suggestions.length === 0) return;
-
-    const maxIndex = this.suggestions.length - 1;
-    
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        this.selectedSuggestionIndex = Math.min(this.selectedSuggestionIndex + 1, maxIndex);
-        this.renderSuggestions();
-        break;
-        
-      case 'ArrowUp':
-        e.preventDefault();
-        this.selectedSuggestionIndex = Math.max(this.selectedSuggestionIndex - 1, -1);
-        this.renderSuggestions();
-        break;
-        
-      case 'Enter':
-        e.preventDefault();
-        if (this.selectedSuggestionIndex >= 0) {
-          this.selectSuggestion(this.selectedSuggestionIndex);
-        } else {
-          this.hideSuggestions();
-          this.notifyFilterChange();
-        }
-        break;
-        
-      case 'Escape':
-        e.preventDefault();
-        this.hideSuggestions();
-        this.searchInput.blur();
-        break;
-    }
-  }
-
-  /**
-   * Select a suggestion and update search
+   * Select suggestion and trigger immediate search
    */
   selectSuggestion(index) {
     const suggestion = this.suggestions[index];
@@ -312,11 +475,15 @@ export default class SlopSearch {
     this.searchInput.value = suggestion.value;
     this.currentQuery = suggestion.value;
     this.hideSuggestions();
-    this.notifyFilterChange();
+    
+    // Immediate search when selecting a suggestion
+    clearTimeout(this.searchTimeout);
+    console.log('⚡ Immediate search triggered by suggestion selection');
+    this.executeSearch();
   }
 
   /**
-   * Handle filter changes
+   * Handle filter changes (immediate response for deliberate actions)
    */
   handleFilterChange(filterKey, value) {
     if (value && value.trim()) {
@@ -330,10 +497,9 @@ export default class SlopSearch {
   }
 
   /**
-   * Handle sort changes
+   * Handle sort changes (immediate response)
    */
   handleSortChange(sortValue) {
-    // Parse sort value (e.g., "title-asc", "year-desc")
     const [field, order] = sortValue.split('-');
     this.currentSort = field || 'title';
     this.currentOrder = order || 'asc';
@@ -401,6 +567,7 @@ export default class SlopSearch {
 
   /**
    * Notify parent component of filter changes
+   * This is called by main.js via the onFilterChange callback
    */
   notifyFilterChange() {
     const allFilters = {
@@ -416,16 +583,10 @@ export default class SlopSearch {
   }
 
   /**
-   * Loads initial data from backend to populate filter dropdowns
-   * Fetches available facets and populates select elements dynamically
-   * 
-   * @async
-   * @method loadInitialData
-   * @returns {Promise<void>} Populates filter options and performs initial search
+   * Load initial data from backend to populate filter dropdowns
    */
   async loadInitialData() {
     try {
-      // Load filter facets to populate dropdowns
       const response = await fetch('/api/games/facets');
       if (response.ok) {
         const facets = await response.json();
@@ -461,7 +622,6 @@ export default class SlopSearch {
    * Populate a select element with options
    */
   populateSelectOptions(selectElement, options, defaultText) {
-    // Keep existing options and add new ones
     const existingOptions = Array.from(selectElement.options).map(opt => opt.value);
     
     options.forEach(option => {
@@ -496,11 +656,11 @@ export default class SlopSearch {
   }
 
   /**
-   * Set loading state
+   * Configuration method for customizing timing
    */
-  setLoading(isLoading) {
-    this.isLoading = isLoading;
-    // Could add visual loading indicators here
+  configure(newConfig) {
+    this.config = { ...this.config, ...newConfig };
+    console.log('🎛️ Search configuration updated:', this.config);
   }
 
   /**
@@ -516,17 +676,18 @@ export default class SlopSearch {
   }
 
   /**
-   * Resets all search filters and state to default values
-   * Clears search input, filter selections, and active filter display
-   * 
-   * @method reset
-   * @returns {void} Resets component to initial state and triggers filter change
+   * Reset all search filters and state
    */
   reset() {
     this.currentQuery = '';
     this.currentFilters = {};
     this.currentSort = 'title';
     this.currentOrder = 'asc';
+    this.keystrokeCount = 0;
+    
+    // Clear timeouts
+    clearTimeout(this.searchTimeout);
+    clearTimeout(this.suggestionsTimeout);
     
     if (this.searchInput) this.searchInput.value = '';
     
@@ -538,6 +699,7 @@ export default class SlopSearch {
     
     this.renderActiveFilters();
     this.hideSuggestions();
+    this.hideSearchPending();
     this.notifyFilterChange();
   }
 }

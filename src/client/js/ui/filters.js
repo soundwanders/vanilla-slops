@@ -2,22 +2,20 @@
  * @fileoverview Filter management system for Vanilla Slops
  * Handles search filters, URL state management, and dynamic filter population
  * Integrates with Steam Launch Options API for real-time filter data
- */
-
-/**
- * Set up search filters and handle changes to inputs
- * Initializes event listeners, populates dynamic options, and manages filter state
- *
- * @param {Function} onChange - Callback function to execute when filters change
+ * @module Filters
+ * @requires utils.js
+ * @requires styles/filters.css
+ * @requires styles/animations.css
+ * @param {Function} onChange - Callback function to handle filter changes
  * @param {Object} onChange.filters - The updated filter object
  * @param {string} [onChange.filters.searchQuery] - Search query string
  * @param {string} [onChange.filters.category] - Selected category filter
  * @param {string} [onChange.filters.developer] - Selected developer filter
  * @param {string} [onChange.filters.engine] - Selected engine filter
  * @param {string} [onChange.filters.options] - Launch options filter type
- * @param {string} [onChange.filters.sort] - Sort field and order
  * @returns {void}
  */
+
 export function setupFilters(onChange) {
   // Support both old form-based approach and new direct element approach
   const form = document.getElementById('search-form-component');
@@ -326,8 +324,7 @@ function populateEngineFilterWithDefaults(engineFilter) {
 }
 
 /**
- * Improve the options filter with better, more descriptive labels
- * Replaces generic options with user-friendly descriptions
+ * Populate options filter with predefined options
  *
  * @returns {void}
  */
@@ -341,7 +338,7 @@ function improveOptionsFilter() {
   // Clear existing options
   optionsFilter.innerHTML = '';
   
-  // Add improved options with custom labels
+  // Add options with custom labels
   const options = [
     { value: '', label: 'All Games' },
     { value: 'has-options', label: 'Has Launch Options' },
@@ -363,8 +360,6 @@ function improveOptionsFilter() {
   if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
     optionsFilter.value = currentValue;
   }
-  
-  console.log('Options filter improved with better labels');
 }
 
 /**
@@ -457,8 +452,8 @@ function populateSelectFilter(filterId, options, defaultText) {
 }
 
 /**
- * Improved filter UI with styling and functionality
- * Adds custom styling and UX features
+ * Filter UI with styling and functionality
+ * 
  *
  * @returns {void}
  */

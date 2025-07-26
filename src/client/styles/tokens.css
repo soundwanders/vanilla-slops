@@ -9,6 +9,9 @@
   --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', monospace;
   --font-family-heading: var(--font-family-base);
+  --font-family-display: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
 
   /* Font Weights */
   --font-weight-light: 300;
@@ -46,14 +49,40 @@
   --space-2xl: clamp(2rem, 1.6rem + 2vw, 3rem);
   --space-3xl: clamp(3rem, 2.4rem + 3vw, 4.5rem);
 
+  /* Spacing Scale - Fixed Values */
+  --space-px: 1px;
+  --space-0: 0;
+  --space-0_5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-1_5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-2_5: 0.625rem;
+  --space-3: 0.75rem;
+  --space-3_5: 0.875rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-14: 3.5rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-28: 7rem;
+  --space-32: 8rem;
+
   /* Border Radius */
-  --radius-none: 0;
   --radius-xs: 0.125rem;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
   --radius-full: 9999px;
 
   /* Shadows */
@@ -63,7 +92,8 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
+  --shadow-glow: 0 0 0 1px rgb(59 130 246 / 0.1), 0 0 16px rgb(59 130 246 / 0.1);
 
   /* Z-Index Scale */
   --z-behind: -1;
@@ -80,10 +110,11 @@
   --z-maximum: 999;
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 350ms ease;
-  --transition-slower: 500ms ease;
+  --transition-micro: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   /* Color Palette - Light Theme */
   --color-white: #ffffff;
@@ -102,16 +133,36 @@
   --gray-900: #0f172a;
 
   /* Brand Colors */
-  --brand-50: #eff6ff;
-  --brand-100: #dbeafe;
-  --brand-200: #bfdbfe;
-  --brand-300: #93c5fd;
-  --brand-400: #60a5fa;
-  --brand-500: #3b82f6;
-  --brand-600: #2563eb;
-  --brand-700: #1d4ed8;
-  --brand-800: #1e40af;
-  --brand-900: #1e3a8a;
+  --brand-50: #f0f9ff;
+  --brand-100: #e0f2fe;
+  --brand-200: #bae6fd;
+  --brand-300: #7dd3fc;
+  --brand-400: #38bdf8;
+  --brand-500: #0ea5e9;
+  --brand-600: #0284c7;
+  --brand-700: #0369a1;
+  --brand-800: #075985;
+  --brand-900: #0c4a6e;
+
+  /* Gray Scale with proper contrast */
+  --gray-25: #fcfcfd;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --gray-950: #020617;
+
+  /* Gradients */
+  --gradient-brand: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%);
+  --gradient-surface: linear-gradient(135deg, var(--gray-25) 0%, var(--gray-50) 100%);
+  --gradient-dark: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--brand-400) 0%, var(--brand-600) 50%, var(--brand-700) 100%);
 
   /* Semantic Colors */
   --success-50: #ecfdf5;
@@ -135,9 +186,10 @@
   --info-700: #1d4ed8;
 
   /* Light Theme Token Assignments */
-  --color-background: var(--color-white);
-  --color-surface: var(--gray-50);
+  --color-background: var(--gray-25);
+  --color-surface: var(--color-white);
   --color-surface-raised: var(--color-white);
+  --color-surface-subtle: var(--gray-50);
   --color-surface-overlay: rgba(255, 255, 255, 0.95);
   
   --color-border: var(--gray-200);
@@ -145,22 +197,24 @@
   --color-border-subtle: var(--gray-100);
   
   --color-text-primary: var(--gray-900);
-  --color-text-secondary: var(--gray-600);
+  --color-text-secondary: var(--gray-700);
   --color-text-tertiary: var(--gray-500);
   --color-text-placeholder: var(--gray-400);
   --color-text-disabled: var(--gray-300);
   --color-text-inverse: var(--color-white);
+
+  --color-launch-options: var(--brand-300);
+  --color-launch-options-hover: var(--brand-400);
+  --color-launch-options-active: var(--brand-500);
+  --color-launch-options-subtle: var(--brand-50);
+  --color-launch-options-muted: var(--brand-100);
   
   --color-accent: var(--brand-600);
   --color-accent-hover: var(--brand-700);
   --color-accent-active: var(--brand-800);
   --color-accent-subtle: var(--brand-50);
   --color-accent-muted: var(--brand-100);
-  
-  --color-success: var(--success-600);
-  --color-success-hover: var(--success-700);
-  --color-success-subtle: var(--success-50);
-  
+
   --color-error: var(--error-600);
   --color-error-hover: var(--error-700);
   --color-error-subtle: var(--error-50);
@@ -174,10 +228,13 @@
   --color-info-subtle: var(--info-50);
 
   /* Interactive States */
-  --color-interactive-hover: var(--gray-100);
-  --color-interactive-active: var(--gray-200);
+  --color-interactive-hover: var(--gray-50);
+  --color-interactive-active: var(--gray-100);
   --color-interactive-disabled: var(--gray-100);
   --color-interactive-focus: var(--brand-500);
+  --color-success: var(--success-600);
+  --color-success-hover: var(--success-700);
+  --color-success-subtle: var(--success-50);
 
   /* Code Syntax */
   --color-code-background: var(--gray-900);
@@ -190,9 +247,10 @@
 
 /* Dark Theme */
 [data-theme="dark"] {
-  --color-background: var(--gray-900);
-  --color-surface: var(--gray-800);
-  --color-surface-raised: var(--gray-700);
+  --color-background: var(--gray-950);
+  --color-surface: var(--gray-900);
+  --color-surface-raised: var(--gray-800);
+  --color-surface-subtle: var(--gray-900);
   --color-surface-overlay: rgba(15, 23, 42, 0.95);
   
   --color-border: var(--gray-700);
@@ -209,8 +267,11 @@
   --color-accent: var(--brand-500);
   --color-accent-hover: var(--brand-400);
   --color-accent-active: var(--brand-300);
-  --color-accent-subtle: rgba(59, 130, 246, 0.1);
-  --color-accent-muted: rgba(59, 130, 246, 0.2);
+  --color-accent-subtle: rgba(14, 165, 233, 0.1);
+  --color-accent-muted: rgba(14, 165, 233, 0.2);
+  
+  --gradient-surface: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+  --gradient-dark: linear-gradient(135deg, var(--gray-950) 0%, var(--gray-900) 100%);
   
   --color-success: var(--success-500);
   --color-success-hover: var(--success-400);
@@ -228,12 +289,13 @@
   --color-info-hover: var(--info-400);
   --color-info-subtle: rgba(59, 130, 246, 0.1);
 
-  --color-interactive-hover: var(--gray-700);
-  --color-interactive-active: var(--gray-600);
+  --color-interactive-hover: var(--gray-800);
+  --color-interactive-active: var(--gray-700);
   --color-interactive-disabled: var(--gray-800);
   --color-interactive-focus: var(--brand-400);
 
-  /* Update shadows for dark theme */
+
+  /* Shadows for dark theme */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
