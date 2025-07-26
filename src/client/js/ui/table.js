@@ -170,8 +170,7 @@ function renderGamesTable(container, games) {
 }
 
 /**
- * Create HTML for a single game row with COMPLETE mobile data-label support
- * This ensures every table cell has the required data-label attribute
+ * Create HTML for a single game row with mobile data-label support
  */
 function createGameRowHTML(game) {
   const gameId = game.app_id;
