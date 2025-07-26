@@ -1,10 +1,9 @@
-/* -----------------------------------------------------------------------------
-   VANILLA SLOPS - TABLE STYLES
-   All games table-related styles, including launch options
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   VANILLA SLOPS - TABLE STYLES 
+   ============================================================================= */
 
 /* =============================================================================
-   TABLE STYLES
+   1. BASE TABLE STRUCTURE
    ============================================================================= */
 
 .table-container {
@@ -16,7 +15,6 @@
   background: var(--color-surface-raised);
 }
 
-/* Table Base */
 .games-table {
   width: 100%;
   border-collapse: separate;
@@ -58,7 +56,7 @@
   border-top-right-radius: var(--radius-2xl);
 }
 
-/* Table Header Sorting Indicators */
+/* Table Header Sorting */
 .games-table th.sortable {
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -83,18 +81,11 @@
   opacity: 1;
 }
 
-/* Table Body */
+/* Table Body Base */
 .games-table tbody tr {
   transition: all var(--transition-fast);
   border-bottom: 1px solid var(--color-border-subtle);
   position: relative;
-}
-
-.games-table tbody tr:hover {
-  background: var(--color-interactive-hover);
-  transform: scale(1.005);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-raised);
 }
 
 .games-table tbody tr:last-child {
@@ -109,7 +100,6 @@
   border-bottom-right-radius: var(--radius-2xl);
 }
 
-/* Table Cells */
 .games-table td {
   padding: var(--space-4) var(--space-6);
   vertical-align: middle;
@@ -119,6 +109,10 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+
+/* =============================================================================
+   2. TABLE CONTENT STYLING
+   ============================================================================= */
 
 /* Game Title */
 .game-title {
@@ -137,21 +131,21 @@
   opacity: 0.6;
 }
 
-/* Developer and Publisher Styling */
+/* Developer and Publisher */
 .games-table td:nth-child(2),
 .games-table td:nth-child(3) {
   color: var(--color-text-secondary);
   font-weight: 500;
 }
 
-/* Release Date Styling */
+/* Release Date */
 .games-table td:nth-child(4) {
   color: var(--color-text-tertiary);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
 }
 
-/* Engine Styling */
+/* Engine */
 .games-table td:nth-child(5) {
   color: var(--color-text-secondary);
   font-weight: 500;
@@ -163,10 +157,10 @@
   opacity: 0.6;
 }
 
+/* =============================================================================
+   3. LAUNCH OPTIONS BUTTON
+   ============================================================================= */
 
-/* ============================================================================
-  LAUNCH OPTIONS BUTTON AND OPTIONS
-   ============================================================================ */
 .launch-options-btn {
   background: var(--gradient-accent);
   color: var(--color-text-inverse);
@@ -209,24 +203,10 @@
   transform: none;
 }
 
-/* Button Ripple Effect */
-.launch-options-btn::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.4s ease, height 0.4s ease;
-  pointer-events: none;
-}
-
-.launch-options-btn:active::after {
-  width: 200px;
-  height: 200px;
+.launch-options-btn:focus-visible {
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+  z-index: var(--z-raised);
 }
 
 /* Options Count Badge */
@@ -244,7 +224,11 @@
   margin-left: var(--space-2);
 }
 
-/* Launch Options Display Row */
+/* =============================================================================
+   4. LAUNCH OPTIONS DISPLAY
+   ============================================================================= */
+
+/* Launch Options Row */
 .launch-options-row {
   background: var(--gradient-surface) !important;
   border-top: 2px solid var(--color-accent-subtle);
@@ -260,36 +244,7 @@
   animation: fadeOut 0.3s ease-out;
 }
 
-.launch-options-cell {
-  padding: var(--space-10) !important;
-  border-radius: 0;
-}
-
-.launch-options-cell {
-  padding: var(--space-10) !important;
-  border-radius: 0;
-}
-
-.no-options,
-.launch-options-cell .no-options {
-  text-align: center;
-  padding: var(--space-12);
-  color: var(--color-text-secondary);
-  background: var(--color-surface-subtle);
-  border-radius: var(--radius-xl);
-  border: 2px dashed var(--color-border);
-  opacity: 1 !important;
-  visibility: visible !important;
-  height: auto !important;
-  overflow: visible !important;
-  display: block !important;
-}
-
-.launch-options-row:hover {
-  background: var(--gradient-surface) !important;
-  transform: none !important;
-}
-
+/* Launch Options Cell */
 .launch-options-cell {
   padding: var(--space-10) !important;
   border-radius: 0;
@@ -297,26 +252,6 @@
   overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
-}
-
-/* Loading State in Launch Options Cell */
-.launch-options-cell .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-8);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.launch-options-cell .spinner {
-  width: var(--space-5);
-  height: var(--space-5);
-  border: 2px solid var(--color-border);
-  border-top: 2px solid var(--color-accent);
-  border-radius: var(--radius-full);
-  animation: spin 1s linear infinite;
 }
 
 /* Launch Options List */
@@ -425,27 +360,16 @@
   font-size: inherit;
 }
 
+.option-command code:nth-child(1) {
+  font-size: --var(--font-size-2xl);
+}
+
 .option-command[tabindex]:focus {
   background: var(--color-interactive-hover);
   border-color: var(--color-accent);
   outline: 2px solid var(--color-interactive-focus);
   outline-offset: 2px;
   z-index: var(--z-raised);
-}
-
-/* Copy Success and Error Feedback */
-.option-command.copied {
-  animation: copySuccessAnimation 0.6s ease-out;
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-success) !important;
-}
-
-.option-command.copy-failed {
-  animation: copyFailedAnimation 0.6s ease-out;
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-error) !important;
 }
 
 /* Option Description */
@@ -516,7 +440,7 @@
   font-size: var(--font-size-xs);
 }
 
-/* Close Button Container and Button */
+/* Close Button */
 .launch-options-close-container {
   margin-top: var(--space-8);
   padding-top: var(--space-6);
@@ -579,7 +503,83 @@
   height: 200px;
 }
 
-/* Error State Styling */
+/* =============================================================================
+   5. INTERACTIVE STATES & FEEDBACK
+   ============================================================================= */
+
+/* Table Row Hover */
+.games-table tbody tr:hover {
+  background: var(--color-interactive-hover);
+  transform: scale(1.005);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-raised);
+}
+
+/* Copy Success and Error Feedback */
+.option-command.copied {
+  animation: copySuccessAnimation 0.6s ease-out;
+  background-color: var(--color-success) !important;
+  color: var(--color-text-inverse) !important;
+  border-color: var(--color-success) !important;
+}
+
+.option-command.copy-failed {
+  animation: copyFailedAnimation 0.6s ease-out;
+  background-color: var(--color-error) !important;
+  color: var(--color-text-inverse) !important;
+  border-color: var(--color-error) !important;
+}
+
+/* Loading States */
+.launch-options-cell .loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.launch-options-cell .spinner {
+  width: var(--space-5);
+  height: var(--space-5);
+  border: 2px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+.table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-16);
+  text-align: center;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.loading-spinner {
+  width: var(--space-6);
+  height: var(--space-6);
+  border: 2px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+}
+
+.games-table.loading {
+  opacity: 0.7;
+}
+
+.games-table.loading tbody tr {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Error States */
 .launch-options-cell .error {
   padding: var(--space-8);
   background: var(--color-surface-subtle);
@@ -614,7 +614,7 @@
   background-color: var(--color-interactive-hover);
 }
 
-/* No Options State  */
+/* No Options State */
 .no-options,
 .launch-options-cell .no-options {
   text-align: center;
@@ -623,7 +623,6 @@
   background: var(--color-surface-subtle);
   border-radius: var(--radius-xl);
   border: 2px dashed var(--color-border);
-  /* Ensure visibility */
   opacity: 1 !important;
   visibility: visible !important;
   height: auto !important;
@@ -645,14 +644,12 @@
   margin-bottom: var(--space-3);
   color: var(--color-text-primary);
   font-size: var(--font-size-lg);
-  /* Ensure text is visible */
   opacity: 1 !important;
   visibility: visible !important;
 }
 
 .no-options p,
 .launch-options-cell .no-options p {
-  /* Ensure text is visible */
   opacity: 1 !important;
   visibility: visible !important;
   color: var(--color-text-secondary);
@@ -663,62 +660,8 @@
   margin: 0 auto;
 }
 
-/* No Results State */
-.no-results {
-  text-align: center;
-  padding: var(--space-16);
-  color: var(--color-text-secondary);
-  background: var(--gradient-surface);
-  border-radius: var(--radius-2xl);
-  border: 2px dashed var(--color-border);
-}
-
-.no-results h3 {
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-4);
-  font-size: var(--font-size-xl);
-}
-
-/* Table Loading State */
-.table-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  padding: var(--space-16);
-  text-align: center;
-  font-size: var(--font-size-base);
-  color: var(--color-text-secondary);
-}
-
-.loading-spinner {
-  width: var(--space-6);
-  height: var(--space-6);
-  border: 2px solid var(--color-border);
-  border-top: 2px solid var(--color-accent);
-  border-radius: var(--radius-full);
-  animation: spin 1s linear infinite;
-}
-
-/* Loading State for Table */
-.games-table.loading {
-  opacity: 0.7;
-}
-
-.games-table.loading tbody tr {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Focus Management Improvements */
-.launch-options-btn:focus-visible {
-  outline: 2px solid var(--color-interactive-focus);
-  outline-offset: 2px;
-  z-index: var(--z-raised);
-}
-
 /* =============================================================================
-   OPTIONS-FIRST TOGGLE COMPONENT
+   6. OPTIONS-FIRST TOGGLE COMPONENT
    ============================================================================= */
 
 .options-first-toggle {
@@ -851,7 +794,7 @@
 }
 
 /* =============================================================================
-   EMPTY STATES
+   7. EMPTY STATES & COMPONENTS
    ============================================================================= */
 
 .empty-table-state {
@@ -938,7 +881,7 @@
   letter-spacing: 0.05em;
 }
 
-/* Suggestions Section */
+/* Empty State Suggestions */
 .empty-suggestions {
   margin-bottom: var(--space-8);
   max-width: 40rem;
@@ -1125,7 +1068,6 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* Empty State Suggestions */
 .empty-suggestion {
   margin-bottom: var(--space-6);
   padding: var(--space-4);
@@ -1135,8 +1077,23 @@
   color: var(--color-text-primary);
 }
 
+.no-results {
+  text-align: center;
+  padding: var(--space-16);
+  color: var(--color-text-secondary);
+  background: var(--gradient-surface);
+  border-radius: var(--radius-2xl);
+  border: 2px dashed var(--color-border);
+}
+
+.no-results h3 {
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-xl);
+}
+
 /* =============================================================================
-   YEAR FILTER STYLES
+   8. YEAR FILTER COMPONENT
    ============================================================================= */
 
 .year-filter-container {
@@ -1172,6 +1129,7 @@
   color: var(--color-text, #1f2937);
   transition: all 0.2s ease;
   font-family: inherit;
+  height: 2.5rem;
 }
 
 .year-input:focus {
@@ -1190,13 +1148,27 @@
   border-color: var(--color-border-hover, #9ca3af);
 }
 
-/* Invalid year styling */
 .year-input:invalid {
   border-color: var(--color-error, #ef4444);
   box-shadow: 0 0 0 2px var(--color-error-alpha, rgba(239, 68, 68, 0.1));
 }
 
-/* FIlter group styling */
+.year-input.invalid-year {
+  animation: shake 0.3s ease-in-out;
+  border-color: var(--color-error, #ef4444);
+}
+
+.year-input.has-value {
+  border-color: var(--color-success, #10b981);
+  background: var(--color-bg-success, #f0fdf4);
+}
+
+.year-input[data-validation="out-of-range"] {
+  border-color: var(--color-warning, #f59e0b);
+  background: var(--color-bg-warning, #fffbeb);
+}
+
+/* Filter group styling */
 .filter-group:has(.year-filter-container) {
   min-width: 280px;
 }
@@ -1208,129 +1180,12 @@
   color: var(--color-text-secondary, #374151);
 }
 
-/* Dark theme support */
-[data-theme="dark"] .year-input {
-  background: var(--color-bg-input-dark, #374151);
-  border-color: var(--color-border-dark, #4b5563);
-  color: var(--color-text-dark, #f9fafb);
-}
-
-[data-theme="dark"] .year-input:focus {
-  background: var(--color-bg-input-focus-dark, #4b5563);
-  border-color: var(--color-primary-dark, #60a5fa);
-  box-shadow: 0 0 0 2px var(--color-primary-alpha-dark, rgba(96, 165, 250, 0.2));
-}
-
-[data-theme="dark"] .year-divider {
-  color: var(--color-text-muted-dark, #9ca3af);
-}
-
-[data-theme="dark"] .year-input::placeholder {
-  color: var(--color-text-placeholder-dark, #6b7280);
-}
-
-[data-theme="dark"] .year-input:invalid {
-  border-color: var(--color-error-dark, #f87171);
-  box-shadow: 0 0 0 2px var(--color-error-alpha-dark, rgba(248, 113, 113, 0.2));
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .year-filter-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-  
-  .year-select {
-    flex: none;
-    max-width: none;
-  }
-  
-  .year-divider {
-    align-self: center;
-    margin: -0.25rem 0;
-  }
-  
-  .year-input {
-    flex: none;
-    max-width: none;
-  }
-  
-  .filter-group:has(.year-filter-container) {
-    min-width: auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .year-filter-container {
-    gap: 0.5rem;
-  }
-  
-  .year-input {
-    padding: 0.625rem 0.75rem;
-    font-size: 1rem; /* Prevent zoom on mobile */
-  }
-}
-
-/* Animation for year input validation feedback */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-.year-input.invalid-year {
-  animation: shake 0.3s ease-in-out;
-  border-color: var(--color-error, #ef4444);
-}
-
-/* Loading state for year filter */
-.year-filter-container.loading {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.year-filter-container.loading .year-select,
-.year-filter-container.loading .year-input {
-  background: var(--color-bg-loading, #f3f4f6);
-  cursor: wait;
-}
-
-[data-theme="dark"] .year-filter-container.loading .year-select,
-[data-theme="dark"] .year-filter-container.loading .year-input {
-  background: var(--color-bg-loading-dark, #374151);
-}
-
-/* Focus indicators for accessibility */
-.year-select:focus-visible,
-.year-input:focus-visible {
-  outline: 2px solid var(--color-focus, #3b82f6);
-  outline-offset: 2px;
-}
-
-/* Success state when year is selected */
-.year-input.has-value {
-  border-color: var(--color-success, #10b981);
-  background: var(--color-bg-success, #f0fdf4);
-}
-
-[data-theme="dark"] .year-input.has-value {
-  border-color: var(--color-success-dark, #34d399);
-  background: var(--color-bg-success-dark, #064e3b);
-}
-
-/* Filter label */
 .filter-group .filter-label {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-text-label, #374151);
   display: block;
-}
-
-[data-theme="dark"] .filter-group .filter-label {
-  color: var(--color-text-label-dark, #d1d5db);
 }
 
 /* Filter dropdown consistency */
@@ -1343,6 +1198,25 @@
   line-height: 1.25rem;
 }
 
+/* Year filter loading state */
+.year-filter-container.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.year-filter-container.loading .year-select,
+.year-filter-container.loading .year-input {
+  background: var(--color-bg-loading, #f3f4f6);
+  cursor: wait;
+}
+
+/* Focus indicators for accessibility */
+.year-select:focus-visible,
+.year-input:focus-visible {
+  outline: 2px solid var(--color-focus, #3b82f6);
+  outline-offset: 2px;
+}
+
 /* Year filter hint text */
 .year-filter-container::after {
   content: attr(data-hint);
@@ -1353,19 +1227,8 @@
   font-style: italic;
 }
 
-/* Year range validation visual feedback */
-.year-input[data-validation="out-of-range"] {
-  border-color: var(--color-warning, #f59e0b);
-  background: var(--color-bg-warning, #fffbeb);
-}
-
-[data-theme="dark"] .year-input[data-validation="out-of-range"] {
-  border-color: var(--color-warning-dark, #fbbf24);
-  background: var(--color-bg-warning-dark, #451a03);
-}
-
 /* =============================================================================
-   INFORMATION MODAL
+   9. INFORMATION MODAL
    ============================================================================= */
 
 .info-modal-overlay {
@@ -1468,6 +1331,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* =============================================================================
+   10. MOBILE RESPONSIVE LAYOUT
+   ============================================================================= */
+
 /* Mobile Card Layout */
 @media (max-width: 640px) {
   .games-table,
@@ -1535,9 +1402,49 @@
     padding: var(--space-3);
     font-size: var(--font-size-sm);
   }
+
+  /* Year Filter Mobile */
+  .year-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .year-select {
+    flex: none;
+    max-width: none;
+  }
+  
+  .year-divider {
+    align-self: center;
+    margin: -0.25rem 0;
+  }
+  
+  .year-input {
+    flex: none;
+    max-width: none;
+  }
+  
+  .filter-group:has(.year-filter-container) {
+    min-width: auto;
+  }
 }
 
-/* Performance Optimizations */
+@media (max-width: 480px) {
+  .year-filter-container {
+    gap: 0.5rem;
+  }
+  
+  .year-input {
+    padding: 0.625rem 0.75rem;
+    font-size: 1rem; /* Prevent zoom on mobile */
+  }
+}
+
+/* =============================================================================
+   11. PERFORMANCE OPTIMIZATIONS
+   ============================================================================= */
+
 .launch-option,
 .option-command,
 .launch-options-btn {
@@ -1546,8 +1453,9 @@
 }
 
 /* =============================================================================
-   DARK THEME TABLE AND TABLE OPTIONS STYLES
+   12. DARK THEME OVERRIDES
    ============================================================================= */
+
 [data-theme="dark"] .games-table th {
   background: var(--color-surface);
   border-color: var(--color-border);
@@ -1629,4 +1537,49 @@
 [data-theme="dark"] .info-modal-header {
   background: var(--gradient-dark);
   border-color: var(--color-border);
+}
+
+/* Dark theme year filter */
+[data-theme="dark"] .year-input {
+  background: var(--color-bg-input-dark, #374151);
+  border-color: var(--color-border-dark, #4b5563);
+  color: var(--color-text-dark, #f9fafb);
+}
+
+[data-theme="dark"] .year-input:focus {
+  background: var(--color-bg-input-focus-dark, #4b5563);
+  border-color: var(--color-primary-dark, #60a5fa);
+  box-shadow: 0 0 0 2px var(--color-primary-alpha-dark, rgba(96, 165, 250, 0.2));
+}
+
+[data-theme="dark"] .year-divider {
+  color: var(--color-text-muted-dark, #9ca3af);
+}
+
+[data-theme="dark"] .year-input::placeholder {
+  color: var(--color-text-placeholder-dark, #6b7280);
+}
+
+[data-theme="dark"] .year-input:invalid {
+  border-color: var(--color-error-dark, #f87171);
+  box-shadow: 0 0 0 2px var(--color-error-alpha-dark, rgba(248, 113, 113, 0.2));
+}
+
+[data-theme="dark"] .year-input.has-value {
+  border-color: var(--color-success-dark, #34d399);
+  background: var(--color-bg-success-dark, #064e3b);
+}
+
+[data-theme="dark"] .year-input[data-validation="out-of-range"] {
+  border-color: var(--color-warning-dark, #fbbf24);
+  background: var(--color-bg-warning-dark, #451a03);
+}
+
+[data-theme="dark"] .filter-group .filter-label {
+  color: var(--color-text-label-dark, #d1d5db);
+}
+
+[data-theme="dark"] .year-filter-container.loading .year-select,
+[data-theme="dark"] .year-filter-container.loading .year-input {
+  background: var(--color-bg-loading-dark, #374151);
 }
