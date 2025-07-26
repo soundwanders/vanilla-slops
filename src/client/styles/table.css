@@ -360,6 +360,10 @@
   font-size: inherit;
 }
 
+.option-command code:nth-child(1) {
+  font-size: --var(--font-size-2xl);
+}
+
 .option-command[tabindex]:focus {
   background: var(--color-interactive-hover);
   border-color: var(--color-accent);
