@@ -74,7 +74,6 @@ window.addEventListener('resize', debounce(() => {
 
 /**
  * Main table render function - entry point for all table rendering
- * Enhanced with mobile-first approach and proper data attributes
  * @param {Array} games - Array of game objects
  * @param {boolean} showLoading - Whether to show loading state
  */
@@ -1390,7 +1389,7 @@ function triggerClearSearch() {
     searchInput.value = '';
     searchInput.dispatchEvent(new Event('input', { bubbles: true }));
     
-    // Focus search input for better UX (but not on mobile to avoid keyboard)
+    // Focus search input, but NOT ON MOBILE to avoid keyboard
     if (!TableState.isMobile) {
       searchInput.focus();
     }

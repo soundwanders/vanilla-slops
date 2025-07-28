@@ -1401,19 +1401,36 @@
 /* Medium screens - 3-4 filters per row */
 @media (min-width: 768px) and (max-width: 1199px) {
   .filters-container,
+  .slops-filters,
   .hero-filters .filters-container {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
-    gap: var(--space-5) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-4) !important;
+    padding: var(--space-6) var(--space-4) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: var(--space-6) !important;
+    border-radius: var(--radius-xl) !important;
+    grid-template-columns: 1fr !important;
   }
 }
 
 /* Small screens - 2 filters per row */
-@media (min-width: 480px) and (max-width: 767px) {
+@media (max-width: 480px) {
   .filters-container,
+  .slops-filters, 
   .hero-filters .filters-container {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: var(--space-4) !important;
-    padding: var(--space-6) !important;
+    padding: var(--space-4, 1rem) var(--space-3, 0.75rem);
+    gap: var(--space-3, 0.75rem);
+  }
+  
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: 44px;
+    font-size: 16px;
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
   }
 }
 
@@ -1426,7 +1443,6 @@
     padding: var(--space-5) !important;
   }
 }
-
 
 /* =============================================================================
    LANDSCAPE MOBILE ADJUSTMENTS
@@ -2035,5 +2051,47 @@
       background: var(--color-surface) !important;
       border-color: var(--color-border) !important;
     }
+  }
+}
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filters-container,
+  .slops-filters,
+  .hero-filters .filters-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--space-4, 1rem) !important;
+    padding: var(--space-6, 1.5rem) var(--space-4, 1rem) !important;
+    max-width: 100% !important;
+  }
+  
+  .filter-group {
+    width: 100% !important;
+  }
+  
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: 48px !important;
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  .filters-container,
+  .slops-filters, 
+  .hero-filters .filters-container {
+    padding: var(--space-4, 1rem) var(--space-3, 0.75rem);
+    gap: var(--space-3, 0.75rem);
+  }
+  
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: 44px;
+    font-size: 16px;
+    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
   }
 }
