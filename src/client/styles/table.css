@@ -22,7 +22,7 @@
   font-size: var(--font-size-sm);
   background: var(--color-surface-raised);
   position: relative;
-  table-layout: fixed; /* prevent column width changes */
+  table-layout: fixed;
   margin: 0;
 }
 

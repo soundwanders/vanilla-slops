@@ -51,6 +51,7 @@ async function initializeFilters() {
     // Populate each filter dropdown
     populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
     populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
+    populateFilterDropdown('engineFilter', facets.engines, 'All Engines'); 
     populateYearFilter(facets.releaseYears);
     populateOptionsFilter();
     
@@ -62,7 +63,7 @@ async function initializeFilters() {
     
     AppState.filtersInitialized = true;
 
-    addShowAllGamesFilter();''
+    addShowAllGamesFilter();
   } catch (error) {
     console.error('Failed to initialize filters:', error);
     
@@ -72,7 +73,56 @@ async function initializeFilters() {
       select.disabled = false;
       select.style.opacity = '';
     });
+    
+    // Add fallback engine options if API fails
+    populateEngineFilterWithDefaults();
   }
+}
+
+/**
+ * Populate engine filter with default options if API fails
+ * Provides useful default options before API data is loaded
+ */
+function populateEngineFilterWithDefaults() {
+  const engineFilter = document.getElementById('engineFilter');
+  if (!engineFilter) return;
+  
+  const currentValue = engineFilter.value;
+  engineFilter.innerHTML = '';
+  
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'All Engines';
+  engineFilter.appendChild(defaultOption);
+  
+  const commonEngines = [
+    'Unity',
+    'Unreal Engine',
+    'Source Engine',
+    'Creation Engine',
+    'CryEngine',
+    'Frostbite',
+    'id Tech',
+    'GameMaker',
+    'Godot',
+    'REDengine',
+    'Custom Engine'
+  ];
+  
+  commonEngines.forEach(engine => {
+    const option = document.createElement('option');
+    option.value = engine.toLowerCase().replace(/\s+/g, '-');
+    option.textContent = engine;
+    engineFilter.appendChild(option);
+  });
+  
+  // Restore previous value if it exists
+  if (currentValue && [...engineFilter.options].some(opt => opt.value === currentValue)) {
+    engineFilter.value = currentValue;
+  }
+  
+  console.log('Engine filter populated with default options');
 }
 
 /** Adds a "Show All Games" filter to the filters container
@@ -176,6 +226,7 @@ async function refreshFilterStatistics() {
       search: AppState.filters?.search || '',
       developer: AppState.filters?.developer || '',
       category: AppState.filters?.category || '',
+      engine: AppState.filters?.engine || '', 
       year: AppState.filters?.year || ''
     };
     
@@ -187,7 +238,7 @@ async function refreshFilterStatistics() {
     updateShowAllFilterStats(stats);
     
     console.log('📊 Refreshed filter statistics:', stats);
-    console.log('🔍 AppState.filters after stats refresh:', AppState.filters); // Debug logging
+    console.log('🔍 AppState.filters after stats refresh:', AppState.filters);
   } catch (error) {
     console.error('Failed to refresh statistics:', error);
   }
@@ -519,6 +570,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
       search: AppState.filters.search || '',
       category: AppState.filters.category || '',
       developer: AppState.filters.developer || '',
+      engine: AppState.filters.engine || '', // NEW ENGINE PARAM
       options: AppState.filters.options || '',
       year: AppState.filters.year || '',
       sort: AppState.filters.sort || 'title',
@@ -530,6 +582,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     console.log('🔍 Loading with filters:', {
       hasOptions: queryParams.hasOptions,
       showAll: queryParams.showAll,
+      engine: queryParams.engine, // LOG ENGINE FILTER
       mode: queryParams.showAll ? 'SHOW ALL' : 'OPTIONS-FIRST'
     });
 
@@ -709,12 +762,15 @@ function updateURL() {
  * It handles Show All vs Options-First logic based on the parameters
  * * @returns {void}
  */
+/**
+ * Parse URL parameters and initialize AppState.filters
+ * Updated to handle engine parameter
+ */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
 
   AppState.currentPage = parseInt(params.get('page')) || 1;
   
-  // Handle Show All vs Options-First logic
   const showAllParam = params.get('showAll');
   const hasOptionsParam = params.get('hasOptions');
   
@@ -730,6 +786,7 @@ function parseURLParams() {
       search: params.get('search') || '',
       category: params.get('category') || '',
       developer: params.get('developer') || '', 
+      engine: params.get('engine') || '', 
       options: params.get('options') || '',
       year: params.get('year') || '',
       sort: params.get('sort') || 'title',
@@ -744,6 +801,7 @@ function parseURLParams() {
       search: params.get('search') || '',
       category: params.get('category') || '',
       developer: params.get('developer') || '', 
+      engine: params.get('engine') || '', 
       options: params.get('options') || '',
       year: params.get('year') || '',
       sort: params.get('sort') || 'title',
@@ -753,11 +811,11 @@ function parseURLParams() {
     };
     console.log('🎯 URL indicates explicit OPTIONS-FIRST mode');
   } else {
-    // Default Options-First mode (no parameters needed)
     AppState.filters = {
       search: params.get('search') || '',
       category: params.get('category') || '',
       developer: params.get('developer') || '', 
+      engine: params.get('engine') || '',
       options: params.get('options') || '',
       year: params.get('year') || '',
       sort: params.get('sort') || 'title',
@@ -812,7 +870,8 @@ function initializeSearchComponent() {
       sortId: 'sortSelect',
       filters: {
         category: 'categoryFilter',
-        developer: 'developerFilter', 
+        developer: 'developerFilter',
+        engine: 'engineFilter', 
         options: 'optionsFilter',
         year: 'yearFilter'
       }
@@ -826,10 +885,10 @@ function initializeSearchComponent() {
       minCharsForSearch: 3,         // Only search after 3 characters
       enableSearchOnEnter: true,    // Allow Enter key for immediate search
       enableProgressiveDebounce: true, // Longer delays for rapid typing
-      enableClickOutsideSearch: true   // Search when clicking outside (now with safe zones)
+      enableClickOutsideSearch: true   // Search when clicking outside
     });
     
-    // Set the callback for filter changes - THIS IS THE ONLY SEARCH LISTENER
+    // Set the callback for filter changes
     searchInstance.onFilterChange = handleFilterChange;
     
     return searchInstance;
@@ -857,15 +916,10 @@ function setupScrollTracking() {
   // Track when users click on launch options buttons
   document.addEventListener('click', (e) => {
     if (e.target.closest('.launch-options-btn')) {
-      // User is about to interact with launch options, store position
       storeScrollPosition();
     }
   });
 }
-
-/**
- * App initialization
- */
 async function initializeApp() {
   try {
     // Parse URL params first
@@ -874,7 +928,7 @@ async function initializeApp() {
     // Initialize components in sequence
     AppState.searchInstance = initializeSearchComponent();
     setupThemeToggle();
-    setupScrollTracking(); // Set up scroll position tracking
+    setupScrollTracking(); // Sets up scroll position tracking
 
     // Initialize filters before loading data
     await initializeFilters();
@@ -887,7 +941,7 @@ async function initializeApp() {
         AppState.searchInstance.currentQuery = AppState.filters.search;
       }
       
-      // Set filter values from URL
+      // Set filter values from URL 
       Object.entries(AppState.filters).forEach(([key, value]) => {
         if (value && AppState.searchInstance.filterElements[key]) {
           AppState.searchInstance.filterElements[key].value = value;
