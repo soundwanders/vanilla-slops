@@ -3,15 +3,19 @@
  * Handles cross-origin requests between frontend (port 3000) and backend (port 8000)
 */
 
-const corsConfig = {
-  // Allow requests from these origins
-  origin: [
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : [
+    'https://vanilla-slops.up.railway.app', // Production frontend URL
     'http://localhost:3000',  // Vite dev server
     'http://127.0.0.1:3000',  // Alternative localhost
     'http://localhost:5173',  // Vite default port (fallback)
     'http://127.0.0.1:5173',  // Alternative localhost for Vite
-  ],
-  
+  ];
+
+const corsConfig = {
+  origin: true,
+    
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   
   allowedHeaders: [
