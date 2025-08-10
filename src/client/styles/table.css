@@ -118,7 +118,7 @@
 .game-title {
   font-weight: 600;
   color: var(--color-text-primary);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -162,6 +162,13 @@
    ============================================================================= */
 
 .launch-options-btn {
+  display: inline-flex;
+  position: relative;
+  overflow: hidden;
+  min-width: 120px;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
   background: var(--gradient-accent);
   color: var(--color-text-inverse);
   border: none;
@@ -172,13 +179,6 @@
   cursor: pointer;
   transition: all var(--transition-base);
   box-shadow: var(--shadow-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 120px;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
 }
 
 .launch-options-btn::before {
@@ -296,7 +296,7 @@
 
 .launch-option:hover {
   box-shadow: var(--shadow-xl);
-  transform: translateY(-2px) scale(1.005);
+  transform: scale(1.00375);
   border-color: var(--color-accent);
   z-index: var(--z-raised);
 }

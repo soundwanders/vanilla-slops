@@ -131,20 +131,26 @@ function populateEngineFilterWithDefaults() {
  * * @returns {Promise<void>}
  */
 
+/**
+ * Adds a "Show All Games" filter to the filters fieldset in the correct position
+ * This filter allows users to toggle between showing all games
+ * and only those with launch options
+ * 
+ * @returns {Promise<void>}
+ */
 async function addShowAllGamesFilter() {
   console.log('🔧 Adding Show All Games filter...');
   
-  const filtersContainer = document.querySelector('.filters-container fieldset, .filters-container');
-  if (!filtersContainer) {
-    console.error('❌ Filters container not found');
+  // Find the fieldset where filters belong
+  const fieldset = document.querySelector('.filters-container fieldset');
+  if (!fieldset) {
+    console.error('❌ Fieldset not found in filters container');
     return;
   }
   
-  // Remove existing filter
-  const existingFilter = filtersContainer.querySelector('.show-all-filter');
-  if (existingFilter) {
-    existingFilter.remove();
-  }
+  // Check if there's an existing placeholder or filter to replace
+  let existingFilter = document.getElementById('showAllFilterGroup') || 
+                      fieldset.querySelector('.show-all-filter');
   
   // Get statistics
   try {
@@ -165,21 +171,34 @@ async function addShowAllGamesFilter() {
   const stats = AppState.gameStats;
   const isShowingAll = AppState.filters?.showAll || false;
   
-  // Create filter group with correct HTML structure for CSS
-  const filterGroup = document.createElement('div');
-  filterGroup.className = 'filter-group show-all-filter';
+  // Create or update the filter group
+  let filterGroup;
   
-  // Create the HTML structure that matches our CSS selectors
+  if (existingFilter) {
+    // Use existing placeholder and update its content
+    filterGroup = existingFilter;
+    filterGroup.style.display = 'block'; // Show if it was hidden
+    console.log('📝 Using existing filter placeholder');
+  } else {
+    // Create new filter group
+    filterGroup = document.createElement('div');
+    filterGroup.className = 'filter-group show-all-filter';
+    filterGroup.id = 'showAllFilterGroup';
+    console.log('🆕 Creating new filter group');
+  }
+  
+  // Set the HTML structure that matches our CSS selectors
   filterGroup.innerHTML = `
-    <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
+    <label class="filter-label" for="showAllGamesFilter">Display Mode</label>
     <input 
       type="checkbox" 
       id="showAllGamesFilter" 
+      class="sr-only"
       ${isShowingAll ? 'checked' : ''}
       aria-describedby="showAllGamesHelp"
     />
-    <label for="showAllGamesFilter" class="show-all-checkbox-container">
-      <span class="checkbox-label-text">Show All</span>
+    <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="${isShowingAll}">
+      <span class="checkbox-label-text">${isShowingAll ? 'All' : 'Hide'}</span>
       <span class="checkbox-stats" id="showAllStats">
         ${isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions} hidden`}
       </span>
@@ -189,12 +208,21 @@ async function addShowAllGamesFilter() {
     </div>
   `;
   
-  filtersContainer.appendChild(filterGroup);
+  // Position as LAST filter in the fieldset (more logical placement)
+  if (!existingFilter) {
+    fieldset.appendChild(filterGroup);
+    console.log('📍 Added filter as last item in fieldset');
+  }
   
-  // Add single event listener to the hidden checkbox
+  // Remove any old event listeners to prevent duplicates
   const checkbox = filterGroup.querySelector('#showAllGamesFilter');
   if (checkbox) {
-    checkbox.addEventListener('change', function(e) {
+    // Clone the checkbox to remove all event listeners
+    const newCheckbox = checkbox.cloneNode(true);
+    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+    
+    // Add fresh event listener
+    newCheckbox.addEventListener('change', function(e) {
       console.log('🖱️ CHECKBOX CHANGED!', {
         checked: e.target.checked,
         timestamp: new Date().toISOString()
@@ -203,11 +231,11 @@ async function addShowAllGamesFilter() {
       handleShowAllFilterChange(e);
     });
     
-    console.log('✅ Show All Games filter added successfully');
+    console.log('✅ Show All Games filter added successfully to fieldset');
     console.log('🔍 Checkbox state:', { 
-      id: checkbox.id, 
-      checked: checkbox.checked,
-      hidden: checkbox.offsetParent === null 
+      id: newCheckbox.id, 
+      checked: newCheckbox.checked,
+      inFieldset: fieldset.contains(newCheckbox)
     });
   } else {
     console.error('❌ Failed to find checkbox element');

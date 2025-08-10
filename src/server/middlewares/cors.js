@@ -14,8 +14,7 @@ const corsOrigins = process.env.CORS_ORIGIN
   ];
 
 const corsConfig = {
-  origin: true,
-    
+  origin: corsOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   
   allowedHeaders: [

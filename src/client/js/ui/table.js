@@ -175,10 +175,10 @@ function createGameRowHTML(game) {
   const gameId = game.app_id;
   const optionsCount = game.total_options_count || 0;
   const releaseDate = formatDate(game.release_date);
-  const title = escapeHtml(game.title || 'Unknown Game');
-  const developer = escapeHtml(game.developer || 'Unknown Developer');
-  const publisher = escapeHtml(game.publisher || 'Unknown Publisher');
-  const engine = escapeHtml(game.engine || 'Unknown Engine');
+  const title = escapeHtml(game.title || 'Unknown');
+  const developer = escapeHtml(game.developer || 'Unknown');
+  const publisher = escapeHtml(game.publisher || 'Unknown');
+  const engine = escapeHtml(game.engine || 'Unknown');
 
   return `
     <tr role="row" data-game-id="${gameId}" class="game-row">
@@ -220,7 +220,7 @@ function generateLaunchOptionsButton(gameId, gameTitle, optionsCount) {
         type="button"
         ${TableState.touchDevice ? 'ontouchstart=""' : ''}
       >
-        <span class="btn-text">Show Options</span>
+        <span class="btn-text">Options</span>
         <span class="options-count" aria-label="${optionsCount} options">${optionsCount}</span>
       </button>
     `;
@@ -870,12 +870,12 @@ function setButtonLoadingState(button) {
   if (TableState.isMobile) {
     button.innerHTML = `
       <span class="loading-spinner mobile-spinner"></span>
-      <span class="btn-text">Loading...</span>
+      <span class="btn-text">...</span>
     `;
   } else {
     button.innerHTML = `
       <span class="loading-spinner"></span>
-      Loading...
+      ...
     `;
   }
 }

@@ -10,11 +10,11 @@
 #yearFilter,
 #yearFilterSelect,
 #sortSelect {
-  height: 2.75rem !important;
-  padding: 0.5rem 2.5rem 0.5rem 0.75rem !important;
-  display: flex !important;
-  align-items: center !important;
-  line-height: 1.25rem !important;
+  height: 2.75rem;
+  padding: 0.5rem 0.375rem;
+  display: flex;
+  align-items: center;
+  line-height: 1.25rem ;
 }
 
 .filter-select option,
@@ -72,7 +72,6 @@ select option:checked {
 }
 
 /* Browser-specific fixes */
-
 /* WebKit browsers (Chrome, Safari, Edge) */
 @supports (-webkit-appearance: none) {
   .filter-select option,
@@ -110,60 +109,6 @@ select option:checked {
 /* Ensure the select dropdown itself has proper background */
 .filter-select:focus,
 select:focus {
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
-}
-
-/* Nuclear option - if above doesn't work in all browsers */
-.filter-select,
-.sort-select,
-#categoryFilter,
-#developerFilter,
-#optionsFilter,
-#yearFilter,
-#sortSelect {
-  /* Ensure select element has dark background */
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
-  
-  /* Remove any conflicting styling */
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  appearance: none !important;
-}
-
-/* Style the dropdown when it's open */
-.filter-select[aria-expanded="true"],
-select[aria-expanded="true"] {
-  background-color: var(--color-surface-raised) !important;
-}
-
-/* Try to style the dropdown list itself (browser dependent) */
-.filter-select optgroup,
-select optgroup {
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
-  font-weight: 600 !important;
-}
-
-/* Alternative fix using CSS variables directly */
-:root {
-  color-scheme: dark; /* Tell browser we prefer dark styling */
-}
-
-[data-theme="dark"] {
-  color-scheme: dark;
-}
-
-/* Force styling for all option elements globally */
-option {
-  background-color: var(--color-surface-raised, #1e293b) !important;
-  color: var(--color-text-primary, #f1f5f9) !important;
-}
-
-/* Last resort - inline styling override */
-.filter-select option[style],
-select option[style] {
   background-color: var(--color-surface-raised) !important;
   color: var(--color-text-primary) !important;
 }
