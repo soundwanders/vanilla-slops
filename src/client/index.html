@@ -64,22 +64,6 @@
             <div class="suggestions-dropdown" id="suggestionsDropdown" role="listbox" aria-label="Search suggestions"></div>
           </div>
         </div>
-
-        <!-- Quick Stats or Features -->
-        <div class="hero-stats">
-          <div class="stat-item">
-            <span class="stat-number" data-count="1000+">1000+</span>
-            <span class="stat-label">Games</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" data-count="5000+">5000+</span>
-            <span class="stat-label">Launch Options</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" data-count="100%">100%</span>
-            <span class="stat-label">Community Verified</span>
-          </div>
-        </div>
       </div>
 
       <!-- Filters Section -->
@@ -88,117 +72,116 @@
           <fieldset class="filter-fieldset">
             <legend class="sr-only">Filter games by various criteria</legend>
             
-            <!-- Show All Games Filter - Will be inserted here by JavaScript -->
-            <div class="filter-group show-all-filter" id="showAllFilterGroup" style="display: none;">
-              <label class="filter-label" for="showAllGamesFilter">Display Mode</label>
-              <input type="checkbox" id="showAllGamesFilter" class="sr-only">
-              <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="false">
-                <span class="checkbox-label-text">Games with options</span>
-                <span class="checkbox-stats">151 more</span>
-              </label>
-            </div>
-            
+            <!-- Row 1: Category and Developer -->
             <div class="filter-group">
-            <label class="filter-label" for="categoryFilter">Category</label>
-                <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
-                    <option value="">All Categories</option>
-                    
-                    <!-- Core Popular Genres -->
-                    <option value="action">Action</option>
-                    <option value="adventure">Adventure</option>
-                    <option value="rpg">RPG</option>
-                    <option value="strategy">Strategy</option>
-                    <option value="simulation">Simulation</option>
-                    <option value="fps">FPS</option>
-                    <option value="indie">Indie</option>
-                      
-                    <!-- Specific Action Subgenres -->
-                    <option value="platformer">Platformer</option>
-                    <option value="fighting">Fighting</option>
-                    <option value="battle-royale">Battle Royale</option>
-                    <option value="survival">Survival</option>
-                    <option value="horror">Horror</option>
-                    <option value="stealth">Stealth</option>
-                    
-                    <!-- Strategy Subgenres -->
-                    <option value="rts">Real-Time Strategy</option>
-                    <option value="turn-based">Turn-Based Strategy</option>
-                    <option value="tower-defense">Tower Defense</option>
-                    <option value="4x">4X Strategy</option>
-                    
-                    <!-- RPG Subgenres -->
-                    <option value="mmorpg">MMORPG</option>
-                    <option value="roguelike">Roguelike</option>
-                    <option value="roguelite">Roguelite</option>
-                    <option value="dungeon-crawler">Dungeon Crawler</option>
-                    
-                    <!-- Multiplayer Categories -->
-                    <option value="multiplayer">Multiplayer</option>
-                    <option value="co-op">Co-op</option>
-                    <option value="moba">MOBA</option>
-                    <option value="mmo">MMO</option>
-                    
-                    <!-- Sports & Racing -->
-                    <option value="sports">Sports</option>
-                    <option value="racing">Racing</option>
-                    <option value="soccer">Soccer</option>
-                    <option value="basketball">Basketball</option>
-                    
-                    <!-- Casual & Puzzle -->
-                    <option value="puzzle">Puzzle</option>
-                    <option value="casual">Casual</option>
-                    <option value="arcade">Arcade</option>
-                    <option value="match-3">Match-3</option>
-                    <option value="hidden-object">Hidden Object</option>
-                    
-                    <!-- Creative & Sandbox -->
-                    <option value="sandbox">Sandbox</option>
-                    <option value="city-builder">City Builder</option>
-                    <option value="building">Building</option>
-                    <option value="crafting">Crafting</option>
-                    
-                    <!-- Narrative & Visual -->
-                    <option value="visual-novel">Visual Novel</option>
-                    <option value="interactive-fiction">Interactive Fiction</option>
-                    <option value="walking-simulator">Walking Simulator</option>
-                    <option value="story-rich">Story Rich</option>
-                    
-                    <!-- Card & Board Games -->
-                    <option value="card-game">Card Game</option>
-                    <option value="board-game">Board Game</option>
-                    <option value="deck-building">Deck Building</option>
-                    <option value="trading-card-game">Trading Card Game</option>
-                    
-                    <!-- Specialized Categories -->
-                    <option value="educational">Educational</option>
-                    <option value="programming">Programming</option>
-                    <option value="typing">Typing</option>
-                    <option value="music">Music</option>
-                    <option value="rhythm">Rhythm</option>
-                    
-                    <!-- Style/Setting Categories -->
-                    <option value="retro">Retro</option>
-                    <option value="pixel-art">Pixel Art</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="medieval">Medieval</option>
-                    <option value="sci-fi">Sci-Fi</option>
-                    <option value="fantasy">Fantasy</option>
-                    <option value="historical">Historical</option>
-                    <option value="post-apocalyptic">Post-Apocalyptic</option>
-                    
-                    <!-- Gameplay Mechanics -->
-                    <option value="open-world">Open World</option>
-                    <option value="metroidvania">Metroidvania</option>
-                    <option value="bullet-hell">Bullet Hell</option>
-                    <option value="auto-battler">Auto Battler</option>
-                    <option value="idle">Idle</option>
-                </select>
+              <label class="filter-label" for="categoryFilter">Category</label>
+              <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
+                <option value="">All Categories</option>
+                
+                <!-- Core Popular Genres -->
+                <option value="action">Action</option>
+                <option value="adventure">Adventure</option>
+                <option value="rpg">RPG</option>
+                <option value="strategy">Strategy</option>
+                <option value="simulation">Simulation</option>
+                <option value="fps">FPS</option>
+                <option value="indie">Indie</option>
+                  
+                <!-- Specific Action Subgenres -->
+                <option value="platformer">Platformer</option>
+                <option value="fighting">Fighting</option>
+                <option value="battle-royale">Battle Royale</option>
+                <option value="survival">Survival</option>
+                <option value="horror">Horror</option>
+                <option value="stealth">Stealth</option>
+                
+                <!-- Strategy Subgenres -->
+                <option value="rts">Real-Time Strategy</option>
+                <option value="turn-based">Turn-Based Strategy</option>
+                <option value="tower-defense">Tower Defense</option>
+                <option value="4x">4X Strategy</option>
+                
+                <!-- RPG Subgenres -->
+                <option value="mmorpg">MMORPG</option>
+                <option value="roguelike">Roguelike</option>
+                <option value="roguelite">Roguelite</option>
+                <option value="dungeon-crawler">Dungeon Crawler</option>
+                
+                <!-- Multiplayer Categories -->
+                <option value="multiplayer">Multiplayer</option>
+                <option value="co-op">Co-op</option>
+                <option value="moba">MOBA</option>
+                <option value="mmo">MMO</option>
+                
+                <!-- Sports & Racing -->
+                <option value="sports">Sports</option>
+                <option value="racing">Racing</option>
+                <option value="soccer">Soccer</option>
+                <option value="basketball">Basketball</option>
+                
+                <!-- Casual & Puzzle -->
+                <option value="puzzle">Puzzle</option>
+                <option value="casual">Casual</option>
+                <option value="arcade">Arcade</option>
+                <option value="match-3">Match-3</option>
+                <option value="hidden-object">Hidden Object</option>
+                
+                <!-- Creative & Sandbox -->
+                <option value="sandbox">Sandbox</option>
+                <option value="city-builder">City Builder</option>
+                <option value="building">Building</option>
+                <option value="crafting">Crafting</option>
+                
+                <!-- Narrative & Visual -->
+                <option value="visual-novel">Visual Novel</option>
+                <option value="interactive-fiction">Interactive Fiction</option>
+                <option value="walking-simulator">Walking Simulator</option>
+                <option value="story-rich">Story Rich</option>
+                
+                <!-- Card & Board Games -->
+                <option value="card-game">Card Game</option>
+                <option value="board-game">Board Game</option>
+                <option value="deck-building">Deck Building</option>
+                <option value="trading-card-game">Trading Card Game</option>
+                
+                <!-- Specialized Categories -->
+                <option value="educational">Educational</option>
+                <option value="programming">Programming</option>
+                <option value="typing">Typing</option>
+                <option value="music">Music</option>
+                <option value="rhythm">Rhythm</option>
+                
+                <!-- Style/Setting Categories -->
+                <option value="retro">Retro</option>
+                <option value="pixel-art">Pixel Art</option>
+                <option value="cyberpunk">Cyberpunk</option>
+                <option value="medieval">Medieval</option>
+                <option value="sci-fi">Sci-Fi</option>
+                <option value="fantasy">Fantasy</option>
+                <option value="historical">Historical</option>
+                <option value="post-apocalyptic">Post-Apocalyptic</option>
+                
+                <!-- Gameplay Mechanics -->
+                <option value="open-world">Open World</option>
+                <option value="metroidvania">Metroidvania</option>
+                <option value="bullet-hell">Bullet Hell</option>
+                <option value="auto-battler">Auto Battler</option>
+                <option value="idle">Idle</option>
+              </select>
             </div>
             
             <div class="filter-group">
               <label class="filter-label" for="developerFilter">Developer</label>
               <select class="filter-select" id="developerFilter" aria-label="Filter by developer" name="developer">
                 <option value="">All Developers</option>
+              </select>
+            </div>
+            
+            <!-- Row 2: Engine and Launch Options -->
+            <div class="filter-group">
+              <label class="filter-label" for="engineFilter">Engine</label>
+              <select class="filter-select" id="engineFilter" aria-label="Filter by game engine" name="engine">
+                <option value="">All Engines</option>
               </select>
             </div>
             
@@ -213,6 +196,7 @@
               </select>
             </div>
             
+            <!-- Row 3: Release Year -->
             <div class="filter-group">
               <label class="filter-label" for="yearFilter">Release Year</label>
               <select class="filter-select" id="yearFilter" aria-label="Filter by release year" name="year">

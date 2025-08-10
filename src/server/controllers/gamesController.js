@@ -60,7 +60,7 @@ export async function gamesController(req, res) {
     const hasOptions = parseBoolean(hasOptionsParam);
     const showAll = parseBoolean(showAllParam);
 
-    console.log('🎯 PARSED PARAMETERS (FIXED):', {
+    console.log('🎯 PARSED PARAMETERS:', {
       hasOptions,
       showAll,
       hasOptionsType: typeof hasOptions,

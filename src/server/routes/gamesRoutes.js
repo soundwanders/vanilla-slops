@@ -17,7 +17,6 @@ import {
 
 /**
  * Express router for games-related API endpoints
- * Supports Options-First strategy with progressive disclosure
  * 
  * @module GamesRoutes
  */
@@ -101,7 +100,7 @@ router.get('/facets', validateRequest(facetsQuerySchema), filterFacetsController
 
 /**
  * @route GET /api/games/statistics
- * @description Get game statistics for progressive disclosure UI
+ * @description Get game statistics from API 
  * @access Public
  * @param {Object} [req.query] - Optional filter parameters
  * @param {string} [req.query.search] - Search term to scope statistics
@@ -122,7 +121,7 @@ router.get('/statistics', validateRequest(statisticsQuerySchema), gameStatistics
 
 /**
  * @route GET /api/games/:id
- * @description Get a specific game with its associated launch options
+ * @description Get a specific game and its associated launch options
  * @access Public
  * @param {Object} req.params - Route parameters
  * @param {string} req.params.id - Steam app ID of the game
@@ -155,9 +154,9 @@ router.get('/health/strategy', async (req, res) => {
   try {
     // Quick test of options-first functionality
     const [optionsOnlyTest, allGamesTest] = await Promise.all([
-      // Test 1: Default behavior (options-first)
+      // Test default behavior
       fetch(`${req.protocol}://${req.get('host')}/api/games?limit=1`).then(r => r.json()),
-      // Test 2: Show all behavior
+      // Test with show all games set to 'true" as default behavior
       fetch(`${req.protocol}://${req.get('host')}/api/games?limit=1&showAll=true`).then(r => r.json())
     ]);
 
