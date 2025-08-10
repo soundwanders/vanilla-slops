@@ -133,7 +133,7 @@ fieldset,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--space-3);
   box-sizing: border-box;
   cursor: pointer;
   user-select: none;
@@ -144,8 +144,9 @@ fieldset,
 }
 
 .show-all-checkbox-container:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+  background: var(--color-interactive-hover);
 }
 
 /* Hover state - match dropdown hover exactly */
@@ -175,12 +176,10 @@ fieldset,
 }
 
 .checkbox-label-text {
-  display: block;
-  font-size: var(--font-size-xs);
+  flex: 1;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-primary);
-  flex: 1;
-  margin: 0;
   line-height: 1.2;
 }
 
@@ -190,22 +189,48 @@ fieldset,
   justify-content: center;
   font-size: var(--font-size-xs);
   font-weight: 600;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
   white-space: nowrap;
+  min-width: 75px;
+  text-align: center;
   transition: all var(--transition-fast);
   
-  /* Default state */
+  /* Default: showing only games with options */
   background: var(--color-surface-subtle);
   color: var(--color-text-secondary);
   border: 1px solid var(--color-border-subtle);
 }
 
+/* Checked state - hiding games without options */
 #showAllGamesFilter:checked + .show-all-checkbox-container .checkbox-stats {
   background: var(--color-success);
   color: var(--color-text-inverse);
   border-color: var(--color-success);
 }
+
+.show-all-checkbox-container::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  margin-right: var(--space-2);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+/* Checked indicator */
+#showAllGamesFilter:checked + .show-all-checkbox-container::before {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='white' d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
+  background-size: 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
 
 /* =============================================================================
    YEAR FILTER 
