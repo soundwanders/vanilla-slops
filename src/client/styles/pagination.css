@@ -25,6 +25,7 @@
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-medium);
   text-align: center;
+  padding-bottom: var(--space-md);
 }
 
 .pagination-controls {

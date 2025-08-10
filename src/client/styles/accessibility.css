@@ -17,6 +17,63 @@
   border: 0;
 }
 
+/* Focus indicators */
+.filter-select:focus-visible,
+.sort-select:focus-visible,
+.year-input:focus-visible,
+#showAllGamesFilter:focus + .show-all-checkbox-container {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 6px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  z-index: var(--z-maximum);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+.skip-link:focus-visible {
+  top: 6px;
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+}
+
+/* High contrast mode MOBILE views */
+@media (prefers-contrast: high) and (max-width: 768px) {
+  .games-table tbody tr, .launch-option {
+    border-width: 2px !important;
+  }
+
+  .games-table td::before {
+    font-weight: 800 !important;
+  }
+  
+  .filter-tag {
+    border: 2px solid;
+  }
+}
+
 /* High Contrast Mode Support */
 @media (prefers-contrast: high) {
   :root {
@@ -125,36 +182,26 @@
   }
 }
 
-/* Screen Reader Improvements */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--color-interactive-focus);
-  outline-offset: 2px;
-}
+/* Reduced motion MOBILE VIEWS */
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+  .games-table tbody tr:hover {
+    transform: none !important;
+  }
 
-/* Skip link for accessibility */
-.skip-link {
-  position: absolute;
-  top: -60px;
-  left: 6px;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  text-decoration: none;
-  z-index: var(--z-maximum);
-  transition: top var(--transition-fast);
-}
-
-.skip-link:focus {
-  top: 6px;
-}
-
-.skip-link:focus-visible {
-  top: 6px;
-  outline: 2px solid var(--color-interactive-focus);
-  outline-offset: 2px;
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container,
+  .filter-tag {
+    transition: none;
+  }
+  
+  .launch-option:hover,
+  .option-command:hover {
+    transform: none !important;
+  }
+  
+  *:focus-visible {
+    outline: 2px solid var(--color-interactive-focus) !important;
+    outline-offset: 2px !important;
+  }
 }

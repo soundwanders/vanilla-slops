@@ -153,31 +153,21 @@ function buildQueryParams(params) {
 
 /**
  * Main function to fetch games with comprehensive filtering and pagination
- * Supports search, category filters, sorting, and caching
+ * Updated to support engine filtering
  * 
- * @async
- * @function fetchGames
  * @param {Object} params - Query parameters
  * @param {number} [params.page=1] - Page number for pagination
  * @param {number} [params.limit=20] - Number of items per page
  * @param {string} [params.search=''] - Search query for games
  * @param {string} [params.category=''] - Game category filter
  * @param {string} [params.developer=''] - Developer name filter
+ * @param {string} [params.engine=''] - Game engine filter 
  * @param {string} [params.options=''] - Launch options filter type
  * @param {string} [params.year=''] - Release year filter
  * @param {string} [params.sort='title'] - Sort field
  * @param {string} [params.order='asc'] - Sort order
  * @param {boolean} [params.useCache=true] - Whether to use caching
  * @returns {Promise<Object>} Games data with pagination metadata
- * @throws {Error} When API request fails or returns invalid data
- * 
- * @example
- * const result = await fetchGames({
- *   search: 'valve',
- *   category: 'fps',
- *   page: 1,
- *   limit: 20
- * });
  */
 export async function fetchGames({
   page = 1,
@@ -185,6 +175,7 @@ export async function fetchGames({
   search = '',
   category = '',
   developer = '',
+  engine = '', // NEW ENGINE PARAMETER
   options = '',
   year = '',
   sort = 'title',
@@ -200,6 +191,7 @@ export async function fetchGames({
     search,
     category,
     developer,
+    engine, // NEW ENGINE PARAM
     options,
     year,
     sort,
@@ -349,37 +341,24 @@ export async function getFilterFacets(searchQuery = '') {
 
 /**
  * Fetch real game statistics from the API for Show All Games filter
- * Provides counts of games with/without launch options, optionally filtered
+ * Updated to support engine filtering
  * 
- * @async
- * @function fetchGameStatistics
  * @param {Object} [filters={}] - Optional filter parameters to scope statistics
  * @param {string} [filters.search] - Search term to scope statistics
  * @param {string} [filters.developer] - Developer filter
  * @param {string} [filters.category] - Category filter
+ * @param {string} [filters.engine] - Engine filter 
  * @param {string} [filters.year] - Year filter
  * @param {boolean} [useCache=true] - Whether to use caching
  * @returns {Promise<Object>} Statistics object with counts and percentages
- * @property {number} withOptions - Count of games with launch options
- * @property {number} withoutOptions - Count of games without launch options
- * @property {number} total - Total games matching filters
- * @property {number} percentageWithOptions - Percentage of games with options
- * @throws {Error} When API request fails (returns fallback data)
- * 
- * @example
- * const stats = await fetchGameStatistics();
- * // Returns: { withOptions: 146, withoutOptions: 129, total: 275, percentageWithOptions: 53.1 }
- * 
- * const filteredStats = await fetchGameStatistics({ search: 'valve' });
- * // Returns stats scoped to search results
  */
 export async function fetchGameStatistics(filters = {}, useCache = true) {
   const queryParams = buildQueryParams({
     search: filters.search || '',
     developer: filters.developer || '',
     category: filters.category || '',
-    year: filters.year || '',
-    engine: filters.engine || ''
+    engine: filters.engine || '',
+    year: filters.year || ''
   });
 
   const cacheKey = `statistics:${queryParams}`;
@@ -550,7 +529,6 @@ export async function advancedSearch({
   exactMatch = false
 } = {}) {
   
-  // For now, map to regular fetchGames
   return fetchGames({
     page,
     limit,

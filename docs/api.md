@@ -1,7 +1,6 @@
 # Vanilla Slops API Documentation
 
-**Version:** 1.0.0  
-**Base URL:** `https://your-api-domain.com`  
+**Base URL:** `https://vanilla-slops.up.railway.app/`  
 **Protocol:** HTTPS only
 
 ## Overview
@@ -35,10 +34,9 @@ The database schema includes three main tables:
 **Key Features:**
 - RESTful design with proper HTTP status codes
 - Request validation and sanitization
-- Comprehensive error handling
 - Rate limiting (1000 requests/15 minutes per IP)
 - CORS support for web applications
-- Structured logging and monitoring
+- Structured logging for readability
 
 ### What are Launch Options?
 
@@ -51,13 +49,13 @@ Launch options are special commands you can add to Steam games to modify how the
 
 ```bash
 # Get all games
-curl "https://your-api-domain.com/api/games"
+curl "https://vanilla-slops.up.railway.app/api/games"
 
 # Search for a specific game
-curl "https://your-api-domain.com/api/games?search=half+life"
+curl "https://vanilla-slops.up.railway.app/api/games?search=half+life"
 
 # Get launch options for Team Fortress 2 (app_id: 440)
-curl "https://your-api-domain.com/api/games/440/launch-options"
+curl "https://vanilla-slops.up.railway.app/api/games/440/launch-options"
 ```
 
 ## Authentication
@@ -74,7 +72,7 @@ Currently, the API is **publicly accessible** and does not require authenticatio
 
 All API requests should be made to:
 ```
-https://your-api-domain.com/api/
+https://vanilla-slops.up.railway.app/api/
 ```
 
 The API is currently version 1.0 and is considered stable. Future breaking changes will be introduced in new versions.
@@ -105,7 +103,7 @@ Retrieve a paginated list of Steam games with optional filtering and search.
 
 **Example Request:**
 ```bash
-curl "https://your-api-domain.com/api/games?search=valve&sort=year&order=desc&limit=10"
+curl "https://vanilla-slops.up.railway.app/api/games?search=valve&sort=year&order=desc&limit=10"
 ```
 
 **Example Response:**
@@ -155,7 +153,7 @@ Retrieve complete details for a specific game, including all launch options.
 
 **Example Request:**
 ```bash
-curl "https://your-api-domain.com/api/games/440"
+curl "https://vanilla-slops.up.railway.app/api/games/440"
 ```
 
 **Example Response:**
@@ -231,7 +229,7 @@ Get autocomplete suggestions for search queries.
 
 **Example Request:**
 ```bash
-curl "https://your-api-domain.com/api/games/suggestions?q=half&limit=5"
+curl "https://vanilla-slops.up.railway.app/api/games/suggestions?q=half&limit=5"
 ```
 
 **Example Response:**
@@ -441,17 +439,17 @@ The API supports Cross-Origin Resource Sharing (CORS) for web applications:
 
 **Get popular games with launch options:**
 ```bash
-curl "https://your-api-domain.com/api/games?options=has-options&sort=options&order=desc&limit=5"
+curl "https://vanilla-slops.up.railway.app/api/games?options=has-options&sort=options&order=desc&limit=5"
 ```
 
 **Search for Valve games:**
 ```bash
-curl "https://your-api-domain.com/api/games?developer=valve&sort=year&order=desc"
+curl "https://vanilla-slops.up.railway.app/api/games?developer=valve&sort=year&order=desc"
 ```
 
 **Find games from 2020:**
 ```bash
-curl "https://your-api-domain.com/api/games?year=2020"
+curl "https://vanilla-slops.up.railway.app/api/games?year=2020"
 ```
 
 ### JavaScript/Node.js (Express.js)
@@ -459,7 +457,7 @@ curl "https://your-api-domain.com/api/games?year=2020"
 ```javascript
 // Using fetch API (client-side)
 async function getGameLaunchOptions(appId) {
-  const response = await fetch(`https://your-api-domain.com/api/games/${appId}/launch-options`);
+  const response = await fetch(`https://vanilla-slops.up.railway.app/api/games/${appId}/launch-options`);
   
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -476,7 +474,7 @@ const app = express();
 app.get('/my-games/:appId/options', async (req, res) => {
   try {
     const { appId } = req.params;
-    const response = await fetch(`https://your-api-domain.com/api/games/${appId}/launch-options`);
+    const response = await fetch(`https://vanilla-slops.up.railway.app/api/games/${appId}/launch-options`);
     const options = await response.json();
     
     res.json(options);
@@ -498,7 +496,7 @@ import requests
 
 def get_games(search_term="", page=1, limit=20):
     """Get games from the Vanilla Slops API"""
-    url = "https://your-api-domain.com/api/games"
+    url = "https://vanilla-slops.up.railway.app/api/games"
     params = {
         "search": search_term,
         "page": page,
@@ -521,13 +519,3 @@ print(f"Found {games['total']} games")
 - React/Vue.js applications
 - Mobile app frameworks
 - Server-side frameworks (Next.js, Nuxt.js, etc.)
-
-## Support & Contributing
-
-**Issues & Bug Reports:**
-- GitHub Issues: https://github.com/soundwanders/vanilla-slops
-
-**Contributing:**
-- Fork the repository
-- Submit pull requests for improvements
-- Follow [contributing guidelines](./CONTRIBUTING.md) for this project

@@ -14,7 +14,6 @@
  * @requires SlopSearchUtils.js
  * 
  */
-
 export default class SlopSearch {
   constructor({
     inputId = 'searchInput',
@@ -34,7 +33,7 @@ export default class SlopSearch {
     this.activeFilters = document.getElementById(activeFiltersId);
     this.sortSelect = document.getElementById(sortId);
 
-    // Filter elements mapping
+    // Filter elements mapping (including engine filter)
     this.filterElements = {};
     Object.entries(filters).forEach(([key, elementId]) => {
       const element = document.getElementById(elementId);
@@ -65,14 +64,14 @@ export default class SlopSearch {
 
     // UX Configuration
     this.config = {
-      suggestionsDelay: 150,        // Fast suggestions
-      searchDelay: 800,             // Slower main search (was 300ms)
-      minCharsForSuggestions: 2,    // Start suggestions after 2 chars
-      minCharsForSearch: 3,         // Only search after 3 chars
-      maxSearchDelay: 2000,         // Max delay for progressive debounce
-      enableSearchOnEnter: true,    // Allow Enter key to trigger immediate search
-      enableProgressiveDebounce: true, // Longer delays for rapid typing
-      enableClickOutsideSearch: true  // Search when clicking outside
+      suggestionsDelay: 150,
+      searchDelay: 800,
+      minCharsForSuggestions: 2,
+      minCharsForSearch: 3,
+      maxSearchDelay: 2000,
+      enableSearchOnEnter: true,
+      enableProgressiveDebounce: true,
+      enableClickOutsideSearch: true
     };
 
     // Define safe zones where clicks shouldn't trigger searches
@@ -80,24 +79,24 @@ export default class SlopSearch {
       '.search-input-wrapper',
       '.search-field', 
       '.suggestions-dropdown',
-      '.launch-options-row',        // Launch options area
-      '.launch-options-cell',       // Launch options cell
-      '.launch-option',             // Individual launch options
-      '.option-command',            // Command areas
-      '.option-meta',               // Meta information areas
-      '.launch-options-btn',        // Launch options buttons
-      '.launch-options-close',      // Close buttons
-      '.filter-select',             // Filter dropdowns
-      '.active-filters',            // Active filter tags
-      '.pagination-container',      // Pagination
-      '.theme-toggle'               // Theme toggle
+      '.launch-options-row',
+      '.launch-options-cell',
+      '.launch-option',
+      '.option-command',
+      '.option-meta',
+      '.launch-options-btn',
+      '.launch-options-close',
+      '.filter-select',
+      '.active-filters',
+      '.pagination-container',
+      '.theme-toggle'
     ];
 
     // Initialize
     this.initializeEventListeners();
     this.loadInitialData();
     
-    console.log('🎯 SlopSearch initialized with click-outside detection');
+    console.log('🎯 SlopSearch initialized with engine filter support');
   }
 
   /**
@@ -557,9 +556,9 @@ export default class SlopSearch {
     const displayNames = {
       category: 'Category',
       developer: 'Developer',
+      engine: 'Engine', 
       options: 'Launch Options',
       year: 'Year',
-      engine: 'Engine',
       platform: 'Platform'
     };
     return displayNames[key] || key;
@@ -574,7 +573,7 @@ export default class SlopSearch {
       search: this.currentQuery,
       sort: this.currentSort,
       order: this.currentOrder,
-      ...this.currentFilters
+      ...this.currentFilters 
     };
 
     if (this.onFilterChange && typeof this.onFilterChange === 'function') {
@@ -606,7 +605,7 @@ export default class SlopSearch {
       this.populateSelectOptions(this.filterElements.developer, facets.developers, 'All Developers');
     }
 
-    // Populate engine filter  
+    // Populate engine filter (NEW)
     if (this.filterElements.engine && facets.engines) {
       this.populateSelectOptions(this.filterElements.engine, facets.engines, 'All Engines');
     }
@@ -669,7 +668,7 @@ export default class SlopSearch {
   getCurrentState() {
     return {
       query: this.currentQuery,
-      filters: { ...this.currentFilters },
+      filters: { ...this.currentFilters }, 
       sort: this.currentSort,
       order: this.currentOrder
     };
@@ -691,6 +690,7 @@ export default class SlopSearch {
     
     if (this.searchInput) this.searchInput.value = '';
     
+    // Clear all filter elements (including engine)
     Object.values(this.filterElements).forEach(element => {
       if (element) element.value = '';
     });
