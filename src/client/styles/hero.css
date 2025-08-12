@@ -21,7 +21,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1;
+  z-index: var(--z-front);
 }
 
 .hero-gradient {
@@ -64,7 +64,7 @@
 /* Main Content Container */
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-dropdown);
   max-width: 1200px;
   width: 100%;
   padding: var(--space-12) var(--space-6);
@@ -201,7 +201,7 @@
   font-size: var(--font-size-xl);
   color: var(--color-text-tertiary);
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--z-front);
   transition: color var(--transition-fast);
 }
 
@@ -268,7 +268,7 @@
 /* Filters Section */
 .hero-filters {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-dropdown);
   max-width: 1200px;
   width: 100%;
   padding: 0 var(--space-6);

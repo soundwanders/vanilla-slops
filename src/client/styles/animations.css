@@ -491,13 +491,6 @@ body {
    Animations for specific UI components
    ============================================================================= */
 
-/* Button Ripple Effect */
-.btn,
-.launch-options-btn {
-  position: relative;
-  overflow: hidden;
-}
-
 /* Filter Tags */
 .filter-tag {
   animation: filterTagSlideIn 0.3s ease-out;

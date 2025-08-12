@@ -182,9 +182,6 @@
 }
 
 .launch-options-btn.loading {
-  min-width: 120px;
-  max-width: 160px;
-  padding: var(--space-2) var(--space-4);
   transform: none !important;
   display: inline-flex;
   align-items: center;
@@ -192,7 +189,6 @@
   gap: var(--space-2);
   transition: all var(--transition-base);
 }
-
 
 .launch-options-btn::before {
   content: '🚀';
@@ -568,11 +564,11 @@
 }
 
 .launch-options-btn .loading-spinner {
-  width: 14px !important;
-  height: 14px !important;
+  width: 12px !important;
+  height: 12px !important;
   border-width: 2px;
-  min-width: unset;
-  max-width: unset;
+  min-width: 0;
+  max-width: 0;
   flex-shrink: 0;
 }
 
