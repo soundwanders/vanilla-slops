@@ -136,6 +136,18 @@ export default class SlopSearch {
    * Search input handling with two-tier approach
    * TIER 1: Fast suggestions (150ms)
    * TIER 2: Deliberate search (800ms with progressive debouncing)
+   * Handles click-outside detection to respect safe zones
+   * @param {string} query - The current search query
+   * @returns {void}
+   * @throws {Error} If query is not a string
+   * @throws {TypeError} If query is not a valid string
+   * @throws {RangeError} If query length is less than minimum threshold
+   * @throws {SyntaxError} If query contains invalid characters (e.g., HTML tags)
+   * @throws {ReferenceError} If searchInput is not defined
+   * @throws {URIError} If query cannot be encoded as a URI component
+   * @throws {EvalError} If query contains invalid characters
+   * @throws {TypeError} If query is not a string or valid selector
+   * @throws {RangeError} If query length exceeds maximum limit
    */
   handleSearchInput(query) {
     const now = Date.now();
@@ -247,7 +259,14 @@ export default class SlopSearch {
    * Prevents search triggers when interacting with launch options and other UI elements
    * 
    * @param {Element} target - The clicked element
-   * @returns {boolean} True if click is in a safe zone
+   * @returns {boolean} True if click is in a safe zone, false otherwise
+   * @throws {TypeError} If target is not a valid DOM element
+   * @throws {RangeError} If target is null or undefined
+   * @throws {SyntaxError} If target is not a valid HTML element
+   * @throws {ReferenceError} If safeZones array is not defined
+   * @throws {URIError} If target cannot be processed as a URI component
+   * @throws {EvalError} If target contains invalid characters
+   * @throws {TypeError} If target is not a string or valid selector
    */
   isClickInSafeZone(target) {
     // Check if the target or any of its parents match a safe zone selector
@@ -369,6 +388,19 @@ export default class SlopSearch {
 
   /**
    * Fast suggestions fetching (keeps autocomplete snappy)
+   * This method fetches suggestions from the backend
+   * and updates the suggestions dropdown
+   * It uses a minimum character threshold to avoid unnecessary requests
+   * @param {string} query - The current search query
+   * @returns {Promise<void>} Resolves when suggestions are fetched
+   * @throws {Error} If fetch fails or response is not ok
+   * @throws {TypeError} If query is not a string
+   * @throws {RangeError} If query length is less than minimum threshold
+   * @throws {SyntaxError} If response JSON is malformed
+   * @throws {ReferenceError} If suggestionsDropdown is not defined
+   * @throws {URIError} If query cannot be encoded as a URI component
+   * @throws {EvalError} If query contains invalid characters
+   * @throws {TypeError} If query is not a string
    */
   async fetchSuggestions(query) {
     if (!query || query.length < this.config.minCharsForSuggestions) {
@@ -396,7 +428,20 @@ export default class SlopSearch {
     }
   }
 
-  /** Render search suggestions */
+  /**
+   * Render suggestions dropdown with categories
+   * This method groups suggestions by category and highlights matches
+   * It also handles click events on suggestions to select them
+   * @returns {void}
+   * @throws {Error} If suggestionsDropdown is not defined
+   * @throws {TypeError} If suggestions is not an array
+   * @throws {RangeError} If selectedSuggestionIndex is out of bounds
+   * @throws {SyntaxError} If suggestion value is malformed
+   * @throws {ReferenceError} If suggestions array is not defined
+   * @throws {URIError} If suggestion value cannot be encoded as a URI component
+   * @throws {EvalError} If suggestion value contains invalid characters
+   * @throws {TypeError} If suggestion value is not a string
+   */
   renderSuggestions() {
     if (!this.suggestionsDropdown) return;
 
@@ -466,6 +511,17 @@ export default class SlopSearch {
 
   /**
    * Select suggestion and trigger immediate search
+   * This is called when a suggestion is clicked or selected via keyboard
+   * @param {number} index - The index of the suggestion to select
+   * @returns {void}
+   * @throws {Error} If index is out of bounds
+   * @throws {TypeError} If index is not a number
+   * @throws {RangeError} If index is negative or exceeds suggestions length
+   * @throws {SyntaxError} If suggestion value is malformed
+   * @throws {ReferenceError} If suggestions array is not defined
+   * @throws {URIError} If suggestion value cannot be encoded as a URI component
+   * @throws {EvalError} If suggestion value contains invalid characters
+   * @throws {TypeError} If suggestion value is not a string
    */
   selectSuggestion(index) {
     const suggestion = this.suggestions[index];
@@ -483,6 +539,18 @@ export default class SlopSearch {
 
   /**
    * Handle filter changes (immediate response for deliberate actions)
+   * This updates the current filters and re-renders active filters
+   * @param {string} filterKey - The key of the filter being changed
+   * @param {string} value - The new value for the filter
+   * If value is empty or whitespace, the filter is removed
+   * @returns {void}
+   * @throws {Error} If filterKey is not recognized
+   * @throws {TypeError} If value is not a string
+   * @throws {RangeError} If value exceeds maximum length (e.g., 100 characters)
+   * @throws {SyntaxError} If value contains invalid characters (e.g., HTML tags)
+   * @throws {ReferenceError} If filterKey is not defined in this.currentFilters
+   * @throws {URIError} If value cannot be encoded as a URI component
+   * @throws {EvalError} If filterKey is not a valid filter key
    */
   handleFilterChange(filterKey, value) {
     if (value && value.trim()) {
@@ -496,7 +564,13 @@ export default class SlopSearch {
   }
 
   /**
-   * Handle sort changes (immediate response)
+   * Handle sort change (immediate response)
+   * This updates the current sort field and order
+   * @param {string} sortValue - The value from the sort select element
+   * Format: "field-order" (e.g., "title-asc", "year-desc")
+   * If no value is provided, defaults to "title-asc"
+   * @returns {void}
+   * @throws {Error} If sortValue is not a valid format
    */
   handleSortChange(sortValue) {
     const [field, order] = sortValue.split('-');
@@ -567,6 +641,16 @@ export default class SlopSearch {
   /**
    * Notify parent component of filter changes
    * This is called by main.js via the onFilterChange callback
+   * It sends the current search query, sort, order, and all filters
+   * @returns {void}
+   * @throws {Error} If onFilterChange is not a function
+   * @throws {TypeError} If onFilterChange is not defined
+   * @throws {RangeError} If currentQuery exceeds maximum length (e.g., 100 characters)
+   * @throws {SyntaxError} If currentQuery contains invalid characters (e.g., HTML tags)
+   * @throws {ReferenceError} If currentFilters is not defined
+   * @throws {URIError} If currentQuery cannot be encoded as a URI component
+   * @throws {EvalError} If currentQuery contains invalid characters
+   * @throws {TypeError} If currentQuery is not a string
    */
   notifyFilterChange() {
     const allFilters = {
@@ -598,6 +682,16 @@ export default class SlopSearch {
 
   /**
    * Populate filter dropdowns with available options
+   * This method is called after loading initial data
+   * It populates the developer, engine, and year filters
+   * @param {Object} facets - The facets data from the backend
+   * @returns {void}
+   * @throws {Error} If facets is not an object
+   * @throws {TypeError} If facets is not defined, not arrays, or not objects
+   * @throws {RangeError} If facets properties are not arrays
+   * @throws {SyntaxError} If facets properties contain invalid data
+   * @throws {ReferenceError} If filterElements are not defined
+   * @throws {URIError} If facets values cannot be encoded as URI components
    */
   populateFilterOptions(facets) {
     // Populate developer filter
@@ -676,6 +770,11 @@ export default class SlopSearch {
 
   /**
    * Reset all search filters and state
+   * This clears the search input, filters, and suggestions
+   * It also resets the sort select to default
+   * @returns {void}
+   * @throws {Error} If reset fails
+   * @throws {TypeError} If reset is not defined
    */
   reset() {
     this.currentQuery = '';
