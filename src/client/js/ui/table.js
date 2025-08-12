@@ -96,7 +96,7 @@ export function renderTable(games, showLoading = false) {
   
   // Add mobile-specific enhancements
   if (TableState.isMobile) {
-    enhanceMobileExperience(container);
+    enhanceMobileTouch(container);
   }
   
   console.log(`✅ Table rendered with ${games.length} games (Mobile: ${TableState.isMobile})`);
@@ -251,7 +251,6 @@ function enhanceMobileTable(table) {
     ensureTouchTarget(button);
   });
   
-  // Add mobile-specific accessibility
   table.setAttribute('aria-label', 'Games table - swipe horizontally on mobile to view all data');
   
   // Add mobile scroll hint if needed
@@ -263,9 +262,9 @@ function enhanceMobileTable(table) {
 }
 
 /**
- * Enhance mobile experience with touch optimizations
+ * Touch optimizations
  */
-function enhanceMobileExperience(container) {
+function enhanceMobileTouch(container) {
   // Add touch-friendly classes
   container.classList.add('mobile-optimized');
   
@@ -311,7 +310,6 @@ function addTouchOptimizations(container) {
  * Add mobile-specific event handlers
  */
 function addMobileEventHandlers(container) {
-  // Handle mobile-specific interactions
   container.addEventListener('touchstart', (e) => {
     const target = e.target.closest('[data-mobile-action]');
     if (target) {
@@ -369,7 +367,6 @@ function addMobileScrollHint(table) {
  * Enhance mobile empty state
  */
 function enhanceMobileEmptyState(container) {
-  // Add mobile-friendly classes
   container.classList.add('mobile-empty-state');
   
   // Ensure buttons are touch-friendly
@@ -378,7 +375,6 @@ function enhanceMobileEmptyState(container) {
     ensureTouchTarget(button);
   });
   
-  // Optimize text for mobile readability
   const descriptions = container.querySelectorAll('.empty-description');
   descriptions.forEach(desc => {
     desc.style.lineHeight = '1.6';
@@ -391,7 +387,7 @@ function enhanceMobileEmptyState(container) {
 // ============================================================================
 
 /**
- * Render loading state with mobile considerations
+ * Render loading state 
  */
 function renderLoadingState(container) {
   container.innerHTML = `
@@ -403,7 +399,7 @@ function renderLoadingState(container) {
 }
 
 /**
- * Render basic empty state (fallback) with mobile support
+ * Render basic empty state (fallback)
  */
 function renderBasicEmptyState(container) {
   container.innerHTML = `
@@ -439,7 +435,7 @@ function determineEmptyStateType(filters, stats) {
 }
 
 /**
- * Create HTML for different empty state types with mobile support
+ * Create HTML for different empty state types
  */
 function createEmptyStateHTML(type, filters, stats) {
   const emptyStates = {
@@ -456,7 +452,7 @@ function createEmptyStateHTML(type, filters, stats) {
 }
 
 /**
- * No options found state with mobile enhancements
+ * No options found state
  */
 function createNoOptionsFoundHTML(stats) {
   const suggestions = ['Counter-Strike', 'Half-Life', 'Portal', 'Cyberpunk', 'Witcher', 'GTA'];
@@ -542,7 +538,7 @@ function createSearchNoResultsHTML(filters, stats) {
 }
 
 /**
- * All games filtered state with mobile enhancements
+ * All games filtered state 
  */
 function createAllFilteredHTML(filters, stats) {
   const activeFilters = getActiveFiltersDescription(filters);
@@ -611,11 +607,11 @@ function createDefaultEmptyHTML(stats) {
 }
 
 // ============================================================================
-// LAUNCH OPTIONS FUNCTIONALITY - MOBILE ENHANCED
+// LAUNCH OPTIONS FUNCTIONALITY
 // ============================================================================
 
 /**
- * Handle launch options button clicks with mobile considerations
+ * Handle launch options button clicks 
  */
 async function handleLaunchOptionsClick(e) {
   const button = e.target.closest(CONFIG.SELECTORS.launchOptionsBtn);
@@ -649,7 +645,6 @@ async function handleLaunchOptionsClick(e) {
     }
 
     closeAllLaunchOptions();
-    setButtonLoadingState(button);
 
     const launchOptions = await fetchLaunchOptions(gameId, true);
     console.log(`✅ Received ${launchOptions.length} launch options for game ${gameId}`);
@@ -668,7 +663,7 @@ async function handleLaunchOptionsClick(e) {
 }
 
 /**
- * Display launch options in table with mobile enhancements
+ * Display launch options in table
  */
 function displayLaunchOptions(gameId, launchOptions) {
   const gameRow = document.querySelector(`tr[data-game-id="${gameId}"]`);
@@ -697,7 +692,7 @@ function displayLaunchOptions(gameId, launchOptions) {
   gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
   setupLaunchOptionsRowEvents(launchOptionsRow);
   
-  // Add mobile-specific enhancements
+  // Activate mobile-specific enhancements
   if (TableState.isMobile) {
     enhanceMobileLaunchOptions(launchOptionsRow);
   }
@@ -797,7 +792,6 @@ function createLaunchOptionHTML(option) {
  * Enhance mobile launch options display
  */
 function enhanceMobileLaunchOptions(container) {
-  // Add mobile-specific classes
   container.classList.add('mobile-enhanced');
   
   // Ensure all interactive elements are touch-friendly
@@ -860,52 +854,56 @@ function addSwipeToClose(container) {
 }
 
 // ============================================================================
-// BUTTON STATE MANAGEMENT - MOBILE ENHANCED
+// BUTTON STATE MANAGEMENT
 // ============================================================================
 
-function setButtonLoadingState(button) {
-  button.disabled = true;
-  button.classList.add('loading');
-  
-  if (TableState.isMobile) {
-    button.innerHTML = `
-      <span class="loading-spinner mobile-spinner"></span>
-      <span class="btn-text">...</span>
-    `;
-  } else {
-    button.innerHTML = `
-      <span class="loading-spinner"></span>
-      ...
-    `;
-  }
-}
-
+// Set button to hide state
 function setButtonHideState(button, originalContent) {
-  const hideContent = originalContent.replace(/Show Options/g, 'Hide Options')
-                                   .replace(/show-options/g, 'hide-options');
+  // Use stored original content or provided content
+  const contentToModify = originalContent || button.dataset.originalContent || button.innerHTML;
+  
+  const hideContent = contentToModify.replace(/Show Options/g, 'Hide Options')
+                                   .replace(/show-options/g, 'hide-options')
+                                   .replace(/Options/g, 'Hide');
+  
   button.innerHTML = hideContent;
   button.disabled = false;
   button.classList.remove('loading');
   button.classList.add('options-shown');
   button.setAttribute('aria-expanded', 'true');
+  
+  // Remove size constraint
+  button.style.minWidth = '';
 }
-
+// Restore button to show state
 function setButtonShowState(button, originalContent = null) {
-  if (originalContent) {
-    button.innerHTML = originalContent;
+  // Use stored original content first, then provided, then current
+  const contentToRestore = originalContent || 
+                          button.dataset.originalContent || 
+                          button.innerHTML;
+  
+  if (originalContent || button.dataset.originalContent) {
+    // Restore to original state
+    button.innerHTML = originalContent || button.dataset.originalContent;
   } else {
-    const currentContent = button.innerHTML;
-    const showContent = currentContent.replace(/Hide Options/g, 'Show Options')
-                                     .replace(/hide-options/g, 'show-options');
+    // Modify current content to show state
+    const showContent = contentToRestore.replace(/Hide Options/g, 'Show Options')
+                                       .replace(/hide-options/g, 'show-options')
+                                       .replace(/Hide/g, 'Options');
     button.innerHTML = showContent;
   }
+  
   button.disabled = false;
   button.classList.remove('loading', 'options-shown');
   button.setAttribute('aria-expanded', 'false');
+  
+  // Remove size constraint and clear stored content
+  button.style.minWidth = '';
+  delete button.dataset.originalContent;
 }
 
 // ============================================================================
-// CLOSE ALL FUNCTIONALITY - MOBILE ENHANCED
+// CLOSE ALL FUNCTIONALITY
 // ============================================================================
 
 function updateCloseAllButton() {
@@ -1018,7 +1016,7 @@ function showCloseAllFeedback(count) {
 }
 
 // ============================================================================
-// COPY FUNCTIONALITY - MOBILE ENHANCED
+// COPY FUNCTIONALITY
 // ============================================================================
 
 async function handleCommandClick(e) {
@@ -1103,8 +1101,6 @@ function attemptTextSelection(element) {
     console.error('Fallback text selection also failed:', fallbackError);
   }
 }
-
-// [Continue with remaining functions - close functions, event management, integration triggers, utility functions...]
 
 // ============================================================================
 // CLOSE FUNCTIONS
@@ -1202,16 +1198,16 @@ function showLaunchOptionsError(gameId, errorMessage) {
 }
 
 // ============================================================================
-// EVENT MANAGEMENT - MOBILE ENHANCED
+// EVENT MANAGEMENT
 // ============================================================================
 
 /**
- * Set up main table event listeners with mobile considerations
+ * Set up main table event listeners 
  */
 function setupTableEventListeners() {
   if (TableState.isInitialized) return;
   
-  // Launch options buttons (with passive event listeners for mobile performance)
+  // Launch options buttons with passive event listeners
   document.addEventListener('click', handleLaunchOptionsClick);
   
   // Close all button
@@ -1251,11 +1247,10 @@ function setupMobileEventListeners() {
       // Refresh mobile state and re-optimize
       TableState.isMobile = window.innerWidth <= CONFIG.MOBILE_BREAKPOINT;
       
-      // Re-enhance mobile experience if still mobile
       if (TableState.isMobile) {
         const container = getTableContainer();
         if (container) {
-          enhanceMobileExperience(container);
+          enhanceMobileTouch(container);
         }
       }
     }, 100);
@@ -1367,7 +1362,7 @@ function setupEmptyStateEventListeners() {
 }
 
 // ============================================================================
-// INTEGRATION TRIGGERS - MOBILE AWARE
+// INTEGRATION TRIGGERS
 // ============================================================================
 
 function triggerShowAllGames() {
@@ -1506,7 +1501,7 @@ function showLaunchOptionsInfo() {
 }
 
 // ============================================================================
-// UTILITY FUNCTIONS - MOBILE ENHANCED
+// UTILITY FUNCTIONS
 // ============================================================================
 
 function getTableContainer() {
@@ -1595,14 +1590,13 @@ function getSafeAreaInsets() {
 }
 
 // ============================================================================
-// INITIALIZATION - MOBILE AWARE
+// INITIALIZATION
 // ============================================================================
 
 /**
  * Initialize table features with mobile detection
  */
 function initializeTable() {
-  // Update mobile state
   TableState.isMobile = isMobileDevice();
   TableState.touchDevice = 'ontouchstart' in window;
   
@@ -1641,7 +1635,7 @@ function initializeTable() {
         padding: 12px 20px;
         border-radius: 8px;
         font-size: 14px;
-        z-index: 1000;
+        z-index: var(--z-popover);
         box-shadow: var(--shadow-lg);
       }
     `;
@@ -1661,7 +1655,7 @@ function initializeTable() {
 initializeTable();
 
 // ============================================================================
-// PUBLIC API - MOBILE ENHANCED
+// PUBLIC API
 // ============================================================================
 
 export {
