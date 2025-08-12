@@ -176,46 +176,60 @@ async function addShowAllGamesFilter() {
   
   const stats = AppState.gameStats;
   
-  // DEFAULT STATE: checked = hide games without options (options-first mode)
-  // This inverts the logic to match user expectation
-  const isHidingGamesWithoutOptions = !AppState.filters?.showAll; // Inverted logic
+  // FIXED: Ensure correct initial state detection
+  // Default should be: showAll = false (only games with options) = checkbox UNCHECKED
+  const isShowingAll = AppState.filters?.showAll === true;
+  
+  console.log('🔍 Initial state check:', {
+    'AppState.filters.showAll': AppState.filters?.showAll,
+    'isShowingAll': isShowingAll,
+    'checkbox will be': isShowingAll ? 'CHECKED' : 'UNCHECKED',
+    'expected behavior': isShowingAll ? 'showing all games' : 'only games with options'
+  });
   
   // Create or update the filter group
   let filterGroup;
   
   if (existingFilter) {
-    // Use existing placeholder and update its content
     filterGroup = existingFilter;
-    filterGroup.style.display = 'block'; // Show if it was hidden
+    filterGroup.style.display = 'block';
     console.log('📝 Using existing filter placeholder');
   } else {
-    // Create new filter group
     filterGroup = document.createElement('div');
     filterGroup.className = 'filter-group show-all-filter';
     filterGroup.id = 'showAllFilterGroup';
     console.log('🆕 Creating new filter group');
   }
   
-  // Simplified, clear HTML structure
+  // Create HTML with EXPLICIT checkbox state logging
+  const checkboxChecked = isShowingAll ? 'checked' : '';
+  const labelText = isShowingAll ? 'All games' : '';
+  const statsText = isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions}`;
+  
+  console.log('🎛️ Setting up checkbox:', {
+    checkboxChecked,
+    labelText,
+    statsText,
+    rawHTML: `checkbox ${checkboxChecked || 'unchecked'}`
+  });
+  
   filterGroup.innerHTML = `
-    <label class="filter-label" for="showAllGamesFilter">Games Without Options</label>
+    <label class="filter-label" for="showAllGamesFilter">Include All Games</label>
     <input 
       type="checkbox" 
       id="showAllGamesFilter" 
       class="sr-only"
-      ${isHidingGamesWithoutOptions ? 'checked' : ''}
+      ${checkboxChecked}
       aria-describedby="showAllGamesHelp"
     />
-    <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="${isHidingGamesWithoutOptions}">
-      <span class="checkbox-label-text"></span>
-      <span class="checkbox-stats" id="showAllStats">
-        ${isHidingGamesWithoutOptions ? `${stats.withoutOptions} hidden` : `+${stats.withoutOptions} shown`}
-      </span>
+    <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="${isShowingAll}">
+      <span class="checkbox-label-text">${labelText}</span>
+      <span class="checkbox-stats" id="showAllStats">${statsText}</span>
     </label>
     <div id="showAllGamesHelp" class="sr-only">
-      ${isHidingGamesWithoutOptions 
-        ? `Hiding ${stats.withoutOptions} games without launch options. Showing ${stats.withOptions} games with options.`
-        : `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options.`
+      ${isShowingAll 
+        ? `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options`
+        : `Showing only ${stats.withOptions} games with launch options. ${stats.withoutOptions} games hidden.`
       }
     </div>
   `;
@@ -226,29 +240,34 @@ async function addShowAllGamesFilter() {
     console.log('📍 Added filter as last item in fieldset');
   }
   
-  // Remove any old event listeners to prevent duplicates
+  // Clean event setup
   const checkbox = filterGroup.querySelector('#showAllGamesFilter');
   if (checkbox) {
-    // Clone the checkbox to remove all event listeners
+    // Verify the checkbox state after DOM insertion
+    console.log('✅ Checkbox created:', {
+      id: checkbox.id,
+      checked: checkbox.checked,
+      expectedChecked: isShowingAll,
+      stateMatches: checkbox.checked === isShowingAll
+    });
+    
+    // Remove old listeners
     const newCheckbox = checkbox.cloneNode(true);
     checkbox.parentNode.replaceChild(newCheckbox, checkbox);
     
-    // Add fresh event listener
+    // FORCE the correct state after DOM operations
+    newCheckbox.checked = isShowingAll;
+    console.log('🔧 Forced checkbox state:', {
+      setTo: isShowingAll,
+      actualState: newCheckbox.checked
+    });
+    
+    // Add event listener
     newCheckbox.addEventListener('change', function(e) {
-      console.log('🖱️ CHECKBOX CHANGED!', {
-        checked: e.target.checked,
-        timestamp: new Date().toISOString()
-      });
-      
       handleShowAllFilterChange(e);
     });
     
-    console.log('✅ Show All Games filter added successfully to fieldset');
-    console.log('🔍 Checkbox state:', { 
-      id: newCheckbox.id, 
-      checked: newCheckbox.checked,
-      inFieldset: fieldset.contains(newCheckbox)
-    });
+    console.log('✅ Show All Games filter setup complete');
   } else {
     console.error('❌ Failed to find checkbox element');
   }
@@ -260,32 +279,29 @@ async function addShowAllGamesFilter() {
 function syncShowAllCheckboxWithState() {
   const checkbox = document.getElementById('showAllGamesFilter');
   if (!checkbox) {
-    return; // Checkbox hasn't been created yet
+    console.log('🔍 Sync skipped: checkbox not found');
+    return;
   }
   
-  const shouldBeChecked = !AppState.filters?.showAll;
-  const currentCheckboxState = checkbox.checked;
+  const shouldBeChecked = AppState.filters?.showAll === true;
+  const currentlyChecked = checkbox.checked;
   
-  console.log('🔄 Syncing checkbox with AppState:', {
-    appStateShowAll: AppState.filters?.showAll,
-    shouldBeChecked: shouldBeChecked,
-    checkboxChecked: currentCheckboxState,
-    needsSync: shouldBeChecked !== currentCheckboxState
+  console.log('🔄 Syncing checkbox:', {
+    'AppState.showAll': AppState.filters?.showAll,
+    'shouldBeChecked': shouldBeChecked,
+    'currentlyChecked': currentlyChecked,
+    'needsSync': currentlyChecked !== shouldBeChecked
   });
   
-  // Only update if there's a mismatch
-  if (currentCheckboxState !== shouldBeChecked) {
-    console.log(`🔧 Syncing checkbox: ${currentCheckboxState} → ${shouldBeChecked}`);
-    
+  if (currentlyChecked !== shouldBeChecked) {
+    console.log(`Fixing checkbox state: ${currentlyChecked} → ${shouldBeChecked}`);
     checkbox.checked = shouldBeChecked;
     updateShowAllFilterUI(shouldBeChecked);
-    
-    console.log('✅ Checkbox synced with AppState');
+    console.log('Checkbox state corrected');
   } else {
-    console.log('✅ Checkbox already in sync');
+    console.log('Checkbox state already correct');
   }
 }
-
 
 /** Handle Show All Games filter change
  * This function updates the UI and AppState based on the checkbox state
@@ -314,8 +330,8 @@ function updateShowAllFilterUI(isChecked, container = null) {
   // Update stats text with clear messaging
   if (statsElement) {
     const newText = isChecked 
-      ? `${stats.withoutOptions} hidden` 
-      : `+${stats.withoutOptions} shown`;
+      ? `${stats.withoutOptions} showing` 
+      : `+${stats.withoutOptions} hidden`;
     statsElement.textContent = newText;
     console.log('📊 Updated stats text:', newText);
   }
@@ -831,33 +847,30 @@ function parseURLParams() {
   };
   
   if (showAllParam === 'true') {
-    // Show All mode: checkbox UNCHECKED, show all games including those without options
+    // Explicit show all mode: checkbox should be CHECKED
     AppState.filters = {
       ...baseFilters,
       showAll: true,
       hasOptions: undefined
     };
-    console.log('🌍 URL indicates SHOW ALL mode (checkbox will be UNCHECKED)');
-  } else if (hasOptionsParam === 'true' || showAllParam === 'false') {
-    // Options-First mode: checkbox CHECKED, hide games without options
-    AppState.filters = {
-      ...baseFilters,
-      showAll: false,
-      hasOptions: true
-    };
-    console.log('🎯 URL indicates OPTIONS-FIRST mode (checkbox will be CHECKED)');
+    console.log('🌍 URL indicates SHOW ALL mode (checkbox should be CHECKED)');
   } else {
-    // Default mode: checkbox CHECKED (hide games without options)
+    // Default mode: only games with options, checkbox should be UNCHECKED
     AppState.filters = {
       ...baseFilters,
       showAll: false,
       hasOptions: true
     };
-    console.log('⚡ URL indicates default OPTIONS-FIRST mode (checkbox will be CHECKED)');
+    console.log('🎯 Default OPTIONS-FIRST mode (checkbox should be UNCHECKED)');
   }
   
-  console.log('📋 Parsed AppState.filters:', AppState.filters);
+  console.log('📋 Final AppState.filters:', {
+    showAll: AppState.filters.showAll,
+    hasOptions: AppState.filters.hasOptions,
+    expectedCheckboxState: AppState.filters.showAll ? 'CHECKED' : 'UNCHECKED'
+  });
 }
+
 
 /**
  * Handle filter changes from search component - SINGLE SOURCE OF TRUTH
