@@ -128,7 +128,7 @@
   opacity: 0.8;
   pointer-events: none;
   animation: searchPendingPulse 2s infinite ease-in-out;
-  z-index: 10;
+  z-index: var(--z-front)0;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -150,7 +150,7 @@
   font-size: var(--font-size-xl);
   color: var(--color-text-tertiary);
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--z-front);
   transition: all var(--transition-fast);
 }
 
@@ -219,7 +219,7 @@
   border-bottom: 1px solid var(--color-border-subtle);
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: var(--z-front);
   opacity: 0.8;
 }
 
