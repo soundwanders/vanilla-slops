@@ -114,6 +114,15 @@
    2. TABLE CONTENT STYLING
    ============================================================================= */
 
+/* Games count HEADER */
+.results-header {
+  padding: 0.5rem;
+}
+
+.results-count {
+  font-size: var(--font-size-sm);
+}
+
 /* Game Title */
 .game-title {
   font-weight: 600;
@@ -239,13 +248,13 @@
 
 /* Launch Options Row */
 .launch-options-row {
-  background: var(--gradient-surface) !important;
+  background: var(--gradient-surface) ;
   border-top: 2px solid var(--color-accent-subtle);
   transition: all var(--transition-base);
 }
 
 .launch-options-row:hover {
-  background: var(--gradient-surface) !important;
+  background: var(--gradient-surface);
   transform: none !important;
 }
 
@@ -255,12 +264,12 @@
 
 /* Launch Options Cell */
 .launch-options-cell {
-  padding: var(--space-10) !important;
+  padding: var(--space-10);
   border-radius: 0;
-  height: auto !important;
-  overflow: visible !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  height: auto;
+  overflow: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Launch Options List */
@@ -527,16 +536,16 @@
 /* Copy Success and Error Feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.6s ease-out;
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-success) !important;
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
+  border-color: var(--color-success);
 }
 
 .option-command.copy-failed {
   animation: copyFailedAnimation 0.6s ease-out;
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-error) !important;
+  background-color: var(--color-error);
+  color: var(--color-text-inverse);
+  border-color: var(--color-error);
 }
 
 /* Loading States */
@@ -561,21 +570,6 @@
 
 .launch-options-btn.loading::before {
   display: none;
-}
-
-.launch-options-btn .loading-spinner {
-  width: 12px !important;
-  height: 12px !important;
-  border-width: 2px;
-  min-width: 0;
-  max-width: 0;
-  flex-shrink: 0;
-}
-
-.launch-options-btn.loading .btn-text {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .table-loading {
@@ -642,11 +636,11 @@
   background: var(--color-surface-subtle);
   border-radius: var(--radius-xl);
   border: 2px dashed var(--color-border);
-  opacity: 1 !important;
-  visibility: visible !important;
-  height: auto !important;
-  overflow: visible !important;
-  display: block !important;
+  opacity: 1;
+  visibility: visible;
+  height: auto;
+  overflow: visible;
+  display: block;
 }
 
 .no-options::before,
@@ -1395,7 +1389,7 @@
   .games-table td {
     border: none;
     position: relative;
-    padding-left: 35% !important;
+    padding-left: 35%;
     padding-top: var(--space-3);
     padding-bottom: var(--space-3);
     padding-right: var(--space-4);
@@ -1485,7 +1479,7 @@
 }
 
 [data-theme="dark"] .launch-options-row {
-  background: var(--gradient-dark) !important;
+  background: var(--gradient-dark);
 }
 
 [data-theme="dark"] .launch-option {
@@ -1499,13 +1493,13 @@
 }
 
 [data-theme="dark"] .option-command.copied {
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
 }
 
 [data-theme="dark"] .option-command.copy-failed {
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
+  background-color: var(--color-error);
+  color: var(--color-text-inverse);
 }
 
 [data-theme="dark"] .launch-options-cell .error {

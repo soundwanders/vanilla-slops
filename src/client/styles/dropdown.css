@@ -26,50 +26,50 @@
 #yearFilter option,
 #sortSelect option {
   /* Force dark background for options */
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-primary);
   
   /* Ensure proper styling */
-  padding: var(--space-2) var(--space-3) !important;
-  font-size: var(--font-size-sm) !important;
-  font-weight: 500 !important;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
   
   /* Remove any browser defaults */
-  border: none !important;
-  outline: none !important;
+  border: none;
+  outline: none;
 }
 
 /* Hover state for options */
 .filter-select option:hover,
 select option:hover {
-  background-color: var(--color-interactive-hover) !important;
-  color: var(--color-text-primary) !important;
+  background-color: var(--color-interactive-hover);
+  color: var(--color-text-primary);
 }
 
 /* Selected option styling */
 .filter-select option:checked,
 select option:checked {
-  background-color: var(--color-accent) !important;
-  color: var(--color-text-inverse) !important;
-  font-weight: 600 !important;
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-weight: 600;
 }
 
 /* Dark theme specific option styling */
 [data-theme="dark"] .filter-select option,
 [data-theme="dark"] select option {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
 }
 
 [data-theme="dark"] .filter-select option:hover,
 [data-theme="dark"] select option:hover {
-  background-color: var(--color-interactive-hover) !important;
+  background-color: var(--color-interactive-hover);
 }
 
 [data-theme="dark"] .filter-select option:checked,
 [data-theme="dark"] select option:checked {
-  background-color: var(--color-accent) !important;
-  color: var(--color-text-inverse) !important;
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
 }
 
 /* Browser-specific fixes */
@@ -77,15 +77,15 @@ select option:checked {
 @supports (-webkit-appearance: none) {
   .filter-select option,
   select option {
-    background-color: var(--color-surface-raised) !important;
-    color: var(--color-text-primary) !important;
+    background-color: var(--color-surface-raised);
+    color: var(--color-text-primary);
   }
   
   /* WebKit dropdown background fix */
   .filter-select,
   select {
-    background-color: var(--color-surface-raised) !important;
-    color: var(--color-text-primary) !important;
+    background-color: var(--color-surface-raised);
+    color: var(--color-text-primary);
   }
 }
 
@@ -93,8 +93,8 @@ select option:checked {
 @-moz-document url-prefix() {
   .filter-select option,
   select option {
-    background-color: var(--color-surface-raised) !important;
-    color: var(--color-text-primary) !important;
+    background-color: var(--color-surface-raised);
+    color: var(--color-text-primary);
   }
 }
 
@@ -102,14 +102,14 @@ select option:checked {
 .filters-container select option,
 .hero-filters select option,
 .slops-filters select option {
-  background: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
-  padding: 8px 12px !important;
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  padding: 8px 12px;
 }
 
 /* Ensure the select dropdown itself has proper background */
 .filter-select:focus,
 select:focus {
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-primary);
 }
