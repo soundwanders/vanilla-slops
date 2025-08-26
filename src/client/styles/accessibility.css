@@ -1,10 +1,12 @@
-
-/* -----------------------------------------------------------------------------
-   ACCESSIBILITY IMPROVEMENTS
+/* =============================================================================
+   ACCESSIBILITY SYSTEM
    Focus management, screen reader support, and reduced motion
-   ----------------------------------------------------------------------------- */
+   ============================================================================= */
 
-/* Focus Management */
+/* =============================================================================
+   1. SCREEN READER UTILITIES
+   ============================================================================= */
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -17,7 +19,10 @@
   border: 0;
 }
 
-/* Focus indicators */
+/* =============================================================================
+   2. FOCUS INDICATORS
+   ============================================================================= */
+
 .filter-select:focus-visible,
 .sort-select:focus-visible,
 .year-input:focus-visible,
@@ -35,7 +40,10 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Skip link for accessibility */
+/* =============================================================================
+   3. SKIP NAVIGATION
+   ============================================================================= */
+
 .skip-link {
   position: absolute;
   top: -60px;
@@ -59,7 +67,11 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* High contrast mode MOBILE views */
+/* =============================================================================
+   4. HIGH CONTRAST MODE SUPPORT
+   ============================================================================= */
+
+/* High contrast mode mobile views */
 @media (prefers-contrast: high) and (max-width: 768px) {
   .games-table tbody tr, .launch-option {
     border-width: 2px !important;
@@ -74,7 +86,7 @@ textarea:focus-visible {
   }
 }
 
-/* High Contrast Mode Support */
+/* High contrast mode standard support */
 @media (prefers-contrast: high) {
   :root {
     --color-border: #000000;
@@ -99,7 +111,7 @@ textarea:focus-visible {
     border-width: 2px;
   }
 
-    .option-command {
+  .option-command {
     border-width: 2px;
   }
   
@@ -113,7 +125,10 @@ textarea:focus-visible {
   }
 }
 
-/* Reduced Motion Support */
+/* =============================================================================
+   5. REDUCED MOTION SUPPORT
+   ============================================================================= */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -182,7 +197,10 @@ textarea:focus-visible {
   }
 }
 
-/* Reduced motion MOBILE VIEWS */
+/* =============================================================================
+   6. REDUCED MOTION MOBILE SUPPORT
+   ============================================================================= */
+
 @media (prefers-reduced-motion: reduce) and (max-width: 768px) {
   .games-table tbody tr:hover {
     transform: none !important;
