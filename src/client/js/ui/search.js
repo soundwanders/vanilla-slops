@@ -220,7 +220,7 @@ export default class SlopSearch {
   }
 
   /**
-   * Add additional search triggers for better UX
+   * Add search triggers to boost UX
    * click-outside detection to respect safe zones
    */
   addSearchTriggers() {
