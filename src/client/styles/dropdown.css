@@ -1,6 +1,11 @@
-/* -----------------------------------------------------------------------------
-   DROPDOWN OPTION STYLING
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   DROPDOWN SYSTEM
+   Select element styling and option customization
+   ============================================================================= */
+
+/* =============================================================================
+   1. BASE DROPDOWN STYLES
+   ============================================================================= */
 
 .filter-select,
 .sort-select,
@@ -18,108 +23,111 @@
   text-align: center;
 }
 
-/* Primary option styling with solid specificity */
-.filters-container .filter-select option,
-.filters-container .sort-select option,
-.filters-container #categoryFilter option,
-.filters-container #developerFilter option,
-.filters-container #optionsFilter option,
-.filters-container #yearFilter option,
-.filters-container #sortSelect option,
-.hero-filters .filter-select option,
-.hero-filters .sort-select option,
-.hero-filters #categoryFilter option,
-.hero-filters #developerFilter option,
-.hero-filters #optionsFilter option,
-.hero-filters #yearFilter option,
-.hero-filters #sortSelect option {
-  background-color: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border: none;
-  outline: none;
+/* =============================================================================
+   2. OPTION STYLING
+   ============================================================================= */
+
+.filter-select option,
+.select option,
+#categoryFilter option,
+#developerFilter option,
+#optionsFilter option,
+#yearFilter option,
+#sortSelect option {
+  /* Force dark background for options */
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  
+  /* Ensure proper styling */
+  padding: var(--space-2) var(--space-3) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 500 !important;
+  
+  /* Remove any browser defaults */
+  border: none !important;
+  outline: none !important;
 }
 
 /* Hover state for options */
-.filters-container .filter-select option:hover,
-.filters-container .sort-select option:hover,
-.hero-filters .filter-select option:hover,
-.hero-filters .sort-select option:hover {
-  background-color: var(--color-interactive-hover);
-  color: var(--color-text-primary);
+.filter-select option:hover,
+select option:hover {
+  background-color: var(--color-interactive-hover) !important;
+  color: var(--color-text-primary) !important;
 }
 
 /* Selected option styling */
-.filters-container .filter-select option:checked,
-.filters-container .sort-select option:checked,
-.hero-filters .filter-select option:checked,
-.hero-filters .sort-select option:checked {
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
-  font-weight: 600;
+.filter-select option:checked,
+select option:checked {
+  background-color: var(--color-accent) !important;
+  color: var(--color-text-inverse) !important;
+  font-weight: 600 !important;
 }
 
-/* Dark theme option styling */
-[data-theme="dark"] .filters-container .filter-select option,
-[data-theme="dark"] .filters-container .sort-select option,
-[data-theme="dark"] .hero-filters .filter-select option,
-[data-theme="dark"] .hero-filters .sort-select option {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
+/* =============================================================================
+   3. DARK THEME SUPPORT
+   ============================================================================= */
+
+[data-theme="dark"] .filter-select option,
+[data-theme="dark"] select option {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
 }
 
-[data-theme="dark"] .filters-container .filter-select option:hover,
-[data-theme="dark"] .filters-container .sort-select option:hover,
-[data-theme="dark"] .hero-filters .filter-select option:hover,
-[data-theme="dark"] .hero-filters .sort-select option:hover {
-  background-color: var(--color-interactive-hover);
+[data-theme="dark"] .filter-select option:hover,
+[data-theme="dark"] select option:hover {
+  background-color: var(--color-interactive-hover) !important;
 }
 
-[data-theme="dark"] .filters-container .filter-select option:checked,
-[data-theme="dark"] .filters-container .sort-select option:checked,
-[data-theme="dark"] .hero-filters .filter-select option:checked,
-[data-theme="dark"] .hero-filters .sort-select option:checked {
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
+[data-theme="dark"] .filter-select option:checked,
+[data-theme="dark"] select option:checked {
+  background-color: var(--color-accent) !important;
+  color: var(--color-text-inverse) !important;
 }
 
-/* Browser-specific enhancements */
+/* =============================================================================
+   4. BROWSER-SPECIFIC FIXES
+   ============================================================================= */
+
+/* WebKit browsers (Chrome, Safari, Edge) */
 @supports (-webkit-appearance: none) {
-  .filters-container .filter-select option,
-  .filters-container .sort-select option,
-  .hero-filters .filter-select option,
-  .hero-filters .sort-select option {
-    background-color: var(--color-surface-raised);
-    color: var(--color-text-primary);
+  .filter-select option,
+  select option {
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
   }
   
-  .filters-container .filter-select,
-  .filters-container .sort-select,
-  .hero-filters .filter-select,
-  .hero-filters .sort-select {
-    background-color: var(--color-surface-raised);
-    color: var(--color-text-primary);
+  /* WebKit dropdown background fix */
+  .filter-select,
+  select {
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
   }
 }
 
-/* Firefox specific styling */
+/* Firefox specific fixes */
 @-moz-document url-prefix() {
-  .filters-container .filter-select option,
-  .filters-container .sort-select option,
-  .hero-filters .filter-select option,
-  .hero-filters .sort-select option {
-    background-color: var(--color-surface-raised);
-    color: var(--color-text-primary);
+  .filter-select option,
+  select option {
+    background-color: var(--color-surface-raised) !important;
+    color: var(--color-text-primary) !important;
   }
 }
 
-/* Dropdown background for active states */
-.filters-container .filter-select:focus,
-.filters-container .sort-select:focus,
-.hero-filters .filter-select:focus,
-.hero-filters .sort-select:focus {
-  background-color: var(--color-surface-raised);
-  color: var(--color-text-primary);
+/* =============================================================================
+   5. ALTERNATIVE STYLING APPROACH
+   ============================================================================= */
+
+.filters-container select option,
+.hero-filters select option,
+.slops-filters select option {
+  background: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
+  padding: 8px 12px !important;
+}
+
+/* Ensure the select dropdown itself has proper background */
+.filter-select:focus,
+select:focus {
+  background-color: var(--color-surface-raised) !important;
+  color: var(--color-text-primary) !important;
 }

@@ -1,5 +1,10 @@
 /* =============================================================================
-   HORIZONTAL SEARCH FILTERS LAYOUT
+   HORIZONTAL SEARCH FILTERS SYSTEM
+   Filter layout, controls, and interaction states
+   ============================================================================= */
+
+/* =============================================================================
+   1. FILTERS CONTAINER
    ============================================================================= */
 
 .filters-container,
@@ -29,7 +34,7 @@ fieldset,
 }
 
 /* =============================================================================
-   FILTER GROUPS
+   2. FILTER GROUPS
    ============================================================================= */
 
 .filter-group {
@@ -50,7 +55,7 @@ fieldset,
 }
 
 /* =============================================================================
-   ALL FILTER CONTROLS 
+   3. FILTER CONTROLS
    ============================================================================= */
 
 .filter-select,
@@ -86,7 +91,7 @@ fieldset,
 }
 
 /* =============================================================================
-   SHOW ALL GAMES TOGGLE 
+   4. SHOW ALL GAMES TOGGLE
    ============================================================================= */
 
 .filter-group.show-all-filter {
@@ -149,13 +154,6 @@ fieldset,
   background: var(--color-interactive-hover);
 }
 
-/* Hover state - match dropdown hover exactly */
-.show-all-checkbox-container:hover {
-  border-color: var(--color-border-strong);
-  box-shadow: var(--shadow-md);
-  background: var(--color-interactive-hover);
-}
-
 /* Checked/Active state styling */
 #showAllGamesFilter:checked + .show-all-checkbox-container {
   border-color: var(--color-accent);
@@ -168,7 +166,7 @@ fieldset,
   background-color: var(--color-accent-subtle);
 }
 
-/* Focus state for accessibility - match dropdown focus */
+/* Focus state for accessibility */
 #showAllGamesFilter:focus + .show-all-checkbox-container {
   outline: 2px solid var(--color-interactive-focus);
   outline-offset: 2px;
@@ -189,7 +187,7 @@ fieldset,
   justify-content: center;
   font-size: var(--font-size-xs);
   font-weight: 600;
-  padding: 2px var(--space-3);
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
   white-space: nowrap;
   min-width: 50px;
@@ -230,10 +228,8 @@ fieldset,
   background-repeat: no-repeat;
 }
 
-
-
 /* =============================================================================
-   YEAR FILTER 
+   5. YEAR FILTER
    ============================================================================= */
 
 .year-filter-container {
@@ -274,7 +270,7 @@ fieldset,
 }
 
 /* =============================================================================
-   DARK THEME SUPPORT
+   6. DARK THEME SUPPORT
    ============================================================================= */
 
 [data-theme="dark"] .filter-select,

@@ -1,9 +1,12 @@
-
-/* -----------------------------------------------------------------------------
+/* =============================================================================
    PERFORMANCE OPTIMIZATIONS
-   ----------------------------------------------------------------------------- */
+   GPU acceleration, containment, and rendering optimizations
+   ============================================================================= */
 
-/* GPU Acceleration for transforms */
+/* =============================================================================
+   1. GPU ACCELERATION
+   ============================================================================= */
+
 .search-input,
 .suggestions-dropdown,
 .filter-tag,
@@ -12,6 +15,10 @@
   transform: translateZ(0);
   backface-visibility: hidden;
 }
+
+/* =============================================================================
+   2. LAYOUT OPTIMIZATIONS
+   ============================================================================= */
 
 /* Optimize repaints */
 .games-table {
@@ -22,13 +29,20 @@
   contain: layout style;
 }
 
+/* =============================================================================
+   3. LARGE LIST OPTIMIZATIONS
+   ============================================================================= */
+
 /* Optimize large lists */
 .games-table tbody {
   content-visibility: auto;
   contain-intrinsic-size: 1px 400px;
 }
 
-/* Contain layout shifts */
+/* =============================================================================
+   4. CONTAINMENT UTILITIES
+   ============================================================================= */
+
 .contain-layout {
   contain: layout;
 }
@@ -41,13 +55,19 @@
   contain: size;
 }
 
-/* Content visibility for large lists */
+/* =============================================================================
+   5. CONTENT VISIBILITY
+   ============================================================================= */
+
 .content-auto {
   content-visibility: auto;
   contain-intrinsic-size: 1px 400px;
 }
 
-/* Will-change for frequently animated elements */
+/* =============================================================================
+   6. WILL-CHANGE UTILITIES
+   ============================================================================= */
+
 .will-change-transform {
   will-change: transform;
 }

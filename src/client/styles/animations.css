@@ -1,8 +1,12 @@
-/* -----------------------------------------------------------------------------
-   VANILLA SLOPS ANIMATION SYSTEM
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   ANIMATION SYSTEM
+   Keyframes, transitions, and motion design
+   ============================================================================= */
 
-/* Fade Animations */
+/* =============================================================================
+   1. FADE ANIMATIONS
+   ============================================================================= */
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -46,7 +50,10 @@
   }
 }
 
-/* Scale Animations */
+/* =============================================================================
+   2. SCALE ANIMATIONS
+   ============================================================================= */
+
 @keyframes scaleIn {
   from {
     opacity: 0;
@@ -69,7 +76,10 @@
   }
 }
 
-/* Slide Animations */
+/* =============================================================================
+   3. SLIDE ANIMATIONS
+   ============================================================================= */
+
 @keyframes slideInLeft {
   from {
     opacity: 0;
@@ -103,7 +113,21 @@
   }
 }
 
-/* Special Effect Animations */
+@keyframes slideInLeftNoScroll {
+  from {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =============================================================================
+   4. SPECIAL EFFECT ANIMATIONS
+   ============================================================================= */
+
 @keyframes bounceIn {
   0% {
     opacity: 0;
@@ -158,7 +182,10 @@
   }
 }
 
-/* Interaction Feedback Animations */
+/* =============================================================================
+   5. INTERACTION FEEDBACK ANIMATIONS
+   ============================================================================= */
+
 @keyframes shake {
   0%, 100% {
     transform: translateX(0);
@@ -187,6 +214,22 @@
   }
 }
 
+@keyframes copyFailedAnimation {
+  0% {
+    transform: scale(1);
+    background-color: var(--color-code-background);
+  }
+  50% {
+    transform: scale(1.02);
+    background-color: var(--color-error);
+    color: var(--color-text-inverse);
+  }
+  100% {
+    transform: scale(1);
+    background-color: var(--color-code-background);
+  }
+}
+
 @keyframes checkmark {
   0% {
     transform: scale(0);
@@ -202,18 +245,20 @@
   }
 }
 
-/* Spinner Animation */
+/* =============================================================================
+   6. SPINNER ANIMATION
+   ============================================================================= */
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
 /* =============================================================================
-  SEARCH UX ANIMATIONS
-   Animations for improved search experience and visual feedback
+   7. SEARCH UX ANIMATIONS
    ============================================================================= */
 
-/* Search Pending State Animation */
+/* Search pending state animation */
 @keyframes searchPendingPulse {
   0%, 100% { 
     opacity: 0.8; 
@@ -225,7 +270,18 @@
   }
 }
 
-/* Suggestions Dropdown Animation */
+@keyframes searchInputPending {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.01);
+  }
+}
+
+/* Suggestions dropdown animation */
 @keyframes suggestionSlideIn {
   from {
     opacity: 0;
@@ -237,7 +293,7 @@
   }
 }
 
-/* Search Suggestion Highlight Animation */
+/* Search suggestion highlight animation */
 @keyframes highlightGlow {
   from {
     background: var(--color-accent);
@@ -249,7 +305,7 @@
   }
 }
 
-/* Filter Tag Slide In Animation */
+/* Filter tag slide in animation */
 @keyframes filterTagSlideIn {
   from {
     opacity: 0;
@@ -261,13 +317,13 @@
   }
 }
 
-/* Loading Stripes Animation for Form Elements */
+/* Loading stripes animation for form elements */
 @keyframes loadingStripes {
   0% { background-position: right var(--space-3) center, 0 0; }
   100% { background-position: right var(--space-3) center, 15px 0; }
 }
 
-/* Close All Button Pulse Animation */
+/* Close all button pulse animation */
 @keyframes closeAllPulse {
   0%, 100% {
     transform: translateX(0) scale(1);
@@ -277,14 +333,14 @@
   }
 }
 
-/* Success Feedback Animation */
+/* Success feedback animation */
 @keyframes successPulse {
   0% { transform: scale(1); }
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 
-/* Launch Options Container Fade In */
+/* Launch options container fade in */
 @keyframes launchOptionsFadeIn {
   from {
     opacity: 0;
@@ -296,7 +352,7 @@
   }
 }
 
-/* Individual Launch Option Slide In */
+/* Individual launch option slide in */
 @keyframes launchOptionSlideIn {
   from {
     opacity: 0.7;
@@ -308,19 +364,19 @@
   }
 }
 
-/* Verified Badge Glow Animation */
+/* Verified badge glow animation */
 @keyframes verifiedGlow {
   from { opacity: 0.8; }
   to { opacity: 1; }
 }
 
-/* Theme Toggle Float Animation */
+/* Theme toggle float animation */
 @keyframes themeToggleFloat {
   0%, 100% { transform: translateY(-2px); }
   50% { transform: translateY(-6px); }
 }
 
-/* Search Input Focus */
+/* Search input focus */
 @keyframes searchInputFocusGlow {
   from {
     box-shadow: var(--shadow-sm);
@@ -330,13 +386,13 @@
   }
 }
 
-/* Progress Bar Animation */
+/* Progress bar animation */
 @keyframes progressBar {
   0% { width: 0%; }
   100% { width: 100%; }
 }
 
-/* Button Ripple Effect Animation */
+/* Button ripple effect animation */
 @keyframes buttonRipple {
   0% {
     width: 0;
@@ -350,9 +406,28 @@
   }
 }
 
+/* Hero pattern animation */
+@keyframes heroPattern {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-10px, -10px) scale(1.05);
+  }
+}
+
+/* Logo float animation */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 /* =============================================================================
-   UTILITY ANIMATION CLASSES
-   Reusable animation classes for common effects
+   8. UTILITY ANIMATION CLASSES
    ============================================================================= */
 
 .animate-fadeIn {
@@ -387,7 +462,7 @@
   animation: bounceIn 0.5s ease-out;
 }
 
-/* UX Animation Classes */
+/* UX animation classes */
 .animate-searchPending {
   animation: searchPendingPulse 2s infinite ease-in-out;
 }
@@ -405,8 +480,7 @@
 }
 
 /* =============================================================================
-   HOVER EFFECTS
-   Various hover states for interactive elements
+   9. HOVER EFFECTS
    ============================================================================= */
 
 .hover-lift {
@@ -438,12 +512,12 @@
   animation: glow 2s ease-in-out infinite alternate;
 }
 
-/* Hover Effects for Search UX */
-.hover-search {
+/* Hover effects for search UX */
+.hover-search-enhance {
   transition: all var(--transition-fast);
 }
 
-.hover-search:hover {
+.hover-search-enhance:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -458,8 +532,7 @@
 }
 
 /* =============================================================================
-   PAGE-LEVEL ANIMATIONS
-   Orchestrated animations for page sections
+   10. PAGE-LEVEL ANIMATIONS
    ============================================================================= */
 
 /* Main page entrance */
@@ -487,11 +560,10 @@ body {
 }
 
 /* =============================================================================
-   COMPONENT-SPECIFIC ANIMATIONS
-   Animations for specific UI components
+   11. COMPONENT-SPECIFIC ANIMATIONS
    ============================================================================= */
 
-/* Filter Tags */
+/* Filter tags */
 .filter-tag {
   animation: filterTagSlideIn 0.3s ease-out;
   position: relative;
@@ -518,27 +590,7 @@ body {
   left: 100%;
 }
 
-.filter-tag::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: left 0.5s ease;
-}
-
-.filter-tag:hover::before {
-  left: 100%;
-}
-
-/* Table Row Stagger */
+/* Table row stagger */
 .games-table tbody tr {
   opacity: 1;
   animation: slideInLeftNoScroll 0.3s ease-out forwards;
@@ -555,12 +607,12 @@ body {
 .games-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
 .games-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
 
-/* Copy Success Feedback */
+/* Copy success feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.4s ease-out;
 }
 
-/* Suggestions Dropdown */
+/* Suggestions dropdown */
 .suggestions-dropdown {
   transform-origin: top center;
   animation: suggestionSlideIn 0.2s ease-out;
@@ -595,7 +647,7 @@ body {
 .suggestion-item:nth-child(4) { animation-delay: 0.08s; }
 .suggestion-item:nth-child(5) { animation-delay: 0.1s; }
 
-/* Search Input States */
+/* Search input states */
 .search-input.search-pending {
   animation: searchInputPending 2s infinite ease-in-out;
 }
@@ -604,7 +656,7 @@ body {
   animation: searchPendingPulse 2s infinite ease-in-out;
 }
 
-/* Theme Toggle */
+/* Theme toggle */
 .theme-toggle,
 #theme-toggle {
   transition: all var(--transition-base);
@@ -616,8 +668,7 @@ body {
 }
 
 /* =============================================================================
-   LOADING STATES
-   Visual feedback for loading and processing states
+   12. LOADING STATES
    ============================================================================= */
 
 .loading-shimmer {
@@ -648,7 +699,7 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Loading Stripes for Form Elements */
+/* Loading stripes for form elements */
 .loading-stripes {
   background-image: 
     linear-gradient(45deg, transparent 33%, rgba(0,0,0,.1) 33%, rgba(0,0,0,.1) 66%, transparent 66%);
@@ -656,7 +707,7 @@ body {
   animation: loadingStripes 1s linear infinite;
 }
 
-/* Skeleton Loading */
+/* Skeleton loading */
 .skeleton-loader {
   background: linear-gradient(
     90deg,
@@ -680,8 +731,7 @@ body {
 }
 
 /* =============================================================================
-   FEEDBACK ANIMATIONS
-   User interaction feedback and state changes
+   13. FEEDBACK ANIMATIONS
    ============================================================================= */
 
 .error-shake {
@@ -701,7 +751,7 @@ body {
   animation: slideInFromBottom 0.6s ease-out forwards;
 }
 
-/* Focus States */
+/* Focus states */
 .enhanced-focus:focus-visible {
   outline: none;
   position: relative;
@@ -720,17 +770,15 @@ body {
 }
 
 /* =============================================================================
-   UTILITY CLASSES
-   Reusable animation utilities
+   14. INTERACTIVE ELEMENTS
    ============================================================================= */
 
-/* Interactive Elements Enhancement */
-.interactive {
+.interactive-enhance {
   position: relative;
   overflow: hidden;
 }
 
-.interactive::before {
+.interactive-enhance::before {
   content: '';
   position: absolute;
   top: 0;
@@ -746,22 +794,20 @@ body {
   transition: left 0.5s ease;
 }
 
-.interactive:hover::before {
+.interactive-enhance:hover::before {
   left: 100%;
 }
 
-/* Text Reveal Animation */
+/* Text reveal animation */
 .text-reveal {
   opacity: 0;
   animation: slideInFromBottom 0.6s ease-out forwards;
 }
 
 /* =============================================================================
-   ACCESSIBILITY & PERFORMANCE
-   Reduced motion and performance optimizations
+   15. REDUCED MOTION SUPPORT
    ============================================================================= */
 
-/* Reduced Motion Support - IMPORTANT: Keep this at the end */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -791,7 +837,7 @@ body {
     animation: none;
   }
   
-  /* Static fallbacks for new search UX animations */
+  /* Static fallbacks for search UX animations */
   .search-pending-indicator {
     animation: none;
     opacity: 1;
@@ -835,7 +881,7 @@ body {
     animation: none;
   }
   
-  .hover-search:hover {
+  .hover-search-enhance:hover {
     transform: none;
   }
   
