@@ -1,61 +1,294 @@
+/* =============================================================================
+   PAGINATION SYSTEM
+   Page navigation controls and responsive layout
+   ============================================================================= */
 
-/* -----------------------------------------------------------------------------
-   PERFORMANCE OPTIMIZATIONS
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   1. PAGINATION CONTAINER
+   ============================================================================= */
 
-/* GPU Acceleration for transforms */
-.search-input,
-.suggestions-dropdown,
-.filter-tag,
-.games-table tbody tr,
-.theme-toggle {
-  transform: translateZ(0);
-  backface-visibility: hidden;
+.pagination-container {
+  margin: var(--space-xl) 0;
+  padding: var(--space-lg);
+  background-color: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
 }
 
-/* Optimize repaints */
-.games-table {
-  contain: layout;
+.pagination {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  align-items: center;
+  justify-content: center;
 }
 
-.suggestions-dropdown {
-  contain: layout style;
+.pagination-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  padding-bottom: var(--space-md);
 }
 
-/* Optimize large lists */
-.games-table tbody {
-  content-visibility: auto;
-  contain-intrinsic-size: 1px 400px;
+/* =============================================================================
+   2. PAGINATION CONTROLS
+   ============================================================================= */
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-/* Contain layout shifts */
-.contain-layout {
-  contain: layout;
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
 }
 
-.contain-paint {
-  contain: paint;
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--color-interactive-hover);
+  border-color: var(--color-border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
-.contain-size {
-  contain: size;
+.pagination-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
 }
 
-/* Content visibility for large lists */
-.content-auto {
-  content-visibility: auto;
-  contain-intrinsic-size: 1px 400px;
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
-/* Will-change for frequently animated elements */
-.will-change-transform {
-  will-change: transform;
+.pagination-btn:focus-visible {
+  outline: 2px solid var(--color-interactive-focus);
+  outline-offset: 2px;
+  z-index: var(--z-front);
 }
 
-.will-change-opacity {
-  will-change: opacity;
+.pagination-btn-active {
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
 }
 
-.will-change-scroll {
-  will-change: scroll-position;
+.pagination-btn-active:hover {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.pagination-btn-prev,
+.pagination-btn-next {
+  padding: var(--space-sm) var(--space-lg);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--color-surface);
+}
+
+.pagination-btn-prev:hover,
+.pagination-btn-next:hover {
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  border-color: var(--color-accent);
+}
+
+.pagination-btn-page:hover:not(.pagination-btn-active) {
+  background-color: var(--color-accent-subtle);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-bold);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* =============================================================================
+   3. QUICK JUMP CONTROLS
+   ============================================================================= */
+
+.pagination-quick-jump {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination-jump-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.pagination-jump-input {
+  width: 4rem;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.pagination-jump-input:focus {
+  outline: none;
+  border-color: var(--color-interactive-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.pagination-btn-go {
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-sm);
+  min-width: auto;
+  height: auto;
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  border-color: var(--color-accent);
+}
+
+.pagination-btn-go:hover {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+/* =============================================================================
+   4. MOBILE RESPONSIVE
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .pagination-controls {
+    gap: var(--space-2xs);
+  }
+  
+  .pagination-btn {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    font-size: var(--font-size-xs);
+    padding: var(--space-xs) var(--space-sm);
+  }
+  
+  .pagination-btn-prev,
+  .pagination-btn-next {
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--font-size-xs);
+  }
+  
+  .pagination-quick-jump {
+    flex-direction: column;
+    gap: var(--space-xs);
+    text-align: center;
+  }
+  
+  .pagination-jump-label {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-container {
+    margin: var(--space-lg) 0;
+    padding: var(--space-md);
+  }
+  
+  .pagination-controls {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  
+  .pagination-btn {
+    min-width: 2rem;
+    height: 2rem;
+    font-size: var(--font-size-xs);
+    padding: var(--space-2xs) var(--space-xs);
+  }
+  
+  .pagination-ellipsis {
+    display: none;
+  }
+  
+  /* Simplify pagination on very small screens */
+  .pagination-btn-page:not(.pagination-btn-active):not(:first-of-type):not(:last-of-type) {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   5. DARK THEME SUPPORT
+   ============================================================================= */
+
+[data-theme="dark"] .pagination-container {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .pagination-btn {
+  background-color: var(--color-surface-raised);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .pagination-btn:hover:not(:disabled) {
+  background-color: var(--color-interactive-hover);
+  border-color: var(--color-border-strong);
+}
+
+[data-theme="dark"] .pagination-jump-input {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+/* =============================================================================
+   6. PAGINATION ANIMATIONS
+   ============================================================================= */
+
+.pagination-container {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

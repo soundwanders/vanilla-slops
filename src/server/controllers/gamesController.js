@@ -280,7 +280,7 @@ function analyzeResult(result, filters, strategy, logger) {
 
 /**
  * Main controller for fetching games with filter and search capabilities
- * Enhanced with structured logging and comprehensive error handling
+ * plus structured logging and comprehensive error handling
  */
 export async function gamesController(req, res) {
   const logger = new GamesLogger();

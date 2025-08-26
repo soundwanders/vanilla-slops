@@ -1,20 +1,11 @@
-/*
-   =============================================================================
-   VANILLA SLOPS DESIGN SYSTEM
-   A complete, modern CSS design system built with CSS custom properties
-   Optimized for performance, accessibility, and responsive design
-   -----------------------------------------------------------------------------
-   Total size: ~50KB minified and gzipped
-   Compatible with: All modern browsers + IE11 fallbacks
-   Performance: Optimized for Core Web Vitals
-   Accessibility: WCAG 2.1 AA compliant
-   =============================================================================
-*/
+/* =============================================================================
+   CSS DESIGN SYSTEM
+   Modern CSS foundation with reset and base styles
+   ============================================================================= */
 
-/* -----------------------------------------------------------------------------
-   RESET & BASE STYLES
-   Modern CSS reset with sensible defaults
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   1. CSS RESET
+   ============================================================================= */
 
 *,
 *::before,
@@ -33,26 +24,6 @@ html {
   text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  min-height: 100vh;
-  max-width: 1400px;
-  padding: var(--space-lg) var(--space-md);
-  margin: 0 auto;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-normal);
-  color: var(--color-text-primary);
-  background-color: var(--color-background);
-  transition: color var(--transition-base), background-color var(--transition-base);
-  overflow-x: hidden;
-}
-
-#app {
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 /* Remove list styles on ul, ol elements with a list role */
@@ -88,7 +59,34 @@ select {
   font: inherit;
 }
 
-/* Remove all animations, transitions and smooth scroll for people that prefer not to see them */
+/* =============================================================================
+   2. BASE STYLES
+   ============================================================================= */
+
+body {
+  min-height: 100vh;
+  max-width: 1400px;
+  padding: var(--space-lg) var(--space-md);
+  margin: 0 auto;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  transition: color var(--transition-base), background-color var(--transition-base);
+  overflow-x: hidden;
+}
+
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* =============================================================================
+   3. REDUCED MOTION SUPPORT
+   ============================================================================= */
+
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;
