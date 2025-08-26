@@ -94,9 +94,8 @@ export function renderTable(games, showLoading = false) {
   renderGamesTable(container, games);
   setupTableEventListeners();
   
-  // Add mobile-specific enhancements
   if (TableState.isMobile) {
-    enhanceMobileTouch(container);
+    buffMobileTouch(container);
   }
   
   console.log(`✅ Table rendered with ${games.length} games (Mobile: ${TableState.isMobile})`);
@@ -162,7 +161,7 @@ function renderGamesTable(container, games) {
   
   // Add mobile-specific table enhancements
   if (TableState.isMobile) {
-    enhanceMobileTable(table);
+    buffMobileTableView(table);
   }
   
   console.log(`✨ Table rendered with proper mobile data-labels (${games.length} games)`);
@@ -235,13 +234,10 @@ function generateLaunchOptionsButton(gameId, gameTitle, optionsCount) {
 }
 
 // ============================================================================
-// MOBILE ENHANCEMENTS
+// MOBILE STYLES
 // ============================================================================
 
-/**
- * Add mobile-specific enhancements to the table
- */
-function enhanceMobileTable(table) {
+function buffMobileTableView(table) {
   // Add mobile class for CSS targeting
   table.classList.add('mobile-optimized');
   
@@ -257,14 +253,12 @@ function enhanceMobileTable(table) {
   if (table.scrollWidth > table.clientWidth) {
     addMobileScrollHint(table);
   }
-  
-  console.log('🤳 Mobile table enhancements applied');
 }
 
 /**
  * Touch optimizations
  */
-function enhanceMobileTouch(container) {
+function buffMobileTouch(container) {
   // Add touch-friendly classes
   container.classList.add('mobile-optimized');
   
@@ -275,15 +269,12 @@ function enhanceMobileTouch(container) {
   
   // Add mobile-specific event handlers
   addMobileEventHandlers(container);
-  
-  console.log('📱 Mobile experience enhancements applied');
 }
 
 /**
  * Add touch optimizations for mobile devices
  */
 function addTouchOptimizations(container) {
-  // Add touch-action for better scrolling
   container.style.touchAction = 'pan-y';
   
   // Add haptic feedback for supported devices
@@ -413,7 +404,7 @@ function renderBasicEmptyState(container) {
 }
 
 // ============================================================================
-// EMPTY STATES (OPTIONS-FIRST) - MOBILE ENHANCED
+// EMPTY STATES 
 // ============================================================================
 
 /**
@@ -497,7 +488,7 @@ function createNoOptionsFoundHTML(stats) {
 }
 
 /**
- * Search no results state with mobile enhancements
+ * Search function 'no results' state
  */
 function createSearchNoResultsHTML(filters, stats) {
   const searchTerm = filters.search || '';
@@ -694,7 +685,7 @@ function displayLaunchOptions(gameId, launchOptions) {
   
   // Activate mobile-specific enhancements
   if (TableState.isMobile) {
-    enhanceMobileLaunchOptions(launchOptionsRow);
+    buffMobileOptions(launchOptionsRow);
   }
   
   requestAnimationFrame(() => {
@@ -791,7 +782,7 @@ function createLaunchOptionHTML(option) {
 /**
  * Enhance mobile launch options display
  */
-function enhanceMobileLaunchOptions(container) {
+function buffMobileOptions(container) {
   container.classList.add('mobile-enhanced');
   
   // Ensure all interactive elements are touch-friendly
@@ -804,8 +795,6 @@ function enhanceMobileLaunchOptions(container) {
   if (TableState.touchDevice) {
     addSwipeToClose(container);
   }
-  
-  console.log('📱 Mobile launch options enhancements applied');
 }
 
 /**
@@ -1026,10 +1015,19 @@ async function handleCommandClick(e) {
   const element = e.currentTarget;
   const command = element.dataset.command;
   
+  // Add debouncing to prevent rapid double-clicks
+  if (element.dataset.copying === 'true') {
+    console.log('Copy operation already in progress, ignoring duplicate');
+    return;
+  }
+  
   if (!command) {
     console.error('No command found to copy');
     return;
   }
+
+  // Mark as copying to prevent duplicates
+  element.dataset.copying = 'true';
 
   // Add haptic feedback on mobile
   if (TableState.touchDevice && 'vibrate' in navigator) {
@@ -1044,7 +1042,42 @@ async function handleCommandClick(e) {
     console.error('Failed to copy command:', error);
     showCopyError(element);
     attemptTextSelection(element);
+  } finally {
+    // Reset copying flag after a short delay
+    setTimeout(() => {
+      element.dataset.copying = 'false';
+    }, 500);
   }
+}
+
+function cleanupLaunchOptionsEvents(container) {
+  const commandElements = container.querySelectorAll(`.${CONFIG.CLASSES.optionCommand}`);
+  
+  commandElements.forEach(element => {
+    // Remove existing event listeners if they exist
+    if (element._clickHandler) {
+      element.removeEventListener('click', element._clickHandler);
+    }
+    if (element._keydownHandler) {
+      element.removeEventListener('keydown', element._keydownHandler);
+    }
+    if (element._touchStartHandler) {
+      element.removeEventListener('touchstart', element._touchStartHandler);
+    }
+    if (element._touchEndHandler) {
+      element.removeEventListener('touchend', element._touchEndHandler);
+    }
+    
+    // Reset flags
+    delete element.dataset.eventsSetup;
+    delete element.dataset.copying;
+    
+    // Clear stored handlers
+    delete element._clickHandler;
+    delete element._keydownHandler;
+    delete element._touchStartHandler;
+    delete element._touchEndHandler;
+  });
 }
 
 function showCopySuccess(element) {
@@ -1186,7 +1219,7 @@ function showLaunchOptionsError(gameId, errorMessage) {
   gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
   setupLaunchOptionsRowEvents(launchOptionsRow);
   
-  // Add mobile enhancements to error state
+  // Add mobile buffs to error state
   if (TableState.isMobile) {
     const errorButton = launchOptionsRow.querySelector('.launch-options-close');
     if (errorButton) {
@@ -1250,7 +1283,7 @@ function setupMobileEventListeners() {
       if (TableState.isMobile) {
         const container = getTableContainer();
         if (container) {
-          enhanceMobileTouch(container);
+          buffMobileTouch(container);
         }
       }
     }, 100);
@@ -1269,39 +1302,64 @@ function setupMobileEventListeners() {
 }
 
 /**
- * Set up events for launch options row with mobile enhancements
+ * Set up events for launch options row
  */
+
 function setupLaunchOptionsRowEvents(container) {
+  // Clean up any existing event listeners before adding new ones
+  cleanupLaunchOptionsEvents(container);
+  
   // Copy functionality with mobile optimizations
   const commandElements = container.querySelectorAll(`.${CONFIG.CLASSES.optionCommand}`);
+  
   commandElements.forEach(element => {
-    element.addEventListener('click', handleCommandClick);
-    element.tabIndex = 0;
-    
-    // Keyboard support (mainly for desktop/keyboard users)
-    element.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+    // Store event handlers for later cleanup
+    const clickHandler = (e) => handleCommandClick(e);
+    const keydownHandler = (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && !TableState.touchDevice) {
         e.preventDefault();
         handleCommandClick(e);
       }
-    });
+    };
+    
+    // Store handlers on element for cleanup
+    element._clickHandler = clickHandler;
+    element._keydownHandler = keydownHandler;
+    
+    element.addEventListener('click', clickHandler);
+    element.tabIndex = 0;
+    
+    // Keyboard support (avoid double-triggering)
+    element.addEventListener('keydown', keydownHandler);
     
     // Mobile-specific touch events
     if (TableState.touchDevice) {
-      element.addEventListener('touchstart', (e) => {
+      const touchStartHandler = (e) => {
         element.classList.add('touch-active');
-      }, { passive: true });
-      
-      element.addEventListener('touchend', (e) => {
+      };
+      const touchEndHandler = (e) => {
         element.classList.remove('touch-active');
-      }, { passive: true });
+      };
+      
+      element._touchStartHandler = touchStartHandler;
+      element._touchEndHandler = touchEndHandler;
+      
+      element.addEventListener('touchstart', touchStartHandler, { passive: true });
+      element.addEventListener('touchend', touchEndHandler, { passive: true });
     }
+    
+    // Mark as setup
+    element.dataset.eventsSetup = 'true';
   });
   
-  // Close button with mobile enhancements
   const closeButton = container.querySelector('.launch-options-close');
   if (closeButton) {
-    closeButton.addEventListener('click', (e) => {
+    // Clean up existing listeners
+    if (closeButton._clickHandler) {
+      closeButton.removeEventListener('click', closeButton._clickHandler);
+    }
+    
+    const closeClickHandler = (e) => {
       e.preventDefault();
       e.stopPropagation();
       
@@ -1309,7 +1367,10 @@ function setupLaunchOptionsRowEvents(container) {
       if (gameId) {
         closeLaunchOptions(gameId);
       }
-    });
+    };
+    
+    closeButton._clickHandler = closeClickHandler;
+    closeButton.addEventListener('click', closeClickHandler);
     
     // Ensure proper touch target
     if (TableState.isMobile) {

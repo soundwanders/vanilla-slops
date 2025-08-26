@@ -407,9 +407,7 @@
   }
   
   .filter-label {
-    flex: 0 0 80px;
-    text-align: left;
-    font-size: 0.8rem;
+    display: none; 
   }
   
   .filter-select,
@@ -494,7 +492,6 @@
     flex-shrink: 0;
     margin-left: var(--space-1);
   }
-
 
   .filters-container,
   .slops-filters,
@@ -640,7 +637,9 @@
    5. GAMES TABLE MOBILE LAYOUT
    ============================================================================= */
 
+/* Mobile Card Layout - Container scoped specificity */
 @media (max-width: 768px) {
+  /* Convert table to card layout using container scoping */
   .table-container .games-table,
   .table-container .games-table thead,
   .table-container .games-table tbody,
@@ -652,6 +651,7 @@
     box-sizing: border-box;
   }
   
+  /* Hide table headers */
   .table-container .games-table thead tr {
     position: absolute;
     top: -9999px;
@@ -659,6 +659,7 @@
     visibility: hidden;
   }
   
+  /* Game card styling - container scoped */
   .table-container .games-table tbody tr {
     display: block;
     margin-bottom: var(--space-6);
@@ -674,6 +675,7 @@
     transform: none;
   }
   
+  /* Card accent border */
   .table-container .games-table tbody tr::before {
     content: '';
     position: absolute;
@@ -685,12 +687,14 @@
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
   
+  /* Game card hover state */
   .table-container .games-table tbody tr:hover {
     transform: none;
     box-shadow: var(--shadow-xl);
     background: var(--color-surface-raised);
   }
   
+  /* Table cell styling - container scoped */
   .table-container .games-table td {
     display: flex;
     align-items: flex-start;
@@ -705,6 +709,7 @@
     hyphens: auto;
   }
   
+  /* Data labels - container scoped */
   .table-container .games-table td::before {
     content: attr(data-label) ": ";
     position: absolute;
@@ -721,6 +726,7 @@
     line-height: var(--line-height-tight);
   }
   
+  /* Game title styling - container scoped */
   .table-container .games-table td:first-child {
     padding-top: var(--space-4);
     font-weight: 600;
@@ -733,6 +739,14 @@
     font-size: var(--font-size-sm);
   }
   
+  .table-container .game-title {
+    line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+  }
+  
+  /* Launch options button - container scoped */
   .table-container .games-table td:last-child {
     padding-top: var(--space-5);
     padding-left: var(--space-2);
@@ -740,7 +754,7 @@
   }
   
   .table-container .games-table td:last-child::before {
-    display: none;
+    display: none; /* Hide label for button cell */
   }
   
   .table-container .launch-options-btn {
@@ -764,6 +778,7 @@
   }
 }
 
+/* Small Mobile table adjustments - container scoped */
 @media (max-width: 480px) {
   .table-container .games-table {
     font-size: var(--font-size-xs);
@@ -793,40 +808,6 @@
     min-height: 44px;
     font-size: var(--font-size-xs);
     padding: var(--space-2) var(--space-3);
-  }
-}
-
-@media (max-width: 320px) {
-  .table-container .games-table tr {
-    border: 1px solid var(--color-border);
-    margin-bottom: var(--space-sm);
-    padding: var(--space-sm);
-    border-radius: var(--radius-md);
-    background-color: var(--color-surface-raised);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .table-container .games-table td {
-    border: none;
-    position: relative;
-    padding-left: 30%;
-    padding-top: var(--space-xs);
-    padding-bottom: var(--space-xs);
-    min-height: 2rem;
-    display: flex;
-    align-items: center;
-  }
-  
-  .table-container .games-table td:before {
-    content: attr(data-label) ": ";
-    position: absolute;
-    left: 6px;
-    width: 25%;
-    padding-right: var(--space-xs);
-    white-space: nowrap;
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-xs);
   }
 }
 
@@ -2186,7 +2167,6 @@
 
 @media (max-width: 768px) {
   .table-loading {
-    padding: var(--space-16) var(--space-6);
     flex-direction: column;
     align-items: center;
     gap: var(--space-4);

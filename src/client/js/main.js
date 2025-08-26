@@ -214,7 +214,7 @@ async function addShowAllGamesFilter() {
   });
   
   filterGroup.innerHTML = `
-    <label class="filter-label" for="showAllGamesFilter">Include All Games</label>
+    <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
     <input 
       type="checkbox" 
       id="showAllGamesFilter" 
@@ -330,8 +330,8 @@ function updateShowAllFilterUI(isChecked, container = null) {
   // Update stats text with clear messaging
   if (statsElement) {
     const newText = isChecked 
-      ? `${stats.withoutOptions} shown` 
-      : `+${stats.withoutOptions} hidden`;
+      ? `-${stats.withoutOptions}` 
+      : `+${stats.withoutOptions}`;
     statsElement.textContent = newText;
     console.log('Updated stats text:', newText);
   }
