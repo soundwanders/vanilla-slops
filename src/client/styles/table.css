@@ -114,6 +114,15 @@
    2. TABLE CONTENT STYLING
    ============================================================================= */
 
+/* Games count HEADER */
+.results-header {
+  padding: 0.5rem;
+}
+
+.results-count {
+  font-size: var(--font-size-sm);
+}
+
 /* Game Title */
 .game-title {
   font-weight: 600;
@@ -239,13 +248,13 @@
 
 /* Launch Options Row */
 .launch-options-row {
-  background: var(--gradient-surface) !important;
+  background: var(--gradient-surface) ;
   border-top: 2px solid var(--color-accent-subtle);
   transition: all var(--transition-base);
 }
 
 .launch-options-row:hover {
-  background: var(--gradient-surface) !important;
+  background: var(--gradient-surface);
   transform: none !important;
 }
 
@@ -255,12 +264,12 @@
 
 /* Launch Options Cell */
 .launch-options-cell {
-  padding: var(--space-10) !important;
+  padding: var(--space-10);
   border-radius: 0;
-  height: auto !important;
-  overflow: visible !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  height: auto;
+  overflow: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Launch Options List */
@@ -475,7 +484,6 @@
 }
 
 .launch-options-close::before {
-  content: '✕';
   font-size: var(--font-size-sm);
 }
 
@@ -527,16 +535,16 @@
 /* Copy Success and Error Feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.6s ease-out;
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-success) !important;
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
+  border-color: var(--color-success);
 }
 
 .option-command.copy-failed {
   animation: copyFailedAnimation 0.6s ease-out;
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
-  border-color: var(--color-error) !important;
+  background-color: var(--color-error);
+  color: var(--color-text-inverse);
+  border-color: var(--color-error);
 }
 
 /* Loading States */
@@ -561,21 +569,6 @@
 
 .launch-options-btn.loading::before {
   display: none;
-}
-
-.launch-options-btn .loading-spinner {
-  width: 12px !important;
-  height: 12px !important;
-  border-width: 2px;
-  min-width: 0;
-  max-width: 0;
-  flex-shrink: 0;
-}
-
-.launch-options-btn.loading .btn-text {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .table-loading {
@@ -642,11 +635,11 @@
   background: var(--color-surface-subtle);
   border-radius: var(--radius-xl);
   border: 2px dashed var(--color-border);
-  opacity: 1 !important;
-  visibility: visible !important;
-  height: auto !important;
-  overflow: visible !important;
-  display: block !important;
+  opacity: 1;
+  visibility: visible;
+  height: auto;
+  overflow: visible;
+  display: block;
 }
 
 .no-options::before,
@@ -1350,115 +1343,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* =============================================================================
-   10. MOBILE RESPONSIVE LAYOUT
-   ============================================================================= */
-
-/* Mobile Card Layout */
-@media (max-width: 640px) {
-  .games-table,
-  .games-table thead,
-  .games-table tbody,
-  .games-table th,
-  .games-table td,
-  .games-table tr {
-    display: block;
-  }
-  
-  .games-table thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-  }
-  
-  .games-table tr {
-    border: 1px solid var(--color-border);
-    margin-bottom: var(--space-4);
-    padding: var(--space-4);
-    border-radius: var(--radius-xl);
-    background: var(--color-surface-raised);
-    box-shadow: var(--shadow-md);
-    position: relative;
-  }
-  
-  .games-table tr::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--gradient-accent);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  }
-  
-  .games-table td {
-    border: none;
-    position: relative;
-    padding-left: 35% !important;
-    padding-top: var(--space-3);
-    padding-bottom: var(--space-3);
-    padding-right: var(--space-4);
-    min-height: var(--space-12);
-    display: flex;
-    align-items: center;
-  }
-  
-  .games-table td:before {
-    content: attr(data-label) ": ";
-    position: absolute;
-    left: var(--space-4);
-    width: 30%;
-    padding-right: var(--space-3);
-    white-space: nowrap;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-  }
-  
-  .launch-options-btn {
-    width: 100%;
-    padding: var(--space-3);
-    font-size: var(--font-size-sm);
-  }
-
-  /* Year Filter Mobile */
-  .year-filter-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-  
-  .year-select {
-    flex: none;
-    max-width: none;
-  }
-  
-  .year-divider {
-    align-self: center;
-    margin: -0.25rem 0;
-  }
-  
-  .year-input {
-    flex: none;
-    max-width: none;
-  }
-  
-  .filter-group:has(.year-filter-container) {
-    min-width: auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .year-filter-container {
-    gap: 0.5rem;
-  }
-  
-  .year-input {
-    padding: 0.625rem 0.75rem;
-    font-size: 1rem; /* Prevent zoom on mobile */
-  }
-}
 
 /* =============================================================================
    11. PERFORMANCE OPTIMIZATIONS
@@ -1485,7 +1369,7 @@
 }
 
 [data-theme="dark"] .launch-options-row {
-  background: var(--gradient-dark) !important;
+  background: var(--gradient-dark);
 }
 
 [data-theme="dark"] .launch-option {
@@ -1499,13 +1383,13 @@
 }
 
 [data-theme="dark"] .option-command.copied {
-  background-color: var(--color-success) !important;
-  color: var(--color-text-inverse) !important;
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
 }
 
 [data-theme="dark"] .option-command.copy-failed {
-  background-color: var(--color-error) !important;
-  color: var(--color-text-inverse) !important;
+  background-color: var(--color-error);
+  color: var(--color-text-inverse);
 }
 
 [data-theme="dark"] .launch-options-cell .error {
