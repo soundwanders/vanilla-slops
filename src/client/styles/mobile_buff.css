@@ -1,0 +1,515 @@
+/* =============================================================================
+   EXTREME MAKEOVER - MOBILE STYLES EDITION
+   Touch feedback and mobile-specific interactions
+   ============================================================================= */
+
+/* =============================================================================
+   1. TOUCH FEEDBACK SYSTEM
+   ============================================================================= */
+
+@media (pointer: coarse) {
+  /* Launch Options Button */
+  .table-container .launch-options-btn {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  /* Ripple effect container */
+  .table-container .launch-options-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.3s ease-out, height 0.3s ease-out;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  /* Active touch state with ripple */
+  .table-container .launch-options-btn:active::before {
+    width: 200px;
+    height: 200px;
+    transition: width 0.15s ease-out, height 0.15s ease-out;
+  }
+  
+  .table-container .launch-options-btn:active {
+    transform: scale(0.97) translateZ(0);
+    background: var(--color-interactive-active, var(--color-accent-hover));
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Filter Select Touch Feedback */
+  .filters-container .filter-select,
+  .filters-container .sort-select {
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateZ(0);
+  }
+  
+  .filters-container .filter-select:active,
+  .filters-container .sort-select:active {
+    transform: scale(0.98) translateZ(0);
+    background-color: var(--color-interactive-hover);
+    border-color: var(--color-accent);
+  }
+
+  /* Checkbox Container Touch */
+  .filters-container .show-all-checkbox-container {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .filters-container .show-all-checkbox-container:active {
+    transform: scale(0.97) translateZ(0);
+    background-color: var(--color-interactive-hover);
+  }
+
+  /* Table Card Touch Feedback */
+  .table-container .games-table tbody tr {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    cursor: pointer;
+    transform: translateZ(0);
+  }
+  
+  .table-container .games-table tbody tr:active {
+    transform: scale(0.995) translateZ(0);
+    box-shadow: var(--shadow-md);
+    background: var(--color-surface-hover, var(--color-surface-raised));
+  }
+}
+
+/* =============================================================================
+   2. COPY SUCCESS FEEDBACK SYSTEM
+   ============================================================================= */
+
+/* Toast notifications for mobile */
+@media (max-width: 768px) {
+  /* Toast container */
+  .mobile-toast {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: var(--z-toast, 1000);
+    transform: translateY(-100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    pointer-events: none;
+  }
+  
+  /* Toast content */
+  .mobile-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .toast-content {
+    background: var(--color-success, #10b981);
+    color: white;
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    backdrop-filter: blur(10px);
+  }
+  
+  .toast-icon {
+    font-size: var(--font-size-lg);
+    line-height: 1;
+  }
+  
+  /* Success animation */
+  .toast-content.success {
+    animation: successPulse 0.6s ease-out;
+  }
+  
+  @keyframes successPulse {
+    0% { transform: scale(0.9); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+}
+
+/* =============================================================================
+   3. MOBILE SEARCH EXPERIENCE
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Search field */
+  .hero-search .search-input {
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .hero-search .search-input:focus {
+    transform: scale(1.02) translateZ(0);
+    box-shadow: var(--shadow-xl);
+  }
+  
+  /* Suggestions dropdown mobile optimization */
+  .suggestions-dropdown {
+    max-height: 50vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Suggestion items with touch feedback */
+  .suggestion-item {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    padding: var(--space-4) var(--space-6);
+  }
+  
+  .suggestion-item:active {
+    transform: scale(0.98) translateZ(0);
+    background: var(--color-interactive-hover);
+  }
+  
+  /* Suggestion chips with touch */
+  .suggestion-chip {
+    transform: translateZ(0);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    touch-action: manipulation;
+  }
+  
+  .suggestion-chip:active {
+    transform: scale(0.95) translateZ(0);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/* =============================================================================
+   4. LAUNCH OPTIONS MODAL MOBILE
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Launch options display */
+  .table-container .launch-options-row {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-top: var(--space-2);
+    background: var(--color-surface);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .table-container .launch-options-cell {
+    padding: var(--space-6);
+    background: var(--color-surface);
+  }
+  
+  /* Individual launch option styling */
+  .table-container .launch-option {
+    background: var(--color-surface-raised);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-3);
+    border: 1px solid var(--color-border-subtle);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateZ(0);
+  }
+  
+  .table-container .launch-option:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Command with touch feedback */
+  .table-container .option-command {
+    background: var(--color-surface-subtle, #f8f9fa);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateZ(0);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  /* Copy indication */
+  .table-container .option-command::after {
+    content: 'Tap to copy';
+    position: absolute;
+    right: var(--space-3);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    opacity: 0.7;
+    font-family: var(--font-sans);
+    pointer-events: none;
+  }
+  
+  /* Active touch state for commands */
+  .table-container .option-command:active {
+    transform: scale(0.98) translateZ(0);
+    background: var(--color-interactive-active, var(--color-accent-subtle));
+    border-color: var(--color-accent);
+  }
+  
+  /* Copy success state */
+  .table-container .option-command.copied {
+    background: var(--color-success-subtle, #d1fae5);
+    border-color: var(--color-success, #10b981);
+    transform: scale(1.02) translateZ(0);
+  }
+  
+  .table-container .option-command.copied::after {
+    content: 'Copied!';
+    color: var(--color-success, #10b981);
+    opacity: 1;
+    font-weight: 600;
+  }
+  
+  /* Close button */
+  .table-container .close-launch-options {
+    background: var(--color-surface-raised);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-full);
+    padding: var(--space-3);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateZ(0);
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  
+  .table-container .close-launch-options:active {
+    transform: scale(0.95) translateZ(0);
+    background: var(--color-interactive-hover);
+    border-color: var(--color-border-strong);
+  }
+}
+
+/* =============================================================================
+   5. FILTER TAG FUNCTIONALITY
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Filter tags */
+  .active-filters .filter-tag {
+    position: relative;
+    transform: translateZ(0);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-xs);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    touch-action: manipulation;
+  }
+  
+  .active-filters .filter-tag:active {
+    transform: scale(0.96) translateZ(0);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* Remove button */
+  .active-filters .filter-remove {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translateZ(0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    min-width: 24px;
+  }
+  
+  .active-filters .filter-remove:active {
+    transform: scale(0.9) translateZ(0);
+    background: rgba(239, 68, 68, 0.2);
+  }
+}
+
+/* =============================================================================
+   6. LOADING STATES
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Table loading */
+  .table-loading {
+    padding: var(--space-12) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    min-height: 400px;
+  }
+  
+  /* Loading spinner */
+  .loading-spinner {
+    width: var(--space-8);
+    height: var(--space-8);
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    transform: translateZ(0);
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg) translateZ(0); }
+  }
+  
+  /* Loading text */
+  .loading-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    text-align: center;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+}
+
+/* =============================================================================
+   7. SCROLL FUNCTIONALITY
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  /* Smooth scroll behavior */
+  body {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Scroll indicators for table */
+  .table-container {
+    position: relative;
+  }
+  
+  .table-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(
+      to right,
+      var(--color-accent) 0%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: var(--z-sticky, 10);
+  }
+  
+  .table-container.scrolled::before {
+    opacity: 1;
+  }
+}
+
+/* =============================================================================
+   8. PERFORMANCE OPTIMIZATIONS
+   ============================================================================= */
+
+/* GPU acceleration for mobile animations */
+.mobile-toast,
+.table-container .launch-options-btn,
+.filters-container .filter-select,
+.table-container .option-command,
+.suggestion-item,
+.loading-spinner {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimize repaints for mobile */
+.table-container .games-table tbody tr,
+.active-filters .filter-tag,
+.suggestion-chip {
+  contain: layout;
+}
+
+/* Content visibility for better performance */
+@media (max-width: 768px) {
+  .table-container .games-table tbody tr {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 200px;
+  }
+}
+
+/* =============================================================================
+   9. ACCESSIBILITY FOR TOUCH
+   ============================================================================= */
+
+@media (max-width: 768px) and (pointer: coarse) {
+  /* Focus indicators for touch navigation */
+  body .table-container .launch-options-btn:focus-visible,
+  body .filters-container .filter-select:focus-visible,
+  body .table-container .option-command:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
+  
+  /* Touch-friendly skip links */
+  body .skip-link {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3) var(--space-6);
+  }
+  
+  /* Screen reader announcements for mobile actions */
+  .sr-announce {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  
+  /* Announce copy success */
+  .copy-announcement {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+}

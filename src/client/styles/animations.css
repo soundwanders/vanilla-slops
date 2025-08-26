@@ -439,11 +439,11 @@
 }
 
 /* Hover Effects for Search UX */
-.hover-search-enhance {
+.hover-search {
   transition: all var(--transition-fast);
 }
 
-.hover-search-enhance:hover {
+.hover-search:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -725,12 +725,12 @@ body {
    ============================================================================= */
 
 /* Interactive Elements Enhancement */
-.interactive-enhance {
+.interactive {
   position: relative;
   overflow: hidden;
 }
 
-.interactive-enhance::before {
+.interactive::before {
   content: '';
   position: absolute;
   top: 0;
@@ -746,7 +746,7 @@ body {
   transition: left 0.5s ease;
 }
 
-.interactive-enhance:hover::before {
+.interactive:hover::before {
   left: 100%;
 }
 
@@ -835,7 +835,7 @@ body {
     animation: none;
   }
   
-  .hover-search-enhance:hover {
+  .hover-search:hover {
     transform: none;
   }
   
