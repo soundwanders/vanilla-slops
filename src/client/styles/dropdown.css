@@ -1,125 +1,84 @@
-/* -----------------------------------------------------------------------------
-   DROPDOWN OPTION STYLING
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   BROWSER COMPATIBILITY
+   Fallbacks and vendor prefixes for older browsers
+   ============================================================================= */
 
-.filter-select,
-.sort-select,
-#categoryFilter,
-#developerFilter,
-#optionsFilter,
-#yearFilter,
-#yearFilterSelect,
-#sortSelect {
-  height: 2.5rem;
-  padding: 0.5rem 0.275rem;
-  display: flex;
-  align-items: center;
-  line-height: 1.25rem;
-  text-align: center;
+/* =============================================================================
+   1. SAFARI FLEXBOX FIXES
+   ============================================================================= */
+
+.safari-flex-fix {
+  min-height: 0;
+  min-width: 0;
 }
 
-/* Primary option styling with solid specificity */
-.filters-container .filter-select option,
-.filters-container .sort-select option,
-.filters-container #categoryFilter option,
-.filters-container #developerFilter option,
-.filters-container #optionsFilter option,
-.filters-container #yearFilter option,
-.filters-container #sortSelect option,
-.hero-filters .filter-select option,
-.hero-filters .sort-select option,
-.hero-filters #categoryFilter option,
-.hero-filters #developerFilter option,
-.hero-filters #optionsFilter option,
-.hero-filters #yearFilter option,
-.hero-filters #sortSelect option {
-  background-color: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border: none;
-  outline: none;
-}
+/* =============================================================================
+   2. IE11 GRID FIXES
+   ============================================================================= */
 
-/* Hover state for options */
-.filters-container .filter-select option:hover,
-.filters-container .sort-select option:hover,
-.hero-filters .filter-select option:hover,
-.hero-filters .sort-select option:hover {
-  background-color: var(--color-interactive-hover);
-  color: var(--color-text-primary);
-}
-
-/* Selected option styling */
-.filters-container .filter-select option:checked,
-.filters-container .sort-select option:checked,
-.hero-filters .filter-select option:checked,
-.hero-filters .sort-select option:checked {
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
-  font-weight: 600;
-}
-
-/* Dark theme option styling */
-[data-theme="dark"] .filters-container .filter-select option,
-[data-theme="dark"] .filters-container .sort-select option,
-[data-theme="dark"] .hero-filters .filter-select option,
-[data-theme="dark"] .hero-filters .sort-select option {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-[data-theme="dark"] .filters-container .filter-select option:hover,
-[data-theme="dark"] .filters-container .sort-select option:hover,
-[data-theme="dark"] .hero-filters .filter-select option:hover,
-[data-theme="dark"] .hero-filters .sort-select option:hover {
-  background-color: var(--color-interactive-hover);
-}
-
-[data-theme="dark"] .filters-container .filter-select option:checked,
-[data-theme="dark"] .filters-container .sort-select option:checked,
-[data-theme="dark"] .hero-filters .filter-select option:checked,
-[data-theme="dark"] .hero-filters .sort-select option:checked {
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
-}
-
-/* Browser-specific enhancements */
-@supports (-webkit-appearance: none) {
-  .filters-container .filter-select option,
-  .filters-container .sort-select option,
-  .hero-filters .filter-select option,
-  .hero-filters .sort-select option {
-    background-color: var(--color-surface-raised);
-    color: var(--color-text-primary);
+@supports not (display: grid) {
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
   }
   
-  .filters-container .filter-select,
-  .filters-container .sort-select,
-  .hero-filters .filter-select,
-  .hero-filters .sort-select {
-    background-color: var(--color-surface-raised);
-    color: var(--color-text-primary);
+  .grid-cols-2 > * {
+    flex: 0 0 50%;
+  }
+  
+  .grid-cols-3 > * {
+    flex: 0 0 33.333%;
+  }
+  
+  .grid-cols-4 > * {
+    flex: 0 0 25%;
   }
 }
 
-/* Firefox specific styling */
-@-moz-document url-prefix() {
-  .filters-container .filter-select option,
-  .filters-container .sort-select option,
-  .hero-filters .filter-select option,
-  .hero-filters .sort-select option {
-    background-color: var(--color-surface-raised);
-    color: var(--color-text-primary);
+/* =============================================================================
+   3. BACKDROP FILTER FALLBACK
+   ============================================================================= */
+
+@supports not (backdrop-filter: blur(4px)) {
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
   }
 }
 
-/* Dropdown background for active states */
-.filters-container .filter-select:focus,
-.filters-container .sort-select:focus,
-.hero-filters .filter-select:focus,
-.hero-filters .sort-select:focus {
-  background-color: var(--color-surface-raised);
-  color: var(--color-text-primary);
+/* =============================================================================
+   4. CUSTOM PROPERTY FALLBACKS
+   ============================================================================= */
+
+@supports not (color: var(--color-accent)) {
+  .btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+  
+  .text-accent {
+    color: #2563eb;
+  }
+}
+
+/* =============================================================================
+   5. CUSTOM SCROLLBAR STYLING
+   ============================================================================= */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
 }
