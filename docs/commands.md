@@ -67,7 +67,7 @@ Source engine games (Half-Life, Counter-Strike, Team Fortress 2, Portal, Left 4 
 - **`+connect [ip:port]`** - Connects to specific server on startup.
 - **`-clientport [port]`** - Sets client network port.
 - **`-insecure`** - Disables VAC protection. **Blocks VAC-secured servers**.
-- **`-enablefakeip`** - Uses Steam Datagram Relay for enhanced security.
+- **`-enablefakeip`** - Uses Steam Datagram Relay for improved security.
 
 ### Game-Specific Source Engine Options
 
