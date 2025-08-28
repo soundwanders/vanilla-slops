@@ -1,6 +1,6 @@
 /**
  * @fileoverview API client for Steam Launch Options backend
- * Provides intelligent caching, retry logic, and comprehensive error handling
+ * Provides caching, retry logic, and comprehensive error handling
  * Supports all backend endpoints with proper parameter validation
  */
 

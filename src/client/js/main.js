@@ -7,7 +7,7 @@ import SlopSearch from './ui/search.js';
 const PAGE_SIZE = 20;
 
 /**
- * Centralized application state management
+ * State management
  */
 const AppState = {
   currentPage: 1,
@@ -64,6 +64,7 @@ async function initializeFilters() {
     AppState.filtersInitialized = true;
 
     addShowAllGamesFilter();
+    console.log('✅ Filters and custom dropdowns initialized');
   } catch (error) {
     console.error('Failed to initialize filters:', error);
     
@@ -132,15 +133,15 @@ function populateEngineFilterWithDefaults() {
  */
 
 /**
- * Adds a "Show All Games" filter to the filters fieldset in the correct position
+ * Adds a "Show All Games" filter to the filters fieldset
  * This filter allows users to toggle between showing all games
  * and only those with launch options
  * 
  * @returns {Promise<void>}
  */
 /**
- * Default state: checked (hide games without options)
- * Unchecked state: show all games including those without options
+ * Default state: unchecked (hide games without options)
+ * Checked state: show all games including those without options
  * 
  * @returns {Promise<void>}
  */
@@ -176,8 +177,8 @@ async function addShowAllGamesFilter() {
   
   const stats = AppState.gameStats;
   
-  // FIXED: Ensure correct initial state detection
-  // Default should be: showAll = false (only games with options) = checkbox UNCHECKED
+  // Ensure correct initial state detection
+  // Default is 'showAll = false' (only show games WITH launch options)
   const isShowingAll = AppState.filters?.showAll === true;
   
   console.log('🔍 Initial state check:', {
@@ -330,8 +331,8 @@ function updateShowAllFilterUI(isChecked, container = null) {
   // Update stats text with clear messaging
   if (statsElement) {
     const newText = isChecked 
-      ? `-${stats.withoutOptions}` 
-      : `+${stats.withoutOptions}`;
+      ? `${stats.withoutOptions}` 
+      : `${stats.withoutOptions}`;
     statsElement.textContent = newText;
     console.log('Updated stats text:', newText);
   }

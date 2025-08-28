@@ -68,24 +68,16 @@ refactor: simplify database connection logic
 
 ## 🧪 Testing
 
-- Write tests for new or existing features
-- Update existing tests if modifying code
-- Aim for meaningful test coverage
+- It's always good to write tests for new or existing features, even if it's just pseudocode!
+- Update any relevant existing tests if modifying code
+- Aim for meaningful test coverage to the best of your ability
 - Run `npm test` before submitting
-- Bonus points for adding your test logs to your PR
-
-## 📋 Code Style
-
-- Use ESLint configuration: `npm run lint`
-- Write clear, descriptive variable names
-- Add comments for complex logic or contextual information
+- A high-five if you add any extra info (like test logs) to your PR
 
 ## 🤝 Community Guidelines
 
-- Be respectful and inclusive, this isn't that serious
-- Be welcoming to newcomers
-- Focus on constructive feedback
-- Celebrate others' contributions
+- Be respectful and kind. I promise it's not that that serious.
+- No, really...that's it.
 
 ## ❓ Questions?
 
@@ -94,5 +86,4 @@ refactor: simplify database connection logic
 
 ---
 
-**Flow Freely**: Don't be afraid to share your ideas or speak up about something you dislike. 
-No contribution is too small! Even fixing a typo helps make the project better.
+**Flow Freely** 🕊️❤️
