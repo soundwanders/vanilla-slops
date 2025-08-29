@@ -5,13 +5,13 @@
 
 ## Overview
 
-The Vanilla Slops API is a RESTful web service built with **Node.js** and **Express.js**, providing access to a comprehensive database of Steam games and their community-sourced launch options. The API uses **Supabase** (PostgreSQL) for data storage and follows modern ES module patterns.
+The Vanilla Slops API is a RESTful web service built with **Node.js** and **Express.js**, providing access to a database of Steam games and their launch options. The API uses **Supabase** for data storage and follows modern ES module patterns.
 
 **Tech Stack:**
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: Supabase (PostgreSQL)
-- **Architecture**: RESTful API with ES modules
+- **Architecture**: RESTful API
 
 Launch options are command-line parameters that can optimize game performance, enable features, or fix compatibility issues.
 
@@ -32,7 +32,7 @@ The database schema includes three main tables:
 - `sources`: Reference table for launch option sources
 
 **Key Features:**
-- RESTful design with proper HTTP status codes
+- RESTful design
 - Request validation and sanitization
 - Rate limiting (1000 requests/15 minutes per IP)
 - CORS support for web applications

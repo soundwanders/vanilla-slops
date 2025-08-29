@@ -166,27 +166,7 @@ Retrieve launch options for a specific game.
 ]
 ```
 
-### Example Usage
-
-```bash
-# Search for Valve games
-curl "https://your-api-domain.com/api/games?search=valve&sort=year&order=desc"
-
-# Get Team Fortress 2 launch options
-curl "https://your-api-domain.com/api/games/440/launch-options"
-
-# Search suggestions for autocomplete
-curl "https://your-api-domain.com/api/games/suggestions?q=half&limit=5"
-```
-
-### Rate Limiting & CORS
-- **Rate Limit:** 1,000 requests per 15 minutes per IP
-- **CORS:** Enabled for web applications
-- **Authentication:** Currently public (no auth required)
-
-### 📖 Complete Documentation
-
-For detailed information including authentication, error handling, data models, SDKs, and comprehensive examples:
+### 📖 Documentation
 
 **👉 [Full API Documentation](./docs/api.md)**
 ---
@@ -196,7 +176,6 @@ For detailed information including authentication, error handling, data models, 
 
 Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, I would love to hear your ideas. 
 Your contributions can only make the project better, and maybe we'll both learn something along the way. 
-This is a personal project and is not intended for commercial use, advertisements, etc.
 
 [📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 
