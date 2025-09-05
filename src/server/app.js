@@ -103,7 +103,7 @@ const setupCORS = () => {
       if (process.env.NODE_ENV === 'production' && 
           !process.env.CORS_ORIGIN && 
           origin.includes('.railway.app')) {
-        console.log(`🚀 Bootstrap: Allowing Railway domain ${origin}`);
+        console.log(`🐸 Bootstrap: Allowing Railway domain ${origin}`);
         return callback(null, true);
       }
       
@@ -230,7 +230,7 @@ process.on('SIGINT', () => {
 });
 
 // Log startup information
-console.log('🚀 Vanilla Slops Server Configuration:');
+console.log('🐸 Vanilla Slops Server Configuration:');
 console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
 console.log(`   Port: ${process.env.PORT || 8000}`);
 console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'not set'}`);

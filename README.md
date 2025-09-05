@@ -33,7 +33,7 @@ One of the core philosophies of this project is to recreate some of the function
 - **Real-time search suggestions** across titles, developers, publishers with instant results
 - **Custom filtering** by category, engine, release year, and launch options
 
-#### **🎯 Steam Launch Options Database**
+#### **🍓 Steam Launch Options Database**
 - **Categorized by purpose**: Performance boosting, graphics optimization, compatibility fixes
 - **Source attribution** linking back to original documentation and community contributions
 
@@ -55,7 +55,7 @@ One of the core philosophies of this project is to recreate some of the function
 
 ---
 
-## 🚀 Quick Start
+## 🐸 Quick Start
 
 ### Installation
 
