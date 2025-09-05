@@ -2,26 +2,38 @@ import { fetchGames, preloadPopularContent, fetchGameStatistics} from './api.js'
 import { renderTable } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
+import { StateManager } from './state/StateManager.js';
 import SlopSearch from './ui/search.js';
 
 const PAGE_SIZE = 20;
 
-/**
- * State management
- */
-const AppState = {
+/** State manager */
+const stateManager = new StateManager({
   currentPage: 1,
-  isLoading: false,  
+  isLoading: false,
   filters: {
-    hasOptions: true, 
-    showAll: false 
+    hasOptions: true,
+    showAll: false,
+    search: '',
+    category: '',
+    developer: '',
+    engine: '',
+    options: '',
+    year: '',
+    sort: 'title',
+    order: 'asc'
   },
   totalPages: 0,
   searchInstance: null,
   filtersInitialized: false,
-  lastScrollPosition: 0, 
-  preventNextScroll: false
-};
+  lastScrollPosition: 0,
+  preventNextScroll: false,
+  gameStats: {
+    withOptions: 0,
+    withoutOptions: 0,
+    total: 0
+  }
+});
 
 /**
  * Initialize and populate filter dropdowns with real data
@@ -605,84 +617,79 @@ function restoreScrollPosition() {
 
 /**
  * Load page with games data - called by search component
- * This function handles loading games based on filters, pagination, and user interactions
- * * @param {number} page - The page number to load (default is 1)
- * * @param {boolean} replace - Whether to replace the current page state (default is true)
- * * * @param {string} reason - The reason for loading the page (default is 'search')
- * * * @returns {Promise<void>} - Resolves when the page is loaded
+ * 
+ * This function handles loading games based on filters, pagination, and user interactions.
+ * Uses StateManager for all state updates to ensure predictable state changes and 
+ * proper change detection throughout the application.
+ * 
+ * State Actions Dispatched:
+ * - SET_LOADING: Controls loading state to prevent concurrent requests
+ * - SET_CURRENT_PAGE: Updates current page number
+ * - SET_TOTAL_PAGES: Updates total pages from API response
+ * - SET_PREVENT_SCROLL: Controls scroll restoration behavior
+ * - BATCH_UPDATE: Efficiently updates multiple state properties
+ * 
+ * @async
+ * @function loadPage
+ * @param {number} [page=1] - The page number to load
+ * @param {boolean} [replace=true] - Whether to replace the current page state in browser history
+ * @param {string} [reason='search'] - The reason for loading the page. Used for:
+ *   - 'search': Standard search/filter operation
+ *   - 'initial-load': App startup
+ *   - 'navigation': Browser back/forward
+ *   - 'launch-options-interaction': User viewing launch options (preserves scroll)
+ *   - 'user-interaction': General user interaction
+ * @returns {Promise<void>} Resolves when the page is loaded and UI is updated
+ * @throws {Error} Logs error and shows error state if API request fails
+ * 
  */
-async function loadPage(page = 1, replace = true, reason = 'search') {
-  if (AppState.isLoading) return;
-  
-  AppState.isLoading = true;
-  
-  // Store scroll position before loading if user is interacting with content
-  if (reason === 'launch-options-interaction' || reason === 'user-interaction') {
-    storeScrollPosition();
-    AppState.preventNextScroll = true;
-  }
-  
-  showLoadingState(replace);
-
+async function loadPage(page = 1, replaceState = false, source = 'unknown') {
   try {
-    const queryParams = {
+    // Set loading state
+    appState.batch(() => {
+      appState.setState(StateActions.setLoading(true));
+      appState.setState(StateActions.setCurrentPage(page));
+      appState.setState({ error: null });
+    }, 'LOAD_PAGE_START');
+
+    // Get current filters from state
+    const filters = appState.get('filters');
+    const searchParams = {
       page,
       limit: PAGE_SIZE,
-      search: AppState.filters.search || '',
-      category: AppState.filters.category || '',
-      developer: AppState.filters.developer || '',
-      engine: AppState.filters.engine || '', // NEW ENGINE PARAM
-      options: AppState.filters.options || '',
-      year: AppState.filters.year || '',
-      sort: AppState.filters.sort || 'title',
-      order: AppState.filters.order || 'asc',
-      hasOptions: AppState.filters.hasOptions,
-      showAll: AppState.filters.showAll
+      ...filters
     };
 
-    console.log('🔍 Loading with filters:', {
-      hasOptions: queryParams.hasOptions,
-      showAll: queryParams.showAll,
-      engine: queryParams.engine, // LOG ENGINE FILTER
-      mode: queryParams.showAll ? 'SHOW ALL' : 'OPTIONS-FIRST'
-    });
+    // Make API call
+    const result = await fetchGames(searchParams);
 
-    const response = await fetchGames(queryParams);
-
-    AppState.currentPage = page;
-    AppState.totalPages = response.totalPages || 0;
+    // Update state with results
+    appState.batch(() => {
+      appState.setState({
+        games: result.games || [],
+        totalPages: result.totalPages || 0,
+        facets: result.facets || appState.get('facets'), // Keep existing facets if none returned
+        isLoading: false
+      });
+    }, 'LOAD_PAGE_SUCCESS');
 
     // Update UI
-    updateResultsCount(response.total || 0);
-    clearResults();
-    renderTable(response.games || [], false);
-    renderPagination(AppState.currentPage, AppState.totalPages, loadPage);
-    
-    if (reason === 'initial-load' || reason === 'navigation') {
-      syncShowAllCheckboxWithState();
-    }
-    
-    // Refresh statistics with current filters (don't reset filters)
-    await refreshFilterStatistics();
+    renderTable(result.games || []);
+    renderPagination(result);
+    updateResultsCount(result.total || 0);
 
-    // Feedback logic
-    if (response.games?.length > 0) {
-      if (reason !== 'launch-options-interaction') {
-        showSuccessFeedback(`Loaded ${response.games.length} games`);
-      }
+    // Update URL
+    if (replaceState) {
+      updateURL(filters, true);
     }
 
-    // Handle scroll restoration
-    if (AppState.preventNextScroll) {
-      restoreScrollPosition();
-    }
   } catch (error) {
-    console.error('Error loading page:', error);
-    showErrorState(error.message);
-    AppState.preventNextScroll = false;
-  } finally {
-    AppState.isLoading = false;
-    hideLoadingState();
+    console.error('Failed to load page:', error);
+    
+    appState.setState({
+      isLoading: false,
+      error: 'Failed to load games. Please try again.'
+    }, 'LOAD_PAGE_ERROR');
   }
 }
 
