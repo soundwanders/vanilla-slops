@@ -96,7 +96,7 @@ export default class SlopSearch {
     this.initializeEventListeners();
     this.loadInitialData();
     
-    console.log('🎯 SlopSearch initialized with engine filter support');
+    console.log('🍓 SlopSearch initialized with engine filter support');
   }
 
   /**

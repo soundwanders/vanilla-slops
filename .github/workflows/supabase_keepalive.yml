@@ -35,7 +35,7 @@ jobs:
           
           async function keepDatabaseAlive() {
             try {
-              console.log('🚀 Starting Supabase keep-alive ping...');
+              console.log('🐸 Starting Supabase keep-alive ping...');
               console.log('📅 Timestamp:', new Date().toISOString());
               
               // Validate environment variables
@@ -55,7 +55,7 @@ jobs:
               console.log('✅ Supabase client created successfully');
               
               // Perform a simple query to keep the database active
-              console.log('🎯 Executing keep-alive query...');
+              console.log('🍓 Executing keep-alive query...');
               
               const { data, error, count } = await supabase
                 .from('games')

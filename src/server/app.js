@@ -1,11 +1,10 @@
 import express from 'express';
-import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import setupCORS from './middlewares/cors.js';
 import compression from 'compression';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-
 import gamesRoutes from './routes/gamesRoutes.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
@@ -38,7 +37,18 @@ app.use(helmet({
       connectSrc: ["'self'", "https://*.supabase.co"],
       fontSrc: ["'self'", "https:", "data:"],
     },
-  } : false, // Disable CSP in development
+  } : {
+    // DEVELOPMENT: More permissive CSP to avoid blocking issues
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrcAttr: ["'self'", "'unsafe-inline'"], // Allow inline event handlers
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://*.supabase.co"],
+      fontSrc: ["'self'", "https:", "data:"],
+    },
+  },
   crossOriginEmbedderPolicy: false
 }));
 
@@ -56,76 +66,7 @@ const apiLimiter = rateLimit({
 // Apply rate limiting to API routes
 app.use('/api', apiLimiter);
 
-// CORS configuration
-const setupCORS = () => {
-  const allowedOrigins = [];
-  
-  // Production origins
-  if (process.env.CORS_ORIGIN) {
-    // Handle potential trailing slash
-    const corsOrigin = process.env.CORS_ORIGIN.replace(/\/$/, '');
-    allowedOrigins.push(corsOrigin);
-    console.log(`✅ CORS: Added production origin ${corsOrigin}`);
-  }
-  
-  if (process.env.DOMAIN_URL) {
-    const domainUrl = process.env.DOMAIN_URL.replace(/\/$/, '');
-    if (!allowedOrigins.includes(domainUrl)) {
-      allowedOrigins.push(domainUrl);
-      console.log(`✅ CORS: Added domain URL ${domainUrl}`);
-    }
-  }
-  
-  // Development origins
-  if (process.env.NODE_ENV !== 'production') {
-    allowedOrigins.push(
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173'
-    );
-    console.log('🔧 CORS: Added development origins');
-  }
-  
-  return cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman, etc.)
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      // Check against allowed origins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      // Production fallback: allow Railway domains if no specific origin set
-      if (process.env.NODE_ENV === 'production' && 
-          !process.env.CORS_ORIGIN && 
-          origin.includes('.railway.app')) {
-        console.log(`🚀 Bootstrap: Allowing Railway domain ${origin}`);
-        return callback(null, true);
-      }
-      
-      // Log blocked requests for debugging
-      console.warn(`❌ CORS: Blocked origin ${origin}`);
-      console.warn(`   Allowed origins: ${allowedOrigins.join(', ')}`);
-      return callback(new Error('Not allowed by CORS'));
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Origin',
-      'X-Requested-With',
-      'Content-Type',
-      'Accept',
-      'Authorization',
-      'Cache-Control'
-    ],
-    credentials: true,
-    optionsSuccessStatus: 200 // For legacy browser support
-  });
-};
-
+// CORS setup initialization
 app.use(setupCORS());
 
 // Body parsing middleware
@@ -135,16 +76,23 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging middleware
 app.use(logRequests);
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '../client/dist');
-  
-  // Serve static assets with caching headers
+// FIXED: Serve static files in BOTH development and production
+const clientBuildPath = path.join(__dirname, '../client/dist');
+
+// Check if built files exist
+import fs from 'fs';
+if (fs.existsSync(clientBuildPath)) {
+  // Serve static assets with appropriate caching
   app.use(express.static(clientBuildPath, {
-    maxAge: '1y', // Cache static assets for 1 year
+    maxAge: process.env.NODE_ENV === 'production' ? '1y' : '0', // No cache in dev
     etag: true,
     lastModified: true,
     setHeaders: (res, filePath) => {
+      // Set correct MIME types for JavaScript modules
+      if (path.extname(filePath) === '.js') {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+      
       // Don't cache HTML files
       if (path.extname(filePath) === '.html') {
         res.setHeader('Cache-Control', 'no-cache');
@@ -153,6 +101,9 @@ if (process.env.NODE_ENV === 'production') {
   }));
   
   console.log(`📁 Serving static files from: ${clientBuildPath}`);
+} else {
+  console.warn(`⚠️  Client build directory not found: ${clientBuildPath}`);
+  console.warn(`   Run 'npm run build' in the client directory first`);
 }
 
 // API Routes
@@ -167,6 +118,7 @@ app.get('/health', (req, res) => {
     version: process.env.npm_package_version || '1.0.0',
     environment: process.env.NODE_ENV || 'development',
     uptime: process.uptime(),
+    staticFiles: fs.existsSync(clientBuildPath) ? 'available' : 'missing',
     memory: {
       used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100,
       total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024 * 100) / 100
@@ -191,30 +143,36 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Handle SPA routing (must be after API routes to work correctly)
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    // Don't serve index.html for API routes that don't exist
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ 
-        error: 'API endpoint not found',
-        path: req.path,
-        availableEndpoints: ['/api/games', '/api/games/suggestions', '/api/games/facets']
-      });
-    }
-    
-    // Serve index.html for all other routes (SPA routing)
-    const indexPath = path.join(__dirname, '../client/dist/index.html');
+// Handle SPA routing (must be after static file serving and API routes)
+app.get('*', (req, res) => {
+  // Don't serve index.html for API routes that don't exist
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ 
+      error: 'API endpoint not found',
+      path: req.path,
+      availableEndpoints: ['/api/games', '/api/games/suggestions', '/api/games/facets']
+    });
+  }
+  
+  // Serve index.html for all other routes (SPA routing)
+  const indexPath = path.join(clientBuildPath, 'index.html');
+  
+  if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('Error serving index.html:', err);
         res.status(500).json({ error: 'Failed to serve application' });
       }
     });
-  });
-}
+  } else {
+    res.status(500).json({ 
+      error: 'Application not built',
+      message: 'Run "npm run build" in the client directory first'
+    });
+  }
+});
 
-// Error handlers (must be last to function correctly)
+// Error handlers (must be last)
 app.use(notFoundHandler);
 app.use(errorHandler);
 
@@ -230,7 +188,7 @@ process.on('SIGINT', () => {
 });
 
 // Log startup information
-console.log('🚀 Vanilla Slops Server Configuration:');
+console.log('🐸 Vanilla Slops Server Configuration:');
 console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
 console.log(`   Port: ${process.env.PORT || 8000}`);
 console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'not set'}`);

@@ -1,120 +1,42 @@
 /* =============================================================================
-   VANILLA SLOPS DESIGN SYSTEM
-   Mobile-first design 
+   VANILLA SLOPS RESPONSIVE STYLES
+   Mobile-first design system
    ============================================================================= */
 
 /* =============================================================================
-   1. BASE  UTILITIES
+   1. MOBILE BASE LAYOUT
    ============================================================================= */
 
-/* Typography */
-@media (min-width: 640px) {
-  .sm\:text-sm { font-size: var(--font-size-sm); }
-  .sm\:text-base { font-size: var(--font-size-base); }
-  .sm\:text-lg { font-size: var(--font-size-lg); }
-  .sm\:text-xl { font-size: var(--font-size-xl); }
-}
-
-@media (min-width: 768px) {
-  .md\:text-base { font-size: var(--font-size-base); }
-  .md\:text-lg { font-size: var(--font-size-lg); }
-  .md\:text-xl { font-size: var(--font-size-xl); }
-  .md\:text-2xl { font-size: var(--font-size-2xl); }
-}
-
-@media (min-width: 1024px) {
-  .lg\:text-lg { font-size: var(--font-size-lg); }
-  .lg\:text-xl { font-size: var(--font-size-xl); }
-  .lg\:text-2xl { font-size: var(--font-size-2xl); }
-  .lg\:text-3xl { font-size: var(--font-size-3xl); }
-}
-
-/* Grid */
-@media (min-width: 640px) {
-  .sm\:grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .sm\:flex-row { flex-direction: row; }
-  .sm\:flex-col { flex-direction: column; }
-}
-
-@media (min-width: 768px) {
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .md\:flex-row { flex-direction: row; }
-}
-
-@media (min-width: 1024px) {
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .lg\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1280px) {
-  .xl\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .xl\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .xl\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
-
-/* Spacing */
-@media (min-width: 640px) {
-  .sm\:p-md { padding: var(--space-md); }
-  .sm\:p-lg { padding: var(--space-lg); }
-}
-
-@media (min-width: 768px) {
-  .md\:p-lg { padding: var(--space-lg); }
-  .md\:p-xl { padding: var(--space-xl); }
-  .md\:gap-lg { gap: var(--space-lg); }
-  .md\:gap-xl { gap: var(--space-xl); }
-}
-
-@media (min-width: 1024px) {
-  .lg\:p-xl { padding: var(--space-xl); }
-  .lg\:p-2xl { padding: var(--space-2xl); }
-  .lg\:gap-xl { gap: var(--space-xl); }
-  .lg\:gap-2xl { gap: var(--space-2xl); }
-}
-
-@media (min-width: 1280px) {
-  .xl\:p-2xl { padding: var(--space-2xl); }
-  .xl\:p-3xl { padding: var(--space-3xl); }
-}
-
-/* =============================================================================
-   2. GLOBAL MOBILE STYLES
-   ============================================================================= */
-
-/* Mobile Base Layout */
 @media (max-width: 768px) {
+  /* Prevent horizontal scrolling on mobile */
   html, body {
-    overflow-x: hidden;
-    max-width: 100vw;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
   }
 
   body {
     padding: var(--space-md) var(--space-sm);
-    line-height: 1.5;
+    line-height: var(--line-height-normal);
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
   
+  /* App container constraints */
   #app {
-    width: 100%;
-    max-width: 100vw;
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-    overflow-x: hidden;
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
   }
 
-  /* Typography */
+  /* Typography optimizations */
   h1, h2, h3, h4, h5, h6 {
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
-    line-height: 1.3;
+    line-height: var(--line-height-snug);
   }
   
   p, span, div {
@@ -123,18 +45,20 @@
     max-width: 100%;
   }
 
-  /* Performance optimizations */
+  /* KEEP !important - Performance critical */
   * {
-    transition-duration: 0.2s;
+    transition-duration: var(--transition-fast) !important;
   }
   
+  /* KEEP !important - Visual consistency override */
   .card,
   .games-table,
   .filters-container,
   .hero-section {
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-sm) !important;
   }
   
+  /* Performance containment - Removed !important */
   .filters-container,
   .table-container,
   .hero-section {
@@ -142,21 +66,20 @@
   }
 }
 
-/* Small Mobile */
 @media (max-width: 480px) {
   body {
     padding: var(--space-sm) var(--space-xs);
     font-size: var(--font-size-sm);
   }
   
-  /* Prevent zoom on iOS */
+  /* Prevent iOS zoom on form inputs */
   input[type="text"],
   input[type="search"],
   input[type="email"],
   input[type="password"],
   select,
   textarea {
-    font-size: 16px;
+    font-size: var(--space-4) !important; /* 16px */
     max-width: 100%;
     box-sizing: border-box;
   }
@@ -165,28 +88,28 @@
   button,
   .btn,
   .launch-options-btn {
-    min-height: 44px;
+    min-height: var(--space-12); /* 44px */
     padding: var(--space-3) var(--space-4);
     font-size: var(--font-size-sm);
     border-radius: var(--radius-lg);
   }
 }
 
-/* Very Small Mobile */
 @media (max-width: 374px) {
   body {
     padding: var(--space-xs);
   }
   
-  /* Minimal effects for performance */
+  /* Minimal effects for better performance */
   * {
-    box-shadow: none;
+    box-shadow: none !important;
   }
   
+  /* Essential shadow elements */
   .card,
   .slops-search,
   .slops-results {
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-xs) !important;
   }
   
   .hover-lift:hover {
@@ -195,451 +118,11 @@
 }
 
 /* =============================================================================
-   3. HERO SECTION 
+   2. GAMES TABLE MOBILE LAYOUT
    ============================================================================= */
 
 @media (max-width: 768px) {
-  .hero-section {
-    min-height: 60vh;
-    padding: 0;
-    overflow-x: hidden;
-  }
-  
-  .hero-content {
-    padding: var(--space-8) var(--space-4);
-  }
-  
-  .hero-branding {
-    gap: var(--space-4);
-    margin-bottom: var(--space-4);
-  }
-  
-  .hero-logo {
-    width: 70px;
-    height: 70px;
-  }
-  
-  .hero-title-main {
-    font-size: clamp(2rem, 8vw, 3rem);
-    line-height: 1.1;
-    overflow-wrap: break-word;
-    word-break: break-word;
-  }
-  
-  .hero-title-accent {
-    font-size: clamp(1.125rem, 4vw, 1.5rem);
-    line-height: 1.2;
-  }
-  
-  /* Hero Search */
-  .hero-search {
-    margin-bottom: var(--space-6);
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  .hero-search .search-input {
-    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-12);
-    font-size: 16px; /* Prevent zoom on iOS */
-    min-height: 44px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .hero-search .search-icon {
-    left: var(--space-3);
-    font-size: var(--font-size-lg);
-  }
-  
-  /* Hero Stats */
-  .hero-stats {
-    flex-direction: column;
-    gap: var(--space-3);
-    margin-bottom: var(--space-6);
-    padding: 0 var(--space-4);
-  }
-  
-  .stat-item {
-    flex-direction: row;
-    gap: var(--space-3);
-    min-width: auto;
-    width: 100%;
-    max-width: 280px;
-    padding: var(--space-3) var(--space-4);
-    margin: 0 auto;
-  }
-  
-  .stat-number {
-    font-size: var(--font-size-xl);
-  }
-  
-  /* Hero Filters */
-  .hero-filters {
-    width: 100%;
-    padding: 0 var(--space-2);
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-section {
-    min-height: 50vh;
-    margin-bottom: var(--space-6);
-  }
-  
-  .hero-content {
-    padding: var(--space-4) var(--space-3);
-  }
-  
-  .hero-logo {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .hero-title-main {
-    font-size: clamp(1.75rem, 10vw, 2.5rem);
-  }
-  
-  .hero-title-accent {
-    font-size: clamp(1rem, 5vw, 1.25rem);
-  }
-  
-  .hero-search .search-input {
-    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-10);
-  }
-  
-  .hero-search .search-icon {
-    left: var(--space-2);
-    font-size: var(--font-size-base);
-  }
-  
-  .hero-stats {
-    gap: var(--space-2);
-  }
-  
-  .stat-item {
-    padding: var(--space-2) var(--space-3);
-    max-width: 240px;
-  }
-  
-  .stat-number {
-    font-size: var(--font-size-lg);
-  }
-  
-  .stat-label {
-    font-size: var(--font-size-xs);
-  }
-}
-
-/* Large Phones */
-@media (min-width: 428px) and (max-width: 768px) {
-  .hero-stats {
-    flex-direction: row;
-    gap: var(--space-4);
-    justify-content: center;
-  }
-  
-  .stat-item {
-    flex-direction: column;
-    gap: var(--space-2);
-    min-width: 100px;
-  }
-}
-
-/* Landscape Mobile */
-@media (max-height: 500px) and (orientation: landscape) {
-  .hero-section {
-    min-height: 50vh;
-  }
-  
-  .hero-content {
-    padding: var(--space-6) var(--space-4);
-  }
-  
-  .hero-branding {
-    flex-direction: row;
-    align-items: center;
-    gap: var(--space-6);
-    margin-bottom: var(--space-3);
-  }
-  
-  .hero-logo {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .hero-stats {
-    flex-direction: row;
-    gap: var(--space-4);
-  }
-  
-  .stat-item {
-    flex-direction: column;
-    gap: var(--space-1);
-    min-width: 80px;
-    padding: var(--space-2) var(--space-3);
-  }
-}
-
-/* =============================================================================
-   4. FILTERS 
-   ============================================================================= */
-
-@media (max-width: 768px) {  
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  
-  .filter-fieldset {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .filter-group {
-    flex-direction: row;
-    align-items: center;
-    min-width: auto;
-    max-width: none;
-  }
-  
-  .filter-label {
-    display: none; 
-  }
-  
-  .filter-select,
-  .sort-select {
-    flex: 1;
-    height: 44px;
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-  
-  .filter-group.show-all-filter {
-    margin-left: 0;
-    padding-left: 0;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 1rem;
-  }
-  
-
-  .show-all-checkbox-container {
-    min-height: 48px;
-    height: 48px;
-    padding: var(--space-2) var(--space-3);
-    gap: var(--space-2);
-  }
-
-
-  .checkbox-stats {
-    font-size: calc(var(--font-size-xs) * 0.9);
-    padding: var(--space-1) var(--space-2);
-    min-width: 60px;
-  }
-  
-  .year-filter-container {
-    flex: 1;
-  }
-  
-  .year-select,
-  .year-input {
-    height: 44px;
-    font-size: 16px;
-  }
-  
-  .checkbox-label-text {
-    font-size: var(--font-size-xs);
-    flex: 1;
-    margin-right: var(--space-2);
-  }
-  
-  .checkbox-stats {
-    font-size: var(--font-size-xs);
-    padding: var(--space-1) var(--space-2);
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  
-  /* Active Filters */
-  .active-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: 0 var(--space-4);
-    margin-bottom: var(--space-4);
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .filter-tag {
-    font-size: var(--font-size-xs);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    flex-shrink: 0;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .filter-remove {
-    width: var(--space-4);
-    height: var(--space-4);
-    font-size: var(--font-size-xs);
-    flex-shrink: 0;
-    margin-left: var(--space-1);
-  }
-
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    padding: 0.75rem 1rem;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .filter-fieldset {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .filter-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    width: 100%;
-    max-width: none;
-  }
-  
-  .filter-label {
-    align-self: flex-start;
-  }
-  
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    width: 100%;
-    max-width: none;
-  }
-  
-  .year-filter-container {
-    width: 100%;
-    max-width: none;
-  }
-  
-  .year-input {
-    flex: 0 0 80px;
-  }
-}
-
-@media (max-width: 480px) {
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    padding: var(--space-4) var(--space-3);
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
-  }
-  
-  .filter-label {
-    font-size: var(--font-size-xs);
-    margin-bottom: var(--space-1);
-  }
-
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    min-height: 44px;
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-  
-  .checkbox-stats {
-    font-size: 0.6875rem;
-    padding: 2px 6px;
-  }
-  
-  .active-filters {
-    padding: 0 var(--space-3);
-    gap: var(--space-1);
-  }
-  
-  .filter-tag {
-    font-size: 0.6875rem;
-    padding: var(--space-1) var(--space-2);
-    max-width: 150px;
-  }
-  
-  .filter-remove {
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
-  }
-}
-
-/* Year Filter Mobile */
-@media (max-width: 768px) {
-  .year-filter-container {
-    flex-direction: column;
-    gap: var(--space-3);
-    align-items: stretch;
-  }
-  
-  .year-select,
-  .year-input {
-    flex: none;
-    max-width: none;
-    min-height: 44px;
-    font-size: 16px;
-  }
-  
-  .year-input {
-    padding: var(--space-3) var(--space-4);
-  }
-  
-  .year-divider {
-    text-align: center;
-    margin: var(--space-1) 0;
-  }
-}
-
-/* Tablet Styles for Search Filters */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .filter-group {
-    max-width: 160px;
-  }
-  
-  .filter-select,
-  .sort-select {
-    max-width: 120px;
-  }
-}
-
-@media (min-width: 1025px) {
-  .filter-group {
-    min-width: 120px;
-    max-width: 160px;
-  }
-  
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-}
-
-/* =============================================================================
-   5. GAMES TABLE MOBILE LAYOUT
-   ============================================================================= */
-
-/* Mobile Card Layout - Container scoped specificity */
-@media (max-width: 768px) {
-  /* Convert table to card layout using container scoping */
+  /* Convert table to card layout */
   .table-container .games-table,
   .table-container .games-table thead,
   .table-container .games-table tbody,
@@ -659,7 +142,7 @@
     visibility: hidden;
   }
   
-  /* Game card styling - container scoped */
+  /* Game card styling */
   .table-container .games-table tbody tr {
     display: block;
     margin-bottom: var(--space-6);
@@ -672,7 +155,7 @@
     width: 100%;
     max-width: 100%;
     overflow: hidden;
-    transform: none;
+    transform: none; /* Remove transform on mobile */
   }
   
   /* Card accent border */
@@ -682,19 +165,19 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: var(--space-1);
     background: var(--gradient-accent);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
   
-  /* Game card hover state */
+  /* Game card hover */
   .table-container .games-table tbody tr:hover {
     transform: none;
     box-shadow: var(--shadow-xl);
     background: var(--color-surface-raised);
   }
   
-  /* Table cell styling - container scoped */
+  /* Table cell styling */
   .table-container .games-table td {
     display: flex;
     align-items: flex-start;
@@ -709,14 +192,14 @@
     hyphens: auto;
   }
   
-  /* Data labels - container scoped */
+  /* Data labels */
   .table-container .games-table td::before {
     content: attr(data-label) ": ";
     position: absolute;
     left: var(--space-2);
     top: var(--space-3);
     width: 35%;
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     font-size: var(--font-size-xs);
     text-transform: uppercase;
@@ -726,27 +209,27 @@
     line-height: var(--line-height-tight);
   }
   
-  /* Game title styling - container scoped */
+  /* Game title styling */
   .table-container .games-table td:first-child {
     padding-top: var(--space-4);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     font-size: var(--font-size-base);
   }
   
   .table-container .games-table td:first-child::before {
-    font-weight: 800;
+    font-weight: var(--font-weight-extrabold);
     color: var(--color-accent);
     font-size: var(--font-size-sm);
   }
   
-  .table-container .game-title {
-    line-height: 1.3;
+  .game-title {
+    line-height: var(--line-height-snug);
     word-wrap: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
   }
   
-  /* Launch options button - container scoped */
+  /* Launch options button */
   .table-container .games-table td:last-child {
     padding-top: var(--space-5);
     padding-left: var(--space-2);
@@ -770,7 +253,7 @@
     margin-top: var(--space-2);
   }
   
-  .table-container .options-count {
+  .options-count {
     min-width: var(--space-5);
     height: var(--space-5);
     font-size: var(--font-size-xs);
@@ -778,9 +261,9 @@
   }
 }
 
-/* Small Mobile table adjustments - container scoped */
+/* Small mobile table */
 @media (max-width: 480px) {
-  .table-container .games-table {
+  .games-table {
     font-size: var(--font-size-xs);
   }
   
@@ -800,22 +283,23 @@
     left: var(--space-1);
   }
   
-  .table-container .game-title {
+  .game-title {
     font-size: var(--font-size-xs);
   }
   
   .table-container .launch-options-btn {
-    min-height: 44px;
+    min-height: var(--space-12);
     font-size: var(--font-size-xs);
     padding: var(--space-2) var(--space-3);
   }
 }
 
 /* =============================================================================
-   6. LAUNCH OPTIONZ
+   3. LAUNCH OPTIONS
    ============================================================================= */
 
 @media (max-width: 768px) {
+  /* Launch options row */
   .table-container .launch-options-row {
     display: block;
     width: 100%;
@@ -823,6 +307,7 @@
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   }
   
+  /* Launch options cell */
   .table-container .launch-options-cell {
     display: flex;
     flex-direction: column;
@@ -836,6 +321,7 @@
     box-sizing: border-box;
   }
   
+  /* Launch options list */
   .table-container .launch-options-list {
     display: flex;
     flex-direction: column;
@@ -850,234 +336,223 @@
     box-sizing: border-box;
   }
   
+  /* Launch option items */
   .table-container .launch-option {
-    width: 100%;
-    max-width: 100%;
-    padding: var(--space-5) var(--space-4);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface-raised);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-md);
-    margin: 0 auto;
-    position: relative;
-    overflow: hidden;
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
+    max-width: var(--space-96);
+    padding: var(--space-4);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    gap: var(--space-3);
+    transition: all var(--transition-fast);
   }
   
   .table-container .launch-option:hover {
-    transform: none;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+  
+  /* Option commands */
+  .table-container .option-command {
+    padding: var(--space-3);
+    background: var(--color-code-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    word-break: break-all;
+    user-select: all;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .table-container .option-command:hover {
+    background: var(--color-interactive-hover);
     border-color: var(--color-accent);
   }
   
-  .table-container .option-command {
-    width: 100%;
-    max-width: 100%;
-    padding: var(--space-4);
-    margin-bottom: var(--space-4);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    border-radius: var(--radius-md);
-    background: var(--color-code-background);
-    color: var(--color-code-text);
-    font-family: var(--font-family-mono);
-    word-break: break-all;
-    overflow-wrap: break-word;
-    white-space: pre-wrap;
-    cursor: pointer;
-    position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: left;
-    box-sizing: border-box;
-    display: block;
-  }
-
-  .table-container .option-command:hover {
-    transform: none;
-  }
-
-  .table-container .option-command::after {
-    content: '📋 Tap to copy';
-    position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
-    padding: var(--space-1) var(--space-2);
-    background: rgba(0, 0, 0, 0.9);
-    color: var(--color-white);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-xs);
-    font-family: var(--font-family-base);
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    pointer-events: none;
-    z-index: var(--z-raised);
-    white-space: nowrap;
-  }
-
-  .table-container .option-command.copied,
-  .table-container .option-command.copy-failed {
-    transform: none;
+  .table-container .option-command:active {
+    transform: scale(0.98);
   }
   
+  /* Copy feedback */
   .table-container .option-command.copied::after {
-    content: '✅ Copied!';
-    opacity: 1;
+    content: '✅ Copied to clipboard!';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: var(--color-success);
-  }
-  
-  .table-container .option-command.copy-failed::after {
-    content: '❌ Failed';
-    opacity: 1;
-    background: var(--color-error);
-  }
-  
-  .table-container .option-description {
-    width: 100%;
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    margin-bottom: var(--space-4);
-    color: var(--color-text-secondary);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    text-align: left;
-    box-sizing: border-box;
-  }
-  
-  .table-container .option-meta {
-    width: 100%;
+    color: white;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--color-border-subtle);
+    justify-content: center;
     font-size: var(--font-size-xs);
-    box-sizing: border-box;
-  }
-
-  .table-container .option-source {
-    flex: 1 1 auto;
-    min-width: 0;
+    font-weight: var(--font-weight-bold);
+    animation: copyFeedback 2s ease-in-out;
   }
   
-  .table-container .option-votes,
-  .table-container .option-verified {
-    flex: 0 0 auto;
-    margin-left: var(--space-2);
-  }
-  
-  .table-container .launch-options-close-container {
-    width: 100%;
-    margin-top: var(--space-8);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--color-border);
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    box-sizing: border-box;
-  }
-  
-  .table-container .launch-options-close {
-    width: auto;
-    min-width: 200px;
-    max-width: 280px;
-    padding: var(--space-4) var(--space-6);
-    font-size: var(--font-size-sm);
-    border-radius: var(--radius-lg);
-    margin: 0;
-    box-sizing: border-box;
-  }
-
-  .table-container .no-options,
-  .table-container .launch-options-cell .no-options {
-    width: 100%;
-    max-width: 100%;
-    padding: var(--space-8) var(--space-4);
-    text-align: center;
-    border-radius: var(--radius-lg);
-    margin: 0 auto;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .table-container .no-options::before,
-  .table-container .launch-options-cell .no-options::before {
-    font-size: var(--space-12);
-    margin-bottom: var(--space-4);
-  }
-
-  .table-container .launch-options-cell .loading {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: var(--space-4);
-    padding: var(--space-8);
-    text-align: center;
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    box-sizing: border-box;
-  }
-
-  .table-container .launch-options-cell .error {
-    width: 100%;
-    max-width: 100%;
-    padding: var(--space-8) var(--space-4);
-    background: var(--color-surface-subtle);
-    border: 2px solid var(--color-error);
-    border-radius: var(--radius-lg);
-    color: var(--color-text-primary);
-    margin: 0 auto;
-    text-align: center;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .table-container .launch-options-cell {
-    padding: var(--space-5) var(--space-3);
-  }
-  
-  .table-container .launch-option {
-    padding: var(--space-4) var(--space-3);
-  }
-  
-  .table-container .option-command {
-    padding: var(--space-3);
-    font-size: calc(var(--font-size-sm) * 0.95);
-  }
-  
-  .table-container .launch-options-close {
-    min-width: 180px;
-    max-width: 250px;
-    font-size: calc(var(--font-size-sm) * 0.95);
-  }
-  
-  .table-container .option-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-1);
+  @keyframes copyFeedback {
+    0%, 100% { opacity: 0; transform: scale(0.9); }
+    10%, 90% { opacity: 1; transform: scale(1); }
   }
 }
 
 /* =============================================================================
-   7. SEARCH & SUGGESTIONS 
+   4. FILTERS CONTAINER
    ============================================================================= */
 
 @media (max-width: 768px) {
-  /* Search container */
+  .filters-container,
+  .slops-filters,
+  .hero-filters .filters-container {
+    padding: var(--space-4);
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  
+  .filter-label {
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--space-2);
+  }
+
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: var(--space-12); /* 44px */
+    font-size: var(--font-size-sm);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+  }
+  
+  .checkbox-stats {
+    font-size: calc(var(--font-size-xs) * 0.85);
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  .active-filters {
+    padding: 0 var(--space-4);
+    gap: var(--space-2);
+  }
+  
+  .filter-tag {
+    font-size: calc(var(--font-size-xs) * 0.85);
+    padding: var(--space-1) var(--space-2);
+    max-width: 150px;
+  }
+  
+  .filter-remove {
+    width: var(--space-4);
+    height: var(--space-4);
+    font-size: calc(var(--font-size-xs) * 0.75);
+    flex-shrink: 0;
+    margin-left: var(--space-1);
+  }
+}
+
+@media (max-width: 480px) {
+  .filters-container,
+  .slops-filters,
+  .hero-filters .filters-container {
+    padding: var(--space-4) var(--space-3);
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  
+  .filter-label {
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--space-1);
+  }
+
+  .filter-select,
+  .sort-select,
+  .show-all-checkbox-container {
+    min-height: var(--space-12); /* 44px */
+    font-size: var(--space-4); /* 16px */
+    padding: var(--space-2) var(--space-3);
+  }
+  
+  .checkbox-stats {
+    font-size: calc(var(--font-size-xs) * 0.85);
+    padding: 2px 6px;
+  }
+  
+  .active-filters {
+    padding: 0 var(--space-3);
+    gap: var(--space-1);
+  }
+  
+  .filter-tag {
+    font-size: calc(var(--font-size-xs) * 0.85);
+    padding: var(--space-1) var(--space-2);
+    max-width: 150px;
+  }
+  
+  .filter-remove {
+    width: var(--space-4);
+    height: var(--space-4);
+    font-size: calc(var(--font-size-xs) * 0.75);
+  }
+}
+
+/* =============================================================================
+   5. PAGINATION
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .pagination-container {
+    padding: var(--space-4);
+    margin: var(--space-6) 0;
+  }
+  
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
+  }
+  
+  .pagination-btn {
+    min-width: var(--space-12);
+    min-height: var(--space-12);
+    font-size: var(--font-size-sm);
+  }
+  
+  .results-header,
+  .slops-results-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    text-align: center;
+  }
+  
+  .results-count {
+    font-size: var(--font-size-xs);
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Hide some page numbers on very small screens */
+  .pagination-controls .pagination-btn-page:not(.pagination-btn-active):not(:first-of-type):not(:last-of-type) {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   6. SEARCH & SUGGESTIONS
+   ============================================================================= */
+
+@media (max-width: 768px) {
   .search-container,
   .slops-search {
     margin-bottom: var(--space-8);
@@ -1087,16 +562,16 @@
 
   .search-header h1,
   .slops-logo {
-    font-size: clamp(2rem, 8vw, 2.5rem);
+    font-size: clamp(var(--space-8), 8vw, var(--space-10));
   }
   
   .search-header h2,
-  .slops-logo {
+  .slops-tagline {
     font-size: var(--font-size-xl);
   }
   
   /* Search pending indicator */
-  .search-pending-indicator {
+  .search-container .search-pending-indicator {
     position: absolute;
     right: var(--space-3);
     top: 50%;
@@ -1104,13 +579,13 @@
     font-size: var(--font-size-xs);
     padding: var(--space-1) var(--space-2);
     white-space: nowrap;
-    max-width: 120px;
+    max-width: var(--space-28);
     overflow: hidden;
     text-overflow: ellipsis;
   }
   
   /* Suggestions dropdown */
-  .suggestions-dropdown {
+  .search-container .suggestions-dropdown {
     position: fixed;
     top: auto;
     left: var(--space-2);
@@ -1124,19 +599,20 @@
   }
   
   .hero-search .suggestions-dropdown {
-    left: -var(--space-4);
-    right: -var(--space-4);
+    left: calc(-1 * var(--space-4));
+    right: calc(-1 * var(--space-4));
     border-radius: var(--radius-lg);
-    max-height: 12rem;
+    max-height: var(--space-28);
     position: absolute;
     bottom: auto;
     top: 100%;
   }
   
-  .suggestion-item {
-    padding: var(--space-4) var(--space-4);
+  /* Suggestion items */
+  .suggestions-dropdown .suggestion-item {
+    padding: var(--space-4);
     font-size: var(--font-size-sm);
-    min-height: 48px;
+    min-height: var(--space-12);
     display: flex;
     align-items: center;
   }
@@ -1170,741 +646,88 @@
 }
 
 /* =============================================================================
-   8. PAGINATION & CONTROLS 
+   7. HERO SECTION MOBILE STYLES
    ============================================================================= */
 
 @media (max-width: 768px) {
-  .pagination-container {
-    padding: var(--space-4);
-    margin: var(--space-6) 0;
-  }
-  
-  .pagination-controls {
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    justify-content: center;
-  }
-  
-  .pagination-btn {
-    min-width: 44px;
-    min-height: 44px;
-    font-size: var(--font-size-sm);
-  }
-  
-  /* Results header */
-  .results-header,
-  .slops-results-header {
+  .hero-stats {
     flex-direction: column;
-    align-items: stretch;
     gap: var(--space-3);
-    text-align: center;
-  }
-  
-  .results-count {
-    font-size: var(--font-size-pico);
-    order: -1; /* Show count first */
-  }
-}
-
-@media (max-width: 480px) {
-  /* Hide some page numbers on very small screens */
-  .pagination-btn-page:not(.pagination-btn-active):not(:first-of-type):not(:last-of-type) {
-    display: none;
-  }
-}
-
-/* =============================================================================
-   9. EMPTY STATES & MODALS 
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  /* Empty table state */
-  .empty-table-state {
-    padding: var(--space-12) var(--space-4);
-    margin: var(--space-6) 0;
-    border-radius: var(--radius-xl);
-    min-height: 20rem;
-  }
-  
-  .empty-icon {
-    font-size: 3rem;
-  }
-  
-  .empty-title {
-    font-size: var(--font-size-xl);
-    margin-bottom: var(--space-3);
-  }
-  
-  .empty-description {
-    font-size: var(--font-size-base);
     margin-bottom: var(--space-6);
   }
   
-  .empty-stats {
-    flex-direction: column;
-    gap: var(--space-4);
-    margin-bottom: var(--space-6);
-  }
-  
-  .stat-card {
+  .stat-item {
+    flex-direction: row;
+    gap: var(--space-3);
     min-width: auto;
     width: 100%;
     max-width: 200px;
-    margin: 0 auto;
+    padding: var(--space-2) var(--space-3);
+    flex-shrink: 0;
+    margin-left: var(--space-1);
   }
   
   .stat-number {
-    font-size: var(--font-size-xl);
-  }
-  
-  .empty-actions {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-3);
-  }
-  
-  .btn {
-    width: 100%;
-    max-width: 280px;
-    min-height: 44px;
-    justify-content: center;
-  }
-  
-  .suggestion-chips {
-    gap: var(--space-2);
-    justify-content: center;
-  }
-  
-  .suggestion-chip {
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--font-size-sm);
-    min-height: 36px;
-  }
-  
-  .search-tips {
-    text-align: center;
-  }
-  
-  .search-tips li {
-    padding: var(--space-2) 0;
-    font-size: var(--font-size-sm);
-  }
-  
-  /* Information modal */
-  .info-modal-overlay {
-    padding: var(--space-4);
-  }
-  
-  .info-modal {
-    margin: 0;
-    max-height: 90vh;
-    border-radius: var(--radius-xl);
-  }
-  
-  .info-modal-header {
-    padding: var(--space-4);
-  }
-  
-  .info-modal-header h3 {
     font-size: var(--font-size-lg);
   }
   
-  .info-modal-close {
-    padding: var(--space-2);
-    font-size: var(--font-size-xl);
-    min-width: 44px;
-    min-height: 44px;
+  .stat-label {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Large phones */
+@media (min-width: 428px) and (max-width: 768px) {
+  .hero-stats {
+    flex-direction: row;
+    gap: var(--space-4);
+    justify-content: center;
   }
   
-  .info-modal-body {
-    padding: var(--space-4);
-    max-height: calc(90vh - 4rem);
+  .stat-item {
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: var(--space-24);
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero-section {
+    min-height: 50vh !important;
   }
   
-  .info-modal-body p {
-    font-size: var(--font-size-sm);
+  .hero-content {
+    padding: var(--space-6) var(--space-4) !important;
+  }
+  
+  .hero-branding {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-6);
     margin-bottom: var(--space-3);
   }
   
-  .info-modal-body h4 {
-    font-size: var(--font-size-base);
-    margin: var(--space-4) 0 var(--space-2) 0;
+  .hero-logo {
+    width: var(--space-16);
+    height: var(--space-16);
   }
   
-  /* Table loading state */
-  .table-loading {
-    padding: var(--space-12) var(--space-4);
+  .hero-stats {
+    flex-direction: row !important;
+    gap: var(--space-4) !important;
+  }
+  
+  .stat-item {
     flex-direction: column;
-    gap: var(--space-3);
-  }
-  
-  .loading-spinner {
-    width: var(--space-5);
-    height: var(--space-5);
-  }
-  
-  /* Modal generic */
-  .modal {
-    margin: var(--space-sm);
-    max-width: none;
-    max-height: 90vh;
-  }
-  
-  .modal-body {
-    max-height: calc(90vh - 4rem);
-  }
-}
-
-@media (max-width: 480px) {
-  .suggestion-chip {
-    padding: var(--space-1) var(--space-3);
-    font-size: var(--font-size-xs);
+    gap: var(--space-1);
+    min-width: var(--space-20);
+    padding: var(--space-2) var(--space-3);
   }
 }
 
 /* =============================================================================
-  FILTER FIELDS GRID  ADJUSTMENTS
-   ============================================================================= */
-
-/* Large screens - 5 filters per row */
-@media (min-width: 1200px) {
-  .filters-container,
-  .hero-filters .filters-container {
-    grid-template-columns: auto;
-    gap: var(--space-6);
-  }
-}
-
-/* Medium screens - 3-4 filters per row */
-@media (min-width: 768px) and (max-width: 1199px) {
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    padding: var(--space-6) var(--space-4);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin-bottom: var(--space-6);
-    border-radius: var(--radius-xl);
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Small screens - 2 filters per row */
-@media (max-width: 480px) {
-  .filters-container,
-  .slops-filters, 
-  .hero-filters .filters-container {
-    padding: var(--space-4, 1rem) var(--space-3, 0.75rem);
-    gap: var(--space-3, 0.75rem);
-  }
-  
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    min-height: 44px;
-    font-size: 16px;
-    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  }
-}
-
-/* Very small screens - 1 filter per row */
-@media (max-width: 479px) {
-  .filters-container,
-  .hero-filters .filters-container {
-    grid-template-columns: 1fr;
-    gap: var(--space-4);
-    padding: var(--space-5);
-  }
-}
-
-/* =============================================================================
-   LANDSCAPE MOBILE ADJUSTMENTS
-   ============================================================================= */
-@media (max-height: 500px) and (orientation: landscape) and (max-width: 900px) {
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
-    padding: var(--space-4);
-  }
-  
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    min-height: 40px;
-    font-size: var(--font-size-sm);
-  }
-
-  .empty-table-state {
-    padding: var(--space-8) var(--space-4);
-    min-height: 20rem;
-  }
-  
-  .empty-stats {
-    flex-direction: row;
-    gap: var(--space-4);
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .stat-card {
-    min-width: 100px;
-    max-width: 120px;
-  }
-  
-  .empty-actions {
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .btn {
-    width: auto;
-    min-width: 120px;
-  }
-  
-  .modal {
-    max-height: 80vh;
-  }
-  
-  .modal-body {
-    max-height: 50vh;
-  }
-
-  .launch-options-cell {
-    padding: var(--space-4) var(--space-3);
-  }
-  
-  .launch-option {
-    padding: var(--space-3);
-  }
-  
-  .option-command {
-    padding: var(--space-3);
-    font-size: var(--font-size-xs);
-  }
-  
-  .launch-options-close-container {
-    margin-top: var(--space-4);
-    padding-top: var(--space-3);
-  }
-}
-
-/* =============================================================================
-   10. TOGGLES & CONTROLS 
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  /* Options-first toggle */
-  .options-first-toggle {
-    margin: var(--space-4) 0;
-    padding: var(--space-4);
-    border-radius: var(--radius-lg);
-  }
-  
-  .toggle-container {
-    gap: var(--space-3);
-  }
-  
-  .toggle-label {
-    font-size: var(--font-size-base);
-    gap: var(--space-3);
-  }
-  
-  .toggle-slider {
-    width: 3rem;
-    height: 1.75rem;
-    flex-shrink: 0;
-  }
-  
-  .toggle-slider::before {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  
-  .toggle-checkbox:checked + .toggle-slider::before {
-    transform: translateX(1.25rem);
-  }
-  
-  .toggle-description {
-    padding-left: 0;
-    margin-top: var(--space-2);
-  }
-  
-  .toggle-hint {
-    font-size: var(--font-size-sm);
-  }
-  
-  .toggle-stats {
-    font-size: var(--font-size-xs);
-    padding: var(--space-1) var(--space-2);
-  }
-  
-  /* Theme toggle */
-  .theme-toggle,
-  #theme-toggle {
-    top: var(--space-4);
-    right: var(--space-4);
-    padding: var(--space-2);
-    min-width: var(--space-10);
-    height: var(--space-10);
-    font-size: var(--font-size-base);
-    border-radius: var(--radius-lg);
-    z-index: var(--z-fixed);
-  }
-  
-  /* Close all button */
-  .close-all-btn {
-    right: 40px;
-  }
-  
-  .close-all-icon {
-    width: var(--space-4);
-    height: var(--space-4);
-    font-size: var(--font-size-xs);
-  }
-  
-  .close-all-text {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .theme-toggle,
-  #theme-toggle {
-    top: var(--space-3);
-    right: var(--space-3);
-    padding: var(--space-1);
-    min-width: var(--space-8);
-    height: var(--space-8);
-    font-size: var(--font-size-sm);
-  }
-  
-  .toggle-slider {
-    width: 3rem;
-    height: 1.75rem;
-  }
-  
-  .toggle-slider::before {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  
-  .toggle-checkbox:checked + .toggle-slider::before {
-    transform: translateX(1.25rem);
-  }
-}
-
-/* =============================================================================
-   11. TOUCH DEVICE OPTIMIZATIONS
-   ============================================================================= */
-
-@media (pointer: coarse) {
-  /* Larger touch targets */
-  .btn,
-  .launch-options-btn,
-  .filter-select,
-  .pagination-btn,
-  .suggestion-item,
-  .dropdown-item {
-    min-height: 44px;
-    min-width: 44px;
-    touch-action: manipulation;
-  }
-  
-  .suggestion-item,
-  .dropdown-item {
-    padding: var(--space-md) var(--space-lg);
-  }
-  
-  .filter-tag {
-    padding: var(--space-sm) var(--space-md);
-    min-height: 32px;
-  }
-  
-  .filter-remove {
-    width: 24px;
-    height: 24px;
-    margin-left: var(--space-xs);
-  }
-  
-  input[type="checkbox"],
-  input[type="radio"] {
-    width: 20px;
-    height: 20px;
-  }
-
-  .option-command:active {
-    transform: scale(0.98);
-    background: var(--color-interactive-hover);
-  }
-  
-  .suggestion-chip:active {
-    transform: scale(0.95);
-  }
-  
-  .filter-select:active,
-  .sort-select:active {
-    background-color: var(--color-interactive-hover);
-    transform: scale(0.98);
-  }
-  
-  .show-all-checkbox-container:active {
-    background-color: var(--color-interactive-hover);
-    transform: scale(0.98);
-  }
-  
-  /* Remove hover effects on touch devices */
-  @media (hover: none) {
-    .hover-lift:hover,
-    .hover-scale:hover,
-    .hover-rotate:hover {
-      transform: none;
-    }
-    
-    .games-table tbody tr:hover {
-      transform: none;
-      background: var(--color-surface-raised);
-    }
-  }
-}
-
-/* =============================================================================
-   12. ACCESSIBILITY FEATURES
-   ============================================================================= */
-
-/* Focus indicators */
-@media (max-width: 768px) {
-  *:focus-visible {
-    outline: 2px solid var(--color-interactive-focus);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-  }
-  
-  .launch-options-btn:focus-visible,
-  .filter-select:focus-visible,
-  .option-command:focus-visible {
-    outline: 3px solid var(--color-interactive-focus);
-    outline-offset: 2px;
-  }
-  
-  .filter-select:focus-visible,
-  .sort-select:focus-visible,
-  #showAllGamesFilter:focus + .show-all-checkbox-container,
-  .year-input:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-  }
-  
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-}
-
-/* Skip link */
-@media (max-width: 768px) {
-  .skip-link {
-    left: var(--space-2);
-    top: -50px;
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-sm);
-    border-radius: var(--radius-lg);
-  }
-  
-  .skip-link:focus {
-    top: var(--space-2);
-  }
-}
-
-/* =============================================================================
-   13. SPECIAL DEVICE SUPPORT
-   ============================================================================= */
-
-/* iPhone SE and similar small devices */
-@media (max-width: 375px) {
-  .search-input,
-  .slops-search-input {
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-  
-  .games-table td {
-    padding-left: 35%;
-  }
-  
-  .games-table td:before {
-    width: 30%;
-  }
-}
-
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-  .hero-section {
-    min-height: -webkit-fill-available;
-  }
-  
-  input[type="text"],
-  input[type="search"],
-  select {
-    font-size: 16px;
-    transform: translateZ(0); /* Force hardware acceleration */
-  }
-  
-  .games-table thead {
-    position: -webkit-sticky;
-    position: sticky;
-  }
-  
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-  
-  .filter-select,
-  .sort-select {
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  
-  .show-all-checkbox-container {
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
-/* High DPI / Retina displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .games-table tbody tr::before,
-  .launch-option::before {
-    height: 3px;
-  }
-  
-  .filter-tag,
-  .option-command,
-  .launch-options-btn {
-    border-width: 0.5px;
-  }
-}
-
-/* =============================================================================
-   14. PRINT STYLES
-   ============================================================================= */
-
-@media print {
-  /* Hide interactive elements */
-  .theme-toggle,
-  .slops-search,
-  .slops-filters,
-  .pagination,
-  .launch-options-btn,
-  .filter-tag,
-  .suggestions-dropdown,
-  .modal-overlay,
-  .active-filters {
-    display: none;
-  }
-  
-  /* Optimize table for printing */
-  .games-table {
-    box-shadow: none;
-    border: 1px solid #000;
-    font-size: 10pt;
-    width: 100%;
-  }
-  
-  .games-table th,
-  .games-table td {
-    border: 1px solid #000;
-    padding: 4pt;
-  }
-  
-  .games-table th {
-    background: #f0f0f0;
-    font-weight: bold;
-  }
-  
-  .launch-options-cell {
-    font-size: 9pt;
-  }
-  
-  .option-command {
-    background: #f0f0f0;
-    color: #000;
-    border: 1px solid #ccc;
-    font-size: 8pt;
-  }
-  
-  .games-table tr {
-    page-break-inside: avoid;
-  }
-  
-  .launch-options-row {
-    page-break-inside: avoid;
-  }
-  
-  body::before {
-    content: "Steam Launch Options Database - Vanilla Slops";
-    display: block;
-    text-align: center;
-    font-size: 16pt;
-    font-weight: bold;
-    margin-bottom: 20pt;
-    border-bottom: 2px solid #000;
-    padding-bottom: 10pt;
-  }
-}
-
-/* Print styles for mobile */
-@media print and (max-width: 768px) {
-  body {
-    font-size: 10pt;
-    line-height: 1.4;
-  }
-  
-  .games-table {
-    font-size: 8pt;
-  }
-  
-  .games-table td {
-    padding: 4pt;
-  }
-  
-  .games-table td:before {
-    font-size: 7pt;
-  }
-  
-  .mobile-hidden-print {
-    display: none;
-  }
-  
-  .games-table tbody tr {
-    page-break-inside: avoid;
-    margin-bottom: var(--space-2);
-    padding: var(--space-2);
-  }
-  
-  .launch-options-row {
-    page-break-inside: avoid;
-  }
-  
-  .launch-option {
-    page-break-inside: avoid;
-    margin-bottom: var(--space-1);
-  }
-}
-
-/* =============================================================================
-   15. MOBILE UTILITY CLASSES
+   8. MOBILE UTILITY CLASSES
    ============================================================================= */
 
 @media (max-width: 768px) {
@@ -1955,294 +778,41 @@
   
   /* Mobile touch targets */
   body .mobile-touch-target {
-    min-height: 48px;
-    min-width: 48px;
+    min-height: var(--space-12); /* 48px */
+    min-width: var(--space-12);
   }
 }
 
 /* =============================================================================
-   MOBILE CASCADE IMPROVEMENTS
-   Leveraging CSS source order and natural cascade
+   9. DARK THEME MOBILE OPTIMIZATIONS
    ============================================================================= */
 
-/* =============================================================================
-   MOBILE TOUCH ENHANCEMENTS
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  body .launch-options-btn:active,
-  body .filter-select:active,
-  body .show-all-checkbox-container:active {
-    transform: scale(0.97);
-    transition: all 0.1s ease;
-  }
-
-  body .launch-options-btn:active {
-    background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-800) 100%);
-  }
-
-  body .filter-select:active,
-  body .show-all-checkbox-container:active {
-    background: var(--color-accent-subtle);
-    border-color: var(--color-accent);
-  }
-
-  body .option-command:active {
-    transform: scale(0.98);
-    background: var(--color-accent-subtle);
-    border-color: var(--color-accent);
-    transition: all 0.1s ease;
+[data-theme="dark"] {
+  @media (max-width: 768px) {
+    .games-table tbody tr {
+      background: var(--color-surface) !important;
+      border-color: var(--color-border) !important;
+    }
+    
+    .launch-option {
+      background: var(--color-surface-raised) !important;
+      border-color: var(--color-border) !important;
+    }
+    
+    .option-command {
+      background: var(--color-code-background) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .suggestions-dropdown {
+      background: var(--color-surface) !important;
+      border-color: var(--color-border) !important;
+    }
   }
 }
 
 /* =============================================================================
-   MOBILE SEARCH
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  .hero-search .search-input:focus,
-  .search-input:focus {
-    position: relative;
-    z-index: var(--z-front);
-  }
-
-  .hero-search .search-pending-indicator,
-  .search-pending-indicator {
-    right: var(--space-4);
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--font-size-xs);
-    border-radius: var(--radius-full);
-    backdrop-filter: blur(8px);
-  }
-
-  .hero-search .suggestions-dropdown,
-  .suggestions-dropdown {
-    border-radius: var(--radius-2xl);
-    border: 2px solid var(--color-border);
-    box-shadow: var(--shadow-2xl);
-    backdrop-filter: blur(20px);
-  }
-
-  .hero-search .suggestion-item,
-  .suggestion-item {
-    min-height: 48px;
-    padding: var(--space-4);
-    font-size: var(--font-size-base);
-    border-radius: var(--radius-lg);
-    margin: var(--space-1) var(--space-2);
-    transition: all 0.2s ease;
-  }
-
-  .hero-search .suggestion-item:active,
-  .suggestion-item:active {
-    transform: scale(0.98);
-    background: var(--color-accent);
-    color: var(--color-text-inverse);
-  }
-}
-
-/* =============================================================================
-   MOBILE FILTER ENHANCEMENTS
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  .hero-filters .filters-container,
-  .filters-container {
-    padding: var(--space-6) var(--space-5);
-    gap: var(--space-5);
-    border-radius: var(--radius-2xl);
-    border: 2px solid var(--color-border);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .hero-filters .filter-group,
-  .filter-group {
-    gap: var(--space-3);
-  }
-
-  .hero-filters .filter-label,
-  .filter-label {
-    font-size: var(--font-size-sm);
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-2);
-  }
-
-  .hero-filters .filter-select,
-  .hero-filters .sort-select,
-  .filter-select,
-  .sort-select {
-    min-height: 48px;
-    padding: var(--space-3) var(--space-4);
-    font-size: 16px;
-    border-radius: var(--radius-xl);
-    border: 2px solid var(--color-border);
-    background: var(--color-surface-raised);
-    transition: all 0.2s ease;
-  }
-
-  .hero-filters .filter-select:focus,
-  .hero-filters .sort-select:focus,
-  .filter-select:focus,
-  .sort-select:focus {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    transform: none;
-  }
-
-  .hero-filters .filter-select:active,
-  .hero-filters .sort-select:active,
-  .filter-select:active,
-  .sort-select:active {
-    background: var(--color-accent-subtle);
-  }
-
-  .hero-filters .show-all-checkbox-container,
-  .show-all-checkbox-container {
-    min-height: 48px;
-    padding: var(--space-3) var(--space-5);
-    border-radius: var(--radius-xl);
-    border: 2px solid var(--color-border);
-    background: var(--color-surface-raised);
-    transition: all 0.2s ease;
-  }
-
-  .hero-filters .show-all-checkbox-container:active,
-  .show-all-checkbox-container:active {
-    background: var(--color-accent-subtle);
-    border-color: var(--color-accent);
-  }
-
-  .hero-filters .checkbox-stats,
-  .checkbox-stats {
-    font-size: var(--font-size-xs);
-    font-weight: 700;
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-lg);
-    min-width: 70px;
-  }
-}
-
-/* =============================================================================
-   MOBILE PAGINATION
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  .pagination-container {
-    padding: var(--space-6) var(--space-4);
-    margin: var(--space-8) 0;
-    border-radius: var(--radius-2xl);
-    border: 2px solid var(--color-border);
-    box-shadow: var(--shadow-xl);
-  }
-
-  .pagination-controls .pagination-btn {
-    min-width: 48px;
-    min-height: 48px;
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    border-radius: var(--radius-lg);
-    border: 2px solid var(--color-border);
-    transition: all 0.2s ease;
-  }
-
-  .pagination-controls .pagination-btn:active {
-    transform: scale(0.95);
-    background: var(--color-accent);
-    color: var(--color-text-inverse);
-    border-color: var(--color-accent);
-  }
-
-  .pagination-controls .pagination-btn-active {
-    background: var(--color-accent);
-    color: var(--color-text-inverse);
-    border-color: var(--color-accent);
-    box-shadow: var(--shadow-lg);
-  }
-}
-
-/* =============================================================================
-   MOBILE LOADING AND EMPTY STATES
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  .table-loading {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-4);
-    font-size: var(--font-size-base);
-    text-align: center;
-  }
-
-  .empty-table-state {
-    padding: var(--space-12) var(--space-6);
-    margin: var(--space-8) 0;
-    border-radius: var(--radius-2xl);
-    text-align: center;
-  }
-
-  .empty-table-state .empty-icon {
-    font-size: 3.5rem;
-    margin-bottom: var(--space-6);
-  }
-
-  .empty-table-state .empty-title {
-    font-size: var(--font-size-2xl);
-    margin-bottom: var(--space-4);
-    line-height: 1.2;
-  }
-
-  .empty-table-state .empty-description {
-    font-size: var(--font-size-base);
-    line-height: 1.5;
-    margin-bottom: var(--space-8);
-  }
-}
-
-/* =============================================================================
-   MOBILE MODAL IMPROVEMENTS
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  .info-modal-overlay {
-    padding: var(--space-4);
-  }
-
-  .info-modal {
-    margin: 0;
-    max-height: 90vh;
-    border-radius: var(--radius-2xl);
-    border: 2px solid var(--color-border);
-    box-shadow: var(--shadow-2xl);
-  }
-
-  .info-modal-header {
-    padding: var(--space-6) var(--space-5);
-    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
-  }
-
-  .info-modal-close {
-    padding: var(--space-3);
-    font-size: var(--font-size-xl);
-    min-width: 48px;
-    min-height: 48px;
-    border-radius: var(--radius-lg);
-    transition: all 0.2s ease;
-  }
-
-  .info-modal-close:active {
-    transform: scale(0.9);
-    background: var(--color-interactive-hover);
-  }
-
-  .info-modal-body {
-    padding: var(--space-6) var(--space-5);
-    max-height: calc(90vh - 6rem);
-  }
-}
-
-/* =============================================================================
-   MOBILE THEME TOGGLE
+   10. MOBILE THEME TOGGLE
    ============================================================================= */
 
 @media (max-width: 768px) {
@@ -2281,7 +851,7 @@
 }
 
 /* =============================================================================
-   MOBILE SCROLL OPTIMIZATIONS
+   11. MOBILE SCROLL OPTIMIZATIONS
    ============================================================================= */
 
 @media (max-width: 768px) {
@@ -2315,7 +885,7 @@
 }
 
 /* =============================================================================
-   MOBILE PERFORMANCE OPTIMIZATIONS
+   12. MOBILE PERFORMANCE OPTIMIZATIONS
    ============================================================================= */
 
 @media (max-width: 768px) {
@@ -2340,181 +910,28 @@
 }
 
 /* =============================================================================
-   MOBILE UTILITY CLASSES
-   High specificity for reliable application
+   13. ACCESSIBILITY REDUCED MOTION SUPPORT
    ============================================================================= */
 
-@media (max-width: 768px) {
-  body .mobile-text-sm { font-size: var(--font-size-sm); }
-  body .mobile-text-xs { font-size: var(--font-size-xs); }
-  body .mobile-text-wrap { 
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-  }
-  
-  body .mobile-p-2 { padding: var(--space-2); }
-  body .mobile-p-3 { padding: var(--space-3); }
-  body .mobile-p-4 { padding: var(--space-4); }
-  body .mobile-m-2 { margin: var(--space-2); }
-  body .mobile-m-3 { margin: var(--space-3); }
-  body .mobile-m-4 { margin: var(--space-4); }
-  
-  body .mobile-stack { 
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-  }
-  
-  body .mobile-full-width { 
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  
-  body .mobile-hidden { display: none; }
-  body .mobile-visible { display: block; }
-  
-  body .mobile-no-overflow {
-    overflow-x: hidden;
-    max-width: 100%;
-  }
-  
-  body .mobile-padding {
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
-  }
-  
-  body .mobile-touch-target {
-    min-height: 48px;
-    min-width: 48px;
-  }
-}
-
-/* =============================================================================
-   MOBILE COPY FEEDBACK
-   ============================================================================= */
-
-@media (max-width: 768px) {
-  .table-container .option-command.copied::after {
-    content: '✅ Copied to clipboard!';
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: var(--space-4) var(--space-6);
-    background: var(--color-success);
-    color: var(--color-text-inverse);
-    border-radius: var(--radius-xl);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    z-index: var(--z-toast);
-    box-shadow: var(--shadow-2xl);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    opacity: 1;
-    animation: mobileToastSlideIn 0.3s ease-out;
-    pointer-events: none;
-    white-space: nowrap;
-    font-family: var(--font-family-base);
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+  .games-table tbody tr:hover {
+    transform: none !important;
   }
 
-  .table-container .option-command.copy-failed::after {
-    content: '❌ Copy failed - try again';
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: var(--space-4) var(--space-6);
-    background: var(--color-error);
-    color: var(--color-text-inverse);
-    border-radius: var(--radius-xl);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    z-index: var(--z-toast);
-    box-shadow: var(--shadow-2xl);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    opacity: 1;
-    animation: mobileToastSlideIn 0.3s ease-out;
-    pointer-events: none;
-    white-space: nowrap;
-    font-family: var(--font-family-base);
-  }
-
-  @keyframes mobileToastSlideIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-  }
-}
-
-/* Dark theme mobile optimizations */
-[data-theme="dark"] {
-  @media (max-width: 768px) {
-    .games-table tbody tr {
-      background: var(--color-surface);
-      border-color: var(--color-border);
-    }
-    
-    .launch-option {
-      background: var(--color-surface-raised);
-      border-color: var(--color-border);
-    }
-    
-    .option-command {
-      background: var(--color-code-background);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .suggestions-dropdown {
-      background: var(--color-surface);
-      border-color: var(--color-border);
-    }
-  }
-}
-
-
-/*  Design */
-@media (max-width: 768px) {
-  .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4, 1rem);
-    padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
-    max-width: 100%;
-  }
-  
-  .filter-group {
-    width: 100%;
-  }
-  
   .filter-select,
   .sort-select,
-  .show-all-checkbox-container {
-    min-height: 48px;
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-}
-
-@media (max-width: 480px) {
-  .filters-container,
-  .slops-filters, 
-  .hero-filters .filters-container {
-    padding: var(--space-4, 1rem) var(--space-3, 0.75rem);
-    gap: var(--space-3, 0.75rem);
+  .show-all-checkbox-container,
+  .filter-tag {
+    transition: none;
   }
   
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    min-height: 44px;
-    font-size: 16px;
-    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  .launch-option:hover,
+  .option-command:hover {
+    transform: none !important;
+  }
+  
+  *:focus-visible {
+    outline: 2px solid var(--color-interactive-focus) !important;
+    outline-offset: 2px !important;
   }
 }

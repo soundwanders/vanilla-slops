@@ -1,5 +1,6 @@
 /* =============================================================================
-   VANILLA SLOPS - TABLE STYLES 
+   TABLE SYSTEM 
+   Games table, launch options, and interactive components
    ============================================================================= */
 
 /* =============================================================================
@@ -15,6 +16,12 @@
   background: var(--color-surface-raised);
 }
 
+.results-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  padding: var(--space-2) var(--space-4);
+}
+
 .games-table {
   width: 100%;
   border-collapse: separate;
@@ -26,7 +33,7 @@
   margin: 0;
 }
 
-/* Table Header */
+/* Table header */
 .games-table thead {
   background: var(--gradient-surface);
   position: sticky;
@@ -37,7 +44,7 @@
 .games-table th {
   padding: var(--space-4) var(--space-6);
   text-align: left;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -56,7 +63,7 @@
   border-top-right-radius: var(--radius-2xl);
 }
 
-/* Table Header Sorting */
+/* Table header sorting */
 .games-table th.sortable {
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -81,7 +88,7 @@
   opacity: 1;
 }
 
-/* Table Body Base */
+/* Table body base */
 .games-table tbody tr {
   transition: all var(--transition-fast);
   border-bottom: 1px solid var(--color-border-subtle);
@@ -114,18 +121,9 @@
    2. TABLE CONTENT STYLING
    ============================================================================= */
 
-/* Games count HEADER */
-.results-header {
-  padding: 0.5rem;
-}
-
-.results-count {
-  font-size: var(--font-size-sm);
-}
-
-/* Game Title */
+/* Game title */
 .game-title {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   display: flex;
@@ -140,14 +138,14 @@
   opacity: 0.6;
 }
 
-/* Developer and Publisher */
+/* Developer and publisher */
 .games-table td:nth-child(2),
 .games-table td:nth-child(3) {
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
-/* Release Date */
+/* Release date */
 .games-table td:nth-child(4) {
   color: var(--color-text-tertiary);
   font-family: var(--font-family-mono);
@@ -157,7 +155,7 @@
 /* Engine */
 .games-table td:nth-child(5) {
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .games-table td:nth-child(5)::before {
@@ -174,7 +172,7 @@
   display: inline-flex;
   position: relative;
   overflow: hidden;
-  min-width: 120px;
+  min-width: var(--space-28);
   justify-content: center;
   align-items: center;
   gap: var(--space-2);
@@ -184,7 +182,7 @@
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--transition-base);
   box-shadow: var(--shadow-sm);
@@ -200,7 +198,7 @@
 }
 
 .launch-options-btn::before {
-  content: '🚀';
+  content: '🐸';
   font-size: var(--font-size-sm);
 }
 
@@ -227,7 +225,7 @@
   z-index: var(--z-raised);
 }
 
-/* Options Count Badge */
+/* Options count badge */
 .options-count {
   display: inline-flex;
   align-items: center;
@@ -238,7 +236,7 @@
   color: var(--color-launch-options);
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   margin-left: var(--space-2);
 }
 
@@ -246,33 +244,33 @@
    4. LAUNCH OPTIONS DISPLAY
    ============================================================================= */
 
-/* Launch Options Row */
+/* Launch options row */
 .launch-options-row {
-  background: var(--gradient-surface) ;
+  background: var(--gradient-surface) !important;
   border-top: 2px solid var(--color-accent-subtle);
   transition: all var(--transition-base);
 }
 
 .launch-options-row:hover {
-  background: var(--gradient-surface);
+  background: var(--gradient-surface) !important;
   transform: none !important;
 }
 
 .launch-options-row[style*="none"] {
-  animation: fadeOut 0.3s ease-out;
+  animation: fadeOut var(--transition-base);
 }
 
-/* Launch Options Cell */
+/* Launch options cell */
 .launch-options-cell {
-  padding: var(--space-10);
+  padding: var(--space-10) !important;
   border-radius: 0;
-  height: auto;
-  overflow: visible;
-  opacity: 1;
-  visibility: visible;
+  height: auto !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
-/* Launch Options List */
+/* Launch options list */
 .launch-options-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -288,7 +286,7 @@
   user-select: none;
 }
 
-/* Individual Launch Option Cards */
+/* Individual launch option cards */
 .launch-option {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
@@ -307,7 +305,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: var(--space-1);
   background: var(--gradient-accent);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
@@ -325,7 +323,7 @@
   transform: none;
 }
 
-/* Command Display */
+/* Command display */
 .option-command {
   background: var(--color-code-background);
   color: var(--color-code-text);
@@ -341,7 +339,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  user-select: none; /* Prevent text selection during copy operations */
+  user-select: none;
 }
 
 .option-command:hover {
@@ -357,13 +355,13 @@
   right: var(--space-3);
   padding: var(--space-1) var(--space-2);
   background: rgba(0, 0, 0, 0.8);
-  color: var(--color-primary);
+  color: var(--color-white);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   opacity: 0;
   transition: opacity var(--transition-fast);
   pointer-events: none;
-  font-family: var(--font-family-body);
+  font-family: var(--font-family-base);
 }
 
 .option-command:hover::after {
@@ -379,7 +377,7 @@
 }
 
 .option-command code:nth-child(1) {
-  font-size: --var(--font-size-2xl);
+  font-size: var(--font-size-2xl);
 }
 
 .option-command[tabindex]:focus {
@@ -390,7 +388,7 @@
   z-index: var(--z-raised);
 }
 
-/* Option Description */
+/* Option description */
 .option-description {
   color: var(--color-text-secondary);
   margin-bottom: var(--space-4);
@@ -402,7 +400,7 @@
   user-select: text;
 }
 
-/* Option Meta Information */
+/* Option meta information */
 .option-meta {
   display: flex;
   justify-content: space-between;
@@ -420,7 +418,7 @@
   text-decoration: underline;
   text-decoration-style: dotted;
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -436,7 +434,7 @@
   align-items: center;
   gap: var(--space-1);
   color: var(--color-success);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .option-votes::before {
@@ -446,7 +444,7 @@
 
 .option-verified {
   color: var(--color-success);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -458,7 +456,7 @@
   font-size: var(--font-size-xs);
 }
 
-/* Close Button */
+/* Close button */
 .launch-options-close-container {
   margin-top: var(--space-8);
   padding-top: var(--space-6);
@@ -474,7 +472,7 @@
   border-radius: var(--radius-xl);
   cursor: pointer;
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
@@ -484,6 +482,7 @@
 }
 
 .launch-options-close::before {
+  content: '✕';
   font-size: var(--font-size-sm);
 }
 
@@ -509,7 +508,7 @@
   width: 0;
   height: 0;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   transform: translate(-50%, -50%);
   transition: width 0.4s ease, height 0.4s ease;
   pointer-events: none;
@@ -524,7 +523,7 @@
    5. INTERACTIVE STATES & FEEDBACK
    ============================================================================= */
 
-/* Table Row Hover */
+/* Table row hover */
 .games-table tbody tr:hover {
   background: var(--color-interactive-hover);
   transform: scale(1.005);
@@ -532,22 +531,22 @@
   z-index: var(--z-raised);
 }
 
-/* Copy Success and Error Feedback */
+/* Copy success and error feedback */
 .option-command.copied {
   animation: copySuccessAnimation 0.6s ease-out;
-  background-color: var(--color-success);
-  color: var(--color-text-inverse);
-  border-color: var(--color-success);
+  background-color: var(--color-success) !important;
+  color: var(--color-text-inverse) !important;
+  border-color: var(--color-success) !important;
 }
 
 .option-command.copy-failed {
   animation: copyFailedAnimation 0.6s ease-out;
-  background-color: var(--color-error);
-  color: var(--color-text-inverse);
-  border-color: var(--color-error);
+  background-color: var(--color-error) !important;
+  color: var(--color-text-inverse) !important;
+  border-color: var(--color-error) !important;
 }
 
-/* Loading States */
+/* Loading states */
 .launch-options-cell .loading {
   display: flex;
   align-items: center;
@@ -571,6 +570,21 @@
   display: none;
 }
 
+.launch-options-btn .loading-spinner {
+  width: var(--space-3) !important;
+  height: var(--space-3) !important;
+  border-width: 2px;
+  min-width: 0;
+  max-width: 0;
+  flex-shrink: 0;
+}
+
+.launch-options-btn.loading .btn-text {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
 .table-loading {
   display: flex;
   align-items: center;
@@ -591,7 +605,7 @@
   pointer-events: none;
 }
 
-/* Error States */
+/* Error states */
 .launch-options-cell .error {
   padding: var(--space-8);
   background: var(--color-surface-subtle);
@@ -626,7 +640,7 @@
   background-color: var(--color-interactive-hover);
 }
 
-/* No Options State */
+/* No options state */
 .no-options,
 .launch-options-cell .no-options {
   text-align: center;
@@ -635,11 +649,11 @@
   background: var(--color-surface-subtle);
   border-radius: var(--radius-xl);
   border: 2px dashed var(--color-border);
-  opacity: 1;
-  visibility: visible;
-  height: auto;
-  overflow: visible;
-  display: block;
+  opacity: 1 !important;
+  visibility: visible !important;
+  height: auto !important;
+  overflow: visible !important;
+  display: block !important;
 }
 
 .no-options::before,
@@ -713,7 +727,7 @@
   color: var(--color-accent);
 }
 
-/* Custom Toggle Switch */
+/* Custom toggle switch */
 .toggle-checkbox {
   position: relative;
   width: 0;
@@ -725,8 +739,8 @@
 .toggle-slider {
   position: relative;
   display: inline-block;
-  width: 3.5rem;
-  height: 2rem;
+  width: var(--space-14);
+  height: var(--space-8);
   background: var(--color-border-strong);
   border-radius: var(--radius-full);
   transition: all var(--transition-base);
@@ -736,10 +750,10 @@
 .toggle-slider::before {
   content: '';
   position: absolute;
-  top: 0.125rem;
-  left: 0.125rem;
-  width: 1.75rem;
-  height: 1.75rem;
+  top: var(--space-0_5);
+  left: var(--space-0_5);
+  width: var(--space-7);
+  height: var(--space-7);
   background: var(--color-white);
   border-radius: var(--radius-full);
   transition: all var(--transition-base);
@@ -751,7 +765,7 @@
 }
 
 .toggle-checkbox:checked + .toggle-slider::before {
-  transform: translateX(1.5rem);
+  transform: translateX(var(--space-6));
 }
 
 .toggle-checkbox:focus-visible + .toggle-slider {
@@ -759,7 +773,7 @@
   outline-offset: 2px;
 }
 
-/* Toggle Text and Stats */
+/* Toggle text and stats */
 .toggle-text {
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
@@ -781,7 +795,7 @@
   color: var(--color-accent);
 }
 
-/* Toggle Description */
+/* Toggle description */
 .toggle-description {
   margin-top: var(--space-2);
   padding-left: calc(3.5rem + var(--space-4)); /* Align with toggle text */
@@ -806,7 +820,28 @@
 }
 
 /* =============================================================================
-   7. EMPTY STATES & COMPONENTS
+   7. LARGE SCREENS OPTIMIZATION
+   ============================================================================= */
+
+@media (min-width: 1020px) {
+  .games-table th,
+  .games-table td {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .launch-options-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+/* Tablet launch options */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .launch-options-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+/* =============================================================================
+   8. EMPTY STATES & COMPONENTS
    ============================================================================= */
 
 .empty-table-state {
@@ -1105,7 +1140,7 @@
 }
 
 /* =============================================================================
-   8. YEAR FILTER COMPONENT
+   9. YEAR FILTER COMPONENT
    ============================================================================= */
 
 .year-filter-container {
@@ -1240,7 +1275,7 @@
 }
 
 /* =============================================================================
-   9. INFORMATION MODAL
+   10. INFORMATION MODAL
    ============================================================================= */
 
 .info-modal-overlay {
@@ -1343,7 +1378,6 @@
   font-weight: var(--font-weight-semibold);
 }
 
-
 /* =============================================================================
    11. PERFORMANCE OPTIMIZATIONS
    ============================================================================= */
@@ -1369,7 +1403,7 @@
 }
 
 [data-theme="dark"] .launch-options-row {
-  background: var(--gradient-dark);
+  background: var(--gradient-dark) !important;
 }
 
 [data-theme="dark"] .launch-option {
@@ -1383,13 +1417,13 @@
 }
 
 [data-theme="dark"] .option-command.copied {
-  background-color: var(--color-success);
-  color: var(--color-text-inverse);
+  background-color: var(--color-success) !important;
+  color: var(--color-text-inverse) !important;
 }
 
 [data-theme="dark"] .option-command.copy-failed {
-  background-color: var(--color-error);
-  color: var(--color-text-inverse);
+  background-color: var(--color-error) !important;
+  color: var(--color-text-inverse) !important;
 }
 
 [data-theme="dark"] .launch-options-cell .error {
