@@ -712,7 +712,7 @@ export async function fetchLaunchOptionsForGame(gameId) {
     }
     
     const optionIds = gameOptions.map(option => option.launch_option_id);
-    console.log(`🎯 Looking up ${optionIds.length} launch option IDs:`, optionIds);
+    console.log(`🍓 Looking up ${optionIds.length} launch option IDs:`, optionIds);
     
     // Step 3: Get actual launch options
     const { data: options, error: optionsError } = await supabase

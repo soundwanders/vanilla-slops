@@ -1,6 +1,6 @@
 /**
  * @fileoverview API client for Steam Launch Options backend
- * Provides caching, retry logic, and comprehensive error handling
+ * Provides caching, retry logic, and error handling
  * Supports all backend endpoints with proper parameter validation
  */
 
@@ -152,7 +152,7 @@ function buildQueryParams(params) {
 }
 
 /**
- * Main function to fetch games with comprehensive filtering and pagination
+ * Main function to fetch games with filtering and pagination
  * Updated to support engine filtering
  * 
  * @param {Object} params - Query parameters
