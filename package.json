@@ -18,9 +18,9 @@
     "test:health": "curl http://localhost:8000/health"
   },
   "keywords": [
+    "javascript",
     "node",
     "express",
-    "javascript",
     "supabase",
     "steam",
     "launch",
@@ -42,6 +42,7 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^8.1.0",
     "supabase": "^2.6.8",
+    "terser": "^5.44.0",
     "zod": "^3.24.4"
   },
   "devDependencies": {

@@ -1,12 +1,12 @@
 /**
  * @fileoverview State Manager
- * Observable, immutable state management
+ * Observable, immutable state management with action dispatch system
  * Features change detection, action-based updates, debugging, type safety
  * @module StateManager
  */
 
 /**
- * Observable State Manager
+ * Observable State Manager with Action Dispatch System
  * Provides immutable state updates with change detection and debugging
  * 
  * Key Features:
@@ -14,6 +14,7 @@
  * - Observer pattern enables reactive UI updates  
  * - Action-based changes make state flow predictable
  * - Built-in debugging and state history
+ * - Redux-style dispatch system
  * - No external dependencies
  */
 class StateManager {
@@ -22,11 +23,70 @@ class StateManager {
     this._state = Object.freeze({ ...initialState });
     this._observers = new Map(); // topic -> Set of callbacks
     this._history = []; // For debugging
+    this._actions = new Map(); // actionName -> actionHandler
     this._isProduction = process.env.NODE_ENV === 'production';
     
     // Enable debugging in development
     if (!this._isProduction) {
       this._enableDebugging();
+    }
+  }
+
+  /**
+   * Add an action handler to the state manager
+   * @param {string} actionName - Name of the action
+   * @param {Function} actionHandler - Function that takes (state, payload) and returns new state
+   */
+  addAction(actionName, actionHandler) {
+    if (typeof actionHandler !== 'function') {
+      throw new Error(`Action handler for "${actionName}" must be a function`);
+    }
+    
+    this._actions.set(actionName, actionHandler);
+    
+    if (!this._isProduction) {
+      console.log(`📝 Registered action: ${actionName}`);
+    }
+  }
+
+  /**
+   * Dispatch an action to update state
+   * @param {string} actionName - Name of the action to dispatch
+   * @param {*} payload - Payload to pass to the action handler
+   * @returns {Object} New state after action
+   */
+  dispatch(actionName, payload) {
+    const actionHandler = this._actions.get(actionName);
+    
+    if (!actionHandler) {
+      throw new Error(`Unknown action: ${actionName}. Available actions: ${Array.from(this._actions.keys()).join(', ')}`);
+    }
+
+    try {
+      const previousState = this._state;
+      const newState = actionHandler(previousState, payload);
+      
+      if (!newState || typeof newState !== 'object') {
+        throw new Error(`Action "${actionName}" must return a valid state object`);
+      }
+
+      // Update state immutably
+      this._state = Object.freeze(newState);
+
+      // Track history for debugging
+      if (!this._isProduction) {
+        this._addToHistory(actionName, payload, previousState, this._state);
+      }
+
+      // Notify observers of the changes
+      const changes = this._getChanges(previousState, this._state);
+      this._notifyObservers(changes, previousState, this._state, actionName);
+
+      return this._state;
+      
+    } catch (error) {
+      console.error(`Error dispatching action "${actionName}":`, error);
+      throw error;
     }
   }
 
@@ -84,7 +144,7 @@ class StateManager {
   }
 
   /**
-   * Update state immutably
+   * Update state immutably (legacy method for compatibility)
    * @param {Object} updates - Object with updates to apply
    * @param {string} [action='UPDATE'] - Action name for debugging
    * @returns {Object} New state
@@ -109,7 +169,7 @@ class StateManager {
     }
 
     // Notify observers
-    this._notifyObservers(updates, previousState, newState);
+    this._notifyObservers(updates, previousState, newState, action);
 
     return newState;
   }
@@ -186,6 +246,21 @@ class StateManager {
   }
 
   // Private methods
+  _getChanges(previousState, newState) {
+    const changes = {};
+    
+    // Find all changed keys
+    const allKeys = new Set([...Object.keys(previousState), ...Object.keys(newState)]);
+    
+    allKeys.forEach(key => {
+      if (previousState[key] !== newState[key]) {
+        changes[key] = newState[key];
+      }
+    });
+    
+    return changes;
+  }
+
   _notifyObservers(updates, previousState, newState, action) {
     const changedKeys = Object.keys(updates);
     
@@ -227,11 +302,11 @@ class StateManager {
     }
   }
 
-  _addToHistory(action, updates, previousState, newState) {
+  _addToHistory(action, payload, previousState, newState) {
     this._history.push({
       timestamp: Date.now(),
       action,
-      updates,
+      payload,
       previousState: { ...previousState },
       newState: { ...newState }
     });
@@ -248,6 +323,7 @@ class StateManager {
       window.__SLOPS_STATE_DEBUG = {
         getState: () => this.getState(),
         getHistory: () => [...this._history],
+        getActions: () => Array.from(this._actions.keys()),
         getObservers: () => {
           const result = {};
           this._observers.forEach((observers, topic) => {
@@ -260,12 +336,13 @@ class StateManager {
           this._history.forEach((entry, index) => {
             console.log(`${index + 1}. ${entry.action}`, {
               timestamp: new Date(entry.timestamp).toLocaleTimeString(),
-              updates: entry.updates,
+              payload: entry.payload,
               state: entry.newState
             });
           });
           console.groupEnd();
-        }
+        },
+        dispatch: (action, payload) => this.dispatch(action, payload)
       };
 
       console.log('🐛 State debugging enabled. Use window.__SLOPS_STATE_DEBUG');
@@ -274,7 +351,7 @@ class StateManager {
 }
 
 /**
- * Action creators for common state operations
+ * Action creators for common state operations (legacy compatibility)
  */
 export const StateActions = {
   // App state actions
@@ -319,6 +396,7 @@ export function createAppStateManager() {
       developer: '',
       engine: '',
       options: '',
+      year: '',
       sort: 'title',
       order: 'asc'
     },
@@ -331,6 +409,13 @@ export function createAppStateManager() {
     lastScrollPosition: 0,
     preventNextScroll: false,
     
+    // Statistics
+    gameStats: {
+      withOptions: 0,
+      withoutOptions: 0,
+      total: 0
+    },
+    
     // Error state
     error: null,
     
@@ -342,5 +427,4 @@ export function createAppStateManager() {
   return new StateManager(initialState);
 }
 
-// Export the StateManager class for advanced usage
 export { StateManager };

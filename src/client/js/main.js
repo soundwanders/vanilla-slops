@@ -3,9 +3,8 @@ import { renderTable } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
 import { StateManager } from './state/StateManager.js';
-import SlopSearch from './ui/search.js';
-import { StateManager } from './state/StateManager.js';
 import { addVanillaSlopActions } from './state/stateActions.js';
+import SlopSearch from './ui/search.js';
 import { 
   getAPIQueryParams, 
   isLoading, 
@@ -16,23 +15,12 @@ import {
   getCurrentURL,
   getCheckboxStateInfo,
   hasActiveFilters,
-  getCleanFilters
+  getCleanFilters,
+  getGameStats,
+  getSearchSyncData 
 } from './state/stateSelectors.js';
 
 const PAGE_SIZE = 20;
-
-const AppState = new Proxy({}, {
-  get(target, prop) {
-    console.error(`🚨 MIGRATION ERROR: Still accessing AppState.${prop}`);
-    console.trace('Stack trace:');
-    throw new Error(`AppState.${prop} accessed - needs migration to StateManager`);
-  },
-  set(target, prop, value) {
-    console.error(`🚨 MIGRATION ERROR: Still setting AppState.${prop} = ${value}`);
-    console.trace('Stack trace:');
-    throw new Error(`AppState.${prop} assignment - needs migration to StateManager`);
-  }
-});
 
 /** State manager */
 const stateManager = new StateManager({
@@ -205,26 +193,26 @@ async function addShowAllGamesFilter() {
   try {
     console.log('Fetching real statistics for filter...');
     const stats = await fetchGameStatistics();
-    AppState.gameStats = {
+    stateManager.dispatch('MERGE_STATS', {
       withOptions: stats.withOptions,
       withoutOptions: stats.withoutOptions,
       total: stats.total,
       percentageWithOptions: stats.percentageWithOptions
-    };
+    });
     console.log('📈 Using real statistics:', stats);
   } catch (error) {
     console.error('Failed to fetch statistics, using fallback:', error);
-    AppState.gameStats = { withOptions: 146, withoutOptions: 129, total: 275 };
+    stateManager.dispatch('MERGE_STATS', { withOptions: 94, withoutOptions: 1033, total: 1127 });
   }
   
   const stats = getGameStats(stateManager.getState());
   
   // Ensure correct initial state detection
-  // Default is 'showAll = false' (only show games WITH launch options)
-  const isShowingAll = AppState.filters?.showAll === true;
-  
+  const currentState = stateManager.getState();
+  const isShowingAll = currentState.filters?.showAll === true;
+
   console.log('🔍 Initial state check:', {
-    'AppState.filters.showAll': AppState.filters?.showAll,
+    'filters.showAll': currentState.filters?.showAll,
     'isShowingAll': isShowingAll,
     'checkbox will be': isShowingAll ? 'CHECKED' : 'UNCHECKED',
     'expected behavior': isShowingAll ? 'showing all games' : 'only games with options'
@@ -317,7 +305,7 @@ async function addShowAllGamesFilter() {
 }
 
 /**
- * Sync checkbox with AppState using inverted logic
+ * Sync checkbox
  */
 function syncShowAllCheckboxWithState() {
   const checkbox = document.getElementById('showAllGamesFilter');
@@ -326,16 +314,17 @@ function syncShowAllCheckboxWithState() {
     return;
   }
   
-  const shouldBeChecked = AppState.filters?.showAll === true;
+  const currentState = stateManager.getState();
+  const shouldBeChecked = currentState.filters?.showAll === true;
   const currentlyChecked = checkbox.checked;
-  
+
   console.log('🔄 Syncing checkbox:', {
-    'AppState.showAll': AppState.filters?.showAll,
+    'filters.showAll': currentState.filters?.showAll,
     'shouldBeChecked': shouldBeChecked,
     'currentlyChecked': currentlyChecked,
     'needsSync': currentlyChecked !== shouldBeChecked
   });
-  
+
   if (currentlyChecked !== shouldBeChecked) {
     console.log(`Fixing checkbox state: ${currentlyChecked} → ${shouldBeChecked}`);
     checkbox.checked = shouldBeChecked;
@@ -347,7 +336,7 @@ function syncShowAllCheckboxWithState() {
 }
 
 /** Handle Show All Games filter change
- * This function updates the UI and AppState based on the checkbox state
+ * This function updates the UI and state manager based on the checkbox state
  * @param {boolean} isChecked - Whether the checkbox is checked
  * @param {HTMLElement|null} container - The container element
  * @returns {void}
@@ -392,13 +381,14 @@ function updateShowAllFilterUI(isChecked, container = null) {
 }
 
 // Refresh filter statistics periodically
-/** * Refreshes the filter statistics based on current AppState filters
- *  * This function is called periodically to keep the UI in sync with the latest data
- * * @returns {Promise<void>} 
- * */
+/**
+ * Refreshes the filter statistics based on current StateManager filters
+ * This function is called periodically to keep the UI in sync with the latest data
+ * @returns {Promise<void>}
+ */
 async function refreshFilterStatistics() {
   try {
-    // Use current AppState filters for statistics
+    // Use current StateManager filters for statistics
     const filters = getCleanFilters(stateManager.getState());
     const currentFilters = {
       search: filters.search,
@@ -416,7 +406,7 @@ async function refreshFilterStatistics() {
     updateShowAllFilterStats(stats);
     
     console.log('Refreshed filter statistics:', stats);
-    console.log('🔍 AppState.filters after stats refresh:', AppState.filters);
+    console.log('🔍 Current filters after stats refresh:', stateManager.getState().filters);
   } catch (error) {
     console.error('Failed to refresh statistics:', error);
   }
@@ -424,7 +414,6 @@ async function refreshFilterStatistics() {
 
 /**
  * Handle changes to the Show All Games filter
- * This function updates the AppState and UI based on the checkbox state
  * * @param {Event} event - The change event from the checkbox
  * * @returns {void}
  */
@@ -480,14 +469,13 @@ function updateURL() {
 
 /**
  * Update the filter when statistics change (called from main app)
- * This function updates the AppState and UI based on new statistics
  * * @param {Object} newStats - The new statistics object
  * * * @returns {void}
  */
 function updateShowAllFilterStats(newStats) {
   if (!newStats) return;
   
-  // Update AppState
+  // Update state manager with new stats
   stateManager.dispatch('MERGE_STATS', newStats);
 
   const checkbox = document.getElementById('showAllGamesFilter');
@@ -627,18 +615,20 @@ function populateOptionsFilter() {
  * Store current scroll position before page operations
  */
 function storeScrollPosition() {
-  AppState.lastScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  stateManager.dispatch('SET_SCROLL_POSITION', window.pageYOffset || document.documentElement.scrollTop);
 }
 
 /**
  * Restore scroll position with debouncing
+  Also restores previous scroll position instead of scrolling to top
  */
 function restoreScrollPosition() {
-  if (AppState.preventNextScroll) {
+  const scrollInfo = getScrollInfo(stateManager.getState());
+  if (scrollInfo.shouldRestore) {
     // Restore the previous scroll position instead of scrolling to top
     setTimeout(() => {
-      window.scrollTo(0, AppState.lastScrollPosition);
-      AppState.preventNextScroll = false;
+      window.scrollTo(0, scrollInfo.lastPosition);
+      stateManager.dispatch('SET_PREVENT_SCROLL', false);
     }, 50);
   }
 }
@@ -765,7 +755,8 @@ function showLoadingState(clearContent = false) {
   const tableContainer = document.getElementById('table-container');
   if (tableContainer && clearContent) {
     // Only show loading spinner for actual searches, not interactions
-    if (!AppState.preventNextScroll) {
+    const scrollInfo = getScrollInfo(stateManager.getState());
+    if (!scrollInfo.shouldPreventScroll) {
       tableContainer.innerHTML = `
         <div class="loading">
           <div class="spinner"></div>
@@ -836,12 +827,12 @@ function clearResults() {
 }
 
 /**
- * Parse URL parameters and initialize AppState.filters
+ * Parse URL parameters and initialize statemanager filters
  * Updated to handle inverted toggle logic:
  * - Checkbox checked = hide games without options (showAll: false, hasOptions: true)
  * - Checkbox unchecked = show all games (showAll: true, hasOptions: undefined)
  */
-function parseURLParamsEnhanced() {
+function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
 
   try {

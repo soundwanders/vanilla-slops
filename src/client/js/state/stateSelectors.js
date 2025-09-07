@@ -1,15 +1,17 @@
 /**
  * State Selectors for Vanilla Slops
- * These functions eliminate repeated state access patterns and provide
- * a single source of truth for derived state computations.
+ * These functions eliminate repeated state access patterns
  */
 
-// ============================================================================
-// FILTER SELECTORS - Your biggest pain point
-// ============================================================================
+/**
+ * @module FilterSelectors
+ * @description Functions for handling filter-related state operations
+ */
 
 /**
- * Get sanitized filters with defaults - eliminates redundant `|| ''` patterns
+ * Retrieves sanitized filters with default values
+ * @param {Object} state - Application state
+ * @returns {Object} Sanitized filter object with defaults
  */
 export const getCleanFilters = (state) => {
   const filters = state.filters || {};
@@ -28,7 +30,10 @@ export const getCleanFilters = (state) => {
 };
 
 /**
- * Build API query parameters 
+ * Constructs API query parameters from state
+ * @param {Object} state - Application state
+ * @param {Object} [additionalParams={}] - Additional parameters to merge
+ * @returns {Object} API query parameters
  */
 export const getAPIQueryParams = (state, additionalParams = {}) => {
   const filters = getCleanFilters(state);
@@ -37,12 +42,14 @@ export const getAPIQueryParams = (state, additionalParams = {}) => {
     page: state.currentPage || 1,
     limit: 20, // PAGE_SIZE constant
     ...filters,
-    ...additionalParams // Allow overrides
+    ...additionalParams
   };
 };
 
 /**
- * Build base filters from URL params
+ * Extracts base filters from URL parameters
+ * @param {URLSearchParams} urlParams - URL search parameters
+ * @returns {Object} Base filter object
  */
 export const getBaseFiltersFromURL = (urlParams) => {
   return {
@@ -58,7 +65,9 @@ export const getBaseFiltersFromURL = (urlParams) => {
 };
 
 /**
- * Get API filters object for specific calls
+ * Prepares API filters object for specific API calls
+ * @param {Object} state - Application state
+ * @returns {Object} API filters object
  */
 export const getAPIFilters = (state) => {
   const filters = getCleanFilters(state);
@@ -75,12 +84,15 @@ export const getAPIFilters = (state) => {
   };
 };
 
-// ============================================================================
-// UI STATE SELECTORS - Complex derivations
-// ============================================================================
+/**
+ * @module UIStateSelectors
+ * @description Functions for deriving UI state
+ */
 
 /**
- * Determine current filtering mode
+ * Determines current filtering mode
+ * @param {Object} state - Application state
+ * @returns {string} Filter mode ('SHOW_ALL' or 'OPTIONS_FIRST')
  */
 export const getFilterMode = (state) => {
   const filters = state.filters || {};
@@ -88,14 +100,18 @@ export const getFilterMode = (state) => {
 };
 
 /**
- * Determine if show-all checkbox should be checked
+ * Checks if show-all checkbox should be checked
+ * @param {Object} state - Application state
+ * @returns {boolean} True if show-all checkbox should be checked
  */
 export const shouldShowAllCheckboxBeChecked = (state) => {
   return (state.filters?.showAll === true);
 };
 
 /**
- * Get checkbox state description for debugging
+ * Provides checkbox state information for debugging
+ * @param {Object} state - Application state
+ * @returns {Object} Checkbox state details
  */
 export const getCheckboxStateInfo = (state) => {
   const shouldBeChecked = shouldShowAllCheckboxBeChecked(state);
@@ -107,7 +123,9 @@ export const getCheckboxStateInfo = (state) => {
 };
 
 /**
- * Check if any filters are active (for UI indicators)
+ * Checks if any filters are currently active
+ * @param {Object} state - Application state
+ * @returns {boolean} True if any filters are active
  */
 export const hasActiveFilters = (state) => {
   const filters = getCleanFilters(state);
@@ -123,12 +141,15 @@ export const hasActiveFilters = (state) => {
   );
 };
 
-// ============================================================================
-// PAGINATION SELECTORS
-// ============================================================================
+/**
+ * @module PaginationSelectors
+ * @description Functions for handling pagination state
+ */
 
 /**
- * Get pagination info for UI
+ * Retrieves pagination information for UI
+ * @param {Object} state - Application state
+ * @returns {Object} Pagination details
  */
 export const getPaginationInfo = (state) => {
   return {
@@ -140,18 +161,23 @@ export const getPaginationInfo = (state) => {
 };
 
 /**
- * Check if should show pagination controls
+ * Determines if pagination controls should be displayed
+ * @param {Object} state - Application state
+ * @returns {boolean} True if pagination controls should be shown
  */
 export const shouldShowPagination = (state) => {
   return (state.totalPages || 0) > 1;
 };
 
-// ============================================================================
-// STATISTICS SELECTORS
-// ============================================================================
+/**
+ * @module StatisticsSelectors
+ * @description Functions for handling game statistics
+ */
 
 /**
- * Get game statistics with fallbacks
+ * Retrieves game statistics with fallback values
+ * @param {Object} state - Application state
+ * @returns {Object} Game statistics object
  */
 export const getGameStats = (state) => {
   return state.gameStats || {
@@ -163,7 +189,9 @@ export const getGameStats = (state) => {
 };
 
 /**
- * Get formatted statistics for UI display
+ * Formats statistics for UI display based on filter mode
+ * @param {Object} state - Application state
+ * @returns {Object} Formatted statistics for UI
  */
 export const getFormattedStats = (state) => {
   const stats = getGameStats(state);
@@ -184,25 +212,26 @@ export const getFormattedStats = (state) => {
   }
 };
 
-// ============================================================================
-// URL/NAVIGATION SELECTORS
-// ============================================================================
+/**
+ * @module URLNavigationSelectors
+ * @description Functions for handling URL and navigation state
+ */
 
 /**
- * Build URL parameters for browser history
+ * Constructs URL parameters for browser history
+ * @param {Object} state - Application state
+ * @returns {URLSearchParams} URL parameters
  */
 export const getURLParams = (state) => {
   const params = new URLSearchParams();
   const filters = getCleanFilters(state);
   
-  // Handle show all logic
   if (filters.showAll === true) {
     params.set('showAll', 'true');
   } else if (filters.hasOptions === true) {
     params.set('hasOptions', 'true');
   }
 
-  // Add filter params
   Object.entries(filters).forEach(([key, value]) => {
     if (key === 'showAll' || key === 'hasOptions') return;
     
@@ -211,7 +240,6 @@ export const getURLParams = (state) => {
     }
   });
 
-  // Add page if not first
   if ((state.currentPage || 1) > 1) {
     params.set('page', state.currentPage);
   }
@@ -220,33 +248,42 @@ export const getURLParams = (state) => {
 };
 
 /**
- * Get complete URL for current state
+ * Generates complete URL for current state
+ * @param {Object} state - Application state
+ * @returns {string} Complete URL with query parameters
  */
 export const getCurrentURL = (state) => {
   const params = getURLParams(state);
   return `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
 };
 
-// ============================================================================
-// LOADING/UI STATE SELECTORS
-// ============================================================================
+/**
+ * @module LoadingUIStateSelectors
+ * @description Functions for handling loading and UI readiness
+ */
 
 /**
- * Check if app is in loading state
+ * Checks if application is in loading state
+ * @param {Object} state - Application state
+ * @returns {boolean} True if application is loading
  */
 export const isLoading = (state) => {
   return state.isLoading === true;
 };
 
 /**
- * Check if app is ready for user interaction
+ * Checks if application is ready for user interaction
+ * @param {Object} state - Application state
+ * @returns {boolean} True if application is ready
  */
 export const isAppReady = (state) => {
   return !isLoading(state) && state.filtersInitialized === true;
 };
 
 /**
- * Get scroll behavior info
+ * Retrieves scroll behavior information
+ * @param {Object} state - Application state
+ * @returns {Object} Scroll behavior details
  */
 export const getScrollInfo = (state) => {
   return {
@@ -256,19 +293,24 @@ export const getScrollInfo = (state) => {
   };
 };
 
-// ============================================================================
-// COMPONENT SELECTORS
-// ============================================================================
+/**
+ * @module ComponentSelectors
+ * @description Functions for handling component-specific state
+ */
 
 /**
- * Check if search component is available and has values
+ * Checks if search component exists and has active filters
+ * @param {Object} state - Application state
+ * @returns {boolean} True if search component has values
  */
 export const hasSearchInstanceWithValues = (state) => {
   return !!(state.searchInstance && hasActiveFilters(state));
 };
 
 /**
- * Get search component sync data
+ * Retrieves search component synchronization data
+ * @param {Object} state - Application state
+ * @returns {Object} Search component sync data
  */
 export const getSearchSyncData = (state) => {
   const filters = getCleanFilters(state);

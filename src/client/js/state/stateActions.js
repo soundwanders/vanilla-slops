@@ -1,6 +1,3 @@
-// Add these actions to your StateManager class
-// These handle all the specific patterns found in your codebase
-
 const stateActions = {
   // Loading state management
   SET_LOADING: (state, payload) => ({
@@ -19,7 +16,7 @@ const stateActions = {
     totalPages: payload
   }),
 
-  // Filter management - your most complex use case
+  // Filter management
   SET_FILTERS: (state, payload) => ({
     ...state,
     filters: { ...payload }
@@ -117,14 +114,14 @@ const stateActions = {
     isLoading: false
   }),
 
-  // Batch update for performance (multiple changes at once)
+  // Batch update for performance
   BATCH_UPDATE: (state, payload) => ({
     ...state,
     ...payload
   })
 };
 
-// Helper function to add these to your StateManager
+// Add actions to StateManager
 function addVanillaSlopActions(stateManager) {
   Object.entries(stateActions).forEach(([actionName, actionHandler]) => {
     stateManager.addAction(actionName, actionHandler);
@@ -133,5 +130,4 @@ function addVanillaSlopActions(stateManager) {
   console.log('✅ Added all Vanilla Slops actions to StateManager');
 }
 
-// Export for use in your main.js
 export { stateActions, addVanillaSlopActions };
