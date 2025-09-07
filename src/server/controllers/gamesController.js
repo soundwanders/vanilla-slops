@@ -52,7 +52,7 @@ class GamesLogger {
   section(title) {
     if (!this.enabled) return;
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`🎯 ${title.toUpperCase()}`);
+    console.log(`🍓 ${title.toUpperCase()}`);
     console.log(`${'='.repeat(60)}`);
   }
 
@@ -280,7 +280,7 @@ function analyzeResult(result, filters, strategy, logger) {
 
 /**
  * Main controller for fetching games with filter and search capabilities
- * plus structured logging and comprehensive error handling
+ * plus structured logging and error handling
  */
 export async function gamesController(req, res) {
   const logger = new GamesLogger();

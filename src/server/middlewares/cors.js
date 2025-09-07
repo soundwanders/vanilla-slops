@@ -1,57 +1,79 @@
-/**
- * CORS Configuration for Steam Launch Options API
- * Handles cross-origin requests between frontend (port 3000) and backend (port 8000)
-*/
+import cors from 'cors';
 
-const corsOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : [
-    'https://vanilla-slops.up.railway.app', // Production frontend URL
-    'http://localhost:3000',  // Vite dev server
-    'http://127.0.0.1:3000',  // Alternative localhost
-    'http://localhost:5173',  // Vite default port (fallback)
-    'http://127.0.0.1:5173',  // Alternative localhost for Vite
-  ];
-
-const corsConfig = {
-  origin: corsOrigins,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+// CORS configuration
+const setupCORS = () => {
+  const allowedOrigins = [];
   
-  allowedHeaders: [
-    'Origin',
-    'X-Requested-With',
-    'Content-Type',
-    'Accept',
-    'Authorization',
-    'Cache-Control',
-    'X-Requested-With',
-    'Access-Control-Allow-Origin'
-  ],
+  // Production origins
+  if (process.env.CORS_ORIGIN) {
+    const corsOrigin = process.env.CORS_ORIGIN.replace(/\/$/, '');
+    allowedOrigins.push(corsOrigin);
+    console.log(`✅ CORS: Added production origin ${corsOrigin}`);
+  }
   
-  // Allow credentials (cookies, auth headers)
-  credentials: true,
+  if (process.env.DOMAIN_URL) {
+    const domainUrl = process.env.DOMAIN_URL.replace(/\/$/, '');
+    if (!allowedOrigins.includes(domainUrl)) {
+      allowedOrigins.push(domainUrl);
+      console.log(`✅ CORS: Added domain URL ${domainUrl}`);
+    }
+  }
   
-  // Cache preflight requests for 24 hours
-  maxAge: 86400,
+  // Development origins - always add these in development
+  if (process.env.NODE_ENV !== 'production') {
+    allowedOrigins.push(
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:8000',  // Add your Express server
+      'http://127.0.0.1:8000'
+    );
+    console.log('🔧 CORS: Added development origins');
+  }
   
-  // Handle preflight requests
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  return cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (same-origin, mobile apps, curl, Postman, etc.)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      // In development, be more permissive
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      
+      // Production: strict checking
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Production fallback: allow Railway domains if no specific origin set
+      if (process.env.NODE_ENV === 'production' && 
+          !process.env.CORS_ORIGIN && 
+          origin.includes('.railway.app')) {
+        console.log(`🐸 Bootstrap: Allowing Railway domain ${origin}`);
+        return callback(null, true);
+      }
+      
+      // Log blocked requests for debugging
+      console.warn(`❌ CORS: Blocked origin ${origin}`);
+      console.warn(`   Allowed origins: ${allowedOrigins.join(', ')}`);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'Cache-Control'
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200
+  });
 };
 
-// Development mode - allow all origins
-if (process.env.NODE_ENV === 'development') {
-  corsConfig.origin = true; // Allow all origins in development
-  console.log('🔓 CORS: Development mode - allowing all origins');
-}
-
-// Production mode - strict origin checking
-if (process.env.NODE_ENV === 'production') {
-  corsConfig.origin = [
-    process.env.FRONTEND_URL || 'https://localhost:3000', // Default to localhost if not set
-    'https://vanilla-slops-place.holder.com', // Replace with production frontend URL
-  ];
-  console.log('🔒 CORS: Production mode - restricted origins');
-}
-
-export default corsConfig;
+export default setupCORS;

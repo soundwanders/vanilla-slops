@@ -198,7 +198,7 @@
 }
 
 .launch-options-btn::before {
-  content: '🚀';
+  content: '🐸';
   font-size: var(--font-size-sm);
 }
 

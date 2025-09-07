@@ -11,12 +11,12 @@ assignees: ''
 - **Platform**: [e.g., Steam, Epic Games, GOG, Battle.net]
 - **Game Version**: [if relevant]
 
-## 🚀 Launch Options
+## 🐸 Launch Options
 ```
 [Paste the exact launch options here]
 ```
 
-## 🎯 Purpose/Benefit
+## 🍓 Purpose/Benefit
 What does this launch option do? What problem does it solve?
 - [ ] Performance improvement
 - [ ] Graphics enhancement

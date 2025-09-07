@@ -9,7 +9,7 @@ assignees: ''
 ## ✨ Feature Summary
 A brief description of the feature you'd like to see.
 
-## 🎯 Problem Statement
+## 🍓 Problem Statement
 What problem does this feature solve? What's the current pain point?
 
 ## 💡 Proposed Solution
@@ -26,7 +26,7 @@ As a [type of user], I want [goal] so that [benefit].
 ## 🖼️ Mockups/Examples
 If you have any visual ideas, sketches, or examples from other applications, share them here.
 
-## 🚀 Implementation Ideas
+## 🐸 Implementation Ideas
 Do you have thoughts on how this could be implemented? (Optional)
 
 ## 📈 Impact & Priority
