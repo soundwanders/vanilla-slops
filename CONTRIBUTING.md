@@ -4,7 +4,7 @@ Thanks for stopping by! Vanilla Slops is a welcoming place, whether you're a fir
 It's a great environment to get your feet wet because there's nothing at stake here. 
 Your contributions, no matter how small, will help this project grow! And maybe we'll both learn something along the way. 
 
-## 🚀 Getting Started
+## 🐸 Getting Started
 
 ### Prerequisites
 - Node.js (v16 or higher)
@@ -17,7 +17,7 @@ Your contributions, no matter how small, will help this project grow! And maybe 
 3. Install dependencies: `npm install`
 4. Start development: `npm run dev`
 
-## 🎯 Ways to Contribute
+## 🍓 Ways to Contribute
 
 ### 🎮 Launch Options
 - Submit verified launch options for games
@@ -68,24 +68,16 @@ refactor: simplify database connection logic
 
 ## 🧪 Testing
 
-- Write tests for new or existing features
-- Update existing tests if modifying code
-- Aim for meaningful test coverage
+- It's always good to write tests for new or existing features, even if it's just pseudocode!
+- Update any relevant existing tests if modifying code
+- Aim for meaningful test coverage to the best of your ability
 - Run `npm test` before submitting
-- Bonus points for adding your test logs to your PR
+- A high-five if you add any extra info (like test logs) to your PR
 
-## 📋 Code Style
+## 🫶 Community Guidelines
 
-- Use ESLint configuration: `npm run lint`
-- Write clear, descriptive variable names
-- Add comments for complex logic or contextual information
-
-## 🤝 Community Guidelines
-
-- Be respectful and inclusive, this isn't that serious
-- Be welcoming to newcomers
-- Focus on constructive feedback
-- Celebrate others' contributions
+- Be respectful and kind, but always feel free to speak your mind.
+- No, really...that's it. I promise it's not that that serious 😺
 
 ## ❓ Questions?
 
@@ -94,5 +86,4 @@ refactor: simplify database connection logic
 
 ---
 
-**Flow Freely**: Don't be afraid to share your ideas or speak up about something you dislike. 
-No contribution is too small! Even fixing a typo helps make the project better.
+**Flow Freely** 🕊️❤️

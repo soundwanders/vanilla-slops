@@ -57,7 +57,7 @@ async function verifyDatabase() {
     }
     
     // 3. Check launch_options table
-    console.log('\n🚀 Checking LAUNCH_OPTIONS table...');
+    console.log('\n🐸 Checking LAUNCH_OPTIONS table...');
     const { data: options, error: optionsError, count: optionsCount } = await supabase
       .from('launch_options')
       .select('id, command, description, source, upvotes', { count: 'exact' })
@@ -92,7 +92,7 @@ async function verifyDatabase() {
         
         if (testJunctions?.length > 0) {
           const optionIds = testJunctions.map(j => j.launch_option_id);
-          console.log(`   🎯 Option IDs: ${optionIds.join(', ')}`);
+          console.log(`   🍓 Option IDs: ${optionIds.join(', ')}`);
           
           // Step 2: Get actual options
           const { data: testOptions, error: testOptionsError } = await supabase
@@ -146,7 +146,7 @@ async function verifyDatabase() {
     }
     
     // Provide next steps
-    console.log('\n🚀 NEXT STEPS:');
+    console.log('\n🐸 NEXT STEPS:');
     if (junctionError || optionsError) {
       console.log('1. Create missing database tables');
       console.log('2. Set up proper table relationships');

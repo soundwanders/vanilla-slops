@@ -623,7 +623,7 @@ async function handleLaunchOptionsClick(e) {
     return;
   }
 
-  console.log(`🚀 Launch options clicked for game ID: ${gameId} (Mobile: ${TableState.isMobile})`);
+  console.log(`🐸 Launch options clicked for game ID: ${gameId} (Mobile: ${TableState.isMobile})`);
 
   const originalContent = button.innerHTML;
   
@@ -1267,7 +1267,7 @@ function setupTableEventListeners() {
   }
   
   TableState.isInitialized = true;
-  console.log(`🎯 Table event listeners initialized (Mobile: ${TableState.isMobile})`);
+  console.log(`🍓 Table event listeners initialized (Mobile: ${TableState.isMobile})`);
 }
 
 /**

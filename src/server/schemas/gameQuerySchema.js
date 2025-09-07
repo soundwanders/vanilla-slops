@@ -149,7 +149,7 @@ export function validateAndLogQuery(query, schema) {
     
     // Log options-first strategy decisions
     if (result.hasOptions !== undefined || result.showAll !== undefined) {
-      console.log('🎯 Options-First Query:', {
+      console.log('🍓 Options-First Query:', {
         hasOptions: result.hasOptions,
         showAll: result.showAll,
         strategy: result.showAll ? 'show-all' : (result.hasOptions ? 'options-only' : 'no-options-only')

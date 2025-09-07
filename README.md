@@ -1,7 +1,6 @@
-# Vanilla Slops
 
 <p align="center">
-  <img src="./src/client/public/slops-logo.png" alt="Vanilla Slops - Steam Launch Options Discovery" width="160">
+  <img src="./src/client/public/slops-logo.png" alt="Vanilla Slops" width="150">
 </p>
 
 <p align="center">
@@ -14,26 +13,27 @@
 
 ---
 
-### 👖 Vanilla Slops?
+## 👖 Vanilla Slops?
 
-**Vanilla Slops** is a web application that provides a searchable database of community-verified launch options for thousands of Steam games. 
-The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by Supabase and an Express.js API.
+**Vanilla Slops** is a web application that provides a searchable database of community-verified launch options for games on [Steam](https://store.steampowered.com/).
+s
+The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by an Express.js API and Supabase (PostgreSQL).
+
+The core philosophy of this project aims to recreate some of the functionality that modern frameworks abstract away, while remaining lightweight, fast, and secure.
 
 Steam Launch Options (SLOPS) are custom command-line parameters that can improve game performance or unlock features outside of the standard game menus.
 
 <img src="./src/client/public/slops-screenshot.png" alt="Steam Launch Options Screenshot" width="540">
 
-One of the core philosophies of this project is to recreate some of the functionality that modern frameworks abstract away, while remaining lightweight, fast, and secure. 
-
 ---
 
-## 🧙 Features
+## 🐸 Features
 
 #### **🔎 Smart Search & Discovery**
 - **Real-time search suggestions** across titles, developers, publishers with instant results
 - **Custom filtering** by category, engine, release year, and launch options
 
-#### **🎯 Steam Launch Options Database**
+#### **🍓 Steam Launch Options Database**
 - **Categorized by purpose**: Performance boosting, graphics optimization, compatibility fixes
 - **Source attribution** linking back to original documentation and community contributions
 
@@ -55,7 +55,7 @@ One of the core philosophies of this project is to recreate some of the function
 
 ---
 
-## 🚀 Quick Start
+## 🧙 Quick Start
 
 ### Installation
 
@@ -80,8 +80,8 @@ SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NODE_ENV=development
 PORT=8000
-CORS_ORIGIN=http://localhost:3000
-DOMAIN_URL=vanilla-slops-placeholder.com
+CORS_ORIGIN=placeholder.com
+DOMAIN_URL=placeholder.com
 ```
 
 ### Development & npm Scripts
@@ -101,10 +101,9 @@ DOMAIN_URL=vanilla-slops-placeholder.com
 
 ## 📚 API Documentation
 
-**Base URL:** `https://your-api-domain.com/api`  
-**Tech Stack:** Node.js + Express.js + Supabase (PostgreSQL)
+**👉 [Full API Documentation](./docs/api.md)**
 
-### Quick Reference
+#### Quick Reference
 
 | Endpoint | Description |
 |----------|-------------|
@@ -115,7 +114,7 @@ DOMAIN_URL=vanilla-slops-placeholder.com
 | `GET /api/games/facets` | Get available filter options |
 | `GET /health` | API health check |
 
-### **`GET /api/games`**
+#### **`GET /api/games`**
 Retrieve games with advanced filtering and pagination.
 
 **Query Parameters:**
@@ -150,7 +149,7 @@ Retrieve games with advanced filtering and pagination.
 }
 ```
 
-### **`GET /api/games/{id}/launch-options`**
+#### **`GET /api/games/{id}/launch-options`**
 Retrieve launch options for a specific game.
 
 **Response:**
@@ -166,37 +165,12 @@ Retrieve launch options for a specific game.
 ]
 ```
 
-### Example Usage
-
-```bash
-# Search for Valve games
-curl "https://your-api-domain.com/api/games?search=valve&sort=year&order=desc"
-
-# Get Team Fortress 2 launch options
-curl "https://your-api-domain.com/api/games/440/launch-options"
-
-# Search suggestions for autocomplete
-curl "https://your-api-domain.com/api/games/suggestions?q=half&limit=5"
-```
-
-### Rate Limiting & CORS
-- **Rate Limit:** 1,000 requests per 15 minutes per IP
-- **CORS:** Enabled for web applications
-- **Authentication:** Currently public (no auth required)
-
-### 📖 Complete Documentation
-
-For detailed information including authentication, error handling, data models, SDKs, and comprehensive examples:
-
-**👉 [Full API Documentation](./docs/api.md)**
 ---
-
 
 ## 🧘 Contributing
 
 Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, I would love to hear your ideas. 
 Your contributions can only make the project better, and maybe we'll both learn something along the way. 
-This is a personal project and is not intended for commercial use, advertisements, etc.
 
 [📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 

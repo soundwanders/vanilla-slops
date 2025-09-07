@@ -1,23 +1,18 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createSecureConfig } from './secureConfig.js';
 
-// Resolve root dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load .env from the project root
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-const requiredVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
-requiredVars.forEach((key) => {
-  if (!process.env[key]) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-});
+// Load and validate configuration securely
+const config = createSecureConfig();
 
 export default {
-  port: process.env.PORT || 8000,
-  supabaseUrl: process.env.SUPABASE_URL,
-  supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY
+  port: config.PORT,
+  supabaseUrl: config.SUPABASE_URL,
+  supabaseKey: config.SUPABASE_SERVICE_ROLE_KEY,
+  nodeEnv: config.NODE_ENV,
+  corsOrigin: config.CORS_ORIGIN,
+  domainUrl: config.DOMAIN_URL,
+  
+  // Utility methods
+  isProduction: () => config.NODE_ENV === 'production',
+  isDevelopment: () => config.NODE_ENV === 'development',
+  isTest: () => config.NODE_ENV === 'test'
 };

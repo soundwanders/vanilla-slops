@@ -1,133 +1,92 @@
 /* =============================================================================
-   DROPDOWN SYSTEM
-   Select element styling and option customization
+   BROWSER COMPATIBILITY
+   Fallbacks and vendor prefixes for older browsers
    ============================================================================= */
 
 /* =============================================================================
-   1. BASE DROPDOWN STYLES
+   1. SAFARI FLEXBOX FIXES
    ============================================================================= */
 
-.filter-select,
-.sort-select,
-#categoryFilter,
-#developerFilter,
-#optionsFilter,
-#yearFilter,
-#yearFilterSelect,
-#sortSelect {
-  height: 2.5rem;
-  padding: 0.5rem 0.275rem;
-  display: flex;
-  align-items: center;
-  line-height: 1.25rem;
-  text-align: center;
+.safari-flex-fix {
+  min-height: 0;
+  min-width: 0;
 }
 
 /* =============================================================================
-   2. OPTION STYLING
+   2. IE11 GRID FIXES
    ============================================================================= */
 
-.filter-select option,
-.select option,
-#categoryFilter option,
-#developerFilter option,
-#optionsFilter option,
-#yearFilter option,
-#sortSelect option {
-  /* Force dark background for options */
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
-  
-  /* Ensure proper styling */
-  padding: var(--space-2) var(--space-3) !important;
-  font-size: var(--font-size-sm) !important;
-  font-weight: 500 !important;
-  
-  /* Remove any browser defaults */
-  border: none !important;
-  outline: none !important;
-}
-
-/* Hover state for options */
-.filter-select option:hover,
-select option:hover {
-  background-color: var(--color-interactive-hover) !important;
-  color: var(--color-text-primary) !important;
-}
-
-/* Selected option styling */
-.filter-select option:checked,
-select option:checked {
-  background-color: var(--color-accent) !important;
-  color: var(--color-text-inverse) !important;
-  font-weight: 600 !important;
-}
-
-/* =============================================================================
-   3. DARK THEME SUPPORT
-   ============================================================================= */
-
-[data-theme="dark"] .filter-select option,
-[data-theme="dark"] select option {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
-}
-
-[data-theme="dark"] .filter-select option:hover,
-[data-theme="dark"] select option:hover {
-  background-color: var(--color-interactive-hover) !important;
-}
-
-[data-theme="dark"] .filter-select option:checked,
-[data-theme="dark"] select option:checked {
-  background-color: var(--color-accent) !important;
-  color: var(--color-text-inverse) !important;
-}
-
-/* =============================================================================
-   4. BROWSER-SPECIFIC FIXES
-   ============================================================================= */
-
-/* WebKit browsers (Chrome, Safari, Edge) */
-@supports (-webkit-appearance: none) {
-  .filter-select option,
-  select option {
-    background-color: var(--color-surface-raised) !important;
-    color: var(--color-text-primary) !important;
+@supports not (display: grid) {
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
   }
   
-  /* WebKit dropdown background fix */
-  .filter-select,
-  select {
-    background-color: var(--color-surface-raised) !important;
-    color: var(--color-text-primary) !important;
+  .grid-cols-2 > * {
+    flex: 0 0 50%;
   }
-}
-
-/* Firefox specific fixes */
-@-moz-document url-prefix() {
-  .filter-select option,
-  select option {
-    background-color: var(--color-surface-raised) !important;
-    color: var(--color-text-primary) !important;
+  
+  .grid-cols-3 > * {
+    flex: 0 0 33.333%;
+  }
+  
+  .grid-cols-4 > * {
+    flex: 0 0 25%;
   }
 }
 
 /* =============================================================================
-   5. ALTERNATIVE STYLING APPROACH
+   3. BACKDROP FILTER FALLBACK
    ============================================================================= */
 
-.filters-container select option,
-.hero-filters select option,
-.slops-filters select option {
-  background: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
-  padding: 8px 12px !important;
+@supports not (backdrop-filter: blur(4px)) {
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
 }
 
-/* Ensure the select dropdown itself has proper background */
-.filter-select:focus,
-select:focus {
-  background-color: var(--color-surface-raised) !important;
-  color: var(--color-text-primary) !important;
+/* =============================================================================
+   4. CUSTOM PROPERTY FALLBACKS
+   ============================================================================= */
+
+@supports not (color: var(--color-accent)) {
+  .btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+  
+  .text-accent {
+    color: #2563eb;
+  }
+}
+
+/* =============================================================================
+   5. CUSTOM SCROLLBAR STYLING
+   ============================================================================= */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--color-accent);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-surface);
 }
