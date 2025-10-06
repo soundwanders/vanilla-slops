@@ -16,10 +16,18 @@
   background: var(--color-surface-raised);
 }
 
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
 .results-count {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  padding: var(--space-2) var(--space-4);
 }
 
 .games-table {
@@ -335,7 +343,6 @@
   white-space: pre-wrap;
   word-break: break-all;
   font-size: var(--font-size-sm);
-  text-align: center;
   position: relative;
   cursor: pointer;
   transition: all var(--transition-fast);
