@@ -667,6 +667,10 @@ body {
   animation: themeToggleFloat 2s ease-in-out infinite;
 }
 
+.pagination-container {
+  animation: fadeIn 0.2s ease-out;
+}
+
 /* =============================================================================
    12. LOADING STATES
    ============================================================================= */

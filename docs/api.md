@@ -1,6 +1,6 @@
 # Vanilla Slops API Documentation
 
-**Base URL:** `https://vanilla-slops.up.railway.app/`  
+**Base URL:** `https://vanillaslopsplaceholder.app/`  
 **Protocol:** HTTPS only
 
 ## Overview
@@ -49,13 +49,13 @@ Launch options are special commands you can add to Steam games to modify how the
 
 ```bash
 # Get all games
-curl "https://vanilla-slops.up.railway.app/api/games"
+curl "https://vanillaslopsplaceholder.app/api/games"
 
 # Search for a specific game
-curl "https://vanilla-slops.up.railway.app/api/games?search=half+life"
+curl "https://vanillaslopsplaceholder.app/api/games?search=half+life"
 
 # Get launch options for Team Fortress 2 (app_id: 440)
-curl "https://vanilla-slops.up.railway.app/api/games/440/launch-options"
+curl "https://vanillaslopsplaceholder.app/api/games/440/launch-options"
 ```
 
 ## Authentication
@@ -72,7 +72,7 @@ Currently, the API is **publicly accessible** and does not require authenticatio
 
 All API requests should be made to:
 ```
-https://vanilla-slops.up.railway.app/api/
+https://vanillaslopsplaceholder.app/api/
 ```
 
 The API is currently version 1.0 and is considered stable. Future breaking changes will be introduced in new versions.
@@ -103,7 +103,7 @@ Retrieve a paginated list of Steam games with optional filtering and search.
 
 **Example Request:**
 ```bash
-curl "https://vanilla-slops.up.railway.app/api/games?search=valve&sort=year&order=desc&limit=10"
+curl "https://vanillaslopsplaceholder.app/api/games?search=valve&sort=year&order=desc&limit=10"
 ```
 
 **Example Response:**
@@ -153,7 +153,7 @@ Retrieve complete details for a specific game, including all launch options.
 
 **Example Request:**
 ```bash
-curl "https://vanilla-slops.up.railway.app/api/games/440"
+curl "https://vanillaslopsplaceholder.app/api/games/440"
 ```
 
 **Example Response:**
@@ -229,7 +229,7 @@ Get autocomplete suggestions for search queries.
 
 **Example Request:**
 ```bash
-curl "https://vanilla-slops.up.railway.app/api/games/suggestions?q=half&limit=5"
+curl "https://vanillaslopsplaceholder.app/api/games/suggestions?q=half&limit=5"
 ```
 
 **Example Response:**
@@ -439,17 +439,17 @@ The API supports Cross-Origin Resource Sharing (CORS) for web applications:
 
 **Get popular games with launch options:**
 ```bash
-curl "https://vanilla-slops.up.railway.app/api/games?options=has-options&sort=options&order=desc&limit=5"
+curl "https://vanillaslopsplaceholder.app/api/games?options=has-options&sort=options&order=desc&limit=5"
 ```
 
 **Search for Valve games:**
 ```bash
-curl "https://vanilla-slops.up.railway.app/api/games?developer=valve&sort=year&order=desc"
+curl "https://vanillaslopsplaceholder.app/api/games?developer=valve&sort=year&order=desc"
 ```
 
 **Find games from 2020:**
 ```bash
-curl "https://vanilla-slops.up.railway.app/api/games?year=2020"
+curl "https://vanillaslopsplaceholder.app/api/games?year=2020"
 ```
 
 ### JavaScript/Node.js (Express.js)
@@ -457,7 +457,7 @@ curl "https://vanilla-slops.up.railway.app/api/games?year=2020"
 ```javascript
 // Using fetch API (client-side)
 async function getGameLaunchOptions(appId) {
-  const response = await fetch(`https://vanilla-slops.up.railway.app/api/games/${appId}/launch-options`);
+  const response = await fetch(`https://vanillaslopsplaceholder.app/api/games/${appId}/launch-options`);
   
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -474,7 +474,7 @@ const app = express();
 app.get('/my-games/:appId/options', async (req, res) => {
   try {
     const { appId } = req.params;
-    const response = await fetch(`https://vanilla-slops.up.railway.app/api/games/${appId}/launch-options`);
+    const response = await fetch(`https://vanillaslopsplaceholder.app/api/games/${appId}/launch-options`);
     const options = await response.json();
     
     res.json(options);
@@ -496,7 +496,7 @@ import requests
 
 def get_games(search_term="", page=1, limit=20):
     """Get games from the Vanilla Slops API"""
-    url = "https://vanilla-slops.up.railway.app/api/games"
+    url = "https://vanillaslopsplaceholder.app/api/games"
     params = {
         "search": search_term,
         "page": page,
