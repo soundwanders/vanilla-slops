@@ -269,13 +269,13 @@
 }
 
 /* Launch options cell */
-.launch-options-cell {
-  padding: var(--space-10) !important;
+.launch-options-cell {  
+  padding: var(--space-4) var(--space-7) !important;
   border-radius: 0;
-  height: auto !important;
-  overflow: visible !important;
-  opacity: 1 !important;
-  visibility: visible !important;
+  height: auto;
+  overflow: visible;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Launch options list */
@@ -347,7 +347,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  user-select: none;
+  word-break: normal;
 }
 
 .option-command:hover {
