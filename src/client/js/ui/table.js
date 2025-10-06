@@ -709,7 +709,6 @@ function createOptionsHTML(colspan, launchOptions, gameId) {
       </ul>
       <div class="launch-options-close-container ${TableState.isMobile ? 'mobile-close-container' : ''}">
         <button class="launch-options-close ${TableState.isMobile ? 'mobile-close-btn' : ''}" data-game-id="${gameId}">
-          <span class="close-icon" aria-hidden="true">✕</span>
           <span class="close-text">Hide Options</span>
         </button>
       </div>
@@ -769,7 +768,7 @@ function createLaunchOptionHTML(option) {
       ` : ''}
       
       <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
-        <span class="option-source">📝 ${escapeHtml(option.source || 'Community')}</span>
+        <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
         <div class="option-badges">
           ${verifiedBadge}
           ${votesBadge}
@@ -1208,7 +1207,7 @@ function showLaunchOptionsError(gameId, errorMessage) {
         <p>Failed to load launch options: ${escapeHtml(errorMessage)}</p>
         <div class="launch-options-close-container ${TableState.isMobile ? 'mobile-close-container' : ''}">
           <button class="launch-options-close ${TableState.isMobile ? 'mobile-close-btn' : ''}" data-game-id="${gameId}">
-            <span class="close-icon" aria-hidden="true">✕</span>
+            <span class="close-icon" aria-hidden="true"></span>
             <span class="close-text">Close</span>
           </button>
         </div>
