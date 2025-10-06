@@ -296,7 +296,6 @@
   --color-text-inverse: var(--gray-900);
   
   /* Accent colors */
-  --color-accent: var(--brand-500);
   --color-accent-hover: var(--brand-400);
   --color-accent-active: var(--brand-300);
   --color-accent-subtle: rgba(14, 165, 233, 0.1);
