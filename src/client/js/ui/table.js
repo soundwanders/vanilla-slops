@@ -768,7 +768,7 @@ function createLaunchOptionHTML(option) {
       ` : ''}
       
       <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
-        <span class="option-source">📝 ${escapeHtml(option.source || 'Community')}</span>
+        <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
         <div class="option-badges">
           ${verifiedBadge}
           ${votesBadge}
