@@ -397,8 +397,8 @@ export function createAppStateManager() {
       engine: '',
       options: '',
       year: '',
-      sort: 'title',
-      order: 'asc'
+      sort: 'options',
+      order: 'desc'
     },
     
     // Component state
