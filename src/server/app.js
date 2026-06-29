@@ -176,22 +176,4 @@ app.get('*', (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Graceful shutdown handling
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('🛑 SIGINT received, shutting down gracefully');
-  process.exit(0);
-});
-
-// Log startup information
-console.log('🐸 Vanilla Slops Server Configuration:');
-console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`   Port: ${process.env.PORT || 8000}`);
-console.log(`   CORS Origin: ${process.env.CORS_ORIGIN || 'not set'}`);
-console.log(`   Domain URL: ${process.env.DOMAIN_URL || 'not set'}`);
-
 export default app;

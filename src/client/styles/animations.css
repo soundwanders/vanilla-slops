@@ -734,6 +734,51 @@ body {
   margin-bottom: 0;
 }
 
+/* Skeleton table rows */
+.skeleton-row td {
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+}
+
+.skeleton-cell {
+  height: 0.875rem;
+  border-radius: var(--radius-sm, 4px);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    var(--color-interactive-hover) 50%,
+    var(--color-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Column width variation */
+.skeleton-row td:nth-child(1) .skeleton-cell { width: 80%; }
+.skeleton-row td:nth-child(2) .skeleton-cell { width: 65%; }
+.skeleton-row td:nth-child(3) .skeleton-cell { width: 60%; }
+.skeleton-row td:nth-child(4) .skeleton-cell { width: 50%; }
+.skeleton-row td:nth-child(5) .skeleton-cell { width: 55%; }
+.skeleton-row td:nth-child(6) .skeleton-cell {
+  width: 5.5rem;
+  height: 2rem;
+  border-radius: var(--radius-full, 9999px);
+}
+
+/* Alternate row variation for natural variance */
+.skeleton-row:nth-child(even) td:nth-child(1) .skeleton-cell  { width: 90%; }
+.skeleton-row:nth-child(3n) td:nth-child(2) .skeleton-cell    { width: 75%; }
+.skeleton-row:nth-child(3n+1) td:nth-child(3) .skeleton-cell  { width: 70%; }
+.skeleton-row:nth-child(even) td:nth-child(4) .skeleton-cell  { width: 40%; }
+
+/* Stagger shimmer by row */
+.skeleton-row:nth-child(2) .skeleton-cell { animation-delay: 0.1s; }
+.skeleton-row:nth-child(3) .skeleton-cell { animation-delay: 0.2s; }
+.skeleton-row:nth-child(4) .skeleton-cell { animation-delay: 0.3s; }
+.skeleton-row:nth-child(5) .skeleton-cell { animation-delay: 0.4s; }
+.skeleton-row:nth-child(6) .skeleton-cell { animation-delay: 0.5s; }
+.skeleton-row:nth-child(7) .skeleton-cell { animation-delay: 0.6s; }
+.skeleton-row:nth-child(8) .skeleton-cell { animation-delay: 0.7s; }
+
 /* =============================================================================
    13. FEEDBACK ANIMATIONS
    ============================================================================= */
@@ -824,6 +869,11 @@ body {
   
   /* Static fallbacks for loading states */
   .loading-shimmer {
+    animation: none;
+    background: var(--color-surface);
+  }
+
+  .skeleton-cell {
     animation: none;
     background: var(--color-surface);
   }

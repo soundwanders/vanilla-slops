@@ -1,6 +1,7 @@
-// Basic server test
-describe('Server App', () => {
-  it('should start without errors', () => {
+import { describe, it, expect } from 'vitest';
+
+describe('Server', () => {
+  it('placeholder — real integration tests require a running Supabase connection', () => {
     expect(true).toBe(true);
   });
 });
