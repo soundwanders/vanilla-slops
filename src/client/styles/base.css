@@ -1,6 +1,6 @@
 /* =============================================================================
-   CSS DESIGN SYSTEM
-   Modern CSS foundation with reset and base styles
+   BASE STYLES
+   CSS reset, base styles, browser compatibility, and performance hints
    ============================================================================= */
 
 /* =============================================================================
@@ -26,23 +26,19 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Remove list styles on ul, ol elements with a list role */
 ul[role='list'],
 ol[role='list'] {
   list-style: none;
 }
 
-/* Set core root defaults */
 html:focus-within {
   scroll-behavior: smooth;
 }
 
-/* A elements that don't have a class get default styles */
 a:not([class]) {
   text-decoration-skip-ink: auto;
 }
 
-/* Make images easier to work with */
 img,
 picture,
 svg {
@@ -51,7 +47,6 @@ svg {
   display: block;
 }
 
-/* Inherit fonts for inputs and buttons */
 input,
 button,
 textarea,
@@ -83,14 +78,14 @@ body {
 }
 
 /* =============================================================================
-   3. REDUCED MOTION SUPPORT
+   3. REDUCED MOTION
    ============================================================================= */
 
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;
   }
-  
+
   *,
   *::before,
   *::after {
@@ -100,3 +95,106 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* =============================================================================
+   4. BROWSER COMPATIBILITY
+   ============================================================================= */
+
+.safari-flex-fix {
+  min-height: 0;
+  min-width: 0;
+}
+
+@supports not (display: grid) {
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .grid-cols-2 > * { flex: 0 0 50%; }
+  .grid-cols-3 > * { flex: 0 0 33.333%; }
+  .grid-cols-4 > * { flex: 0 0 25%; }
+}
+
+@supports not (backdrop-filter: blur(4px)) {
+  .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+@supports not (color: var(--color-accent)) {
+  .btn-primary {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+
+  .text-accent {
+    color: #2563eb;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--color-accent);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-surface);
+}
+
+/* =============================================================================
+   5. PERFORMANCE HINTS
+   ============================================================================= */
+
+.search-input,
+.suggestions-dropdown,
+.filter-tag,
+.games-table tbody tr,
+.theme-toggle {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.games-table {
+  contain: layout;
+}
+
+.suggestions-dropdown {
+  contain: layout style;
+}
+
+.games-table tbody {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+.contain-layout { contain: layout; }
+.contain-paint  { contain: paint; }
+.contain-size   { contain: size; }
+
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 400px;
+}
+
+.will-change-transform  { will-change: transform; }
+.will-change-opacity    { will-change: opacity; }
+.will-change-scroll     { will-change: scroll-position; }

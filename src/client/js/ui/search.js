@@ -133,21 +133,9 @@ export default class SlopSearch {
   }
 
   /**
-   * Search input handling with two-tier approach
-   * TIER 1: Fast suggestions (150ms)
-   * TIER 2: Deliberate search (800ms with progressive debouncing)
-   * Handles click-outside detection to respect safe zones
+   * Debounces search input using a two-tier strategy: fast suggestions at 150ms,
+   * deliberate API search at 800ms with progressive delay on rapid typing.
    * @param {string} query - The current search query
-   * @returns {void}
-   * @throws {Error} If query is not a string
-   * @throws {TypeError} If query is not a valid string
-   * @throws {RangeError} If query length is less than minimum threshold
-   * @throws {SyntaxError} If query contains invalid characters (e.g., HTML tags)
-   * @throws {ReferenceError} If searchInput is not defined
-   * @throws {URIError} If query cannot be encoded as a URI component
-   * @throws {EvalError} If query contains invalid characters
-   * @throws {TypeError} If query is not a string or valid selector
-   * @throws {RangeError} If query length exceeds maximum limit
    */
   handleSearchInput(query) {
     const now = Date.now();
