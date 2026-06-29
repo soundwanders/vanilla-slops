@@ -51,7 +51,7 @@ const SORTABLE_COLUMNS = [
   { label: CONFIG.DATA_LABELS.title, field: 'title' },
   { label: CONFIG.DATA_LABELS.developer, field: 'developer' },
   { label: CONFIG.DATA_LABELS.publisher, field: null },
-  { label: CONFIG.DATA_LABELS.releaseDate, field: 'year' },
+  { label: CONFIG.DATA_LABELS.releaseDate, field: null }, // text column, not sortable until migrated to date type
   { label: CONFIG.DATA_LABELS.engine, field: null },
   { label: CONFIG.DATA_LABELS.launchOptions, field: 'options' },
 ];
@@ -107,7 +107,14 @@ function createGameRowHTML(game) {
   return `
     <tr role="row" data-game-id="${gameId}" class="game-row">
       <td data-label="${CONFIG.DATA_LABELS.title}" role="gridcell" class="game-title-cell">
-        <div class="game-title" title="${title}">${title}</div>
+        <div class="game-title">
+          <a href="https://store.steampowered.com/app/${gameId}"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="steam-link"
+             title="View on Steam store"
+          >${title}<span class="steam-external-icon" aria-hidden="true">↗</span></a>
+        </div>
       </td>
       <td data-label="${CONFIG.DATA_LABELS.developer}" role="gridcell" class="game-developer-cell">
         <span title="${developer}">${developer}</span>
