@@ -3,14 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <title>Vanilla Slops</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>Vanilla Slops — Steam Launch Options Database</title>
+
+    <!-- SEO — update the URL below to match your production domain -->
+    <meta name="description" content="Search community-verified Steam launch options (SLOPS) for hundreds of games. Find performance tweaks, graphics settings, and hidden features through community-curated command-line parameters." />
+    <link rel="canonical" href="https://vanilla-slops.up.railway.app" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vanilla-slops.up.railway.app" />
+    <meta property="og:title" content="Vanilla Slops — Steam Launch Options Database" />
+    <meta property="og:description" content="Search community-verified Steam launch options for hundreds of games. Find performance tweaks, graphics settings, and hidden features." />
+    <meta property="og:image" content="https://vanilla-slops.up.railway.app/slops-screenshot.png" />
+    <meta property="og:site_name" content="Vanilla Slops" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vanilla Slops — Steam Launch Options Database" />
+    <meta name="twitter:description" content="Search community-verified Steam launch options for hundreds of games. Find performance tweaks, graphics settings, and hidden features." />
+    <meta name="twitter:image" content="https://vanilla-slops.up.railway.app/slops-screenshot.png" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Vanilla Slops",
+      "description": "Community-verified Steam launch options (SLOPS) database",
+      "url": "https://vanilla-slops.up.railway.app",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://vanilla-slops.up.railway.app/?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
 
     <link rel="stylesheet" href="styles/main.css" />
     <link rel="icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="modulepreload" href="js/main.js" />
-    
+
     <!-- Preload critical resources for mobile performance -->
-    <link rel="preload" href="/slops-logo.png" as="image" />
+    <link rel="preload" href="/slops-logo.webp" as="image" type="image/webp" />
   </head>
 
   <body>
@@ -31,7 +71,10 @@
         <div class="hero-branding">
           <div class="logo-container">
             <a href="/" class="home-link" aria-label="Go Home - Vanilla Slops">
-              <img src="/slops-logo.png" alt="Vanilla Slops Logo" class="hero-logo">
+              <picture>
+                <source srcset="/slops-logo.webp" type="image/webp" />
+                <img src="/slops-logo.png" alt="Vanilla Slops Logo" class="hero-logo" />
+              </picture>
             </a>
           </div>
           <div class="hero-text">
@@ -78,96 +121,6 @@
               <label class="filter-label" for="categoryFilter">Category</label>
               <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
                 <option value="">All Categories</option>
-                
-                <!-- Core Popular Genres -->
-                <option value="action">Action</option>
-                <option value="adventure">Adventure</option>
-                <option value="rpg">RPG</option>
-                <option value="strategy">Strategy</option>
-                <option value="simulation">Simulation</option>
-                <option value="fps">FPS</option>
-                <option value="indie">Indie</option>
-                  
-                <!-- Specific Action Subgenres -->
-                <option value="platformer">Platformer</option>
-                <option value="fighting">Fighting</option>
-                <option value="battle-royale">Battle Royale</option>
-                <option value="survival">Survival</option>
-                <option value="horror">Horror</option>
-                <option value="stealth">Stealth</option>
-                
-                <!-- Strategy Subgenres -->
-                <option value="rts">Real-Time Strategy</option>
-                <option value="turn-based">Turn-Based Strategy</option>
-                <option value="tower-defense">Tower Defense</option>
-                <option value="4x">4X Strategy</option>
-                
-                <!-- RPG Subgenres -->
-                <option value="mmorpg">MMORPG</option>
-                <option value="roguelike">Roguelike</option>
-                <option value="roguelite">Roguelite</option>
-                <option value="dungeon-crawler">Dungeon Crawler</option>
-                
-                <!-- Multiplayer Categories -->
-                <option value="multiplayer">Multiplayer</option>
-                <option value="co-op">Co-op</option>
-                <option value="moba">MOBA</option>
-                <option value="mmo">MMO</option>
-                
-                <!-- Sports & Racing -->
-                <option value="sports">Sports</option>
-                <option value="racing">Racing</option>
-                <option value="soccer">Soccer</option>
-                <option value="basketball">Basketball</option>
-                
-                <!-- Casual & Puzzle -->
-                <option value="puzzle">Puzzle</option>
-                <option value="casual">Casual</option>
-                <option value="arcade">Arcade</option>
-                <option value="match-3">Match-3</option>
-                <option value="hidden-object">Hidden Object</option>
-                
-                <!-- Creative & Sandbox -->
-                <option value="sandbox">Sandbox</option>
-                <option value="city-builder">City Builder</option>
-                <option value="building">Building</option>
-                <option value="crafting">Crafting</option>
-                
-                <!-- Narrative & Visual -->
-                <option value="visual-novel">Visual Novel</option>
-                <option value="interactive-fiction">Interactive Fiction</option>
-                <option value="walking-simulator">Walking Simulator</option>
-                <option value="story-rich">Story Rich</option>
-                
-                <!-- Card & Board Games -->
-                <option value="card-game">Card Game</option>
-                <option value="board-game">Board Game</option>
-                <option value="deck-building">Deck Building</option>
-                <option value="trading-card-game">Trading Card Game</option>
-                
-                <!-- Specialized Categories -->
-                <option value="educational">Educational</option>
-                <option value="programming">Programming</option>
-                <option value="typing">Typing</option>
-                <option value="music">Music</option>
-                <option value="rhythm">Rhythm</option>
-                
-                <!-- Style/Setting Categories -->
-                <option value="retro">Retro</option>
-                <option value="pixel-art">Pixel Art</option>
-                <option value="cyberpunk">Cyberpunk</option>
-                <option value="medieval">Medieval</option>
-                <option value="sci-fi">Sci-Fi</option>
-                <option value="fantasy">Fantasy</option>
-                <option value="historical">Historical</option>
-                <option value="post-apocalyptic">Post-Apocalyptic</option>
-                
-                <!-- Gameplay Mechanics -->
-                <option value="open-world">Open World</option>
-                <option value="metroidvania">Metroidvania</option>
-                <option value="bullet-hell">Bullet Hell</option>
-                <option value="auto-battler">Auto Battler</option>
-                <option value="idle">Idle</option>
               </select>
             </div>
             
@@ -225,41 +178,13 @@
         </div>
         
         <!-- Table will be rendered here with proper data-label attributes -->
-        <div id="table-container" class="mobile-responsive-table">
-        
-        <!-- Loading State -->
-        <div id="loadingState" class="table-loading" style="display: none;">
-          <div class="loading-spinner"></div>
-          <span>Loading games...</span>
-        </div>
-        
-        <!-- Empty State -->
-        <div id="emptyState" class="empty-table-state" style="display: none;">
-          <div class="empty-icon">🎮</div>
-          <h3 class="empty-title">No games found</h3>
-          <p class="empty-description">Try adjusting your search criteria or filters to find more games.</p>
-          
-          <div class="empty-stats">
-            <div class="stat-card">
-              <span class="stat-number">487</span>
-              <span class="stat-label">Total Games</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-number">336</span>
-              <span class="stat-label">With Options</span>
-            </div>
-          </div>
-          
-          <div class="empty-actions">
-            <button class="btn btn-primary" onclick="clearAllFilters()">Clear All Filters</button>
-            <button class="btn btn-secondary" onclick="showAllGames()">Show All Games</button>
-          </div>
-        </div>
-        
-        <!-- Pagination will be rendered here -->
-        <div id="pagination-container"></div>
+        <div id="table-container" class="mobile-responsive-table"></div>
       </section>
     </main>
+
+    <footer>
+      <p>Vanilla Slops &mdash; Community-verified Steam launch options. Not affiliated with Valve Corporation.</p>
+    </footer>
 
     <!-- Theme Toggle Button -->
     <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">

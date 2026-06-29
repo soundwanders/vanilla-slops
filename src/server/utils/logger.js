@@ -1,10 +1,16 @@
-/**
- * Log a message to the console with a timestamp
- * 
- * @param {...any} args - The messages or objects to log
- * 
- * @returns {void}
- */
+import pino from 'pino';
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+const logger = pino(
+  isDev
+    ? { level: 'debug', transport: { target: 'pino-pretty', options: { colorize: true, ignore: 'pid,hostname' } } }
+    : { level: 'info' }
+);
+
+export default logger;
+
+// Named export kept for any callers using `import { log }`
 export function log(...args) {
-  console.log(new Date().toISOString(), ...args);
+  logger.info(args.join(' '));
 }

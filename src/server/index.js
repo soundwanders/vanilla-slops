@@ -1,7 +1,10 @@
 import config from './config/env.js';
 import app from './app.js';
-import { log } from './utils/logger.js';
+import logger from './utils/logger.js';
 
-app.listen(config.port, () => {
-  log(`Server running at http://localhost:${config.port}`);
+const server = app.listen(config.port, () => {
+  logger.info(`Server running at http://localhost:${config.port}`);
 });
+
+process.on('SIGTERM', () => { server.close(() => logger.info('Server shut down')); });
+process.on('SIGINT', () => { server.close(() => logger.info('Server shut down')); });

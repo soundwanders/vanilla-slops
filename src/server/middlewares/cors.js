@@ -4,11 +4,18 @@ import cors from 'cors';
 const setupCORS = () => {
   const allowedOrigins = [];
   
-  // Production origins
+  // Production origins — CORS_ORIGIN may be a single value or comma-separated list
   if (process.env.CORS_ORIGIN) {
-    const corsOrigin = process.env.CORS_ORIGIN.replace(/\/$/, '');
-    allowedOrigins.push(corsOrigin);
-    console.log(`✅ CORS: Added production origin ${corsOrigin}`);
+    const corsOrigins = process.env.CORS_ORIGIN
+      .split(',')
+      .map(o => o.trim().replace(/\/$/, ''))
+      .filter(Boolean);
+    corsOrigins.forEach(origin => {
+      if (!allowedOrigins.includes(origin)) {
+        allowedOrigins.push(origin);
+      }
+    });
+    console.log(`✅ CORS: Added production origin ${corsOrigins.join(', ')}`);
   }
   
   if (process.env.DOMAIN_URL) {

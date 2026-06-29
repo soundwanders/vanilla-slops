@@ -74,7 +74,7 @@
 /* Table header sorting */
 .games-table th.sortable {
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   user-select: none;
 }
 
@@ -83,17 +83,26 @@
   color: var(--color-accent);
 }
 
-.games-table th.sortable::after {
-  content: '↕';
-  position: absolute;
-  right: var(--space-3);
-  opacity: 0.5;
-  font-size: var(--font-size-xs);
-  transition: opacity var(--transition-fast);
+.games-table th.sort-active {
+  color: var(--color-accent);
 }
 
-.games-table th.sortable:hover::after {
+.sort-indicator {
+  display: inline-block;
+  margin-left: var(--space-1);
+  opacity: 0.35;
+  font-size: 0.7em;
+  vertical-align: middle;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
+}
+
+.games-table th.sort-active .sort-indicator {
   opacity: 1;
+  color: var(--color-accent);
+}
+
+.games-table th.sortable:hover .sort-indicator {
+  opacity: 0.8;
 }
 
 /* Table body base */
@@ -602,6 +611,59 @@
   text-align: center;
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
+}
+
+/* Full-table error state */
+.table-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-16) var(--space-8);
+  text-align: center;
+}
+
+.table-error-icon {
+  font-size: 2.5rem;
+  color: var(--color-warning);
+  line-height: 1;
+}
+
+.table-error-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.table-error-message {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin: 0;
+  max-width: 36ch;
+}
+
+.table-error-retry {
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-white);
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.table-error-retry:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.table-error-retry:active {
+  transform: translateY(0);
 }
 
 .games-table.loading {

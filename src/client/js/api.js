@@ -4,8 +4,10 @@
  * Supports all backend endpoints with proper parameter validation
  */
 
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? '/api'  // Use relative URL in production (same domain)
+import { CACHE_MAX_SIZE, CACHE_TTL_MS, FETCH_MAX_RETRIES, DEFAULT_PAGE_SIZE, SUGGESTION_LIMIT } from './constants.js';
+
+const API_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
   : 'http://localhost:8000/api';
   
 /**
@@ -17,7 +19,7 @@ const API_URL = process.env.NODE_ENV === 'production'
  * @param {number} [ttl=300000] - Time to live in milliseconds (5 minutes)
  */
 class SlopCache {
-  constructor(maxSize = 100, ttl = 5 * 60 * 1000) { // 5 minutes TTL
+  constructor(maxSize = CACHE_MAX_SIZE, ttl = CACHE_TTL_MS) {
     this.cache = new Map();
     this.maxSize = maxSize;
     this.ttl = ttl;
@@ -37,14 +39,18 @@ class SlopCache {
 
   get(key) {
     const entry = this.cache.get(key);
-    
+
     if (!entry) return null;
-    
+
     if (Date.now() - entry.timestamp > this.ttl) {
       this.cache.delete(key);
       return null;
     }
-    
+
+    // Move to end to mark as most-recently-used
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+
     return entry.value;
   }
 
@@ -70,6 +76,8 @@ class SlopCache {
   }
 }
 
+export { SlopCache };
+
 const cache = new SlopCache();
 
 /**
@@ -87,7 +95,7 @@ const cache = new SlopCache();
  * @throws {Error} When all retry attempts fail
  */
 async function fetchWrapper(url, options = {}) {
-  const maxRetries = 3;
+  const maxRetries = FETCH_MAX_RETRIES;
   let attempt = 0;
 
   while (attempt < maxRetries) {
@@ -171,7 +179,7 @@ function buildQueryParams(params) {
  */
 export async function fetchGames({
   page = 1,
-  limit = 20,
+  limit = DEFAULT_PAGE_SIZE,
   search = '',
   category = '',
   developer = '',
@@ -258,7 +266,7 @@ export async function fetchGames({
  * //   { type: 'developer', value: 'Valve Corporation', category: 'Developers' }
  * // ]
  */
-export async function getSearchSuggestions(query, limit = 10) {
+export async function getSearchSuggestions(query, limit = SUGGESTION_LIMIT) {
   if (!query || query.length < 2) return [];
   
   const cacheKey = `suggestions:${query}:${limit}`;
@@ -524,7 +532,7 @@ export async function advancedSearch({
   filters = {},
   sort = { field: 'title', order: 'asc' },
   page = 1,
-  limit = 20,
+  limit = DEFAULT_PAGE_SIZE,
   fuzzy = false,
   exactMatch = false
 } = {}) {

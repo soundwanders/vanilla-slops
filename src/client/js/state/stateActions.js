@@ -87,6 +87,17 @@ const stateActions = {
     preventNextScroll: payload
   }),
 
+  // Sort management
+  SET_SORT: (state, payload) => ({
+    ...state,
+    filters: {
+      ...state.filters,
+      sort: payload.sort,
+      order: payload.order,
+    },
+    currentPage: 1,
+  }),
+
   // Compound actions for common use cases
   RESET_TO_PAGE_ONE: (state, payload) => ({
     ...state,

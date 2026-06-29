@@ -28,7 +28,7 @@ export const querySchema = z.object({
     .describe('Show all games including those without options (overrides hasOptions)'),
   
   // Sorting
-  sort: z.enum(['title', 'name', 'year', 'options', 'relevance', 'total_options_count', 'created_at'])
+  sort: z.enum(['title', 'name', 'year', 'options', 'relevance', 'total_options_count', 'created_at', 'developer'])
     .optional()
     .default('total_options_count')
     .describe('Sort field (default: total_options_count for options-first)'),
