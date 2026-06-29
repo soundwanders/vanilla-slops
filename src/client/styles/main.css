@@ -1,27 +1,11 @@
-/*
-   =============================================================================
+/* =============================================================================
    VANILLA SLOPS DESIGN SYSTEM
-   A complete, modern CSS design system built with CSS custom properties
-   Optimized for performance, accessibility, and responsive design
-   -----------------------------------------------------------------------------
-   Total size: ~50KB minified and gzipped
-   Compatible with: All modern browsers + IE11 fallbacks
-   Performance optimized for Core Web Vitals
-   Accessibility: WCAG 2.1 AA compliant
-   =============================================================================
-*/
+   ============================================================================= */
+@import 'tokens.css';
+@import 'base.css';
+@import 'layout.css';
+@import 'components.css';
+@import 'table.css';
+@import 'responsive.css';
 @import 'accessibility.css';
 @import 'animations.css';
-@import 'base.css';
-@import 'compatible.css';
-@import 'dropdown.css';
-@import 'filters.css';
-@import 'footer.css';
-@import 'hero.css';
-@import 'mobile_buff.css';
-@import 'pagination.css';
-@import 'performance.css';
-@import 'responsive.css';
-@import 'slops.css';
-@import 'table.css';
-@import 'tokens.css';

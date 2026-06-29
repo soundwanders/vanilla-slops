@@ -202,7 +202,7 @@ class StateManager {
   reset(keys, initialState, action = 'RESET') {
     const updates = {};
     keys.forEach(key => {
-      if (initialState.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(initialState, key)) {
         updates[key] = initialState[key];
       }
     });

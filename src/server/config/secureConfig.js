@@ -118,7 +118,7 @@ class SecureConfig {
   load(envPath = null) {
     try {
       // Determine .env file path
-      const dotenvPath = envPath || path.resolve(__dirname, '../../.env');
+      const dotenvPath = envPath || path.resolve(__dirname, '../../../.env');
       
       // Load .env file
       const loadResult = dotenv.config({ path: dotenvPath });
@@ -229,12 +229,13 @@ class SecureConfig {
    */
   _processValue(value, type) {
     switch (type) {
-      case 'number':
+      case 'number': {
         const num = parseInt(value);
         if (isNaN(num)) {
           throw new Error('must be a valid number');
         }
         return num;
+      }
       
       case 'boolean':
         return value.toLowerCase() === 'true';

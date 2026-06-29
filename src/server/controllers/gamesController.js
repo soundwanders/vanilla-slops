@@ -275,6 +275,17 @@ function analyzeResult(result, filters, strategy, logger) {
 }
 
 // ============================================================================
+// ERROR HELPERS
+// ============================================================================
+
+function sendError(res, status, code, message, requestId = null, detail = null) {
+  const body = { error: { code, message } };
+  if (requestId) body.requestId = requestId;
+  if (detail && process.env.NODE_ENV === 'development') body.error.detail = detail;
+  res.status(status).json(body);
+}
+
+// ============================================================================
 // CONTROLLER FUNCTIONS
 // ============================================================================
 
@@ -289,7 +300,7 @@ export async function gamesController(req, res) {
     logger.section('Games Controller Request');
 
     // Step 1: Analyze incoming request
-    const { hasOptions, showAll, analysis } = analyzeParameters(req.query, logger);
+    const { hasOptions, showAll } = analyzeParameters(req.query, logger);
 
     // Step 2: Determine filtering strategy
     const { strategy, hasLaunchOptions } = determineFilteringStrategy(hasOptions, showAll, logger);
@@ -312,7 +323,7 @@ export async function gamesController(req, res) {
     const result = await fetchGames(filters);
     
     // Step 5: Analyze and log results
-    const resultSummary = analyzeResult(result, filters, strategy, logger);
+    analyzeResult(result, filters, strategy, logger);
 
     // Step 6: Prepare response
     const response = {
@@ -355,12 +366,7 @@ export async function gamesController(req, res) {
       error: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
-
-    res.status(500).json({ 
-      error: 'Failed to fetch games',
-      requestId: logger.requestId,
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch games', logger.requestId, err.message);
   }
 }
 
@@ -388,10 +394,7 @@ export async function searchSuggestionsController(req, res) {
     res.json(suggestions);
   } catch (err) {
     logger.error('SUGGESTIONS', 'Failed to fetch suggestions', { error: err.message });
-    res.status(500).json({ 
-      error: 'Failed to fetch search suggestions',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch search suggestions', logger.requestId, err.message);
   }
 }
 
@@ -416,10 +419,7 @@ export async function filterFacetsController(req, res) {
     res.json(facets);
   } catch (err) {
     logger.error('FACETS', 'Failed to fetch facets', { error: err.message });
-    res.status(500).json({ 
-      error: 'Failed to fetch filter facets',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch filter facets', logger.requestId, err.message);
   }
 }
 
@@ -435,7 +435,7 @@ export async function gameDetailsController(req, res) {
     
     if (isNaN(gameId)) {
       logger.warning('DETAILS', 'Invalid game ID provided', { id, gameId });
-      return res.status(400).json({ error: 'Invalid game ID' });
+      return sendError(res, 400, 'INVALID_GAME_ID', 'Invalid game ID');
     }
 
     logger.info('DETAILS', 'Fetching game details', { gameId });
@@ -453,12 +453,9 @@ export async function gameDetailsController(req, res) {
     logger.error('DETAILS', 'Failed to fetch game details', { gameId: req.params.id, error: err.message });
     
     if (err.message.includes('not found')) {
-      res.status(404).json({ error: err.message });
+      sendError(res, 404, 'GAME_NOT_FOUND', err.message, logger.requestId);
     } else {
-      res.status(500).json({ 
-        error: 'Failed to fetch game details',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
-      });
+      sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game details', logger.requestId, err.message);
     }
   }
 }
@@ -475,7 +472,7 @@ export async function gameLaunchOptionsController(req, res) {
     
     if (isNaN(gameId)) {
       logger.warning('OPTIONS', 'Invalid game ID for launch options', { id });
-      return res.status(400).json({ error: 'Invalid game ID' });
+      return sendError(res, 400, 'INVALID_GAME_ID', 'Invalid game ID');
     }
 
     logger.info('OPTIONS', 'Fetching launch options only', { gameId });
@@ -490,10 +487,7 @@ export async function gameLaunchOptionsController(req, res) {
     res.json(launchOptions);
   } catch (err) {
     logger.error('OPTIONS', 'Failed to fetch launch options', { gameId: req.params.id, error: err.message });
-    res.status(500).json({ 
-      error: 'Failed to fetch launch options',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch launch options', logger.requestId, err.message);
   }
 }
 
@@ -526,9 +520,6 @@ export async function gameStatisticsController(req, res) {
     res.json(statistics);
   } catch (err) {
     logger.error('STATS', 'Failed to fetch statistics', { error: err.message });
-    res.status(500).json({ 
-      error: 'Failed to fetch game statistics',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game statistics', logger.requestId, err.message);
   }
 }

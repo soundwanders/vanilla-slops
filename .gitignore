@@ -19,6 +19,10 @@ changelog.md
 dist
 build
 
+# claude testing guide
+CLAUDE.md
+docs/supabase-setup.md
+
 # dotenv environment variable files
 .env
 .env.development.local
@@ -33,6 +37,10 @@ build
 # scripts directory
 scripts/*
 src/scripts
+
+# PostgreSQL database backup files (data extracted into supabase/seed.sql)
+*.backup
+*.backup.gz
 src/scripts/appdetails_cache.json
 src/scripts/backups
 src/scripts/readme.md
@@ -60,6 +68,9 @@ lib-cov
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+
+# Supabase
+/supabase
 
 # Dependency directories
 node_modules/

@@ -169,8 +169,8 @@ Retrieve launch options for a specific game.
 
 ## 🧘 Contributing
 
-Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, I would love to hear your ideas. 
-Your contributions can only make the project better, and maybe we'll both learn something along the way. 
+Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, share your ideas freely.
+Contributions can only make the project better, and maybe we'll both learn something along the way. 
 
 [📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
 
