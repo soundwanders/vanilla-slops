@@ -47,8 +47,8 @@ const stateActions = {
       engine: '',
       options: '',
       year: '',
-      sort: 'title',
-      order: 'asc',
+      sort: 'options',
+      order: 'desc',
       ...payload // Allow partial overrides
     }
   }),
