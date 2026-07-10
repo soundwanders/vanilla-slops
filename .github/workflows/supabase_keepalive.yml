@@ -1,13 +1,12 @@
-name: Supabase keepalive (backup)
+name: Supabase keepalive
 
-# PRIMARY keepalive: cron-job.org pings Supabase REST API directly once a week.
-# This workflow is a secondary backup only — GHA scheduled jobs can be delayed
-# by hours and are disabled after 60 days of repo inactivity, making them
-# unsuitable as the primary keepalive mechanism.
-#
-# Use this workflow for manual health checks only (Actions tab → Run workflow).
+# Supabase free tier pauses after 7 days of inactivity.
+# Twice-weekly pings keep the project alive indefinitely.
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 2'  # Tuesday noon UTC
+    - cron: '0 12 * * 5'  # Friday noon UTC
+  workflow_dispatch:       # Allow manual trigger from Actions tab
 
 jobs:
   ping:
