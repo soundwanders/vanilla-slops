@@ -545,8 +545,7 @@ async function getReleaseYears(searchQuery = '') {
     });
 
     return Array.from(years)
-      .sort((a, b) => b.localeCompare(a)) // Newest first
-      .slice(0, 10); // Limit to recent years
+      .sort((a, b) => b.localeCompare(a)); // Newest first, all years included
   } catch (error) {
     console.error('Error in getReleaseYears:', error);
     return [];

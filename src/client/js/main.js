@@ -248,6 +248,14 @@ function updateShowAllFilterUI(isChecked) {
   const statsElement = document.querySelector('#showAllStats');
   const helpElement = document.getElementById('showAllGamesHelp');
   const checkbox = document.getElementById('showAllGamesFilter');
+  const filterGroup = document.getElementById('showAllFilterGroup');
+
+  // Hide the toggle entirely when every matching game already has options —
+  // toggling would change nothing, and an empty count badge looks broken
+  if (filterGroup) {
+    const isPointless = stats.withoutOptions === 0 && !isChecked;
+    filterGroup.style.display = isPointless ? 'none' : 'block';
+  }
 
   if (checkbox && checkbox.checked !== isChecked) {
     checkbox.checked = isChecked;
