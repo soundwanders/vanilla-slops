@@ -64,15 +64,6 @@ export const querySchema = z.object({
     .optional()
     .transform((val) => val ? Number(val) : undefined),
 }).refine((data) => {
-  // Validation: If explicitly filtering for no-options, must use showAll
-  if (data.options === 'no-options' && !data.showAll) {
-    return false;
-  }
-  return true;
-}, {
-  message: "When filtering for games without options (options='no-options'), showAll must be true",
-  path: ['showAll']
-}).refine((data) => {
   // Validation: minOptionsCount should be less than maxOptionsCount
   if (data.minOptionsCount !== undefined && data.maxOptionsCount !== undefined) {
     return data.minOptionsCount <= data.maxOptionsCount;

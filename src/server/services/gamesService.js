@@ -207,9 +207,14 @@ function applySearchFilters(query, filters) {
       case 'no-options':
         query = query.eq('total_options_count', 0);
         break;
-      case 'performance':
-      case 'graphics':
-        // These would need specific implementation based on launch option categories
+      case 'many-options':
+        query = query.gte('total_options_count', 5);
+        break;
+      case 'few-options':
+        query = query.gte('total_options_count', 1).lte('total_options_count', 4);
+        break;
+      default:
+        // Unknown filter value — fall back to default options-first behavior
         query = query.gt('total_options_count', 0);
         break;
     }
@@ -223,29 +228,22 @@ function applySearchFilters(query, filters) {
     query = query.lte('total_options_count', maxOptionsCount);
   }
 
-  // Release year filter
+  // Release year filter — release_date is text, so substring match covers
+  // both display format ("Feb 8, 2018") and ISO format ("2018-02-08")
   if (yearFilter) {
-    console.log(`📅 Year filter: ${yearFilter}`);
-    const year = yearFilter.trim();
-    
-    try {
-      const yearInt = parseInt(year, 10);
-      
-      if (!isNaN(yearInt) && yearInt >= 1980 && yearInt <= new Date().getFullYear() + 1) {
-        // Multiple fallback strategies for timestamp compatibility
-        query = query.or(`extract(year from release_date)::text.eq.${yearInt},release_date.ilike.%${year}%`);
-      } else {
-        console.warn(`⚠️ Invalid year format: ${year}`);
-      }
-    } catch (error) {
-      console.error(`❌ Year filter error: ${error.message}`);
-      // Fallback to simple string matching
-      query = query.ilike('release_date', `%${year}%`);
+    const yearInt = parseInt(yearFilter.trim(), 10);
+
+    if (!isNaN(yearInt) && yearInt >= 1980 && yearInt <= new Date().getFullYear() + 1) {
+      query = query.ilike('release_date', `%${yearInt}%`);
+    } else {
+      console.warn(`⚠️ Invalid year filter ignored: ${yearFilter}`);
     }
   }
 
-  // Has launch options filter
-  if (hasLaunchOptions !== undefined) {
+  // Has launch options filter — skipped when an explicit `options` filter is
+  // present, since that filter already constrains total_options_count and the
+  // two would contradict (e.g. no-options + hasLaunchOptions=true → no results)
+  if (hasLaunchOptions !== undefined && !options) {
     if (hasLaunchOptions) {
       query = query.gt('total_options_count', 0);
     } else {
@@ -439,9 +437,12 @@ export async function getFacets(searchQuery = '') {
  */
 async function getFacetValues(field, searchQuery = '') {
   try {
+    // Count only games with launch options so facet counts match the default
+    // options-first view (otherwise "Engine (19)" shows 14 visible results)
     let query = supabase
       .from('games')
-      .select(field);
+      .select(field)
+      .gt('total_options_count', 0);
 
     // Apply search filter if provided
     if (searchQuery && searchQuery.trim()) {
@@ -512,9 +513,11 @@ async function getOptionsCountRanges() {
  */
 async function getReleaseYears(searchQuery = '') {
   try {
+    // Same options-first scoping as getFacetValues
     let query = supabase
       .from('games')
-      .select('release_date');
+      .select('release_date')
+      .gt('total_options_count', 0);
 
     if (searchQuery && searchQuery.trim()) {
       const searchTerms = searchQuery.trim().split(/\s+/);
