@@ -645,8 +645,14 @@ export default class SlopSearch {
       search: this.currentQuery,
       sort: this.currentSort,
       order: this.currentOrder,
-      ...this.currentFilters 
     };
+
+    // Include every registered filter key explicitly — removed filters must
+    // send '' so downstream MERGE_FILTERS overwrites the stale value in state.
+    // Spreading currentFilters alone omits removed keys, leaving them stuck on.
+    Object.keys(this.filterElements).forEach((key) => {
+      allFilters[key] = this.currentFilters[key] || '';
+    });
 
     if (this.onFilterChange && typeof this.onFilterChange === 'function') {
       this.onFilterChange(allFilters);
