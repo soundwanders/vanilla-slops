@@ -1,0 +1,287 @@
+# Changelog
+
+All notable changes to Vanilla Slops will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### Version Numbering
+- **Major** (X.0.0): Breaking changes, major feature additions
+- **Minor** (0.X.0): New features, significant improvements
+- **Patch** (0.0.X): Bug fixes, small improvements
+
+### Categories
+- **Added**: New features
+- **Changed**: Changes to existing functionality
+- **Deprecated**: Soon-to-be removed features
+- **Removed**: Removed features
+- **Fixed**: Bug fixes
+- **Security**: Security vulnerability fixes
+
+## [Unreleased]
+
+## [1.0.0] - 2026-07-12 — Public launch
+
+First production release. Live at **launchoptions.dev**.
+
+### Added
+- Deployed to Vercel (Express as a serverless function via `api/index.js` + `vercel.json`)
+- Custom domain `launchoptions.dev` (Porkbun DNS, `www` → apex 301 redirect)
+- SEO meta tags pointed at production domain (canonical, Open Graph, Twitter Card, JSON-LD)
+- Supabase keepalive via cron-job.org (weekly REST ping); GitHub Actions workflow kept as a manual backup
+- "5+ options" and "1–4 options" launch-option count filters
+- Regression tests for filter-clear behavior
+
+### Fixed
+- Clearing a filter token now actually clears it — removed filters send an explicit empty value (previously left filters stuck and caused "No games found" loops)
+- "No Launch Options" filter returning 400 (contradictory validation rule + options/hasOptions precedence)
+- Year filter returning 500 (raw SQL `extract()` replaced with `ilike` substring match)
+- Facet dropdown counts now match the default options-first view
+- Show All toggle: inverted help text, blank count badge, and now hidden when it would do nothing
+- Release-year list no longer truncated to 10 newest years
+- Mobile logo flashing full-size on load (explicit `width`/`height`)
+- Doubled "Tap to copy" hint and duplicated source/verified/vote icons
+- Dark-mode hero title now legible (ice-blue accent instead of near-invisible dark blue)
+
+### Changed
+- Compacted launch-option cards (less padding, smaller command text, tighter grid)
+- Scraper rescan raised coverage from 208 → 699 games with launch options
+
+### Removed
+- Dead Category filter and non-functional Performance/Graphics filter options
+
+## [0.9.0] - 2026-06-28 — Prototype → production overhaul
+
+Diamond-tier hardening pass across architecture, testing, and infrastructure.
+
+### Added
+- Vitest test suite + GitHub Actions CI (lint + test on PRs)
+- Husky + lint-staged pre-commit hooks
+- Structured logging with pino (request id, status, duration)
+- Standardized API error shape (`{ error: { code, message } }`)
+- Centralized constants module (`constants.js`) for magic numbers
+- Column sort (title / developer / options count) with Steam store links
+- Skeleton loading screens and offline detection
+- WebP logo with PNG fallback
+
+### Changed
+- Split the 1,700-line `table.js` into focused UI modules (table, empty-states, filters, mobile-gestures, pagination, search, theme)
+- Consolidated stylesheet count (~17 → 9 files) around design tokens
+- Server-side facets cache (5-min TTL) + N+1 launch-options query collapsed into a single nested select
+- Upgraded client cache from FIFO to LRU eviction
+
+### Fixed
+- Broken inline `onclick` handlers on empty-state buttons (moved to event delegation)
+- Missing `<html lang>` attribute (WCAG 3.1.1)
+- Misleading JSDoc on search handlers
+
+### Deferred
+- Sentry error tracking and a formal OpenAPI spec (post-launch)
+
+## [0.8.0] - 2025-05-30
+
+### Added
+- Smart pagination with page number display (e.g., `1 2 ... 5 6 7 ... 99 100`)
+- Quick jump functionality for large datasets
+- Mobile-responsive pagination controls
+- ARIA labels and screen reader support for pagination
+- Enhanced loading states with user feedback
+- Copy buttons for launch options display
+- Dark theme support across all components
+
+### Changed
+- Replaced infinite scroll with traditional pagination for better performance
+- Improved table layout with card-style display on mobile devices
+- Enhanced launch options layout with accent stripes
+- Upgraded error handling with user-friendly retry options
+
+### Removed
+- Infinite scroll implementation due to performance concerns with large datasets
+- Scroll sentinel references from HTML structure
+
+### Fixed
+- `renderPagination() not found` error preventing games from loading
+- Memory usage issues with large game datasets
+- Accessibility issues in table navigation
+
+## [0.7.0] - 2025-05-29
+
+### Added
+- Complete design system with fluid typography and responsive scaling
+- Token-based color system with automatic dark mode support
+- Component library including buttons (6 variants, 4 sizes), forms, tables, cards, modals
+- WCAG 2.1 AA compliant accessibility features
+- Keyboard navigation support for all interactive components
+- Performance optimizations with GPU acceleration and content visibility
+- Steam-specific components for game data display
+
+### Changed
+- Migrated to mobile-first responsive design approach
+- Implemented Perfect Fourth scale (1.333) for consistent spacing
+- Enhanced visual hierarchy with semantic color tokens
+
+## [0.6.2] - 2025-05-28
+
+### Added
+- ESLint configuration with ES2021 module support
+- Basic test infrastructure in `src/client/__tests__/`
+- Environment configuration template (`.env.example`)
+- Production build scripts (`build:client`, `build`, `start`)
+- Code linting scripts (`lint`, `lint:fix`)
+
+### Fixed
+- GitHub Actions workflow (`cicada.yml`) build failures
+- ES module server handling in CI/CD pipeline
+- Branch-specific validation for dev vs production environments
+
+### Changed
+- Optimized CI/CD triggers to run only on `main` and `dev` branches
+- Updated package.json scripts for better build management
+
+## [0.6.1] - 2025-05-28
+
+### Added
+- Dynamic filter population via API calls
+- Engine filter with automatic creation and population
+- "Clear All Filters" button for easy reset
+- Loading states for filter operations
+- Enhanced URL state management for deep linking
+
+### Changed
+- Improved search filters component with dual compatibility support
+- Enhanced dropdown labels and options display
+- Better visual styling for filter dropdowns
+
+### Fixed
+- Year filter display issues (automatically hidden)
+- Filter synchronization across components
+
+## [0.6.0] - 2025-05-26
+
+### Added
+- Centralized state management with AppState object
+- Smart caching with TTL and size limits
+- Debounced search with autocomplete suggestions
+- Request deduplication and retry logic
+- Loading states and error boundaries
+- Active filter display with removal functionality
+- Comprehensive JSDoc documentation
+
+### Added - API Endpoints
+- `GET /api/games` - Games list with search, filter, and pagination
+- `GET /api/games/suggestions` - Search autocomplete
+- `GET /api/games/facets` - Available filter options
+- `GET /api/games/:id` - Single game with launch options
+- `GET /api/games/:id/launch-options` - Game-specific launch options
+
+### Fixed
+- Missing backend service functions (`getSearchSuggestions`, `getFacets`, etc.)
+- Frontend-backend contract misalignment
+- Parameter mapping between frontend filters and backend expectations
+- Response validation in frontend components
+
+### Changed
+- Improved coordination between search component and main controller
+- Enhanced error logging with development vs production handling
+- Better filter synchronization across all components
+
+## [0.5.0] - 2025-05-20
+
+### Added
+- End-to-end data flow from user input to database rendering
+- Real-time games data fetching and table rendering
+- Responsive design for search controls and games table
+- Design tokens for consistent styling
+
+### Changed
+- Integrated Supabase data rendering in main UI
+- Unified button, card, and pagination styles
+- Improved CSS utility structure
+
+### Removed
+- Unused CSS styles and redundant design elements
+
+## [0.4.0] - 2025-05-19
+
+### Added
+- Comprehensive JSDoc documentation for client and server JavaScript files
+
+## [0.3.2] - 2025-05-18
+
+### Added
+- Semantic HTML structure for improved accessibility
+- URL state synchronization for page tracking
+- Search filters system with sort selector
+- Deep linking support for pagination and filtering
+- URL parameter parsing on page load
+
+### Changed
+- Refactored client-side JavaScript into smaller, focused modules
+- Enhanced UX for searching and filtering operations
+- Improved DOM structure and HTML semantics
+
+## [0.3.1] - 2025-05-16
+
+### Added
+- Express.js backend API foundation
+- RESTful routes under `/api/games` endpoint
+- Pagination and sorting query support (`?page=1&limit=20&sort=name&order=asc`)
+- Request validation using Zod schemas
+- Middleware for logging, CORS, error handling, and 404 responses
+- Clean route/controller architecture
+
+### Changed
+- Established standardized error handling patterns
+- Implemented graceful fallback defaults for API parameters
+
+## [0.3.0] - 2025-05-14
+
+### Added
+- Improved database insert/upsert logic for launch options
+- Junction table support for many-to-many relationships
+- Nested query patterns for efficient data retrieval
+
+### Fixed
+- Database query error in `fetch_steam_launch_options_from_db` function
+- Incorrect filtering on non-existent `app_id` column
+- Many-to-many relationship integrity in normalized schema
+
+### Changed
+- Updated launch options fetching to use proper junction table queries
+- Maintained separation between `games`, `launch_options`, and `game_launch_options` tables
+
+## [0.2.0] - 2025-05-13
+
+### Added
+- Modular Python package structure with `core/`, `scrapers/`, `utils/`, and `constants/`
+- CLI interface with `argparse` support
+- Command-line flags: `--top-sellers`, `--top-played`, `--limit`, `--force-refresh`, `--test`
+- Centralized constants for regex patterns and game engines
+- Safe parameter handling for optional test results
+
+### Changed
+- Refactored `SlopScraper` class to manage state while scrapers remain stateless
+- Functions now receive explicit context objects instead of relying on class state
+- Deduplicated launch option patterns and engine detection logic
+
+### Fixed
+- Import errors across modules with proper exports/imports
+- Operator precedence in conditional checks
+- Recursion parameter passing to prevent silent failures
+
+## [0.1.0] - 2025-04-22
+
+### Added
+- Progress bars for game filtering and source checking
+- Signal handlers for graceful shutdown (SIGINT, SIGTERM)
+- Periodic cache saving every 3 games during long runs
+- Dedicated signal handler method in main class
+
+### Changed
+- Enhanced progress bar output with current game indication
+- Improved error handling with partial result saving
+- Streamlined source checking process
+- Cleaner output formatting
+
+### Fixed
+- Exit handling to properly save cache and data before termination
