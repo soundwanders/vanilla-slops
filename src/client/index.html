@@ -71,7 +71,8 @@
             <a href="/" class="home-link" aria-label="Go Home - Vanilla Slops">
               <picture>
                 <source srcset="/slops-logo.webp" type="image/webp" />
-                <img src="/slops-logo.png" alt="Vanilla Slops Logo" class="hero-logo" />
+                <img src="/slops-logo.png" alt="Vanilla Slops Logo" class="hero-logo"
+                     width="112" height="112" decoding="async" />
               </picture>
             </a>
           </div>
@@ -114,14 +115,6 @@
           <fieldset class="filter-fieldset">
             <legend class="sr-only">Filter games by various criteria</legend>
             
-            <!-- Row 1: Category and Developer -->
-            <div class="filter-group">
-              <label class="filter-label" for="categoryFilter">Category</label>
-              <select class="filter-select" id="categoryFilter" aria-label="Filter by category" name="category">
-                <option value="">All Categories</option>
-              </select>
-            </div>
-            
             <div class="filter-group">
               <label class="filter-label" for="developerFilter">Developer</label>
               <select class="filter-select" id="developerFilter" aria-label="Filter by developer" name="developer">
@@ -143,8 +136,6 @@
                 <option value="">Any Options</option>
                 <option value="has-options">Has Launch Options</option>
                 <option value="no-options">No Launch Options</option>
-                <option value="performance">Performance Options</option>
-                <option value="graphics">Graphics Options</option>
               </select>
             </div>
             
