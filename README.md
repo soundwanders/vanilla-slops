@@ -16,7 +16,7 @@
 ## 👖 Vanilla Slops?
 
 **Vanilla Slops** is a web application that provides a searchable database of community-verified launch options for games on [Steam](https://store.steampowered.com/).
-s
+
 The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by an Express.js API and Supabase (PostgreSQL).
 
 The core philosophy of this project aims to recreate some of the functionality that modern frameworks abstract away, while remaining lightweight, fast, and secure.
@@ -30,27 +30,29 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 ## 🐸 Features
 
 #### **🔎 Smart Search & Discovery**
-- **Real-time search suggestions** across titles, developers, publishers with instant results
-- **Custom filtering** by category, engine, release year, and launch options
+- **Real-time search suggestions** across titles, developers, and publishers
+- **Filtering** by developer, engine, release year, and launch-option count
+- **Column sorting** by title, developer, or number of launch options
 
 #### **🍓 Steam Launch Options Database**
-- **Categorized by purpose**: Performance boosting, graphics optimization, compatibility fixes
-- **Source attribution** linking back to original documentation and community contributions
+- **Normalized data model** — each command is stored once and shared across every game that uses it
+- **Source attribution** showing where each option came from (PCGamingWiki, ProtonDB, community curation)
 
 #### **🛡️ Code Quality & Safety**
-- **Accessibility-first design** with semantic HTML and full keyboard navigation
-- **Security hardened** with input validation, CORS policies, and rate limiting
-- **Type-safe architecture** using Zod schemas throughout the stack
+- **Accessibility-first** with semantic HTML, ARIA, and full keyboard navigation
+- **Security hardened** with Zod input validation, CORS policies, and rate limiting
+- **Tested** with a Vitest suite plus lint + test CI on every pull request
 
 ---
 
 ## 🏗️ Architecture
 
 #### **A Look Under the Hood**
-- **Frontend**: Vanilla JavaScript (ES6+) with Vite for development
-- **Backend**: Node.js + Express.js with middleware-based architecture
-- **Database**: Supabase (PostgreSQL) with optimized queries and indexing
-- **Data Collection**: Python-based scraper with Steam API integration
+- **Frontend**: Vanilla JavaScript (ES6+, no framework) with a custom Redux-style state manager, bundled by Vite
+- **Backend**: Node.js + Express with a routes → controllers → services structure
+- **Database**: Supabase (PostgreSQL) — normalized many-to-many schema with trigram search indexes
+- **Data collection**: Python scraper pulling from the Steam API, PCGamingWiki, and community sources
+- **Hosting**: Deployed on Vercel, live at [launchoptions.dev](https://launchoptions.dev)
 
 
 ---
@@ -93,9 +95,10 @@ DOMAIN_URL=placeholder.com
 | `npm run dev:server` | Start backend with nodemon only |
 | `npm run build` | **Build for production** |
 | `npm start` | **Run production server** |
-| `npm test` | Run tests (placeholder) |
+| `npm test` | Run the test suite (Vitest) |
 | `npm run lint` | Check code with ESLint |
 | `npm run lint:fix` | Fix ESLint issues automatically |
+| `npm run db:verify` | Test the Supabase connection |
 
 ---
 
@@ -120,9 +123,9 @@ Retrieve games with advanced filtering and pagination.
 **Query Parameters:**
 - `search` - Search term for games, developers, publishers
 - `developer` - Filter by developer name
-- `options` - Filter by launch options (`has-options`, `no-options`, `performance`, `graphics`)
+- `options` - Filter by launch-option count (`has-options`, `no-options`, `many-options`, `few-options`)
 - `year` - Filter by release year
-- `sort` - Sort field (`title`, `year`, `options`, `relevance`)
+- `sort` - Sort field (`title`, `developer`, `options`)
 - `order` - Sort direction (`asc`, `desc`)
 - `page` - Page number (default: 1)
 - `limit` - Items per page (default: 20, max: 100)
