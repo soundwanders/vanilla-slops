@@ -12,9 +12,6 @@ node_modules
 src/client/api-test
 src/client/api-test/*
 
-# changelog 
-changelog.md
-
 # build files
 dist
 build
