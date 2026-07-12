@@ -78,8 +78,7 @@ async function initializeFilters() {
     
     // Populate each filter dropdown
     populateFilterDropdown('developerFilter', facets.developers, 'All Developers');
-    populateFilterDropdown('categoryFilter', facets.genres, 'All Categories');
-    populateFilterDropdown('engineFilter', facets.engines, 'All Engines'); 
+    populateFilterDropdown('engineFilter', facets.engines, 'All Engines');
     populateYearFilter(facets.releaseYears);
     populateOptionsFilter();
     
@@ -169,8 +168,8 @@ async function addShowAllGamesFilter() {
       percentageWithOptions: stats.percentageWithOptions
     });
   } catch (error) {
-    console.error('Failed to fetch statistics, using fallback:', error);
-    stateManager.dispatch('MERGE_STATS', { withOptions: 94, withoutOptions: 1033, total: 1127 });
+    console.error('Failed to fetch statistics:', error);
+    stateManager.dispatch('MERGE_STATS', { withOptions: 0, withoutOptions: 0, total: 0 });
   }
   
   const stats = getGameStats(stateManager.getState());
@@ -192,8 +191,10 @@ async function addShowAllGamesFilter() {
   }
 
   const checkboxChecked = isShowingAll ? 'checked' : '';
-  const labelText = isShowingAll ? 'All games' : '';
-  const statsText = isShowingAll ? `+${stats.withoutOptions}` : `${stats.withoutOptions}`;
+  const labelText = '';
+  const statsText = isShowingAll
+    ? 'All games'
+    : (stats.withoutOptions > 0 ? `+${stats.withoutOptions}` : '');
 
   filterGroup.innerHTML = `
     <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
@@ -247,19 +248,29 @@ function updateShowAllFilterUI(isChecked) {
   const statsElement = document.querySelector('#showAllStats');
   const helpElement = document.getElementById('showAllGamesHelp');
   const checkbox = document.getElementById('showAllGamesFilter');
+  const filterGroup = document.getElementById('showAllFilterGroup');
+
+  // Hide the toggle entirely when every matching game already has options —
+  // toggling would change nothing, and an empty count badge looks broken
+  if (filterGroup) {
+    const isPointless = stats.withoutOptions === 0 && !isChecked;
+    filterGroup.style.display = isPointless ? 'none' : 'block';
+  }
 
   if (checkbox && checkbox.checked !== isChecked) {
     checkbox.checked = isChecked;
   }
 
   if (statsElement) {
-    statsElement.textContent = `${stats.withoutOptions}`;
+    statsElement.textContent = isChecked
+      ? 'All games'
+      : (stats.withoutOptions > 0 ? `+${stats.withoutOptions}` : '');
   }
 
   if (helpElement) {
     helpElement.textContent = isChecked
-      ? `Hiding ${stats.withoutOptions} games without launch options. Showing ${stats.withOptions} games with options.`
-      : `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options.`;
+      ? `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options.`
+      : `Showing only ${stats.withOptions} games with launch options. ${stats.withoutOptions} games hidden.`;
   }
 }
 
@@ -433,9 +444,7 @@ function populateOptionsFilter() {
     { value: 'has-options', label: 'Has Launch Options' },
     { value: 'no-options', label: 'No Launch Options' },
     { value: 'many-options', label: '5+ Launch Options' },
-    { value: 'few-options', label: '1-4 Launch Options' },
-    { value: 'performance', label: 'Performance Options' },
-    { value: 'graphics', label: 'Graphics Options' }
+    { value: 'few-options', label: '1-4 Launch Options' }
   ];
   
   optionsData.forEach(item => {
@@ -776,7 +785,6 @@ function initializeSearchComponent() {
       activeFiltersId: 'activeFilters',
       sortId: 'sortSelect',
       filters: {
-        category: 'categoryFilter',
         developer: 'developerFilter',
         engine: 'engineFilter', 
         options: 'optionsFilter',
