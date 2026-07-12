@@ -882,10 +882,28 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  /* Command wraps within the space left after the copy hint, so long/multi-word
+     commands (-USEALLAVAILABLECORES, -malloc=system) never collide with it */
+  .table-container .option-command > code {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   /* Mobile copy hint is a real .copy-hint span rendered by table.js —
-     do not duplicate it here with a pseudo-element */
+     do not duplicate it here with a pseudo-element. It reserves its own
+     column and never wraps to two lines. */
+  .table-container .copy-hint {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-tertiary);
+    opacity: 0.7;
+  }
 
   .table-container .option-command:active {
     transform: scale(0.98) translateZ(0);
