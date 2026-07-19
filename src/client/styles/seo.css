@@ -8,6 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-4);
   max-width: 900px;
   margin: 0 auto;
@@ -28,13 +29,23 @@
   border-radius: var(--radius-md);
 }
 
-/* The theme toggle floats at the viewport's top-right (shared #theme-toggle
-   styles, same as the homepage). Once the centered 900px header stops having
-   room beside it, reserve space so "Search all games" never sits underneath. */
-@media (max-width: 1060px) {
-  .seo-header {
-    padding-right: var(--space-20);
-  }
+.seo-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+/* Theme toggle sits inline at the right edge of the header, aligned with the
+   content column. The homepage keeps its viewport-fixed toggle — that works
+   there because the hero is full-bleed; here the content is a narrow centered
+   column, so a viewport-corner button strands itself in empty margin. */
+.seo-page #theme-toggle {
+  position: static;
+  box-shadow: none;
+}
+
+@media (max-width: 560px) {
+  .seo-header-actions { gap: var(--space-4); }
 }
 
 .seo-cta {
