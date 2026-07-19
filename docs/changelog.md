@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Discoverability**: server-rendered per-game landing pages at `/game/:appid/:slug`
+  with unique `<title>`/meta/canonical, Open Graph (each game's Steam header art),
+  and VideoGame + BreadcrumbList JSON-LD — real crawlable content, no client JS
+- Dynamic `sitemap.xml` (homepage + every game with options) and `robots.txt`
+- `docs/sql-snippets.sql` — curated Supabase query reference (health, data-quality, insight)
+- `docs/scraper-data-quality-handoff.md` — extractor-fix spec for the slop-scraper repo
+
+## [1.0.1] - 2026-07-19 — Post-launch hardening
+
+### Fixed
+- **Data quality**: removed 46 junk ProtonDB rows (`WINEPREFIX=` setup instructions,
+  truncated fragments, trailing-punctuation, prose-words) and cleaned ~30 polluted
+  descriptions (raw wiki markup from PCGamingWiki, garbled ProtonDB report fragments)
+- Mobile: long / multi-word launch options no longer collide with the "Tap to copy" hint
+- README Features/Architecture corrected to match reality (dropped the removed Category
+  filter, the "categorized by purpose" claim, and the "Zod throughout the stack"
+  overclaim); added a Visit-the-Site link and Vercel hosting note
+- `.env` `DOMAIN_URL` had `NODE_ENV=production` mashed onto it (malformed value)
+
+### Changed
+- Scraper rescan: coverage grew to ~1,430 games with options; release dates now stored
+  as ISO `YYYY-MM-DD` (unblocks clean chronological date sorting)
+
 ## [1.0.0] - 2026-07-12 — Public launch
 
 First production release. Live at **launchoptions.dev**.

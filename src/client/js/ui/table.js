@@ -51,7 +51,7 @@ const SORTABLE_COLUMNS = [
   { label: CONFIG.DATA_LABELS.title, field: 'title' },
   { label: CONFIG.DATA_LABELS.developer, field: 'developer' },
   { label: CONFIG.DATA_LABELS.publisher, field: null },
-  { label: CONFIG.DATA_LABELS.releaseDate, field: null }, // text column, not sortable until migrated to date type
+  { label: CONFIG.DATA_LABELS.releaseDate, field: 'release_date' }, // ISO YYYY-MM-DD sorts chronologically
   { label: CONFIG.DATA_LABELS.engine, field: null },
   { label: CONFIG.DATA_LABELS.launchOptions, field: 'options' },
 ];
@@ -95,10 +95,27 @@ function renderGamesTable(container, games) {
   if (TableState.isMobile) buffMobileTableView(table);
 }
 
+/**
+ * URL-safe slug for /game/:appid/:slug links. Mirrors src/server/utils/slugify.js
+ * so the internal link matches the server's canonical URL (no 301 hop on click).
+ */
+function slugify(str) {
+  return String(str || '')
+    .replace(/[™®©]/g, '')
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
+    .replace(/-+$/g, '') || 'game';
+}
+
 function createGameRowHTML(game) {
   const gameId = game.app_id;
   const optionsCount = game.total_options_count || 0;
   const releaseDate = formatDate(game.release_date);
+  const slug = slugify(game.title);
   const title = escapeHtml(game.title || 'Unknown');
   const developer = escapeHtml(game.developer || 'Unknown');
   const publisher = escapeHtml(game.publisher || 'Unknown');
@@ -108,12 +125,17 @@ function createGameRowHTML(game) {
     <tr role="row" data-game-id="${gameId}" class="game-row">
       <td data-label="${CONFIG.DATA_LABELS.title}" role="gridcell" class="game-title-cell">
         <div class="game-title">
+          <a href="/game/${gameId}/${slug}"
+             class="game-page-link"
+             title="${title} launch options"
+          >${title}</a>
           <a href="https://store.steampowered.com/app/${gameId}"
              target="_blank"
              rel="noopener noreferrer"
              class="steam-link"
-             title="View on Steam store"
-          >${title}<span class="steam-external-icon" aria-hidden="true">↗</span></a>
+             title="View ${title} on Steam"
+             aria-label="View ${title} on Steam store"
+          ><span class="steam-external-icon" aria-hidden="true">↗</span></a>
         </div>
       </td>
       <td data-label="${CONFIG.DATA_LABELS.developer}" role="gridcell" class="game-developer-cell">

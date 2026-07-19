@@ -1,8 +1,15 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "src/client/dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "src/client/dist/index.html"
+    }
+  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.js" },
+    { "source": "/game/:path*", "destination": "/api/index.js" },
+    { "source": "/sitemap.xml", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

@@ -287,7 +287,9 @@ function applySorting(query, sort, order) {
   }
   
   if (validSortFields.includes(sortField)) {
-    query = query.order(sortField, { ascending });
+    // nullsFirst:false keeps missing values (e.g. blank release dates) at the end
+    // regardless of sort direction
+    query = query.order(sortField, { ascending, nullsFirst: false });
   } else {
     // Default sort
     query = query.order('title', { ascending: true });
@@ -617,6 +619,41 @@ export async function getGameStatistics(filters = {}) {
     console.error('Error in getGameStatistics:', error);
     throw error;
   }
+}
+
+/**
+ * Fetch every game that has launch options, for sitemap generation.
+ * Paginates past Supabase's 1000-row default cap. Only games with options are
+ * returned — pages for optionless games would be thin content.
+ *
+ * @async
+ * @returns {Promise<Array<{app_id:number, title:string, updated_at:string}>>}
+ */
+export async function getGamesForSitemap() {
+  const PAGE = 1000;
+  let from = 0;
+  const all = [];
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data, error } = await supabase
+      .from('games')
+      .select('app_id, title, updated_at')
+      .gt('total_options_count', 0)
+      .order('app_id', { ascending: true })
+      .range(from, from + PAGE - 1);
+
+    if (error) {
+      console.error('Error in getGamesForSitemap:', error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+
+  return all;
 }
 
 /**

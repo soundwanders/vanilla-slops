@@ -1,0 +1,128 @@
+/* =============================================================================
+   SEO GAME LANDING PAGES
+   Styles for the server-rendered /game/:appid/:slug pages. These pages reuse the
+   .launch-option* classes from table.css and add their own page chrome here.
+   ============================================================================= */
+
+.seo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+.seo-home {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.seo-home img {
+  border-radius: var(--radius-md);
+}
+
+.seo-cta {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.seo-cta:hover { text-decoration: underline; }
+
+.seo-main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-6) var(--space-12);
+}
+
+.seo-breadcrumb {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-4);
+}
+
+.seo-breadcrumb a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.seo-breadcrumb a:hover { text-decoration: underline; }
+
+.seo-title {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: var(--font-weight-extrabold);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-3);
+}
+
+.seo-subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-6);
+}
+
+.seo-subtitle a { color: var(--color-accent); }
+
+.game-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-5);
+  margin-bottom: var(--space-8);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.game-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.game-meta-row span {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+}
+
+.game-meta-row strong {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.seo-empty {
+  color: var(--color-text-secondary);
+  padding: var(--space-6);
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.seo-footer-cta {
+  margin-top: var(--space-10);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-subtle);
+  text-align: center;
+}
+
+.seo-foot {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-6);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  border-top: 1px solid var(--color-border-subtle);
+}

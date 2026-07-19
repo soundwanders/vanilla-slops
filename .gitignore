@@ -9,8 +9,13 @@ lerna-debug.log*
 node_modules
 **/__pycache__
 **/slops-setup-guide.md
+
+# MISC PROJECT FILES
 src/client/api-test
 src/client/api-test/*
+docs/sql-snippets.sql
+appdetails_cache.json
+*/appdetails_cache.json
 
 # build files
 dist

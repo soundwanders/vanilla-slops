@@ -2,7 +2,9 @@
 
 Steam launch options are command-line parameters that modify game behavior, performance, and compatibility. These options are set through Steam's Properties menu (right-click game → Properties → General → Launch Options).
 
-This reference covers over 200 documented Steam launch options, from universal parameters to game-specific tweaks. The options range from simple performance improvements to advanced debugging tools, providing users with extensive control over their gaming experience. 
+This reference covers over 200 documented Steam launch options, from universal parameters to game-specific tweaks. The options range from simple performance improvements to advanced debugging tools, providing users with extensive control over their gaming experience.
+
+> **What is *not* a launch option?** A launch option is something Steam substitutes for `%command%` (e.g. `-novid`, or `PROTON_NO_ESYNC=1 %command%` on Linux). It is **not** a terminal setup command. Things like `WINEPREFIX=/home/you/.steam/.../pfx winetricks d3dcompiler_43` are one-off shell instructions you run in a terminal — never paste those into Steam's launch-options box. If a "launch option" contains an absolute filesystem path, ends in stray punctuation, or reads like a sentence, it's almost certainly mis-copied instructions rather than a real option.
 
 ## Universal Steam Launch Options
 
@@ -189,6 +191,36 @@ Unreal Engine games support comprehensive launch parameters for graphics, perfor
 -dx11 -ResX=1920 -ResY=1080 -windowed -USEALLAVAILABLECORES
 ```
 
+## Linux and Proton Launch Options (Steam Deck)
+
+On Linux and the Steam Deck, most launch options are **environment variables placed before `%command%`** in Steam's launch-options box, or wrapper commands. These control Proton (Valve's compatibility layer), the DXVK/VKD3D translation layers, and system performance tools. They are fully legitimate launch options — distinct from the terminal `WINEPREFIX=... winetricks` setup commands noted at the top of this document.
+
+### Performance Wrappers
+- **`gamemoderun %command%`** - Runs the game under Feral GameMode (CPU governor + priority tuning). Often written as **`gamemode`** in shorthand.
+- **`mangohud %command%`** - Overlays an FPS/frametime/temperature HUD (MangoHud).
+- **`DXVK_HUD=fps %command%`** - DXVK's built-in overlay. Values: `fps`, `full`, `1`, or a comma list like `version,devinfo,fps`.
+
+### Proton Behavior
+- **`PROTON_NO_ESYNC=1 %command%`** - Disables esync. Fixes some games that hang or crash with sync primitives.
+- **`PROTON_NO_FSYNC=1 %command%`** - Disables fsync. Same purpose as above on kernels with fsync support.
+- **`PROTON_FORCE_LARGE_ADDRESS_AWARE=1 %command%`** - Forces the 4GB large-address-aware flag. Fixes memory crashes in older 32-bit games.
+- **`PROTON_USE_WINED3D=1 %command%`** - Uses WineD3D (OpenGL) instead of DXVK. Fallback when Vulkan translation misbehaves.
+- **`PROTON_LOG=1 %command%`** - Writes a Proton debug log to your home directory. For troubleshooting only.
+
+### Wine Layer
+- **`WINEARCH=win32 %command%`** / **`WINEARCH=win64 %command%`** - Forces a 32- or 64-bit Wine prefix (must match a fresh prefix).
+- **`WINEDLLOVERRIDES="xaudio2_7=n,b" %command%`** - Overrides how specific DLLs load (native/builtin). Common fix for missing audio or video.
+
+### Steam Deck UI / Compatibility
+- **`-gamepadui`** - Enables the gamepad-optimized (Big Picture / Deck) UI in supported games.
+- **`-steamdeck`** - Makes a game believe it is running on a Steam Deck, applying Deck-specific defaults.
+- **`-force-low-power-device`** - (Unity) Uses the integrated GPU — useful for battery life on handhelds.
+
+### Common Steam Deck / Proton Setup
+```
+gamemoderun mangohud PROTON_NO_ESYNC=1 %command%
+```
+
 ## Game-Specific Launch Options
 
 ### Grand Theft Auto V
@@ -290,11 +322,11 @@ Unreal Engine games support comprehensive launch parameters for graphics, perfor
 - OpenGL and Vulkan preferred rendering APIs
 - **`-force-wayland`** - Experimental Wayland support (Unity)
 - Steam Linux Runtime affects option compatibility
+- See **[Linux and Proton Launch Options](#linux-and-proton-launch-options-steam-deck)** for the `PROTON_*`, `DXVK_HUD`, `gamemode`, and `mangohud` options
 
 ### Steam Deck
-- **`-gamepadui`** - Enables gamepad-optimized UI
-- **`-steamdeck`** - Pretends to be Steam Deck for compatibility
-- Specific compatibility layer considerations
+- Runs games through Proton — most launch options are the Proton/Wine environment variables covered in the [Linux and Proton](#linux-and-proton-launch-options-steam-deck) section
+- `-gamepadui` and `-steamdeck` toggle Deck-specific UI and compatibility behavior
 
 ## Security and Safety Guidelines
 

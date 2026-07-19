@@ -156,12 +156,32 @@
 }
 
 /* Steam store link */
-.steam-link {
+/* Title links to the internal /game/:appid/:slug page */
+.game-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.game-page-link {
   color: var(--color-text-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: color var(--transition-fast);
+}
+
+.game-page-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* Secondary link out to the Steam store */
+.steam-link {
+  color: var(--color-text-tertiary);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  flex-shrink: 0;
   transition: color var(--transition-fast);
 }
 
@@ -170,14 +190,13 @@
 }
 
 .steam-external-icon {
-  font-size: 0.65em;
-  opacity: 0;
+  font-size: 0.7em;
+  opacity: 0.55;
   transition: opacity var(--transition-fast);
-  flex-shrink: 0;
 }
 
 .steam-link:hover .steam-external-icon {
-  opacity: 0.7;
+  opacity: 1;
 }
 
 /* Developer and publisher */
