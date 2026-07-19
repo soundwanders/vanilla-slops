@@ -149,15 +149,22 @@ function renderGamePage(game, slug) {
   <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
   <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
+  <script src="/game-theme.js"></script>
   <link rel="icon" href="/favicon.ico" />
 </head>
-<body>
+<body class="seo-page">
   <header class="seo-header">
     <a href="/" class="seo-home" aria-label="Vanilla Slops home">
       <img src="/slops-logo.png" alt="" width="40" height="40" />
       <span>Vanilla Slops</span>
     </a>
-    <a href="/" class="seo-cta">Search all games →</a>
+    <div class="seo-header-actions">
+      <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
+        <span aria-hidden="true">🌓</span>
+        <span class="sr-only">Toggle Theme</span>
+      </button>
+      <a href="/" class="seo-cta">Search all games →</a>
+    </div>
   </header>
 
   <main class="seo-main">
@@ -216,8 +223,9 @@ function render404() {
   <meta name="robots" content="noindex" />
   <title>Game not found — Vanilla Slops</title>
   ${getCssHref() ? `<link rel="stylesheet" href="${getCssHref()}" />` : ''}
+  <script src="/game-theme.js"></script>
 </head>
-<body>
+<body class="seo-page">
   <main class="seo-main">
     <h1 class="seo-title">Game not found</h1>
     <p class="seo-subtitle">We couldn't find that game. <a href="/">Search the full database →</a></p>

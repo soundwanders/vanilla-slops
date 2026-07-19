@@ -28,6 +28,21 @@
   border-radius: var(--radius-md);
 }
 
+.seo-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* On game pages the theme toggle sits inline in the header, not floating
+   top-right like on the homepage. Scoped to .seo-page so the homepage
+   toggle keeps its fixed positioning. */
+.seo-page #theme-toggle {
+  position: static;
+  top: auto;
+  right: auto;
+}
+
 .seo-cta {
   color: var(--color-accent);
   font-weight: var(--font-weight-semibold);
