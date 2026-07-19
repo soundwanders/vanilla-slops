@@ -437,31 +437,58 @@ export async function getFacets(searchQuery = '') {
 /**
  * Get unique values for a specific field with occurrence counts
  */
+/**
+ * Fetch every row matching a query, paging past Supabase's 1000-row cap.
+ * Counting rows without this silently undercounts once a table exceeds 1000.
+ *
+ * @param {Function} buildQuery - (from, to) => Supabase query for that range
+ * @returns {Promise<Array>} all matching rows
+ */
+async function fetchAllRows(buildQuery) {
+  const PAGE = 1000;
+  let from = 0;
+  const all = [];
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { data, error } = await buildQuery(from, from + PAGE - 1);
+    if (error) {
+      console.error('Paged fetch error:', error);
+      break;
+    }
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+
+  return all;
+}
+
 async function getFacetValues(field, searchQuery = '') {
   try {
     // Count only games with launch options so facet counts match the default
     // options-first view (otherwise "Engine (19)" shows 14 visible results)
-    let query = supabase
-      .from('games')
-      .select(field)
-      .gt('total_options_count', 0);
+    const data = await fetchAllRows((from, to) => {
+      let query = supabase
+        .from('games')
+        .select(field)
+        .gt('total_options_count', 0);
 
-    // Apply search filter if provided
-    if (searchQuery && searchQuery.trim()) {
-      const searchTerms = searchQuery.trim().split(/\s+/);
-      searchTerms.forEach(term => {
-        query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
-      });
-    }
+      // Apply search filter if provided
+      if (searchQuery && searchQuery.trim()) {
+        const searchTerms = searchQuery.trim().split(/\s+/);
+        searchTerms.forEach(term => {
+          query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
+        });
+      }
 
-    const { data, error } = await query
-      .not(field, 'is', null)
-      .not(field, 'eq', '');
-
-    if (error) {
-      console.error(`Error fetching ${field} facets:`, error);
-      return [];
-    }
+      return query
+        .not(field, 'is', null)
+        .not(field, 'eq', '')
+        .order('app_id', { ascending: true })
+        .range(from, to);
+    });
 
     // Count occurrences
     const counts = {};
@@ -515,24 +542,26 @@ async function getOptionsCountRanges() {
  */
 async function getReleaseYears(searchQuery = '') {
   try {
-    // Same options-first scoping as getFacetValues
-    let query = supabase
-      .from('games')
-      .select('release_date')
-      .gt('total_options_count', 0);
+    // Same options-first scoping as getFacetValues, paged past the 1000-row cap
+    const data = await fetchAllRows((from, to) => {
+      let query = supabase
+        .from('games')
+        .select('release_date')
+        .gt('total_options_count', 0);
 
-    if (searchQuery && searchQuery.trim()) {
-      const searchTerms = searchQuery.trim().split(/\s+/);
-      searchTerms.forEach(term => {
-        query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
-      });
-    }
+      if (searchQuery && searchQuery.trim()) {
+        const searchTerms = searchQuery.trim().split(/\s+/);
+        searchTerms.forEach(term => {
+          query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
+        });
+      }
 
-    const { data, error } = await query
-      .not('release_date', 'is', null)
-      .not('release_date', 'eq', '');
-
-    if (error) return [];
+      return query
+        .not('release_date', 'is', null)
+        .not('release_date', 'eq', '')
+        .order('app_id', { ascending: true })
+        .range(from, to);
+    });
 
     const years = new Set();
     data?.forEach(item => {
@@ -578,31 +607,32 @@ export async function getGameStatistics(filters = {}) {
   try {
     console.log('📊 Calculating game statistics with filters:', filters);
 
-    let query = supabase
-      .from('games')
-      .select('total_options_count', { count: 'exact' });
-
-    // Apply same filters as main games query
-    query = applySearchFilters(query, {
+    const baseFilters = {
       searchTerm: filters.search || filters.searchQuery || '',
       developer: filters.developer || '',
       genre: filters.category || '',
       engine: filters.engine || '',
       yearFilter: filters.year || ''
-    });
+    };
 
-    const { data, count, error } = await query;
-    
-    if (error) {
-      console.error('Statistics query error:', error);
+    // Two count-only queries (head:true transfers no rows). Counting rows in JS
+    // instead would silently undercount — Supabase caps returned rows at 1000,
+    // so `withOptions` would stop at 1000 while `count` stayed exact.
+    let totalQuery = supabase.from('games').select('*', { count: 'exact', head: true });
+    totalQuery = applySearchFilters(totalQuery, baseFilters);
+
+    let withOptionsQuery = supabase.from('games').select('*', { count: 'exact', head: true });
+    withOptionsQuery = applySearchFilters(withOptionsQuery, baseFilters).gt('total_options_count', 0);
+
+    const [totalRes, withRes] = await Promise.all([totalQuery, withOptionsQuery]);
+
+    if (totalRes.error || withRes.error) {
+      console.error('Statistics query error:', totalRes.error || withRes.error);
       throw new Error('Failed to fetch game statistics from database');
     }
 
-    const gamesWithOptions = data?.filter(game => 
-      game.total_options_count && game.total_options_count > 0
-    ).length || 0;
-    
-    const total = count || 0;
+    const total = totalRes.count || 0;
+    const gamesWithOptions = withRes.count || 0;
     const gamesWithoutOptions = total - gamesWithOptions;
     const percentageWithOptions = total > 0 ? (gamesWithOptions / total) * 100 : 0;
 

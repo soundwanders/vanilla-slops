@@ -191,7 +191,6 @@ async function addShowAllGamesFilter() {
   }
 
   const checkboxChecked = isShowingAll ? 'checked' : '';
-  const labelText = '';
   const statsText = isShowingAll
     ? 'All games'
     : (stats.withoutOptions > 0 ? `+${stats.withoutOptions}` : '');
@@ -206,7 +205,6 @@ async function addShowAllGamesFilter() {
       aria-describedby="showAllGamesHelp"
     />
     <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="${isShowingAll}">
-      <span class="checkbox-label-text">${labelText}</span>
       <span class="checkbox-stats" id="showAllStats">${statsText}</span>
     </label>
     <div id="showAllGamesHelp" class="sr-only">

@@ -7,13 +7,16 @@
 .seo-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--space-4);
   max-width: 900px;
   margin: 0 auto;
   padding: var(--space-4) var(--space-6);
 }
+
+/* Logo left; CTA + toggle grouped at the right (margin-left:auto on the CTA
+   pushes it and everything after it over). */
+.seo-cta { margin-left: auto; }
 
 .seo-home {
   display: inline-flex;
@@ -29,12 +32,6 @@
   border-radius: var(--radius-md);
 }
 
-.seo-header-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-}
-
 /* Theme toggle sits inline at the right edge of the header, aligned with the
    content column. The homepage keeps its viewport-fixed toggle — that works
    there because the hero is full-bleed; here the content is a narrow centered
@@ -42,10 +39,24 @@
 .seo-page #theme-toggle {
   position: static;
   box-shadow: none;
+  margin-left: var(--space-4);
 }
 
-@media (max-width: 560px) {
-  .seo-header-actions { gap: var(--space-4); }
+/* Narrow screens: keep the toggle on the logo's line (top-right) and drop the
+   CTA to its own full-width row, rather than pairing CTA + toggle on line two. */
+@media (max-width: 640px) {
+  .seo-page .seo-home { order: 1; }
+
+  .seo-page #theme-toggle {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .seo-page .seo-cta {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
 }
 
 .seo-cta {

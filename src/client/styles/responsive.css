@@ -385,6 +385,15 @@
     flex: unset;
   }
 
+  /* Show All spans the full grid row — in a single narrow cell its label wraps
+     to two lines and the toggle looks lopsided. Overrides the desktop
+     min/max-width, which otherwise wins on specificity. */
+  .filters-container .show-all-filter {
+    grid-column: 1 / -1;
+    min-width: 0;
+    max-width: none;
+  }
+
   .filter-label { font-size: var(--font-size-xs); margin-bottom: var(--space-2); }
 
   .filter-select,
