@@ -153,18 +153,17 @@ function renderGamePage(game, slug) {
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
+  <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
+    <span aria-hidden="true">🌓</span>
+    <span class="sr-only">Toggle Theme</span>
+  </button>
+
   <header class="seo-header">
     <a href="/" class="seo-home" aria-label="Vanilla Slops home">
       <img src="/slops-logo.png" alt="" width="40" height="40" />
       <span>Vanilla Slops</span>
     </a>
-    <div class="seo-header-actions">
-      <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
-        <span aria-hidden="true">🌓</span>
-        <span class="sr-only">Toggle Theme</span>
-      </button>
-      <a href="/" class="seo-cta">Search all games →</a>
-    </div>
+    <a href="/" class="seo-cta">Search all games →</a>
   </header>
 
   <main class="seo-main">
