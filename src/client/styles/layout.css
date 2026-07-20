@@ -399,16 +399,47 @@
    SITE FOOTER
    ============================================================================= */
 
+/* Deliberately understated: no surface panel or radius, just a hairline rule and
+   quiet text so it recedes behind the content. */
 footer {
   text-align: center;
-  padding: var(--space-2xl) var(--space-md);
-  margin-top: var(--space-3xl);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
+  padding: var(--space-xl) var(--space-md);
+  margin: var(--space-2xl) auto 0;
   max-width: 1280px;
-  margin-left: auto;
-  margin-right: auto;
+  color: var(--color-text-tertiary);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+footer p {
+  margin: 0;
+}
+
+.footer-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.01em;
+}
+
+.footer-line {
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed);
+  opacity: 0.85;
+}
+
+.footer-sep {
+  margin: 0 var(--space-2);
+  opacity: 0.45;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.footer-link:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }

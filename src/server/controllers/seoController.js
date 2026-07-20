@@ -188,7 +188,14 @@ function renderGamePage(game, slug) {
   </main>
 
   <footer class="seo-foot">
-    <p>Vanilla Slops — Community-verified Steam launch options. Not affiliated with Valve Corporation.</p>
+    <p class="footer-name">
+      <a href="/" class="footer-link">Vanilla Slops</a>
+      <span class="footer-sep" aria-hidden="true">&middot;</span>
+      <a href="https://github.com/soundwanders/vanilla-slops"
+         target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+    </p>
+    <p class="footer-line">Community-verified Steam launch options</p>
+    <p class="footer-line">Not affiliated with Valve Corporation</p>
   </footer>
 </body>
 </html>`;
