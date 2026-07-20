@@ -28,15 +28,10 @@ export function renderBasicEmptyState(container) {
 
 function determineEmptyStateType(filters, stats) {
   const hasSearch = filters.search && filters.search.trim();
-  const hasFilters = Object.entries(filters).some(([key, val]) =>
-    key !== 'showAll' && key !== 'hasOptions' && val && val.toString().trim()
-  );
+  const hasFilters = Object.entries(filters).some(([, val]) => val && val.toString().trim());
 
   if (stats.total === 0) return 'database-empty';
-  if (hasSearch && stats.total === 0) return 'search-no-results';
-  if (!filters.showAll && stats.withOptions === 0) {
-    return hasSearch || hasFilters ? 'search-no-results' : 'no-options-found';
-  }
+  if (hasSearch) return 'search-no-results';
   if (hasFilters) return 'all-games-filtered';
   return 'default';
 }
@@ -80,7 +75,6 @@ function createNoOptionsFoundHTML(stats) {
       </div>
     </div>
     <div class="empty-actions ${TableState.isMobile ? 'mobile-actions' : ''}">
-      <button class="${btn} btn-primary" data-action="show-all">Show all ${stats.total || 0} games</button>
       <button class="${btn} btn-secondary" data-action="learn-more">Learn about launch options</button>
     </div>
   `;
@@ -93,15 +87,7 @@ function createSearchNoResultsHTML(filters, stats) {
   return `
     <div class="empty-icon">🔍</div>
     <h3 class="empty-title">No results found${searchTerm ? ` for "${searchTerm}"` : ''}</h3>
-    <p class="empty-description">
-      ${filters.showAll ? 'No games match your search criteria.' : 'No games with launch options match your search criteria.'}
-    </p>
-    ${!filters.showAll && stats.withoutOptions > 0 ? `
-      <div class="empty-suggestion ${TableState.isMobile ? 'mobile-suggestion' : ''}">
-        <p>💡 Try <button class="inline-btn" data-action="show-all">showing all games</button>
-        to see ${stats.withoutOptions} more results without launch options.</p>
-      </div>
-    ` : ''}
+    <p class="empty-description">No games match your search criteria.</p>
     <div class="empty-actions ${TableState.isMobile ? 'mobile-actions' : ''}">
       <button class="${btn} btn-secondary" data-action="clear-search">Clear search</button>
       <button class="${btn} btn-secondary" data-action="clear-filters">Clear all filters</button>
@@ -132,7 +118,6 @@ function createAllFilteredHTML(filters, stats) {
     </div>
     <div class="empty-actions ${TableState.isMobile ? 'mobile-actions' : ''}">
       <button class="${btn} btn-primary" data-action="clear-filters">Clear all filters</button>
-      ${!filters.showAll ? `<button class="${btn} btn-secondary" data-action="show-all">Show all games</button>` : ''}
     </div>
   `;
 }
@@ -174,7 +159,6 @@ function getActiveFiltersDescription(filters) {
   if (filters.category) active.push(`Category: ${filters.category}`);
   if (filters.year) active.push(`Year: ${filters.year}`);
   if (filters.options) active.push(`Options: ${filters.options}`);
-  if (!filters.showAll) active.push('Only games with launch options');
 
   return active.length > 0
     ? active.map(f => `<span class="filter-tag ${TableState.isMobile ? 'mobile-filter-tag' : ''}">${f}</span>`).join('')
@@ -188,7 +172,6 @@ export function setupEmptyStateEventListeners() {
     e.preventDefault();
     if (TableState.touchDevice && 'vibrate' in navigator) navigator.vibrate(50);
     switch (action) {
-      case 'show-all': triggerShowAllGames(); break;
       case 'clear-search': triggerClearSearch(); break;
       case 'clear-filters': triggerClearFilters(); break;
       case 'learn-more': showLaunchOptionsInfo(); break;
@@ -201,16 +184,6 @@ export function setupEmptyStateEventListeners() {
       if (searchTerm) triggerSearch(searchTerm);
     }
   });
-}
-
-export function triggerShowAllGames() {
-  const checkbox = document.getElementById('showAllGamesFilter');
-  if (checkbox) {
-    checkbox.checked = true;
-    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-  } else {
-    document.dispatchEvent(new CustomEvent('showAllGames'));
-  }
 }
 
 export function triggerClearSearch() {
@@ -228,11 +201,6 @@ export function triggerClearFilters() {
     select.selectedIndex = 0;
     select.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  const showAllCheckbox = document.getElementById('showAllGamesFilter');
-  if (showAllCheckbox) {
-    showAllCheckbox.checked = false;
-    showAllCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-  }
   document.dispatchEvent(new CustomEvent('clearAllFilters'));
 }
 

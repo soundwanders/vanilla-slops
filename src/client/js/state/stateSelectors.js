@@ -23,9 +23,7 @@ export const getCleanFilters = (state) => {
     options: filters.options || '',
     year: filters.year || '',
     sort: filters.sort || 'title',
-    order: filters.order || 'asc',
-    hasOptions: filters.hasOptions,
-    showAll: filters.showAll
+    order: filters.order || 'asc'
   };
 };
 
@@ -78,9 +76,7 @@ export const getAPIFilters = (state) => {
     options: filters.options,
     year: filters.year,
     sort: filters.sort,
-    order: filters.order,
-    showAll: filters.showAll,
-    hasOptions: filters.hasOptions
+    order: filters.order
   };
 };
 
@@ -90,42 +86,23 @@ export const getAPIFilters = (state) => {
  */
 
 /**
- * Determines current filtering mode
+ * Reads game statistics from state with safe defaults
  * @param {Object} state - Application state
- * @returns {string} Filter mode ('SHOW_ALL' or 'OPTIONS_FIRST')
+ * @returns {Object} Game statistics
  */
-export const getFilterMode = (state) => {
-  const filters = state.filters || {};
-  return filters.showAll ? 'SHOW_ALL' : 'OPTIONS_FIRST';
-};
-
-/**
- * Checks if show-all checkbox should be checked
- * @param {Object} state - Application state
- * @returns {boolean} True if show-all checkbox should be checked
- */
-export const shouldShowAllCheckboxBeChecked = (state) => {
-  return (state.filters?.showAll === true);
-};
-
-/**
- * Provides checkbox state information for debugging
- * @param {Object} state - Application state
- * @returns {Object} Checkbox state details
- */
-export const getCheckboxStateInfo = (state) => {
-  const shouldBeChecked = shouldShowAllCheckboxBeChecked(state);
-  return {
-    shouldBeChecked,
-    mode: getFilterMode(state),
-    description: shouldBeChecked ? 'show all games' : 'only games with options'
+export const getGameStats = (state) => {
+  return state.gameStats || {
+    withOptions: 0,
+    withoutOptions: 0,
+    total: 0,
+    percentageWithOptions: 0
   };
 };
 
 /**
- * Checks if any filters are currently active
+ * Whether any user-driven filter, search or non-default sort is active
  * @param {Object} state - Application state
- * @returns {boolean} True if any filters are active
+ * @returns {boolean} True when filters deviate from defaults
  */
 export const hasActiveFilters = (state) => {
   const filters = getCleanFilters(state);
@@ -142,74 +119,17 @@ export const hasActiveFilters = (state) => {
 };
 
 /**
- * @module PaginationSelectors
- * @description Functions for handling pagination state
- */
-
-/**
- * Retrieves pagination information for UI
- * @param {Object} state - Application state
- * @returns {Object} Pagination details
- */
-export const getPaginationInfo = (state) => {
-  return {
-    currentPage: state.currentPage || 1,
-    totalPages: state.totalPages || 0,
-    hasNextPage: (state.currentPage || 1) < (state.totalPages || 0),
-    hasPrevPage: (state.currentPage || 1) > 1
-  };
-};
-
-/**
- * Determines if pagination controls should be displayed
- * @param {Object} state - Application state
- * @returns {boolean} True if pagination controls should be shown
- */
-export const shouldShowPagination = (state) => {
-  return (state.totalPages || 0) > 1;
-};
-
-/**
- * @module StatisticsSelectors
- * @description Functions for handling game statistics
- */
-
-/**
- * Retrieves game statistics with fallback values
- * @param {Object} state - Application state
- * @returns {Object} Game statistics object
- */
-export const getGameStats = (state) => {
-  return state.gameStats || {
-    withOptions: 0,
-    withoutOptions: 0,
-    total: 0,
-    percentageWithOptions: 0
-  };
-};
-
-/**
- * Formats statistics for UI display based on filter mode
+ * Formats statistics for UI display
  * @param {Object} state - Application state
  * @returns {Object} Formatted statistics for UI
  */
 export const getFormattedStats = (state) => {
   const stats = getGameStats(state);
-  const mode = getFilterMode(state);
-  
-  if (mode === 'SHOW_ALL') {
-    return {
-      primary: `${stats.total} total games`,
-      secondary: `${stats.withOptions} with options, ${stats.withoutOptions} without`,
-      description: `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options.`
-    };
-  } else {
-    return {
-      primary: `${stats.withOptions} games with options`,
-      secondary: `${stats.withoutOptions} games hidden`,
-      description: `Showing only ${stats.withOptions} games with launch options. ${stats.withoutOptions} games hidden.`
-    };
-  }
+  return {
+    primary: `${stats.total} games`,
+    secondary: `${stats.withOptions} with launch options`,
+    description: `Showing ${stats.total} games, ${stats.withOptions} with known launch options.`
+  };
 };
 
 /**
@@ -226,15 +146,7 @@ export const getURLParams = (state) => {
   const params = new URLSearchParams();
   const filters = getCleanFilters(state);
   
-  if (filters.showAll === true) {
-    params.set('showAll', 'true');
-  } else if (filters.hasOptions === true) {
-    params.set('hasOptions', 'true');
-  }
-
   Object.entries(filters).forEach(([key, value]) => {
-    if (key === 'showAll' || key === 'hasOptions') return;
-    
     if (value !== undefined && value !== null && value !== '' && value.toString().trim()) {
       params.set(key, value);
     }

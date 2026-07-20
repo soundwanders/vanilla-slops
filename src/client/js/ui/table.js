@@ -7,7 +7,7 @@ import {
 } from './mobile-gestures.js';
 import {
   renderEmptyState, renderBasicEmptyState,
-  triggerShowAllGames, triggerClearSearch, triggerClearFilters
+  triggerClearSearch, triggerClearFilters
 } from './empty-states.js';
 
 window.addEventListener('resize', debounce(() => {
@@ -174,9 +174,9 @@ function generateLaunchOptionsButton(gameId, gameTitle, optionsCount) {
     `;
   }
   return `
-    <span class="no-options-text" aria-label="No launch options available">
+    <span class="no-options-text" aria-label="No known launch options for ${escapeHtml(gameTitle)} yet">
       <span class="no-options-icon" aria-hidden="true">—</span>
-      <span class="no-options-label">No Options</span>
+      <span class="no-options-label">No known options yet</span>
     </span>
   `;
 }
@@ -793,7 +793,6 @@ export {
   getSafeAreaInsets,
   escapeHtml,
   formatDate,
-  triggerShowAllGames,
   triggerClearSearch,
   triggerClearFilters,
   TableState

@@ -389,8 +389,6 @@ export function createAppStateManager() {
     
     // Filter state
     filters: {
-      hasOptions: true,
-      showAll: false,
       search: '',
       category: '',
       developer: '',

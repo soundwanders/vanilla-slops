@@ -26,8 +26,6 @@ const stateManager = new StateManager({
   currentPage: 1,
   isLoading: false,
   filters: {
-    hasOptions: true,
-    showAll: false,
     search: '',
     category: '',
     developer: '',
@@ -90,7 +88,6 @@ async function initializeFilters() {
 
     stateManager.dispatch('SET_FILTERS_INITIALIZED', true);
 
-    addShowAllGamesFilter();
   } catch (error) {
     console.error('Failed to initialize filters:', error);
     
@@ -146,132 +143,6 @@ function populateEngineFilterWithDefaults() {
   }
 }
 
-async function addShowAllGamesFilter() {
-  // Find the fieldset where filters belong
-  const fieldset = document.querySelector('.filters-container fieldset');
-  if (!fieldset) {
-    console.error('❌ Fieldset not found in filters container');
-    return;
-  }
-  
-  // Check if there's an existing placeholder or filter to replace
-  let existingFilter = document.getElementById('showAllFilterGroup') || 
-                      fieldset.querySelector('.show-all-filter');
-  
-  // Get statistics
-  try {
-    const stats = await fetchGameStatistics();
-    stateManager.dispatch('MERGE_STATS', {
-      withOptions: stats.withOptions,
-      withoutOptions: stats.withoutOptions,
-      total: stats.total,
-      percentageWithOptions: stats.percentageWithOptions
-    });
-  } catch (error) {
-    console.error('Failed to fetch statistics:', error);
-    stateManager.dispatch('MERGE_STATS', { withOptions: 0, withoutOptions: 0, total: 0 });
-  }
-  
-  const stats = getGameStats(stateManager.getState());
-  
-  // Ensure correct initial state detection
-  const currentState = stateManager.getState();
-  const isShowingAll = currentState.filters?.showAll === true;
-
-  // Create or update the filter group
-  let filterGroup;
-  
-  if (existingFilter) {
-    filterGroup = existingFilter;
-    filterGroup.style.display = 'block';
-  } else {
-    filterGroup = document.createElement('div');
-    filterGroup.className = 'filter-group show-all-filter';
-    filterGroup.id = 'showAllFilterGroup';
-  }
-
-  const checkboxChecked = isShowingAll ? 'checked' : '';
-  const statsText = isShowingAll
-    ? 'All games'
-    : (stats.withoutOptions > 0 ? `+${stats.withoutOptions}` : '');
-
-  filterGroup.innerHTML = `
-    <label class="filter-label" for="showAllGamesFilter">Show All Games</label>
-    <input 
-      type="checkbox" 
-      id="showAllGamesFilter" 
-      class="sr-only"
-      ${checkboxChecked}
-      aria-describedby="showAllGamesHelp"
-    />
-    <label for="showAllGamesFilter" class="show-all-checkbox-container" role="button" tabindex="0" aria-pressed="${isShowingAll}">
-      <span class="checkbox-stats" id="showAllStats">${statsText}</span>
-    </label>
-    <div id="showAllGamesHelp" class="sr-only">
-      ${isShowingAll 
-        ? `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options`
-        : `Showing only ${stats.withOptions} games with launch options. ${stats.withoutOptions} games hidden.`
-      }
-    </div>
-  `;
-  
-  if (!existingFilter) {
-    fieldset.appendChild(filterGroup);
-  }
-
-  const checkbox = filterGroup.querySelector('#showAllGamesFilter');
-  if (checkbox) {
-    const newCheckbox = checkbox.cloneNode(true);
-    checkbox.parentNode.replaceChild(newCheckbox, checkbox);
-    newCheckbox.checked = isShowingAll;
-    newCheckbox.addEventListener('change', handleShowAllFilterChange);
-  } else {
-    console.error('❌ Failed to find checkbox element after DOM insertion');
-  }
-}
-
-function syncShowAllCheckboxWithState() {
-  const checkbox = document.getElementById('showAllGamesFilter');
-  if (!checkbox) return;
-
-  const shouldBeChecked = stateManager.getState().filters?.showAll === true;
-  if (checkbox.checked !== shouldBeChecked) {
-    checkbox.checked = shouldBeChecked;
-    updateShowAllFilterUI(shouldBeChecked);
-  }
-}
-
-function updateShowAllFilterUI(isChecked) {
-  const stats = getGameStats(stateManager.getState());
-  const statsElement = document.querySelector('#showAllStats');
-  const helpElement = document.getElementById('showAllGamesHelp');
-  const checkbox = document.getElementById('showAllGamesFilter');
-  const filterGroup = document.getElementById('showAllFilterGroup');
-
-  // Hide the toggle entirely when every matching game already has options —
-  // toggling would change nothing, and an empty count badge looks broken
-  if (filterGroup) {
-    const isPointless = stats.withoutOptions === 0 && !isChecked;
-    filterGroup.style.display = isPointless ? 'none' : 'block';
-  }
-
-  if (checkbox && checkbox.checked !== isChecked) {
-    checkbox.checked = isChecked;
-  }
-
-  if (statsElement) {
-    statsElement.textContent = isChecked
-      ? 'All games'
-      : (stats.withoutOptions > 0 ? `+${stats.withoutOptions}` : '');
-  }
-
-  if (helpElement) {
-    helpElement.textContent = isChecked
-      ? `Showing all ${stats.total} games including ${stats.withoutOptions} without launch options.`
-      : `Showing only ${stats.withOptions} games with launch options. ${stats.withoutOptions} games hidden.`;
-  }
-}
-
 // Refresh filter statistics periodically
 /**
  * Refreshes the filter statistics based on current StateManager filters
@@ -292,46 +163,15 @@ async function refreshFilterStatistics() {
     
     const stats = await fetchGameStatistics(currentFilters);
     stateManager.dispatch('MERGE_STATS', stats);
-    updateShowAllFilterStats(stats);
   } catch (error) {
     console.error('Failed to refresh statistics:', error);
   }
-}
-
-/**
- * Handle changes to the Show All Games filter
- * * @param {Event} event - The change event from the checkbox
- * * @returns {void}
- */
-function handleShowAllFilterChange(event) {
-  const isChecked = event.target.checked;
-  updateShowAllFilterUI(isChecked);
-  stateManager.dispatch('TOGGLE_SHOW_ALL', isChecked);
-  updateURL();
-  handleFilterChange(getAPIFilters(stateManager.getState()), 'show-all-filter-change');
 }
 
 function updateURL() {
   // Get complete URL using selector
   const newURL = getCurrentURL(stateManager.getState());
   window.history.replaceState(null, '', newURL);
-}
-
-/**
- * Update the filter when statistics change (called from main app)
- * * @param {Object} newStats - The new statistics object
- * * * @returns {void}
- */
-function updateShowAllFilterStats(newStats) {
-  if (!newStats) return;
-  
-  // Update state manager with new stats
-  stateManager.dispatch('MERGE_STATS', newStats);
-
-  const checkbox = document.getElementById('showAllGamesFilter');
-  if (checkbox) {
-    updateShowAllFilterUI(checkbox.checked);
-  }
 }
 
 /**
@@ -551,10 +391,6 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     const currentState = stateManager.getState();
     renderPagination(currentState.currentPage, currentState.totalPages, loadPage);
     
-    if (reason === 'initial-load' || reason === 'navigation') {
-      syncShowAllCheckboxWithState();
-    }
-    
     // Refresh statistics with current filters (don't reset filters)
     await refreshFilterStatistics();
 
@@ -697,10 +533,7 @@ function clearResults() {
 }
 
 /**
- * Parse URL parameters and initialize statemanager filters
- * Updated to handle inverted toggle logic:
- * - Checkbox checked = hide games without options (showAll: false, hasOptions: true)
- * - Checkbox unchecked = show all games (showAll: true, hasOptions: undefined)
+ * Parse URL parameters and initialize StateManager filters
  */
 function parseURLParams() {
   const params = new URLSearchParams(window.location.search);
@@ -711,24 +544,9 @@ function parseURLParams() {
     const currentPage = pageParam ? Math.max(1, parseInt(pageParam)) : 1;
     stateManager.dispatch('SET_CURRENT_PAGE', currentPage);
     
-    const showAllParam = params.get('showAll');
-
     // Get validated base filters
     const baseFilters = getBaseFiltersFromURL(params);
-
-    if (showAllParam === 'true') {
-      stateManager.dispatch('SET_FILTERS', {
-        ...baseFilters,
-        showAll: true,
-        hasOptions: undefined
-      });
-    } else {
-      stateManager.dispatch('SET_FILTERS', {
-        ...baseFilters,
-        showAll: false,
-        hasOptions: true
-      });
-    }
+    stateManager.dispatch('SET_FILTERS', baseFilters);
 
   } catch (error) {
     console.error('❌ Error parsing URL params:', error);

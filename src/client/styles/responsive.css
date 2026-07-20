@@ -388,24 +388,11 @@
   /* Show All spans the full grid row — in a single narrow cell its label wraps
      to two lines and the toggle looks lopsided. Overrides the desktop
      min/max-width, which otherwise wins on specificity. */
-  .filters-container .show-all-filter {
-    grid-column: 1 / -1;
-    min-width: 0;
-    max-width: none;
-  }
+
 
   .filter-label { font-size: var(--font-size-xs); margin-bottom: var(--space-2); }
 
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    min-height: var(--space-12);
-    font-size: var(--font-size-sm);
-    padding: var(--space-3) var(--space-4);
-    border-radius: var(--radius-lg);
-  }
 
-  .checkbox-stats { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); }
   .active-filters { padding: 0 var(--space-4); gap: var(--space-2); }
   .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 100%; }
   .filter-remove { width: var(--space-4); height: var(--space-4); font-size: calc(var(--font-size-xs) * 0.75); flex-shrink: 0; margin-left: var(--space-1); }
@@ -433,15 +420,7 @@
 
   .filter-label { font-size: var(--font-size-xs); margin-bottom: var(--space-1); }
 
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container {
-    min-height: var(--space-12);
-    font-size: var(--space-4);
-    padding: var(--space-2) var(--space-3);
-  }
 
-  .checkbox-stats { font-size: calc(var(--font-size-xs) * 0.85); padding: 2px 6px; }
   .active-filters { padding: 0 var(--space-3); gap: var(--space-1); }
   .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 100%; }
   .filter-remove { width: var(--space-4); height: var(--space-4); font-size: calc(var(--font-size-xs) * 0.75); }
@@ -734,17 +713,7 @@
     border-color: var(--color-accent);
   }
 
-  .filters-container .show-all-checkbox-container {
-    position: relative;
-    overflow: hidden;
-    transform: translateZ(0);
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
 
-  .filters-container .show-all-checkbox-container:active {
-    transform: scale(0.97) translateZ(0);
-    background-color: var(--color-interactive-hover);
-  }
 
   .table-container .games-table tbody tr {
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -1104,10 +1073,6 @@
 @media (prefers-reduced-motion: reduce) and (max-width: 768px) {
   .games-table tbody tr:hover { transform: none !important; }
 
-  .filter-select,
-  .sort-select,
-  .show-all-checkbox-container,
-  .filter-tag { transition: none; }
 
   .launch-option:hover,
   .option-command:hover { transform: none !important; }

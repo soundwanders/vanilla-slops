@@ -188,9 +188,7 @@ export async function fetchGames({
   year = '',
   sort = 'title',
   order = 'asc',
-  useCache = true,
-  hasOptions,
-  showAll
+  useCache = true
 } = {}) {
   
   const queryParams = buildQueryParams({
@@ -203,9 +201,7 @@ export async function fetchGames({
     options,
     year,
     sort,
-    order,
-    hasOptions,
-    showAll
+    order
   });
 
   const cacheKey = `games:${queryParams}`;

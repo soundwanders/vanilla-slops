@@ -39,8 +39,6 @@ const stateActions = {
   RESET_FILTERS: (state, payload = {}) => ({
     ...state,
     filters: {
-      hasOptions: true,
-      showAll: false,
       search: '',
       category: '',
       developer: '',
@@ -103,20 +101,6 @@ const stateActions = {
     ...state,
     currentPage: 1
   }),
-
-  // Handle the complex show-all filter logic
-  TOGGLE_SHOW_ALL: (state, payload) => {
-    const isShowingAll = payload;
-    return {
-      ...state,
-      filters: {
-        ...state.filters,
-        showAll: isShowingAll,
-        hasOptions: isShowingAll ? undefined : true
-      },
-      currentPage: 1 // Reset pagination on filter change
-    };
-  },
 
   // Initialize app state (useful for startup)
   INITIALIZE_APP: (state, payload) => ({

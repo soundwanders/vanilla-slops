@@ -24,25 +24,16 @@ const router = Router();
 
 // Test endpoint with options-first info
 router.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Vanilla Slops API - Options-First Strategy Enabled!', 
+  res.json({
+    message: 'Vanilla Slops API',
     timestamp: new Date().toISOString(),
-    query: req.query,
-    strategy: {
-      name: 'options-first',
-      version: '2.0',
-      description: 'Defaults to showing games WITH launch options for immediate user value',
-      parameters: {
-        hasOptions: 'boolean (default: true) - Filter games with launch options',
-        showAll: 'boolean (default: false) - Show all games including those without options'
-      }
-    }
+    query: req.query
   });
 });
 
 /**
  * @route GET /api/games
- * @description Get games with Options-First strategy (NEW DEFAULT BEHAVIOR)
+ * @description Get games with search, filtering, sorting and pagination
  * @access Public
  * @param {Object} req.query - Query parameters
  * @param {string} [req.query.search] - Search term for title, developer, publisher
@@ -50,25 +41,17 @@ router.get('/test', (req, res) => {
  * @param {string} [req.query.developer] - Filter by developer name
  * @param {string} [req.query.options] - Filter by launch options type
  * @param {string} [req.query.year] - Filter by release year
- * @param {string} [req.query.sort='total_options_count'] - Sort field
+ * @param {string} [req.query.sort] - Sort field
  * @param {string} [req.query.order='desc'] - Sort order
  * @param {number} [req.query.page=1] - Page number
  * @param {number} [req.query.limit=20] - Items per page
- * @param {boolean} [req.query.hasOptions=true] - Filter games with launch options
- * @param {boolean} [req.query.showAll=false] - Show all games override
  * @returns {Object} 200 - Games list with metadata and statistics
  * @returns {Object} 400 - Validation error
  * @returns {Object} 500 - Server error
  * 
  * @example
- * // Options-First Only games with launch options
  * GET /api/games?search=half+life
- * 
- * // Show All: All games including those without options
- * GET /api/games?search=half+life&showAll=true
- * 
- * // No Options: Only games without launch options
- * GET /api/games?options=no-options&showAll=true
+ * GET /api/games?options=no-options
  */
 router.get('/', validateRequest(querySchema), gamesController);
 
@@ -143,58 +126,5 @@ router.get('/:id', gameDetailsController);
  * @returns {Object} 500 - Server error
  */
 router.get('/:id/launch-options', gameLaunchOptionsController);
-
-/**
- * @route GET /api/games/health/strategy
- * @description Health check specifically for options-first strategy
- * @access Public
- * @returns {Object} 200 - Strategy health information
- */
-router.get('/health/strategy', async (req, res) => {
-  try {
-    // Quick test of options-first functionality
-    const [optionsOnlyTest, allGamesTest] = await Promise.all([
-      // Test default behavior
-      fetch(`${req.protocol}://${req.get('host')}/api/games?limit=1`).then(r => r.json()),
-      // Test with show all games set to 'true" as default behavior
-      fetch(`${req.protocol}://${req.get('host')}/api/games?limit=1&showAll=true`).then(r => r.json())
-    ]);
-
-    const health = {
-      strategy: 'options-first',
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      tests: {
-        optionsFirst: {
-          status: optionsOnlyTest.meta?.showingOptionsOnly ? 'pass' : 'fail',
-          description: 'Default behavior shows only games with options',
-          result: optionsOnlyTest.meta
-        },
-        showAll: {
-          status: allGamesTest.meta?.showingAll ? 'pass' : 'fail',
-          description: 'showAll=true shows all games',
-          result: allGamesTest.meta
-        }
-      },
-      implementation: {
-        defaultSort: 'total_options_count DESC',
-        defaultFilter: 'hasOptions=true',
-        progressiveDisclosure: 'showAll parameter'
-      }
-    };
-
-    const overallStatus = Object.values(health.tests).every(test => test.status === 'pass') 
-      ? 'healthy' : 'degraded';
-    
-    res.json({ ...health, status: overallStatus });
-  } catch (error) {
-    res.status(500).json({
-      strategy: 'options-first',
-      status: 'unhealthy',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
 
 export default router;

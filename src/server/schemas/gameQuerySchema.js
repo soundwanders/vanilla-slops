@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
 /**
- * Query schema with Options-First strategy support
- * Adds hasOptions and showAll parameters for progressive disclosure
+ * Games query schema.
+ * All games are returned by default; `options` is the explicit opt-in filter for
+ * narrowing by launch-option count. Unknown query params (e.g. the retired
+ * showAll/hasOptions) are stripped by Zod rather than rejected, so old
+ * bookmarked URLs still work.
  */
 export const querySchema = z.object({
   search: z.string().optional(),
@@ -13,20 +16,7 @@ export const querySchema = z.object({
   category: z.string().optional(),
   options: z.enum(['has-options', 'no-options', 'performance', 'graphics', 'many-options', 'few-options']).optional(),
   year: z.string().optional(),
-  
-  // Options-First strategy parameters
-  hasOptions: z.string()
-    .optional()
-    .default('true')
-    .transform((val) => val === 'true' || val === true)
-    .describe('Filter games with launch options (default: true for options-first strategy)'),
-  
-  showAll: z.string()
-    .optional()
-    .default('false')
-    .transform((val) => val === 'true' || val === true)
-    .describe('Show all games including those without options (overrides hasOptions)'),
-  
+
   // Sorting
   sort: z.enum(['title', 'name', 'year', 'options', 'relevance', 'total_options_count', 'created_at', 'developer', 'release_date'])
     .optional()
@@ -130,62 +120,3 @@ export const gameIdSchema = z.object({
     .transform(Number)
 });
 
-/**
- * Helper function to validate and log query parameters
- * Useful for debugging the options-first strategy
- */
-export function validateAndLogQuery(query, schema) {
-  try {
-    const result = schema.parse(query);
-    
-    // Log options-first strategy decisions
-    if (result.hasOptions !== undefined || result.showAll !== undefined) {
-      console.log('🍓 Options-First Query:', {
-        hasOptions: result.hasOptions,
-        showAll: result.showAll,
-        strategy: result.showAll ? 'show-all' : (result.hasOptions ? 'options-only' : 'no-options-only')
-      });
-    }
-    
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('❌ Query validation failed:', error.errors || error.message);
-    return { success: false, error };
-  }
-}
-
-/**
- * Preset query configurations for common use cases
- */
-export const queryPresets = {
-  // Default behavior (only games with launch options)
-  optionsFirst: {
-    hasOptions: 'true',
-    showAll: 'false',
-    sort: 'total_options_count',
-    order: 'desc'
-  },
-
-  showAll: {
-    hasOptions: 'true', // doesn't matter when showAll is true
-    showAll: 'true',
-    sort: 'title',
-    order: 'asc'
-  },
-  
-  // No Options: Games without launch options
-  noOptions: {
-    hasOptions: 'false',
-    showAll: 'true', // required to see games without options
-    sort: 'title',
-    order: 'asc'
-  },
-  
-  // Most Options: Games with the most launch options
-  mostOptions: {
-    hasOptions: 'true',
-    showAll: 'false',
-    sort: 'total_options_count',
-    order: 'desc'
-  }
-};

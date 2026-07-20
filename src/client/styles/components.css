@@ -415,131 +415,20 @@ fieldset,
   border-color: var(--color-accent);
 }
 
-.filter-group.show-all-filter {
-  flex: 0 0 auto;
-  min-width: auto;
-  max-width: none;
-  margin-left: var(--space-4);
-  padding-left: var(--space-8);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-}
 
-.show-all-filter {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
-}
 
-.show-all-filter .filter-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  letter-spacing: 0.025em;
-  margin-bottom: var(--space-2);
-}
 
-.filters-container .show-all-filter {
-  min-width: 140px;
-  max-width: 180px;
-}
 
-#showAllGamesFilter { display: none; }
 
-.show-all-checkbox-container {
-  min-height: var(--space-10);
-  height: var(--space-10);
-  padding: var(--space-2) var(--space-4);
-  background: var(--color-surface-raised);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xs);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  box-sizing: border-box;
-  cursor: pointer;
-  user-select: none;
-  transition: all var(--transition-fast);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
 
-.show-all-checkbox-container:hover {
-  border-color: var(--color-border-strong);
-  box-shadow: var(--shadow-md);
-  background: var(--color-interactive-hover);
-}
 
-#showAllGamesFilter:checked + .show-all-checkbox-container {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent-subtle);
-  box-shadow: var(--shadow-md);
-}
 
-#showAllGamesFilter:checked + .show-all-checkbox-container:hover {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent-subtle);
-}
 
-#showAllGamesFilter:focus + .show-all-checkbox-container {
-  outline: 2px solid var(--color-interactive-focus);
-  outline-offset: 2px;
-  z-index: var(--z-raised);
-}
 
-.checkbox-label-text {
-  flex: 1;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-  line-height: var(--line-height-tight);
-}
 
-.checkbox-stats {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
-  white-space: nowrap;
-  min-width: 75px;
-  text-align: center;
-  transition: all var(--transition-fast);
-  background: var(--color-surface-subtle);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border-subtle);
-}
 
-#showAllGamesFilter:checked + .show-all-checkbox-container .checkbox-stats {
-  background: var(--color-success);
-  color: var(--color-text-inverse);
-  border-color: var(--color-success);
-}
 
-.show-all-checkbox-container::before {
-  content: '';
-  width: var(--space-4);
-  height: var(--space-4);
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-  margin-right: var(--space-2);
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-}
 
-#showAllGamesFilter:checked + .show-all-checkbox-container::before {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='white' d='m13.854 3.646-7.5 7.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6 10.293l7.146-7.147a.5.5 0 0 1 .708.708z'/%3e%3c/svg%3e");
-  background-size: var(--space-3);
-  background-position: center;
-  background-repeat: no-repeat;
-}
 
 .year-filter-container {
   display: flex;
@@ -590,32 +479,10 @@ fieldset,
   border-color: var(--color-border-strong);
 }
 
-[data-theme="dark"] .show-all-checkbox-container {
-  background: var(--color-surface-raised);
-  border-color: var(--color-border);
-  color: var(--color-text-primary);
-}
 
-[data-theme="dark"] .show-all-checkbox-container:hover {
-  background: var(--color-interactive-hover);
-  border-color: var(--color-border-strong);
-}
 
-[data-theme="dark"] #showAllGamesFilter:checked + .show-all-checkbox-container {
-  background: var(--color-accent-subtle);
-  border-color: var(--color-accent);
-}
 
-[data-theme="dark"] .checkbox-stats {
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  border-color: var(--color-border);
-}
 
-[data-theme="dark"] #showAllGamesFilter:checked + .show-all-checkbox-container .checkbox-stats {
-  background: var(--color-success);
-  color: var(--color-warning-inverse);
-}
 
 [data-theme="dark"] select,
 [data-theme="dark"] .filter-select,

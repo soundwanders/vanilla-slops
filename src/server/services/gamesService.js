@@ -27,7 +27,6 @@ const _facetsCache = { data: null, expiresAt: 0 };
  * @property {number} [limit=20] - Items per page
  * @property {number} [minOptionsCount] - Minimum launch options count
  * @property {number} [maxOptionsCount] - Maximum launch options count
- * @property {boolean} [hasLaunchOptions] - Filter by launch options presence
  */
 
 /**
@@ -84,8 +83,7 @@ export async function fetchGames({
   page = 1,
   limit = 20,
   minOptionsCount,
-  maxOptionsCount,
-  hasLaunchOptions
+  maxOptionsCount
 } = {}) {
   try {
     // Use search or searchQuery (support both frontend conventions)
@@ -110,8 +108,7 @@ export async function fetchGames({
       options,
       yearFilter,
       minOptionsCount,
-      maxOptionsCount,
-      hasLaunchOptions
+      maxOptionsCount
     });
 
     // Apply sorting
@@ -161,7 +158,6 @@ export async function fetchGames({
  * @param {string} [filters.yearFilter] - Release year filter
  * @param {number} [filters.minOptionsCount] - Minimum options count
  * @param {number} [filters.maxOptionsCount] - Maximum options count
- * @param {boolean} [filters.hasLaunchOptions] - Launch options presence filter
  * @returns {Object} Modified Supabase query with filters applied
  */
 function applySearchFilters(query, filters) {
@@ -174,8 +170,7 @@ function applySearchFilters(query, filters) {
     options,
     yearFilter,
     minOptionsCount,
-    maxOptionsCount,
-    hasLaunchOptions
+    maxOptionsCount
   } = filters;
 
   // Multi-field search
@@ -237,17 +232,6 @@ function applySearchFilters(query, filters) {
       query = query.ilike('release_date', `%${yearInt}%`);
     } else {
       console.warn(`⚠️ Invalid year filter ignored: ${yearFilter}`);
-    }
-  }
-
-  // Has launch options filter — skipped when an explicit `options` filter is
-  // present, since that filter already constrains total_options_count and the
-  // two would contradict (e.g. no-options + hasLaunchOptions=true → no results)
-  if (hasLaunchOptions !== undefined && !options) {
-    if (hasLaunchOptions) {
-      query = query.gt('total_options_count', 0);
-    } else {
-      query = query.eq('total_options_count', 0);
     }
   }
 
@@ -467,13 +451,11 @@ async function fetchAllRows(buildQuery) {
 
 async function getFacetValues(field, searchQuery = '') {
   try {
-    // Count only games with launch options so facet counts match the default
-    // options-first view (otherwise "Engine (19)" shows 14 visible results)
+    // Counts cover every game, matching the default view (all games shown)
     const data = await fetchAllRows((from, to) => {
       let query = supabase
         .from('games')
-        .select(field)
-        .gt('total_options_count', 0);
+        .select(field);
 
       // Apply search filter if provided
       if (searchQuery && searchQuery.trim()) {
@@ -542,12 +524,11 @@ async function getOptionsCountRanges() {
  */
 async function getReleaseYears(searchQuery = '') {
   try {
-    // Same options-first scoping as getFacetValues, paged past the 1000-row cap
+    // Covers every game, paged past the 1000-row cap
     const data = await fetchAllRows((from, to) => {
       let query = supabase
         .from('games')
-        .select('release_date')
-        .gt('total_options_count', 0);
+        .select('release_date');
 
       if (searchQuery && searchQuery.trim()) {
         const searchTerms = searchQuery.trim().split(/\s+/);

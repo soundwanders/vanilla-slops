@@ -83,84 +83,32 @@ function parseBoolean(value) {
  */
 function analyzeParameters(query, logger) {
   logger.subsection('Request Analysis');
-  
-  const analysis = {
+
+  logger.info('REQUEST', 'Incoming request analysis', {
     url: query.originalUrl || 'unknown',
     totalParams: Object.keys(query).length,
     hasSearch: !!query.search,
     hasFilters: !!(query.genre || query.engine || query.developer || query.category),
     hasPagination: !!(query.page || query.limit),
-    hasSorting: !!(query.sort || query.order),
-    hasSpecialFlags: !!(query.hasOptions || query.showAll)
-  };
+    hasSorting: !!(query.sort || query.order)
+  });
 
-  logger.info('REQUEST', 'Incoming request analysis', analysis);
-
-  // Parse critical parameters
-  const hasOptions = parseBoolean(query.hasOptions);
-  const showAll = parseBoolean(query.showAll);
-
-  const parameterSummary = {
-    hasOptions: { raw: query.hasOptions, parsed: hasOptions, type: typeof hasOptions },
-    showAll: { raw: query.showAll, parsed: showAll, type: typeof showAll },
+  logger.debug('PARAMS', 'Parameter parsing results', {
     search: query.search || '(none)',
     filters: {
       genre: query.genre || query.category || '(none)',
-      engine: query.engine || '(none)', 
+      engine: query.engine || '(none)',
       developer: query.developer || '(none)',
-      year: query.year || '(none)'
-    }
-  };
-
-  logger.debug('PARAMS', 'Parameter parsing results', parameterSummary);
-
-  return { hasOptions, showAll, analysis };
-}
-
-/**
- * Determines and logs the filtering strategy
- */
-function determineFilteringStrategy(hasOptions, showAll, logger) {
-  logger.subsection('Filtering Strategy');
-
-  let strategy, hasLaunchOptions, description;
-
-  if (showAll === true) {
-    strategy = 'SHOW_ALL';
-    hasLaunchOptions = undefined;
-    description = 'Show all games regardless of launch options';
-  } else if (hasOptions === true) {
-    strategy = 'OPTIONS_ONLY';
-    hasLaunchOptions = true;
-    description = 'Show only games with launch options';
-  } else if (hasOptions === false) {
-    strategy = 'NO_OPTIONS_ONLY';
-    hasLaunchOptions = false;
-    description = 'Show only games without launch options';
-  } else {
-    strategy = 'DEFAULT_OPTIONS_FIRST';
-    hasLaunchOptions = true;
-    description = 'Default behavior: prioritize games with launch options';
-  }
-
-  logger.info('STRATEGY', `Selected strategy: ${strategy}`, {
-    strategy,
-    hasLaunchOptions,
-    description,
-    reasoning: {
-      showAllFlag: showAll,
-      hasOptionsFlag: hasOptions,
-      isDefault: hasOptions === undefined && showAll === undefined
+      year: query.year || '(none)',
+      options: query.options || '(none)'
     }
   });
-
-  return { strategy, hasLaunchOptions };
 }
 
 /**
  * Builds and validates the filters object
  */
-function buildFilters(query, hasLaunchOptions, logger) {
+function buildFilters(query, logger) {
   logger.subsection('Filter Construction');
 
   const filters = {
@@ -184,10 +132,7 @@ function buildFilters(query, hasLaunchOptions, logger) {
     sort: query.sort || 'title',
     order: query.order || 'asc',
     page: parseInt(query.page, 10) || 1,
-    limit: parseInt(query.limit, 10) || 20,
-    
-    // Launch options filtering
-    hasLaunchOptions: hasLaunchOptions
+    limit: parseInt(query.limit, 10) || 20
   };
 
   // Validate pagination
@@ -213,7 +158,6 @@ function buildFilters(query, hasLaunchOptions, logger) {
       order: filters.order
     },
     specialFilters: {
-      hasLaunchOptions: filters.hasLaunchOptions,
       options: filters.options || '(none)'
     }
   };
@@ -226,7 +170,7 @@ function buildFilters(query, hasLaunchOptions, logger) {
 /**
  * Logs and analyzes the service result
  */
-function analyzeResult(result, filters, strategy, logger) {
+function analyzeResult(result, filters, logger) {
   logger.subsection('Result Analysis');
 
   const summary = {
@@ -234,41 +178,19 @@ function analyzeResult(result, filters, strategy, logger) {
     gamesReturned: result.games?.length || 0,
     totalPages: result.totalPages || 0,
     currentPage: result.currentPage || 1,
-    strategy: strategy,
-    hasLaunchOptionsFilter: filters.hasLaunchOptions,
-    performance: {
-      expectedResults: strategy === 'SHOW_ALL' ? 'All games' : 'Filtered games',
-      actualResults: `${result.games?.length || 0} games returned`
-    }
+    optionsFilter: filters.options || '(none)'
   };
 
   logger.result('SERVICE', 'Query execution summary', summary);
 
-  // Sample games analysis
   if (result.games?.length > 0) {
-    const sampleSize = Math.min(3, result.games.length);
-    const sampleGames = result.games.slice(0, sampleSize).map(game => ({
+    const sampleGames = result.games.slice(0, 3).map(game => ({
       title: game.title,
       appId: game.app_id,
       optionsCount: game.total_options_count || 0,
-      engine: game.engine || 'Unknown',
-      hasOptions: (game.total_options_count || 0) > 0
+      engine: game.engine || 'Unknown'
     }));
-
-    logger.debug('SAMPLE', `Sample of ${sampleSize} games returned`, sampleGames);
-
-    // Validate filtering worked correctly
-    if (filters.hasLaunchOptions === true) {
-      const gamesWithoutOptions = sampleGames.filter(g => !g.hasOptions);
-      if (gamesWithoutOptions.length > 0) {
-        logger.warning('VALIDATION', 'Found games without options when filtering for games WITH options', gamesWithoutOptions);
-      }
-    } else if (filters.hasLaunchOptions === false) {
-      const gamesWithOptions = sampleGames.filter(g => g.hasOptions);
-      if (gamesWithOptions.length > 0) {
-        logger.warning('VALIDATION', 'Found games with options when filtering for games WITHOUT options', gamesWithOptions);
-      }
-    }
+    logger.debug('SAMPLE', `Sample of ${sampleGames.length} games returned`, sampleGames);
   }
 
   return summary;
@@ -300,19 +222,15 @@ export async function gamesController(req, res) {
     logger.section('Games Controller Request');
 
     // Step 1: Analyze incoming request
-    const { hasOptions, showAll } = analyzeParameters(req.query, logger);
+    analyzeParameters(req.query, logger);
 
-    // Step 2: Determine filtering strategy
-    const { strategy, hasLaunchOptions } = determineFilteringStrategy(hasOptions, showAll, logger);
-
-    // Step 3: Build and validate filters
-    const filters = buildFilters(req.query, hasLaunchOptions, logger);
+    // Step 2: Build and validate filters
+    const filters = buildFilters(req.query, logger);
 
     // Step 4: Execute service call
     logger.subsection('Service Execution');
     logger.info('SERVICE', 'Calling fetchGames service', {
       key_filters: {
-        hasLaunchOptions: filters.hasLaunchOptions,
         search: filters.search,
         developer: filters.developer,
         page: filters.page,
@@ -323,7 +241,7 @@ export async function gamesController(req, res) {
     const result = await fetchGames(filters);
     
     // Step 5: Analyze and log results
-    analyzeResult(result, filters, strategy, logger);
+    analyzeResult(result, filters, logger);
 
     // Step 6: Prepare response
     const response = {
@@ -338,9 +256,7 @@ export async function gamesController(req, res) {
       ...(process.env.NODE_ENV === 'development' && {
         debug: {
           requestId: logger.requestId,
-          strategy: strategy,
           appliedFilters: {
-            hasLaunchOptions: filters.hasLaunchOptions,
             search: filters.search,
             developer: filters.developer
           },
@@ -355,8 +271,7 @@ export async function gamesController(req, res) {
 
     logger.success('RESPONSE', 'Successfully processed request', {
       responseSize: response.games.length,
-      total: response.total,
-      strategy: strategy
+      total: response.total
     });
 
     res.json(response);
