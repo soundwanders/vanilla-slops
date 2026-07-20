@@ -97,7 +97,7 @@ const stateActions = {
   }),
 
   // Compound actions for common use cases
-  RESET_TO_PAGE_ONE: (state, payload) => ({
+  RESET_TO_PAGE_ONE: (state) => ({
     ...state,
     currentPage: 1
   }),

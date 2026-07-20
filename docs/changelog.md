@@ -20,13 +20,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-19 — Discoverability & simplification
+
 ### Added
 - **Discoverability**: server-rendered per-game landing pages at `/game/:appid/:slug`
   with unique `<title>`/meta/canonical, Open Graph (each game's Steam header art),
   and VideoGame + BreadcrumbList JSON-LD — real crawlable content, no client JS
 - Dynamic `sitemap.xml` (homepage + every game with options) and `robots.txt`
+- Internal linking: homepage game titles now link to their `/game/...` page, giving
+  crawlers a link path from the homepage (the ↗ remains the Steam store link)
+- Release-date column sorting re-enabled now that dates are stored as ISO
+- Dark mode + theme toggle on game pages (CSP-safe external script, set before
+  first paint so there's no flash of light arriving from a dark homepage)
 - `docs/sql-snippets.sql` — curated Supabase query reference (health, data-quality, insight)
 - `docs/scraper-data-quality-handoff.md` — extractor-fix spec for the slop-scraper repo
+
+### Changed
+- **Removed the "Show All Games" toggle.** With 95.7% of the catalog having options
+  (and the scraper only saving games that do), it duplicated the existing "Launch
+  Options" filter. All games are now shown; those without options display
+  "No known options yet" instead of being hidden — so searching a game we *do*
+  have no longer dead-ends on an empty screen. Net −740 lines across 14 files.
+- Facet counts now cover every game, matching the default view
+
+### Fixed
+- **Game statistics were badly wrong** (`+735` instead of `+71`): rows were counted in
+  JavaScript, but Supabase caps returned rows at 1000 while `count` stays exact.
+  Replaced with count-only queries; the same latent bug in facet counts is fixed
+  by paging.
+- Long filter-chip values (e.g. "Paradox Development Studio") overflowed and hid the
+  × remove button, making filters impossible to clear — the value now truncates
+  with an ellipsis and the × can never shrink or be clipped
+- Mobile: filter chips, the Show All box, and the game-page header layout
+- Empty-string release dates normalised to `NULL` so blanks sort last
+
+### Removed
+- Retired `performance` / `graphics` option values (they silently behaved as
+  "has options"); unknown values now degrade to no filter rather than erroring
+- Empty `vendor` build chunk (`@supabase/supabase-js` is server-only)
 
 ## [1.0.1] - 2026-07-19 — Post-launch hardening
 

@@ -14,7 +14,11 @@ export const querySchema = z.object({
   platform: z.string().optional(),
   developer: z.string().optional(),
   category: z.string().optional(),
-  options: z.enum(['has-options', 'no-options', 'performance', 'graphics', 'many-options', 'few-options']).optional(),
+  // Retired values (performance/graphics) and any stale value degrade to
+  // "no options filter" via .catch() rather than 400ing old bookmarked URLs.
+  options: z.enum(['has-options', 'no-options', 'many-options', 'few-options'])
+    .optional()
+    .catch(undefined),
   year: z.string().optional(),
 
   // Sorting

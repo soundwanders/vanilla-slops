@@ -23,11 +23,6 @@ export default defineConfig({
     
     rollupOptions: {
       output: {
-        // Efficient chunking strategy
-        manualChunks: {
-          vendor: ['@supabase/supabase-js'],
-        },
-        
         // Content-based hashing for cache busting
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -49,11 +44,6 @@ export default defineConfig({
   
   resolve: {
     extensions: ['.js', '.mjs', '.json'],
-  },
-  
-  // Pre-bundle heavy dependencies
-  optimizeDeps: {
-    include: ['@supabase/supabase-js'],
   },
   
   esbuild: {

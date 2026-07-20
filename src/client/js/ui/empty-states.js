@@ -1,4 +1,4 @@
-import { CONFIG, TableState, getTableContainer, escapeHtml } from './table-shared.js';
+import { CONFIG, TableState, getTableContainer } from './table-shared.js';
 import { enhanceMobileEmptyState, ensureTouchTarget } from './mobile-gestures.js';
 
 export function renderEmptyState(filters = {}, stats = {}) {
@@ -39,8 +39,8 @@ function determineEmptyStateType(filters, stats) {
 function createEmptyStateHTML(type, filters, stats) {
   const emptyStates = {
     'no-options-found': () => createNoOptionsFoundHTML(stats),
-    'search-no-results': () => createSearchNoResultsHTML(filters, stats),
-    'all-games-filtered': () => createAllFilteredHTML(filters, stats),
+    'search-no-results': () => createSearchNoResultsHTML(filters),
+    'all-games-filtered': () => createAllFilteredHTML(filters),
     'database-empty': () => createDatabaseEmptyHTML(),
     'default': () => createDefaultEmptyHTML(stats)
   };
@@ -80,7 +80,7 @@ function createNoOptionsFoundHTML(stats) {
   `;
 }
 
-function createSearchNoResultsHTML(filters, stats) {
+function createSearchNoResultsHTML(filters) {
   const searchTerm = filters.search || '';
   const btn = TableState.isMobile ? 'btn mobile-btn' : 'btn';
 
@@ -104,7 +104,7 @@ function createSearchNoResultsHTML(filters, stats) {
   `;
 }
 
-function createAllFilteredHTML(filters, stats) {
+function createAllFilteredHTML(filters) {
   const activeFilters = getActiveFiltersDescription(filters);
   const btn = TableState.isMobile ? 'btn mobile-btn' : 'btn';
 

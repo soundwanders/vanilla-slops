@@ -9,12 +9,10 @@ import {
   getAPIQueryParams,
   isLoading,
   getScrollInfo,
-  getAPIFilters,
   getBaseFiltersFromURL,
   getCurrentURL,
   hasActiveFilters,
   getCleanFilters,
-  getGameStats,
   getSearchSyncData
 } from './state/stateSelectors.js';
 

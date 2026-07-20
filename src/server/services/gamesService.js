@@ -163,9 +163,7 @@ export async function fetchGames({
 function applySearchFilters(query, filters) {
   const {
     searchTerm,
-    genre,
     engine,
-    platform,
     developer,
     options,
     yearFilter,

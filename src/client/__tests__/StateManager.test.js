@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { StateManager } from '../js/state/StateManager.js';
 
 function makeManager(initial = {}) {

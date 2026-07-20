@@ -70,15 +70,6 @@ class GamesLogger {
 }
 
 /**
- * Helper function to parse boolean parameters consistently
- */
-function parseBoolean(value) {
-  if (value === true || value === 'true') return true;
-  if (value === false || value === 'false') return false;
-  return undefined;
-}
-
-/**
  * Analyzes and logs parameter parsing results
  */
 function analyzeParameters(query, logger) {
