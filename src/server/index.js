@@ -1,3 +1,4 @@
+import './instrument.js'; // must stay first — arms Sentry before anything can throw
 import config from './config/env.js';
 import app from './app.js';
 import logger from './utils/logger.js';
