@@ -407,7 +407,7 @@
 
   .checkbox-stats { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); }
   .active-filters { padding: 0 var(--space-4); gap: var(--space-2); }
-  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 150px; }
+  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 100%; }
   .filter-remove { width: var(--space-4); height: var(--space-4); font-size: calc(var(--font-size-xs) * 0.75); flex-shrink: 0; margin-left: var(--space-1); }
 }
 
@@ -443,7 +443,7 @@
 
   .checkbox-stats { font-size: calc(var(--font-size-xs) * 0.85); padding: 2px 6px; }
   .active-filters { padding: 0 var(--space-3); gap: var(--space-1); }
-  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 150px; }
+  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 100%; }
   .filter-remove { width: var(--space-4); height: var(--space-4); font-size: calc(var(--font-size-xs) * 0.75); }
 }
 

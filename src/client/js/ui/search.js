@@ -579,8 +579,10 @@ export default class SlopSearch {
       return `
         <span class="filter-tag">
           <span class="filter-key">${displayKey}:</span>
-          <span class="filter-value">${this.escapeHtml(value)}</span>
-          <button class="filter-remove" data-key="${key}" title="Remove filter">×</button>
+          <span class="filter-value" title="${this.escapeHtml(value)}">${this.escapeHtml(value)}</span>
+          <button class="filter-remove" data-key="${key}"
+                  aria-label="Remove ${displayKey} filter: ${this.escapeHtml(value)}"
+                  title="Remove filter">×</button>
         </span>
       `;
     }).join('');

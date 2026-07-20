@@ -1231,6 +1231,49 @@
   border-radius: var(--radius-full);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* "Developer:" — never shrinks or wraps */
+.filter-key {
+  flex-shrink: 0;
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
+/* The value absorbs the remaining space and truncates. Without min-width:0 a
+   flex child refuses to shrink below its content, so long values (e.g.
+   "Paradox Development Studio") pushed the × past the tag's overflow:hidden
+   edge and it became unclickable. */
+.filter-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The remove button must always stay visible and tappable */
+.filter-remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-5);
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  color: inherit;
+  font-size: var(--font-size-base);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.filter-remove:hover {
+  background: var(--color-accent-muted);
 }
 
 .empty-suggestion {
