@@ -443,3 +443,17 @@ footer p {
   color: var(--color-accent);
   text-decoration: underline;
 }
+
+.footer-icon-link {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-top: -2px; /* optically center the mark against the cap-height text */
+}
+
+.footer-icon-link:hover {
+  text-decoration: none;
+}
+
+.footer-icon-link svg {
+  display: block;
+}

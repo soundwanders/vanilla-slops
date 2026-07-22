@@ -369,11 +369,11 @@
     margin-bottom: var(--space-6);
   }
 
-  /* Switch from horizontal flex row to 3-column grid so filters wrap */
+  /* Four filters as a clean 2×2 block on mobile */
   fieldset,
   .filter-fieldset {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-3);
     flex: unset;
     align-items: unset;
@@ -405,17 +405,6 @@
     padding: var(--space-4) var(--space-3);
     gap: var(--space-3);
     margin-bottom: var(--space-4);
-  }
-
-  /* Collapse to 2-column on small phones */
-  fieldset,
-  .filter-fieldset {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  /* Span the last orphaned filter full-width when it falls alone on a row */
-  .filter-group:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
   }
 
   .filter-label { font-size: var(--font-size-xs); margin-bottom: var(--space-1); }
@@ -585,19 +574,17 @@
   body .theme-toggle {
     top: var(--space-4);
     right: var(--space-4);
-    padding: var(--space-3);
-    min-width: var(--space-12);
+    padding: 0;
+    width: var(--space-12);
     height: var(--space-12);
-    font-size: var(--font-size-lg);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
     backdrop-filter: blur(12px);
-    border: 2px solid var(--color-border);
-    transition: all 0.2s ease;
+    border: 1px solid var(--color-border);
   }
 
   body #theme-toggle:active,
-  body .theme-toggle:active { transform: scale(0.9); box-shadow: var(--shadow-lg); }
+  body .theme-toggle:active { transform: scale(0.92); }
 }
 
 @media (max-width: 480px) {
@@ -605,10 +592,8 @@
   body .theme-toggle {
     top: var(--space-3);
     right: var(--space-3);
-    padding: var(--space-2);
-    min-width: var(--space-10);
+    width: var(--space-10);
     height: var(--space-10);
-    font-size: var(--font-size-base);
   }
 }
 

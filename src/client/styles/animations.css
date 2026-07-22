@@ -371,10 +371,6 @@
 }
 
 /* Theme toggle float animation */
-@keyframes themeToggleFloat {
-  0%, 100% { transform: translateY(-2px); }
-  50% { transform: translateY(-6px); }
-}
 
 /* Search input focus */
 @keyframes searchInputFocusGlow {
@@ -657,16 +653,6 @@ body {
 }
 
 /* Theme toggle */
-.theme-toggle,
-#theme-toggle {
-  transition: all var(--transition-base);
-}
-
-.theme-toggle:hover,
-#theme-toggle:hover {
-  animation: themeToggleFloat 2s ease-in-out infinite;
-}
-
 .pagination-container {
   animation: fadeIn 0.2s ease-out;
 }
