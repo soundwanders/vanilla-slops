@@ -55,36 +55,19 @@
     <!-- Skip to main content for accessibility -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- Hero Section -->
-    <header class="hero-section">
-      <!-- Background Elements -->
-      <div class="hero-background">
-        <div class="hero-gradient"></div>
-        <div class="hero-pattern"></div>
-      </div>
+    <!-- App header -->
+    <header class="app-header">
+      <div class="app-bar">
+        <a href="/" class="app-brand" aria-label="Vanilla Slops — home">
+          <picture>
+            <source srcset="/slops-logo.webp" type="image/webp" />
+            <img src="/slops-logo.png" alt="Vanilla Slops" class="app-logo"
+                 width="34" height="34" decoding="async" />
+          </picture>
+          <span class="app-wordmark">Vanilla&nbsp;<span class="wm-accent">Slops</span></span>
+        </a>
 
-      <!-- Main Hero Content -->
-      <div class="hero-content">
-        <!-- Logo and Branding -->
-        <div class="hero-branding">
-          <div class="logo-container">
-            <a href="/" class="home-link" aria-label="Go Home - Vanilla Slops">
-              <picture>
-                <source srcset="/slops-logo.webp" type="image/webp" />
-                <img src="/slops-logo.png" alt="Vanilla Slops Logo" class="hero-logo"
-                     width="112" height="112" decoding="async" />
-              </picture>
-            </a>
-          </div>
-          <div class="hero-text">
-            <h1 class="hero-title">
-              <span class="hero-title-main">Steam Launch Options</span>
-            </h1>
-        </div>
-        </div>
-
-        <!-- Search Section -->
-        <div class="hero-search">
+        <div class="app-search">
           <div class="search-input-wrapper">
             <div class="search-field">
               <div class="search-icon" aria-hidden="true">🔍</div>
@@ -107,10 +90,18 @@
             <div class="suggestions-dropdown" id="suggestionsDropdown" role="listbox" aria-label="Search suggestions"></div>
           </div>
         </div>
+
+        <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
+          <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.34" y1="17.66" x2="4.93" y2="19.07"/><line x1="19.07" y1="4.93" x2="17.66" y2="6.34"/></svg>
+          <span class="sr-only">Toggle Theme</span>
+        </button>
       </div>
 
-      <!-- Filters Section -->
-      <div class="hero-filters">
+      <h1 class="app-title sr-only">Steam Launch Options — a community-verified database</h1>
+
+      <!-- Filters -->
+      <div class="app-filters">
         <form class="filters-container" role="region" aria-label="Filter options">
           <fieldset class="filter-fieldset">
             <legend class="sr-only">Filter games by various criteria</legend>
@@ -184,12 +175,8 @@
       <p class="footer-line">Not affiliated with Valve Corporation</p>
     </footer>
 
-    <!-- Theme Toggle Button -->
-    <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
-      <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.34" y1="17.66" x2="4.93" y2="19.07"/><line x1="19.07" y1="4.93" x2="17.66" y2="6.34"/></svg>
-      <span class="sr-only">Toggle Theme</span>
-    </button>
+    <!-- Theme toggle now lives in the app header -->
+
 
     <!-- Scripts -->
     <script src="./js/main.js" type="module" defer></script>

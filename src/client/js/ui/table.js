@@ -329,7 +329,7 @@ function createNoOptionsHTML(colspan, gameId) {
 }
 
 function createLaunchOptionHTML(option) {
-  const verifiedBadge = option.verified ? '<span class="option-verified">✅ Verified</span>' : '';
+  const verifiedBadge = option.verified ? '<span class="option-verified">✓ Verified</span>' : '';
   const votesBadge = option.upvotes > 0 ? `<span class="option-votes">👍 ${option.upvotes}</span>` : '';
   const command = option.command || option.option || '';
   const mobileClass = TableState.isMobile ? 'mobile-launch-option' : '';

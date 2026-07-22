@@ -584,7 +584,7 @@ function handleFilterChange(newFilters, reason = 'user-filter') {
  * Initialize search component
  */
 function initializeSearchComponent() {
-  const container = document.querySelector('.search-container, .hero-search');
+  const container = document.querySelector('.app-search, .search-container, .hero-search');
   if (!container) {
     console.error('Search container not found in DOM');
     return null;

@@ -32,13 +32,9 @@
   border-radius: var(--radius-md);
 }
 
-/* Theme toggle sits inline at the right edge of the header, aligned with the
-   content column. The homepage keeps its viewport-fixed toggle — that works
-   there because the hero is full-bleed; here the content is a narrow centered
-   column, so a viewport-corner button strands itself in empty margin. */
+/* Theme toggle sits inline at the right edge of the header (base #theme-toggle
+   is already inline; just space it from the CTA). */
 .seo-page #theme-toggle {
-  position: static;
-  box-shadow: none;
   margin-left: var(--space-4);
 }
 

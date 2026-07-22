@@ -191,6 +191,17 @@
   --info-600: #2563eb;
   --info-700: #1d4ed8;
 
+  /* Facelift accents — cool primary / warm secondary */
+  --cobalt-500: #1550d8;   /* light primary — crisp cobalt (AA on white) */
+  --cobalt-400: #1e63e6;   /* light primary hover */
+  --cobalt-700: #0f3fa8;   /* light primary active */
+  --ice-400: #45c4ff;      /* dark primary — ice blue */
+  --ice-300: #7ad3ff;      /* dark primary hover */
+  --ice-200: #a5e0ff;      /* dark primary active */
+  --amber-700: #9a5b00;    /* light warm accent (AA on white) */
+  --cream-300: #f8e4a1;    /* dark warm accent — luminous cream-gold */
+  --emerald-500: #0a9d54;  /* light success */
+
   /* =============================================================================
      8. GRADIENTS
      ============================================================================= */
@@ -204,22 +215,22 @@
      9. LIGHT THEME TOKEN ASSIGNMENTS
      ============================================================================= */
   
-  /* Surface colors */
-  --color-background: var(--gray-25);
+  /* Surface colors — soft cool ground so white cards read as cards (no more blinding white) */
+  --color-background: #edf0f4;
   --color-surface: var(--color-white);
   --color-surface-raised: var(--color-white);
-  --color-surface-subtle: var(--gray-50);
+  --color-surface-subtle: #f4f7fa;
   --color-surface-overlay: rgba(255, 255, 255, 0.95);
-  
+
   /* Border colors */
-  --color-border: var(--gray-200);
-  --color-border-strong: var(--gray-300);
-  --color-border-subtle: var(--gray-100);
-  
-  /* Text colors */
-  --color-text-primary: var(--gray-900);
-  --color-text-secondary: var(--gray-700);
-  --color-text-tertiary: var(--gray-500);
+  --color-border: #dbe1e9;
+  --color-border-strong: #c5cfdb;
+  --color-border-subtle: #e6ebf1;
+
+  /* Text colors — softened off pure black */
+  --color-text-primary: #1a2230;
+  --color-text-secondary: #545f6e;
+  --color-text-tertiary: #7c8797;
   --color-text-placeholder: var(--gray-400);
   --color-text-disabled: var(--gray-300);
   --color-text-inverse: var(--color-white);
@@ -231,12 +242,16 @@
   --color-launch-options-subtle: var(--brand-50);
   --color-launch-options-muted: var(--brand-100);
   
-  /* Accent colors */
-  --color-accent: var(--brand-600);
-  --color-accent-hover: var(--brand-700);
-  --color-accent-active: var(--brand-800);
-  --color-accent-subtle: var(--brand-50);
-  --color-accent-muted: var(--brand-100);
+  /* Accent colors — crisp cobalt primary */
+  --color-accent: var(--cobalt-500);
+  --color-accent-hover: var(--cobalt-400);
+  --color-accent-active: var(--cobalt-700);
+  --color-accent-subtle: #e9eefe;
+  --color-accent-muted: #d5e0fb;
+
+  /* Warm secondary accent — reserved for earned emphasis (verified, wordmark) */
+  --color-accent-warm: var(--amber-700);
+  --color-accent-warm-subtle: #fbf1dc;
 
   /* Semantic colors */
   --color-error: var(--error-600);
@@ -251,19 +266,19 @@
   --color-info-hover: var(--info-700);
   --color-info-subtle: var(--info-50);
 
-  --color-success: var(--success-600);
+  --color-success: var(--emerald-500);
   --color-success-hover: var(--success-700);
-  --color-success-subtle: var(--success-50);
+  --color-success-subtle: #e3f6ec;
 
   /* Interactive states */
-  --color-interactive-hover: var(--gray-50);
-  --color-interactive-active: var(--gray-100);
+  --color-interactive-hover: #eef1f5;
+  --color-interactive-active: #e4e9ef;
   --color-interactive-disabled: var(--gray-100);
-  --color-interactive-focus: var(--brand-500);
+  --color-interactive-focus: var(--cobalt-500);
 
-  /* Code syntax */
-  --color-code-background: var(--gray-900);
-  --color-code-text: var(--gray-100);
+  /* Code syntax — command blocks stay dark in both themes (they're code) */
+  --color-code-background: #10171f;
+  --color-code-text: #e8eef4;
   --color-code-comment: var(--gray-500);
   --color-code-keyword: var(--brand-400);
   --color-code-string: var(--success-400);
@@ -275,41 +290,45 @@
    ============================================================================= */
 
 [data-theme="dark"] {
-  /* Surface colors */
-  --color-background: var(--gray-950);
-  --color-surface: var(--gray-900);
-  --color-surface-raised: var(--gray-800);
-  --color-surface-subtle: var(--gray-900);
-  --color-surface-overlay: rgba(15, 23, 42, 0.95);
-  
+  /* Surface colors — de-saturated ground with clearly-stepped surfaces so cards separate */
+  --color-background: #0d1017;
+  --color-surface: #161b24;
+  --color-surface-raised: #1e2530;
+  --color-surface-subtle: #12161e;
+  --color-surface-overlay: rgba(13, 16, 23, 0.95);
+
   /* Border colors */
-  --color-border: var(--gray-700);
-  --color-border-strong: var(--gray-600);
-  --color-border-subtle: var(--gray-800);
-  
-  /* Text colors */
-  --color-text-primary: var(--gray-100);
-  --color-text-secondary: var(--gray-300);
-  --color-text-tertiary: var(--gray-400);
+  --color-border: #2a323d;
+  --color-border-strong: #3b4550;
+  --color-border-subtle: #20262f;
+
+  /* Text colors — off-white, not pure white, to cut glare */
+  --color-text-primary: #e6e9ef;
+  --color-text-secondary: #9aa6b4;
+  --color-text-tertiary: #69737f;
   --color-text-placeholder: var(--gray-500);
   --color-text-disabled: var(--gray-600);
   --color-text-inverse: var(--gray-900);
-  
-  /* Accent colors */
-  --color-accent: var(--brand-400);
-  --color-accent-hover: var(--brand-300);
-  --color-accent-active: var(--brand-200);
-  --color-accent-subtle: rgba(14, 165, 233, 0.1);
-  --color-accent-muted: rgba(14, 165, 233, 0.2);
+
+  /* Accent colors — ice blue primary */
+  --color-accent: var(--ice-400);
+  --color-accent-hover: var(--ice-300);
+  --color-accent-active: var(--ice-200);
+  --color-accent-subtle: rgba(69, 196, 255, 0.12);
+  --color-accent-muted: rgba(69, 196, 255, 0.2);
+
+  /* Warm secondary — luminous cream-gold, the cool/warm counterpoint */
+  --color-accent-warm: var(--cream-300);
+  --color-accent-warm-subtle: rgba(248, 228, 161, 0.14);
   
   /* Gradients */
-  --gradient-surface: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
-  --gradient-dark: linear-gradient(135deg, var(--gray-950) 0%, var(--gray-900) 100%);
-  
+  --gradient-surface: linear-gradient(135deg, #161b24 0%, #1e2530 100%);
+  --gradient-dark: linear-gradient(135deg, #0d1017 0%, #161b24 100%);
+
   /* Semantic colors */
-  --color-success: var(--success-500);
+  --color-success: #4ade80;
   --color-success-hover: var(--success-400);
-  --color-success-subtle: rgba(16, 185, 129, 0.1);
+  --color-success-subtle: rgba(74, 222, 128, 0.12);
   
   --color-error: var(--error-500);
   --color-error-hover: var(--error-400);
@@ -324,10 +343,10 @@
   --color-info-subtle: rgba(59, 130, 246, 0.1);
 
   /* Interactive states */
-  --color-interactive-hover: var(--gray-800);
-  --color-interactive-active: var(--gray-700);
-  --color-interactive-disabled: var(--gray-800);
-  --color-interactive-focus: var(--brand-400);
+  --color-interactive-hover: #1c222c;
+  --color-interactive-active: #232b36;
+  --color-interactive-disabled: #1a1f28;
+  --color-interactive-focus: var(--ice-400);
 
   /* Dark theme shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
