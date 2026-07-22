@@ -171,7 +171,8 @@ function renderGamePage(game, slug) {
       <a href="/">Home</a> <span aria-hidden="true">/</span> <span>${escapeHtml(title)}</span>
     </nav>
 
-    <h1 class="seo-title">${escapeHtml(title)} — Steam Launch Options</h1>
+    <span class="seo-eyebrow">Launch Options</span>
+    <h1 class="seo-title">${escapeHtml(title)}</h1>
     <p class="seo-subtitle">
       ${options.length} community-verified launch option${options.length === 1 ? '' : 's'}
       for <a href="https://store.steampowered.com/app/${game.app_id}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)} on Steam ↗</a>.
