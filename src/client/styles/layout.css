@@ -106,29 +106,48 @@
 .app-filters {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 var(--space-5) var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-4);
 }
 
 .app-filters .filters-container {
+  display: block;
   border: 0;
   padding: 0;
   margin: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .app-filters .filter-fieldset {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-3);
+  gap: var(--space-3) var(--space-4);
   border: 0;
   margin: 0;
   padding: 0;
 }
 
+/* Scoped to .app-filters so it beats the desktop rule's specificity on mobile
+   (a plain .filter-fieldset selector loses to .app-filters .filter-fieldset) */
+@media (max-width: 768px) {
+  .app-filters .filter-fieldset { grid-template-columns: repeat(2, 1fr); }
+}
+
 .app-filters .filter-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-1_5);
   min-width: 0;
+  max-width: none;   /* fill the grid cell (base caps at 180px) */
+}
+
+.app-filters .filter-label {
+  text-align: left;
+  padding-left: var(--space-1);
+}
+
+.app-filters .filter-select {
+  text-align: left;
 }
 
 .app-filters .active-filters {
