@@ -46,12 +46,10 @@
 
   .card,
   .games-table,
-  .filters-container,
-  .hero-section { box-shadow: var(--shadow-sm) !important; }
+  .filters-container { box-shadow: var(--shadow-sm) !important; }
 
   .filters-container,
-  .table-container,
-  .hero-section { contain: layout; }
+  .table-container { contain: layout; }
 }
 
 @media (max-width: 480px) {
@@ -387,8 +385,7 @@
 
 @media (max-width: 768px) {
   .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
+  .slops-filters {
     padding: var(--space-4);
     gap: var(--space-4);
     margin-bottom: var(--space-6);
@@ -425,8 +422,7 @@
 
 @media (max-width: 480px) {
   .filters-container,
-  .slops-filters,
-  .hero-filters .filters-container {
+  .slops-filters {
     padding: var(--space-4) var(--space-3);
     gap: var(--space-3);
     margin-bottom: var(--space-4);
@@ -509,15 +505,6 @@
     margin: 0;
   }
 
-  .hero-search .suggestions-dropdown {
-    left: calc(-1 * var(--space-4));
-    right: calc(-1 * var(--space-4));
-    border-radius: var(--radius-lg);
-    max-height: var(--space-28);
-    position: absolute;
-    bottom: auto;
-    top: 100%;
-  }
 
   .suggestions-dropdown .suggestion-item {
     padding: var(--space-4);
@@ -602,7 +589,6 @@
     overscroll-behavior-y: contain;
   }
 
-  .hero-search .suggestions-dropdown,
   .suggestions-dropdown,
   .table-container .launch-options-cell,
   .info-modal-body {
@@ -610,10 +596,8 @@
     overscroll-behavior: contain;
   }
 
-  .hero-search .suggestions-dropdown::-webkit-scrollbar,
   .suggestions-dropdown::-webkit-scrollbar { width: 2px; }
 
-  .hero-search .suggestions-dropdown::-webkit-scrollbar-thumb,
   .suggestions-dropdown::-webkit-scrollbar-thumb {
     background: var(--color-accent);
     border-radius: var(--radius-full);
@@ -753,17 +737,6 @@
     0% { transform: scale(0.9); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
-  }
-
-  /* Search touch feedback */
-  .hero-search .search-input {
-    transform: translateZ(0);
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-
-  .hero-search .search-input:focus {
-    transform: scale(1.02) translateZ(0);
-    box-shadow: var(--shadow-xl);
   }
 
   .suggestions-dropdown {
@@ -999,16 +972,13 @@
   .table-container .games-table tbody tr,
   .table-container .launch-option,
   .table-container .option-command,
-  .hero-search .suggestion-item,
   .suggestion-item {
     will-change: transform;
     backface-visibility: hidden;
     transform: translateZ(0);
   }
 
-  .hero-search .search-input,
   .search-input,
-  .hero-search .suggestions-dropdown,
   .suggestions-dropdown,
   .table-container .launch-options-cell {
     transform: translateZ(0);

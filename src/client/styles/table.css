@@ -1030,21 +1030,6 @@
   opacity: 0.7;
 }
 
-.stat-number {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-accent);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-  font-weight: var(--font-weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 /* Empty State Suggestions */
 .empty-suggestions {
   margin-bottom: var(--space-8);
