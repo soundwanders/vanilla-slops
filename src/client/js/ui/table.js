@@ -284,7 +284,7 @@ function displayLaunchOptions(gameId, launchOptions) {
   gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
   setupLaunchOptionsRowEvents(launchOptionsRow);
 
-  if (TableState.isMobile) buffMobileOptions(launchOptionsRow, closeLaunchOptions);
+  if (TableState.isMobile) buffMobileOptions(launchOptionsRow);
 
   requestAnimationFrame(() => { launchOptionsRow.style.display = 'table-row'; });
 }

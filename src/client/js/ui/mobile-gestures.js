@@ -21,12 +21,9 @@ function addTouchOptimizations(container) {
       if (e.target.closest('.launch-options-btn')) navigator.vibrate(50);
     }, { passive: true });
   }
-  let lastTouchEnd = 0;
-  container.addEventListener('touchend', (e) => {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) e.preventDefault();
-    lastTouchEnd = now;
-  }, { passive: false });
+  // Double-tap-zoom is prevented via `touch-action: manipulation` in CSS on the
+  // interactive elements — cleaner than a JS touchend preventDefault, which also
+  // swallowed legitimate quick taps.
 }
 
 function addMobileEventHandlers(container) {
@@ -75,46 +72,13 @@ export function enhanceMobileEmptyState(container) {
   });
 }
 
-// closeLaunchOptions is injected to avoid circular imports
-export function buffMobileOptions(container, closeLaunchOptions) {
+export function buffMobileOptions(container) {
   container.classList.add('mobile-enhanced');
   const interactiveElements = container.querySelectorAll('button, [role="button"]');
   interactiveElements.forEach(el => ensureTouchTarget(el));
-  if (TableState.touchDevice) addSwipeToClose(container, closeLaunchOptions);
-}
-
-function addSwipeToClose(container, closeLaunchOptions) {
-  let startY = 0;
-  let currentY = 0;
-  let isDragging = false;
-
-  container.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    isDragging = true;
-  }, { passive: true });
-
-  container.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    currentY = e.touches[0].clientY;
-    const deltaY = currentY - startY;
-    if (deltaY > 50) {
-      container.style.transform = `translateY(${Math.min(deltaY - 50, 50)}px)`;
-      container.style.opacity = Math.max(1 - (deltaY - 50) / 100, 0.5);
-    }
-  }, { passive: true });
-
-  container.addEventListener('touchend', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    const deltaY = currentY - startY;
-    if (deltaY > 100) {
-      const gameId = container.dataset.gameId;
-      if (gameId) closeLaunchOptions(gameId);
-    } else {
-      container.style.transform = '';
-      container.style.opacity = '';
-    }
-  }, { passive: true });
+  // No swipe-to-close: on a scrollable list, "swipe down to dismiss" and
+  // "scroll down" are the same motion and fight each other. The Hide Options
+  // button and the row's Options toggle close the panel explicitly.
 }
 
 export function isMobileDevice() {
