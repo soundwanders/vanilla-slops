@@ -20,6 +20,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-26 — Facelift & mobile polish
+
+### Changed
+- **Cosmetic facelift.** New cool-primary / warm-secondary palette — crisp cobalt +
+  vivid emerald in light, ice-blue + luminous cream-gold in dark. A soft cool light
+  ground (no more blinding white) and clearly-stepped dark surfaces (no more flat
+  blue sheet). Every pairing verified to WCAG AA.
+- **Compact, data-first header.** The tall hero is replaced by a slim toolbar (logo,
+  inline search, theme toggle); the games table is now visible above the fold.
+- Theme toggle redesigned — circular, theme-adaptive, sun/moon icons — and moved into
+  the header instead of floating as a fixed button.
+- Game-page header shows the game title alone with a small "Launch Options" chip; the
+  redundant "— Steam Launch Options" suffix is gone (keyword preserved in the `<title>`
+  tag for SEO).
+- Footer simplified to three centered lines with a GitHub icon link.
+- Verified badges and the "Slops" wordmark now use the warm cream accent.
+
+### Added
+- Sentry error tracking (server-side, 5xx only, gated on `SENTRY_DSN`; flushes before
+  the Vercel serverless function freezes so reports aren't dropped).
+
+### Fixed
+- Filter toolbar: removed the stale glassy hero box, fixed the mobile grid (a
+  specificity bug had it stuck at 4 columns on phones), and made the selects
+  token-based so they're visible in light theme.
+- Smoother mobile launch options: removed swipe-to-close (it fought scrolling and
+  caused accidental closes) and the double-tap blocker (it swallowed quick taps);
+  double-tap-zoom is now prevented via `touch-action: manipulation`.
+- Long filter-chip values no longer hide the × remove button (ellipsis truncation).
+- Hide Options button restyled from a plain gray slab into a proper pill.
+- Mobile long/multi-word launch options no longer collide with the copy hint.
+
+### Removed
+- Dead hero CSS orphaned by the facelift and 3 unused keyframes (net ~600 lines
+  lighter across the overhaul).
+
 ## [1.1.0] - 2026-07-19 — Discoverability & simplification
 
 ### Added
