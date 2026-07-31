@@ -737,13 +737,9 @@ export async function fetchGameWithLaunchOptions(gameId) {
  */
 export async function fetchLaunchOptionsForGame(gameId) {
   try {
-    // Single query: join game_launch_options → launch_options via nested select
-    //
-    // ⚠️ WHEN THE slop-scraper MIGRATION IS APPLIED (risk_level, categories,
-    // engine_compatibility): add those three column names to the select() below
-    // AND to the mapped object at the bottom of this function. The frontend badge
-    // rendering is already in place and will light up automatically. Do NOT add
-    // them before the columns exist — selecting a missing column errors the query.
+    // Single query: join game_launch_options → launch_options via nested select.
+    // risk_level / categories / engine_compatibility come from the slop-scraper
+    // metadata migration and drive the badge rendering on the frontend.
     const { data, error } = await supabase
       .from('game_launch_options')
       .select(`
@@ -755,7 +751,10 @@ export async function fetchLaunchOptionsForGame(gameId) {
           downvotes,
           verified,
           source,
-          created_at
+          created_at,
+          risk_level,
+          categories,
+          engine_compatibility
         )
       `)
       .eq('game_app_id', gameId);
@@ -779,6 +778,9 @@ export async function fetchLaunchOptionsForGame(gameId) {
         upvotes: option.upvotes || 0,
         downvotes: option.downvotes || 0,
         verified: option.verified || false,
+        risk_level: option.risk_level || null,
+        categories: option.categories || [],
+        engine_compatibility: option.engine_compatibility || [],
         created_at: option.created_at
       }));
   } catch (error) {
