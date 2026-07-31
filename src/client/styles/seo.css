@@ -83,6 +83,20 @@
 
 .seo-breadcrumb a:hover { text-decoration: underline; }
 
+/* Steam header art, built from app_id. background-image (not <img>) so a missing
+   image degrades to the subtle fallback block instead of a broken-image icon. */
+.seo-art {
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 460 / 215;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
+}
+
 /* Small "Launch Options" chip above the game title — tells the visitor where
    they are without repeating the phrase in the big header. */
 .seo-eyebrow {

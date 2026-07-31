@@ -331,6 +331,8 @@ function createNoOptionsHTML(colspan, gameId) {
 function createLaunchOptionHTML(option) {
   const verifiedBadge = option.verified ? '<span class="option-verified">✓ Verified</span>' : '';
   const votesBadge = option.upvotes > 0 ? `<span class="option-votes">👍 ${option.upvotes}</span>` : '';
+  const riskBadge = renderRiskBadge(option.risk_level);
+  const categoryChips = renderCategoryChips(option.categories);
   const command = option.command || option.option || '';
   const mobileClass = TableState.isMobile ? 'mobile-launch-option' : '';
 
@@ -343,19 +345,44 @@ function createLaunchOptionHTML(option) {
            aria-label="Copy launch option command: ${escapeHtml(command)}"
            ${TableState.touchDevice ? 'ontouchstart=""' : ''}>
         <code>${escapeHtml(command)}</code>
-        ${TableState.isMobile ? '<span class="copy-hint">Tap to copy</span>' : ''}
+        <span class="copy-indicator" aria-hidden="true">
+          <svg class="ci-icon ci-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <svg class="ci-icon ci-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <span class="copy-word">Copy</span>
+        </span>
       </div>
       ${option.description ? `
         <div class="option-description ${TableState.isMobile ? 'mobile-description' : ''}">
           ${escapeHtml(option.description)}
         </div>
       ` : ''}
+      ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
       <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
         <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
-        <div class="option-badges">${verifiedBadge}${votesBadge}</div>
+        <div class="option-badges">${riskBadge}${verifiedBadge}${votesBadge}</div>
       </div>
     </li>
   `;
+}
+
+// --- Metadata badges (slop-scraper columns) --------------------------------
+// Defensive: these read risk_level / categories, which do NOT exist in the query
+// yet. Until the migration is applied AND the columns are added to
+// fetchLaunchOptionsForGame's select(), the values are undefined and nothing
+// renders. See gamesService.js for the query-change marker.
+const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
+
+function renderRiskBadge(level) {
+  const label = RISK_LABELS[level];
+  return label ? `<span class="risk-badge risk-${level}">${label}</span>` : '';
+}
+
+function renderCategoryChips(categories) {
+  if (!Array.isArray(categories) || categories.length === 0) return '';
+  return categories
+    .filter(c => c && c !== 'Uncategorized')
+    .map(c => `<span class="cat-chip">${escapeHtml(c)}</span>`)
+    .join('');
 }
 
 // ============================================================================
@@ -503,30 +530,29 @@ async function handleCommandClick(e) {
   }
 }
 
+// The copy-indicator (icon + word) swaps via the .copied / .copy-failed class in CSS
 function showCopySuccess(element) {
   element.classList.remove('copy-failed');
   element.classList.add('copied');
-  if (TableState.isMobile) {
-    const hint = element.querySelector('.copy-hint');
-    if (hint) {
-      hint.textContent = 'Copied!';
-      setTimeout(() => { hint.textContent = 'Tap to copy'; }, 1000);
-    }
+  const word = element.querySelector('.copy-word');
+  if (word) {
+    word.dataset.reset = word.dataset.reset || word.textContent;
+    word.textContent = 'Copied';
+    setTimeout(() => { word.textContent = word.dataset.reset; }, 1200);
   }
-  setTimeout(() => element.classList.remove('copied'), 1000);
+  setTimeout(() => element.classList.remove('copied'), 1200);
 }
 
 function showCopyError(element) {
   element.classList.remove('copied');
   element.classList.add('copy-failed');
-  if (TableState.isMobile) {
-    const hint = element.querySelector('.copy-hint');
-    if (hint) {
-      hint.textContent = 'Copy failed';
-      setTimeout(() => { hint.textContent = 'Tap to copy'; }, 1000);
-    }
+  const word = element.querySelector('.copy-word');
+  if (word) {
+    word.dataset.reset = word.dataset.reset || word.textContent;
+    word.textContent = 'Failed';
+    setTimeout(() => { word.textContent = word.dataset.reset; }, 1200);
   }
-  setTimeout(() => element.classList.remove('copy-failed'), 1000);
+  setTimeout(() => element.classList.remove('copy-failed'), 1200);
 }
 
 function attemptTextSelection(element) {

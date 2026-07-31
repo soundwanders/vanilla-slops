@@ -150,6 +150,7 @@ function renderGamePage(game, slug) {
   <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
+  <script src="/game-copy.js" defer></script>
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
@@ -170,6 +171,8 @@ function renderGamePage(game, slug) {
     <nav class="seo-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Home</a> <span aria-hidden="true">/</span> <span>${escapeHtml(title)}</span>
     </nav>
+
+    <div class="seo-art" style="background-image:url('${steamImage}')" role="img" aria-label="${escapeHtml(title)} header art"></div>
 
     <span class="seo-eyebrow">Launch Options</span>
     <h1 class="seo-title">${escapeHtml(title)}</h1>
@@ -205,20 +208,36 @@ function renderGamePage(game, slug) {
 </html>`;
 }
 
+const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
+
 function renderOption(opt) {
   const command = opt.command || opt.option || '';
   const description = opt.description && opt.description !== 'No description available' ? opt.description : '';
   const source = opt.source || 'Community';
   const verified = opt.verified
-    ? '<span class="option-verified">✅ Verified</span>'
+    ? '<span class="option-verified">✓ Verified</span>'
     : '';
   const votes = opt.upvotes > 0 ? `<span class="option-votes">👍 ${opt.upvotes}</span>` : '';
+  // Defensive metadata badges — undefined until the slop-scraper columns are live
+  // and added to the query (see gamesService.js). Render nothing when absent.
+  const risk = RISK_LABELS[opt.risk_level] ? `<span class="risk-badge risk-${opt.risk_level}">${RISK_LABELS[opt.risk_level]}</span>` : '';
+  const cats = Array.isArray(opt.categories)
+    ? opt.categories.filter(c => c && c !== 'Uncategorized').map(c => `<span class="cat-chip">${escapeHtml(c)}</span>`).join('')
+    : '';
   return `  <li class="launch-option">
-    <div class="option-command"><code>${escapeHtml(command)}</code></div>
+    <div class="option-command" data-command="${escapeHtml(command)}" role="button" tabindex="0" aria-label="Copy launch option: ${escapeHtml(command)}">
+      <code>${escapeHtml(command)}</code>
+      <span class="copy-indicator" aria-hidden="true">
+        <svg class="ci-icon ci-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <svg class="ci-icon ci-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <span class="copy-word">Copy</span>
+      </span>
+    </div>
     ${description ? `<div class="option-description">${escapeHtml(description)}</div>` : ''}
+    ${cats ? `<div class="option-cats">${cats}</div>` : ''}
     <div class="option-meta">
       <span class="option-source">${escapeHtml(source)}</span>
-      <div class="option-badges">${verified}${votes}</div>
+      <div class="option-badges">${risk}${verified}${votes}</div>
     </div>
   </li>`;
 }

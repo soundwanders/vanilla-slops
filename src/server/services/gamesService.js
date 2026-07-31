@@ -738,6 +738,12 @@ export async function fetchGameWithLaunchOptions(gameId) {
 export async function fetchLaunchOptionsForGame(gameId) {
   try {
     // Single query: join game_launch_options → launch_options via nested select
+    //
+    // ⚠️ WHEN THE slop-scraper MIGRATION IS APPLIED (risk_level, categories,
+    // engine_compatibility): add those three column names to the select() below
+    // AND to the mapped object at the bottom of this function. The frontend badge
+    // rendering is already in place and will light up automatically. Do NOT add
+    // them before the columns exist — selecting a missing column errors the query.
     const { data, error } = await supabase
       .from('game_launch_options')
       .select(`

@@ -390,67 +390,64 @@
   transform: none;
 }
 
-/* Command display */
+/* Command display — code on the left, an always-visible copy affordance on the right */
 .option-command {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   background: var(--color-code-background);
   color: var(--color-code-text);
   font-family: var(--font-family-mono);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-3);
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-all;
   font-size: var(--font-size-sm);
   position: relative;
   cursor: pointer;
   touch-action: manipulation;
-  transition: all var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  word-break: normal;
 }
 
 .option-command:hover {
-  box-shadow: var(--shadow-lg);
-  transform: scale(1.015);
   border-color: var(--color-accent);
 }
 
-/* Hover-only copy hint — restricted to devices with a real pointer so it
-   never stacks with the mobile .copy-hint span rendered by table.js */
-@media (hover: hover) and (pointer: fine) {
-  .option-command::after {
-    content: '📋 Click to copy';
-    position: absolute;
-    top: var(--space-2);
-    right: var(--space-3);
-    padding: var(--space-1) var(--space-2);
-    background: rgba(0, 0, 0, 0.8);
-    color: var(--color-white);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-xs);
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    pointer-events: none;
-    font-family: var(--font-family-base);
-  }
-
-  .option-command:hover::after {
-    opacity: 1;
-  }
-}
-
 .option-command code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: none;
   border: none;
   padding: 0;
   color: inherit;
-  font-size: inherit;
-}
-
-.option-command code:nth-child(1) {
   font-size: var(--font-size-base);
 }
+
+/* Copy affordance — clipboard icon + word, swaps to a check on copy */
+.copy-indicator {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1_5);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast);
+  user-select: none;
+}
+
+.option-command:hover .copy-indicator { color: var(--color-accent); }
+
+.ci-icon { width: 15px; height: 15px; }
+.ci-done { display: none; }
+
+.option-command.copied .copy-indicator { color: var(--color-success); }
+.option-command.copied .ci-copy { display: none; }
+.option-command.copied .ci-done { display: inline-block; }
+
+.option-command.copy-failed .copy-indicator { color: var(--color-error); }
 
 .option-command[tabindex]:focus {
   background: var(--color-interactive-hover);
@@ -483,6 +480,56 @@
   color: var(--color-text-tertiary);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border-subtle);
+}
+
+/* Metadata badges (slop-scraper: risk_level, categories) — hidden until data lands */
+.option-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.risk-safe {
+  color: var(--color-success);
+  background: var(--color-success-subtle);
+}
+
+.risk-caution {
+  color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+/* experimental is the common default — kept quiet so safe/caution stand out */
+.risk-experimental {
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+}
+
+.option-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1_5);
+  margin-bottom: var(--space-3);
+}
+
+.cat-chip {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
 }
 
 .option-source {

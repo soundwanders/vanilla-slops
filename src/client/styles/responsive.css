@@ -330,28 +330,6 @@
   }
 
   .table-container .option-command:active { transform: scale(0.98); }
-
-  .table-container .option-command.copied::after {
-    content: '✅ Copied to clipboard!';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--color-success);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-bold);
-    animation: copyFeedback 2s ease-in-out;
-  }
-
-  @keyframes copyFeedback {
-    0%, 100% { opacity: 0; transform: scale(0.9); }
-    10%, 90% { opacity: 1; transform: scale(1); }
-  }
 }
 
 /* =============================================================================
@@ -823,17 +801,6 @@
     word-break: break-word;
   }
 
-  /* Mobile copy hint is a real .copy-hint span rendered by table.js —
-     do not duplicate it here with a pseudo-element. It reserves its own
-     column and never wraps to two lines. */
-  .table-container .copy-hint {
-    flex: 0 0 auto;
-    white-space: nowrap;
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
-    opacity: 0.7;
-  }
-
   .table-container .option-command:active {
     transform: scale(0.98) translateZ(0);
     background: var(--color-interactive-active, var(--color-accent-subtle));
@@ -843,14 +810,6 @@
   .table-container .option-command.copied {
     background: var(--color-success-subtle, #d1fae5);
     border-color: var(--color-success, #10b981);
-    transform: scale(1.02) translateZ(0);
-  }
-
-  .table-container .option-command.copied::after {
-    content: 'Copied!';
-    color: var(--color-success, #10b981);
-    opacity: 1;
-    font-weight: 600;
   }
 
   .table-container .close-launch-options {
