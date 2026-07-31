@@ -214,9 +214,7 @@ function renderOption(opt) {
   const command = opt.command || opt.option || '';
   const description = opt.description && opt.description !== 'No description available' ? opt.description : '';
   const source = opt.source || 'Community';
-  const verified = opt.verified
-    ? '<span class="option-verified">✓ Verified</span>'
-    : '';
+  // `verified` retired in favour of risk_level + future community votes
   const votes = opt.upvotes > 0 ? `<span class="option-votes">👍 ${opt.upvotes}</span>` : '';
   // Defensive metadata badges — undefined until the slop-scraper columns are live
   // and added to the query (see gamesService.js). Render nothing when absent.
@@ -237,7 +235,7 @@ function renderOption(opt) {
     ${cats ? `<div class="option-cats">${cats}</div>` : ''}
     <div class="option-meta">
       <span class="option-source">${escapeHtml(source)}</span>
-      <div class="option-badges">${risk}${verified}${votes}</div>
+      <div class="option-badges">${risk}${votes}</div>
     </div>
   </li>`;
 }

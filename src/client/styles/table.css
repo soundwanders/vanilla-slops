@@ -264,9 +264,10 @@
   transition: all var(--transition-base);
 }
 
-.launch-options-btn::before {
-  content: '🐸';
-  font-size: var(--font-size-sm);
+.btn-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 .launch-options-btn:hover {
@@ -559,15 +560,6 @@
 
 /* No ::before icon — table.js already renders '👍 N' in the badge text */
 
-.option-verified {
-  color: var(--color-accent-warm);   /* warm cream/amber — the earned-emphasis accent */
-  font-weight: var(--font-weight-bold);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-/* No ::before icon — table.js already renders '✅ Verified' in the badge text */
 
 /* Close button */
 .launch-options-close-container {

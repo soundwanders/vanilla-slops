@@ -168,6 +168,7 @@ function generateLaunchOptionsButton(gameId, gameTitle, optionsCount) {
         type="button"
         ${TableState.touchDevice ? 'ontouchstart=""' : ''}
       >
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg>
         <span class="btn-text">Options</span>
         <span class="options-count" aria-label="${optionsCount} options">${optionsCount}</span>
       </button>
@@ -329,7 +330,8 @@ function createNoOptionsHTML(colspan, gameId) {
 }
 
 function createLaunchOptionHTML(option) {
-  const verifiedBadge = option.verified ? '<span class="option-verified">✓ Verified</span>' : '';
+  // `verified` retired in favour of risk_level (consistent, computed) + community
+  // votes as the future human signal — see the metadata trust model.
   const votesBadge = option.upvotes > 0 ? `<span class="option-votes">👍 ${option.upvotes}</span>` : '';
   const riskBadge = renderRiskBadge(option.risk_level);
   const categoryChips = renderCategoryChips(option.categories);
@@ -359,7 +361,7 @@ function createLaunchOptionHTML(option) {
       ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
       <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
         <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
-        <div class="option-badges">${riskBadge}${verifiedBadge}${votesBadge}</div>
+        <div class="option-badges">${riskBadge}${votesBadge}</div>
       </div>
     </li>
   `;
