@@ -8,16 +8,16 @@
 </p>
 
 <p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-quick-start">Quick Start</a> •
-  <a href="#-api-documentation">API</a> •
-  <a href="#-contributing">Contributing</a>
+  <a href="#features">Features</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#api-documentation">API</a> •
+  <a href="#contributing">Contributing</a>
 </p>
 
 ---
 
-## 👖 Vanilla Slops?
+## Vanilla Slops?
 
 **Vanilla Slops** is a web application that provides a searchable database of community-verified launch options for games on [Steam](https://store.steampowered.com/).
 
@@ -31,25 +31,25 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 
 ---
 
-## 🐸 Features
+## Features
 
-#### **🔎 Smart Search & Discovery**
+#### **Smart Search & Discovery**
 - **Real-time search suggestions** across titles, developers, and publishers
 - **Filtering** by developer, engine, release year, and launch-option count
 - **Column sorting** by title, developer, or number of launch options
 
-#### **🍓 Steam Launch Options Database**
+#### **Steam Launch Options Database**
 - **Normalized data model** — each command is stored once and shared across every game that uses it
 - **Source attribution** showing where each option came from (PCGamingWiki, ProtonDB, community curation)
 
-#### **🛡️ Code Quality & Safety**
+#### **Code Quality & Safety**
 - **Accessibility-first** with semantic HTML, ARIA, and full keyboard navigation
 - **Security hardened** with Zod input validation, CORS policies, and rate limiting
 - **Tested** with a Vitest suite plus lint + test CI on every pull request
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 #### **A Look Under the Hood**
 - **Frontend**: Vanilla JavaScript (ES6+, no framework) with a custom Redux-style state manager, bundled by Vite
@@ -61,7 +61,7 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 
 ---
 
-## 🧙 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -106,9 +106,9 @@ DOMAIN_URL=placeholder.com
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
-**👉 [Full API Documentation](./docs/api.md)**
+**[Full API Documentation](./docs/api.md)**
 
 #### Quick Reference
 
@@ -166,20 +166,22 @@ Retrieve launch options for a specific game.
     "id": "uuid-here",
     "command": "-windowed",
     "description": "Runs the game in windowed mode",
+    "source": "PCGamingWiki",
     "upvotes": 245,
-    "verified": true
+    "risk_level": "safe",
+    "categories": ["display"]
   }
 ]
 ```
 
 ---
 
-## 🧘 Contributing
+## Contributing
 
 Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, share your ideas freely.
 Contributions can only make the project better, and maybe we'll both learn something along the way. 
 
-[📋 **Contributing Guidelines**](./CONTRIBUTING.md) | [🐛 **Issue Templates**](./github/ISSUE_TEMPLATE/)
+[**Contributing Guidelines**](./CONTRIBUTING.md) | [**Issue Templates**](./github/ISSUE_TEMPLATE/)
 
 ### **Ways to Contribute**
 - 🎮 **Launch Options** - Submit verified launch options for games, so we can grow the database
@@ -197,7 +199,7 @@ Contributions can only make the project better, and maybe we'll both learn somet
 
 ---
 
-## 📄 License
+## License
 
 MIT License - please see the [LICENSE](LICENSE) file for details.
 

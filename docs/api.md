@@ -1,83 +1,90 @@
 # Vanilla Slops API Documentation
 
-**Base URL:** `https://vanillaslopsplaceholder.app/`  
+**Base URL:** `https://launchoptions.dev`
 **Protocol:** HTTPS only
 
 ## Overview
 
-The Vanilla Slops API is a RESTful web service built with **Node.js** and **Express.js**, providing access to a database of Steam games and their launch options. The API uses **Supabase** for data storage and follows modern ES module patterns.
+The Vanilla Slops API is a read-only web service built with **Node.js** and **Express.js** that serves a database of Steam games and their community-sourced launch options. Data is stored in **Supabase** (PostgreSQL), and the app is written entirely in modern ES modules.
+
+Launch options are command-line parameters you can add to a Steam game to optimize performance, unlock features, or fix compatibility issues.
 
 **Tech Stack:**
-- **Runtime**: Node.js
+- **Runtime**: Node.js (22.x)
 - **Framework**: Express.js
 - **Database**: Supabase (PostgreSQL)
-- **Architecture**: RESTful API
-
-Launch options are command-line parameters that can optimize game performance, enable features, or fix compatibility issues.
+- **Hosting**: Vercel (serverless)
 
 ### Architecture
 
-The API follows a layered architecture pattern:
+The API follows a layered structure:
 
-- **Controllers**: Handle HTTP requests and responses (`gamesController.js`)
-- **Services**: Business logic and data processing (`gamesService.js`) 
-- **Models**: Data validation with Zod schemas (`gameQuerySchema.js`)
-- **Middleware**: CORS, rate limiting, error handling, request logging
-- **Database**: Supabase client with PostgreSQL backend
+- **Routes**: Endpoint declarations (`routes/gamesRoutes.js`)
+- **Controllers**: HTTP request/response handling (`controllers/gamesController.js`)
+- **Services**: Business logic and Supabase queries (`services/gamesService.js`)
+- **Schemas**: Query validation with Zod (`schemas/gameQuerySchema.js`)
+- **Middleware**: CORS, rate limiting, request logging, standardized error handling
 
-The database schema includes three main tables:
-- `games`: Steam game metadata (app_id, title, developer, etc.)
-- `launch_options`: Community-sourced launch commands and descriptions  
-- `game_launch_options`: Junction table linking games to their launch options
-- `sources`: Reference table for launch option sources
+The database has three tables:
+- `games` — Steam game metadata (`app_id`, `title`, `developer`, `publisher`, `release_date`, `engine`, `total_options_count`)
+- `launch_options` — normalized launch commands, stored once and shared across games
+- `game_launch_options` — junction table linking games to their launch options (many-to-many)
 
-**Key Features:**
-- RESTful design
-- Request validation and sanitization
-- Rate limiting (1000 requests/15 minutes per IP)
-- CORS support for web applications
-- Structured logging for readability
+`total_options_count` is maintained automatically by a PostgreSQL trigger.
+
+**Key features:**
+- Read-only, publicly accessible (no authentication)
+- Query validation and sanitization (Zod)
+- Rate limiting (1,000 requests / 15 minutes per IP on `/api`)
+- Trigram-indexed search across title, developer, and publisher
+- Server-rendered, SEO-friendly per-game pages
 
 ### What are Launch Options?
 
-Launch options are special commands you can add to Steam games to modify how they start. Examples include:
-- `-windowed` - Run the game in windowed mode
-- `-high` - Set high CPU priority
-- `-novid` - Skip intro videos
+Special commands you add to a game's launch settings on Steam to change how it starts. Examples:
+- `-windowed` — run the game in windowed mode
+- `-high` — set high CPU priority
+- `-novid` — skip intro videos
 
 ## Quick Start
 
 ```bash
-# Get all games
-curl "https://vanillaslopsplaceholder.app/api/games"
+# Get games (options-first ordering by default)
+curl "https://launchoptions.dev/api/games"
 
 # Search for a specific game
-curl "https://vanillaslopsplaceholder.app/api/games?search=half+life"
+curl "https://launchoptions.dev/api/games?search=half+life"
 
 # Get launch options for Team Fortress 2 (app_id: 440)
-curl "https://vanillaslopsplaceholder.app/api/games/440/launch-options"
+curl "https://launchoptions.dev/api/games/440/launch-options"
 ```
 
 ## Authentication
 
-Currently, the API is **publicly accessible** and does not require authentication. Rate limiting is applied per IP address.
+The API is **publicly accessible** and does not require authentication. Rate limiting is applied per IP address.
 
 ## Rate Limiting
 
-- **Limit:** 1,000 requests per 15-minute window per IP address
-- **Headers:** Rate limit information is included in response headers
-- **Exceeded:** Returns `429 Too Many Requests` with retry information
-
-## Base URL & Versioning
-
-All API requests should be made to:
-```
-https://vanillaslopsplaceholder.app/api/
-```
-
-The API is currently version 1.0 and is considered stable. Future breaking changes will be introduced in new versions.
+- **Limit:** 1,000 requests per 15-minute window per IP (applied to all `/api` routes)
+- **Headers:** Standard `RateLimit-*` headers are included in responses
+- **Exceeded:** Returns `429 Too Many Requests`
 
 ## Endpoints
+
+The API is read-only — every endpoint is a `GET`.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/games` | List games with filtering, sorting, search, and pagination |
+| `GET /api/games/suggestions` | Autocomplete search suggestions |
+| `GET /api/games/facets` | Available filter values (developers, engines, etc.) |
+| `GET /api/games/statistics` | Aggregate counts (games with/without options) |
+| `GET /api/games/{app_id}` | Full game details including launch options |
+| `GET /api/games/{app_id}/launch-options` | Launch options only (lighter response) |
+| `GET /api/status` | API status and endpoint index |
+| `GET /health` | Health check and system info |
+| `GET /game/{app_id}/{slug}` | Server-rendered game page (HTML, for SEO/sharing) |
+| `GET /sitemap.xml` | XML sitemap of all game pages |
 
 ### Games
 
@@ -86,24 +93,26 @@ The API is currently version 1.0 and is considered stable. Future breaking chang
 GET /api/games
 ```
 
-Retrieve a paginated list of Steam games with optional filtering and search.
+Retrieve a paginated list of Steam games with optional filtering and search. Results are ordered options-first by default (games with the most launch options appear first).
 
 **Query Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `search` | string | - | Search term (title, developer, publisher) |
+| `search` | string | - | Search term (matches title, developer, publisher) |
 | `developer` | string | - | Filter by developer name |
-| `options` | enum | - | `has-options`, `no-options`, `performance`, `graphics` |
+| `options` | enum | - | `has-options`, `no-options`, `many-options`, `few-options` |
 | `year` | string | - | Filter by release year |
-| `sort` | enum | `title` | `title`, `year`, `options`, `relevance` |
-| `order` | enum | `asc` | `asc`, `desc` |
+| `sort` | enum | `total_options_count` | Common values: `title`, `developer`, `options`, `year`, `release_date` |
+| `order` | enum | `desc` | `asc`, `desc` |
 | `page` | integer | 1 | Page number (1-based) |
-| `limit` | integer | 20 | Items per page (1-100) |
+| `limit` | integer | 20 | Items per page (1–100) |
+
+> Unknown or retired query values (e.g. an old `options=performance` bookmark) are ignored rather than rejected, so stale URLs still return results.
 
 **Example Request:**
 ```bash
-curl "https://vanillaslopsplaceholder.app/api/games?search=valve&sort=year&order=desc&limit=10"
+curl "https://launchoptions.dev/api/games?search=valve&sort=options&order=desc&limit=10"
 ```
 
 **Example Response:**
@@ -153,7 +162,7 @@ Retrieve complete details for a specific game, including all launch options.
 
 **Example Request:**
 ```bash
-curl "https://vanillaslopsplaceholder.app/api/games/440"
+curl "https://launchoptions.dev/api/games/440"
 ```
 
 **Example Response:**
@@ -171,10 +180,12 @@ curl "https://vanillaslopsplaceholder.app/api/games/440"
       "id": "uuid-here",
       "command": "-windowed",
       "description": "Runs the game in windowed mode",
-      "source": "Community",
+      "source": "PCGamingWiki",
       "upvotes": 245,
       "downvotes": 12,
-      "verified": true
+      "risk_level": "safe",
+      "categories": ["display"],
+      "engine_compatibility": ["Source"]
     }
   ]
 }
@@ -194,19 +205,23 @@ Retrieve only the launch options for a specific game (lighter response).
     "id": "uuid-here",
     "command": "-windowed",
     "description": "Runs the game in windowed mode",
-    "source": "Community", 
+    "source": "PCGamingWiki",
     "upvotes": 245,
     "downvotes": 12,
-    "verified": true
+    "risk_level": "safe",
+    "categories": ["display"],
+    "engine_compatibility": ["Source"]
   },
   {
-    "id": "uuid-here-2", 
+    "id": "uuid-here-2",
     "command": "-high",
-    "description": "Sets high CPU priority for better performance",
-    "source": "Steam Guide",
+    "description": "Sets high CPU priority",
+    "source": "Community",
     "upvotes": 189,
     "downvotes": 5,
-    "verified": true
+    "risk_level": "caution",
+    "categories": ["performance"],
+    "engine_compatibility": []
   }
 ]
 ```
@@ -224,32 +239,21 @@ Get autocomplete suggestions for search queries.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `q` | string | Yes | Search query (min 2 characters) |
-| `limit` | integer | No | Max suggestions (default: 10) |
+| `q` | string | Yes | Search query (2–100 characters) |
+| `limit` | integer | No | Max suggestions (default: 10, max: 20) |
+| `prioritizeOptions` | boolean | No | Rank games that have launch options higher (default: `true`) |
 
 **Example Request:**
 ```bash
-curl "https://vanillaslopsplaceholder.app/api/games/suggestions?q=half&limit=5"
+curl "https://launchoptions.dev/api/games/suggestions?q=half&limit=5"
 ```
 
 **Example Response:**
 ```json
 [
-  {
-    "type": "title",
-    "value": "Half-Life",
-    "category": "Games"
-  },
-  {
-    "type": "title", 
-    "value": "Half-Life 2",
-    "category": "Games"
-  },
-  {
-    "type": "developer",
-    "value": "Valve Corporation", 
-    "category": "Developers"
-  }
+  { "type": "title", "value": "Half-Life", "category": "Games" },
+  { "type": "title", "value": "Half-Life 2", "category": "Games" },
+  { "type": "developer", "value": "Valve Corporation", "category": "Developers" }
 ]
 ```
 
@@ -258,13 +262,14 @@ curl "https://vanillaslopsplaceholder.app/api/games/suggestions?q=half&limit=5"
 GET /api/games/facets
 ```
 
-Get available filter options for dynamic UI generation.
+Get available filter values for building the filter UI.
 
 **Query Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `search` | string | Filter facets based on search context |
+| `search` | string | Scope facets to a search context |
+| `includeStats` | boolean | Include options statistics (default: `true`) |
 
 **Example Response:**
 ```json
@@ -291,6 +296,30 @@ Get available filter options for dynamic UI generation.
 }
 ```
 
+#### Statistics
+```http
+GET /api/games/statistics
+```
+
+Get aggregate counts, optionally scoped by the same filters as `/api/games`.
+
+**Query Parameters:** `search`, `developer`, `year` (all optional).
+
+**Example Request:**
+```bash
+curl "https://launchoptions.dev/api/games/statistics?search=valve"
+```
+
+**Example Response:**
+```json
+{
+  "withOptions": 1250,
+  "withoutOptions": 750,
+  "total": 2000,
+  "percentageWithOptions": 62.5
+}
+```
+
 ### System
 
 #### Health Check
@@ -298,17 +327,16 @@ Get available filter options for dynamic UI generation.
 GET /health
 ```
 
-Check API health and get system information.
-
 **Example Response:**
 ```json
 {
   "status": "ok",
-  "timestamp": "2025-07-19T10:30:00.000Z",
+  "timestamp": "2026-07-30T10:30:00.000Z",
   "service": "Vanilla Slops - Steam Launch Options API",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "environment": "production",
   "uptime": 86400,
+  "staticFiles": "available",
   "memory": {
     "used": 145.2,
     "total": 512.0
@@ -321,77 +349,93 @@ Check API health and get system information.
 GET /api/status
 ```
 
-Get API status and available endpoints.
-
 **Example Response:**
 ```json
 {
   "api": "Vanilla Slops API",
-  "status": "operational", 
-  "timestamp": "2025-07-19T10:30:00.000Z",
+  "status": "operational",
+  "timestamp": "2026-07-30T10:30:00.000Z",
   "endpoints": {
     "games": "/api/games",
-    "suggestions": "/api/games/suggestions", 
+    "suggestions": "/api/games/suggestions",
     "facets": "/api/games/facets",
     "health": "/health"
   }
 }
 ```
 
+### SEO Pages
+
+#### Game Page (HTML)
+```http
+GET /game/{app_id}/{slug}
+```
+
+Returns a fully server-rendered HTML page for a single game, with meta tags, canonical URL, Open Graph tags (using the Steam header image), and JSON-LD structured data. Intended for search engines and link previews — not a JSON endpoint. The `slug` is optional and cosmetic.
+
+#### Sitemap
+```http
+GET /sitemap.xml
+```
+
+Returns an XML sitemap listing every game page for crawler discovery.
+
 ## Error Handling
 
-The API uses conventional HTTP response codes and returns error details in JSON format.
+The API uses conventional HTTP status codes and returns errors in a standardized JSON envelope.
 
 ### HTTP Status Codes
 
 | Code | Description |
 |------|-------------|
-| `200` | OK - Request successful |
-| `400` | Bad Request - Invalid parameters |
-| `404` | Not Found - Resource doesn't exist |
-| `429` | Too Many Requests - Rate limit exceeded |
-| `500` | Internal Server Error - Server error |
+| `200` | OK — request successful |
+| `400` | Bad Request — validation failed |
+| `404` | Not Found — resource or route doesn't exist |
+| `429` | Too Many Requests — rate limit exceeded |
+| `500` | Internal Server Error |
 
 ### Error Response Format
 
-```json
-{
-  "error": "Description of what went wrong",
-  "details": "Additional technical details (development only)"
-}
-```
+Most errors share this shape:
 
-### Common Errors
-
-**Invalid Game ID**
-```json
-{
-  "error": "Invalid game ID"
-}
-```
-
-**Game Not Found**
-```json
-{
-  "error": "Game with ID 999999 not found"
-}
-```
-
-**Rate Limit Exceeded**
-```json
-{
-  "error": "Too many requests from this IP, please try again later."
-}
-```
-
-**Validation Error**
 ```json
 {
   "error": {
-    "page": {
-      "_errors": ["Page must be a positive integer string"]
+    "code": "NOT_FOUND",
+    "message": "Game not found"
+  },
+  "requestId": "req-abc123"
+}
+```
+
+`requestId` is included when available and is useful when reporting issues.
+
+### Common Errors
+
+**Validation Error (400)** — includes a `fields` object describing which parameters failed:
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Request validation failed",
+    "fields": {
+      "page": { "_errors": ["Page must be a positive integer string"] }
     }
   }
+}
+```
+
+**Route Not Found (404)**
+```json
+{
+  "error": { "code": "NOT_FOUND", "message": "Route not found" }
+}
+```
+
+**Rate Limit Exceeded (429)**
+```json
+{
+  "error": "Too many requests from this IP, please try again later."
 }
 ```
 
@@ -405,9 +449,9 @@ The API uses conventional HTTP response codes and returns error details in JSON 
 | `title` | string | Game title |
 | `developer` | string | Game developer |
 | `publisher` | string | Game publisher |
-| `release_date` | string | Release date (YYYY-MM-DD format) |
-| `engine` | string | Game engine used |
-| `total_options_count` | integer | Number of available launch options |
+| `release_date` | string | Release date (`YYYY-MM-DD`) |
+| `engine` | string | Game engine |
+| `total_options_count` | integer | Number of launch options (auto-maintained) |
 | `created_at` | string | ISO timestamp |
 | `updated_at` | string | ISO timestamp |
 
@@ -418,75 +462,52 @@ The API uses conventional HTTP response codes and returns error details in JSON 
 | `id` | string | Unique identifier (UUID) |
 | `command` | string | Launch option command |
 | `description` | string | Human-readable description |
-| `source` | string | Source of the option |
+| `source` | string | Provenance (e.g. PCGamingWiki, ProtonDB, Community) |
 | `upvotes` | integer | Community upvotes |
 | `downvotes` | integer | Community downvotes |
-| `verified` | boolean | Whether option is verified by moderators |
-| `created_at` | string | ISO timestamp |
+| `risk_level` | string | `safe`, `caution`, or `experimental` — computed risk classification |
+| `categories` | string[] | Tags such as `performance`, `display`, `compatibility` |
+| `engine_compatibility` | string[] | Engines the option is known to apply to |
+
+> **Note:** A legacy `verified` boolean still exists in the schema but is no longer surfaced in the UI. Trust signals are now conveyed by `risk_level` (computed), `source` (provenance), and community votes. Treat `verified` as deprecated.
 
 ## CORS Policy
 
-The API supports Cross-Origin Resource Sharing (CORS) for web applications:
-
-- **Allowed Origins:** Configurable (development allows all)
-- **Allowed Methods:** GET, POST, PUT, DELETE, OPTIONS
-- **Allowed Headers:** Standard headers plus Authorization
-- **Credentials:** Supported
+- **Allowed Origins:** configurable via `CORS_ORIGIN` / `DOMAIN_URL` (development allows all)
+- **Allowed Methods:** `GET`, `OPTIONS` (read-only API)
+- **Credentials:** supported
 
 ## Examples
 
-### Basic Usage
-
-**Get popular games with launch options:**
+**Games with the most launch options:**
 ```bash
-curl "https://vanillaslopsplaceholder.app/api/games?options=has-options&sort=options&order=desc&limit=5"
+curl "https://launchoptions.dev/api/games?options=has-options&sort=options&order=desc&limit=5"
 ```
 
-**Search for Valve games:**
+**Games by a specific developer, newest first:**
 ```bash
-curl "https://vanillaslopsplaceholder.app/api/games?developer=valve&sort=year&order=desc"
+curl "https://launchoptions.dev/api/games?developer=valve&sort=year&order=desc"
 ```
 
-**Find games from 2020:**
+**Games from 2020:**
 ```bash
-curl "https://vanillaslopsplaceholder.app/api/games?year=2020"
+curl "https://launchoptions.dev/api/games?year=2020"
 ```
 
-### JavaScript/Node.js (Express.js)
+### JavaScript
 
 ```javascript
-// Using fetch API (client-side)
 async function getGameLaunchOptions(appId) {
-  const response = await fetch(`https://vanillaslopsplaceholder.app/api/games/${appId}/launch-options`);
-  
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  const res = await fetch(`https://launchoptions.dev/api/games/${appId}/launch-options`);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
   }
-  
-  return await response.json();
+  return res.json();
 }
 
-// Express.js server-side example
-import express from 'express';
-
-const app = express();
-
-app.get('/my-games/:appId/options', async (req, res) => {
-  try {
-    const { appId } = req.params;
-    const response = await fetch(`https://vanillaslopsplaceholder.app/api/games/${appId}/launch-options`);
-    const options = await response.json();
-    
-    res.json(options);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get TF2 launch options
 getGameLaunchOptions(440)
   .then(options => console.log(options))
-  .catch(error => console.error(error));
+  .catch(err => console.error(err));
 ```
 
 ### Python
@@ -495,27 +516,13 @@ getGameLaunchOptions(440)
 import requests
 
 def get_games(search_term="", page=1, limit=20):
-    """Get games from the Vanilla Slops API"""
-    url = "https://vanillaslopsplaceholder.app/api/games"
-    params = {
-        "search": search_term,
-        "page": page,
-        "limit": limit
-    }
-    
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    
-    return response.json()
+    """Get games from the Vanilla Slops API."""
+    url = "https://launchoptions.dev/api/games"
+    params = {"search": search_term, "page": page, "limit": limit}
+    res = requests.get(url, params=params)
+    res.raise_for_status()
+    return res.json()
 
-# Search for games
 games = get_games("valve", limit=10)
 print(f"Found {games['total']} games")
 ```
-
-### Compatible with:
-- Any HTTP client library
-- Express.js middleware
-- React/Vue.js applications
-- Mobile app frameworks
-- Server-side frameworks (Next.js, Nuxt.js, etc.)
