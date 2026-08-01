@@ -193,6 +193,17 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     max-width: 100%;
+    font-size: var(--font-size-lg);
+  }
+
+  /* On touch there's no hover, so the title has to read as a tappable link at
+     rest: accent colour + underline, bolder, with padding for a bigger target. */
+  .game-page-link {
+    color: var(--color-accent);
+    font-weight: var(--font-weight-bold);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: var(--space-1) 0;
   }
 
   .table-container .games-table td:last-child {
@@ -240,7 +251,9 @@
     left: var(--space-1);
   }
 
-  .game-title { font-size: var(--font-size-xs); }
+  /* Keep the title prominent even on the smallest screens — never smaller than
+     its own "GAME TITLE" label. */
+  .game-title { font-size: var(--font-size-base); }
 
   .table-container .launch-options-btn {
     min-height: var(--space-12);

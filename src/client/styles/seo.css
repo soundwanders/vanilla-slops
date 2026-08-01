@@ -174,6 +174,13 @@
   text-align: center;
 }
 
+/* The footer CTA is a full sentence — override the header CTA's nowrap so it
+   wraps instead of running off the edge on narrow screens. */
+.seo-footer-cta .seo-cta {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
 .seo-foot {
   max-width: 900px;
   margin: 0 auto;
