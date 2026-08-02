@@ -145,7 +145,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  word-wrap: anywhere;
+  /* Wrap on word boundaries; only break a single over-long word as a last
+     resort. `anywhere` was splitting normal titles mid-word (e.g. "Minut/es")
+     when the column got cramped on tablets. */
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .game-title::before {
@@ -976,6 +980,24 @@
   .launch-options-list {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Tablet portrait (iPad 10, Galaxy Tab, ~769–1024px): the full six-column table
+   is above the mobile-card breakpoint but too narrow for even columns, which
+   squeezed the title. Trim cell padding and weight the columns toward the title
+   and the options button. */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .games-table th,
+  .games-table td {
+    padding: var(--space-3);
+  }
+
+  .games-table th:nth-child(1) { width: 24%; }  /* Game title  */
+  .games-table th:nth-child(2) { width: 15%; }  /* Developer   */
+  .games-table th:nth-child(3) { width: 15%; }  /* Publisher   */
+  .games-table th:nth-child(4) { width: 14%; }  /* Release date*/
+  .games-table th:nth-child(5) { width: 12%; }  /* Engine      */
+  .games-table th:nth-child(6) { width: 20%; }  /* Launch opts */
 }
 /* =============================================================================
    8. EMPTY STATES & COMPONENTS
