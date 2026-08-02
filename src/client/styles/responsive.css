@@ -199,6 +199,11 @@
     font-size: var(--font-size-lg);
   }
 
+  /* The GAME TITLE label already names this row, so the decorative controller
+     glyph is redundant here — and with the title wrapping to two lines it
+     floats orphaned between them. Drop it on the mobile card. */
+  .game-title::before { content: none; }
+
   /* On touch there's no hover, so the title has to read as a tappable link at
      rest: accent colour + underline, bolder. Bottom-only padding keeps a
      comfortable tap target without pushing the text below its label. */
