@@ -186,6 +186,9 @@
     font-weight: var(--font-weight-extrabold);
     color: var(--color-accent);
     font-size: var(--font-size-sm);
+    /* Match the cell's larger top padding so the label lines up with the
+       title's first line instead of floating above it. */
+    top: var(--space-4);
   }
 
   .game-title {
@@ -197,13 +200,14 @@
   }
 
   /* On touch there's no hover, so the title has to read as a tappable link at
-     rest: accent colour + underline, bolder, with padding for a bigger target. */
+     rest: accent colour + underline, bolder. Bottom-only padding keeps a
+     comfortable tap target without pushing the text below its label. */
   .game-page-link {
     color: var(--color-accent);
     font-weight: var(--font-weight-bold);
     text-decoration: underline;
     text-underline-offset: 2px;
-    padding: var(--space-1) 0;
+    padding-bottom: var(--space-1);
   }
 
   .table-container .games-table td:last-child {
