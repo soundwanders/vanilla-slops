@@ -24,6 +24,11 @@ html {
   text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* The viewport takes its scroll behaviour from <html>, not <body>, so the
+     body's overflow-x guard alone doesn't stop sideways page scroll. `clip`
+     (vs `hidden`) prevents horizontal overflow without making <html> a scroll
+     container, which would break the sticky table header. */
+  overflow-x: clip;
 }
 
 ul[role='list'],
