@@ -50,6 +50,7 @@ export default class SlopSearch {
     this.currentSort = 'title';
     this.currentOrder = 'asc';
     this.suggestions = [];
+    this.popularOptions = []; // set from facets by main.js; shown on empty focus
     this.selectedSuggestionIndex = -1;
     
     // Timing controls
@@ -108,7 +109,7 @@ export default class SlopSearch {
     if (this.searchInput) {
       this.searchInput.addEventListener('input', (e) => this.handleSearchInput(e.target.value));
       this.searchInput.addEventListener('keydown', (e) => this.handleKeyNavigation(e));
-      this.searchInput.addEventListener('focus', () => this.showSuggestions());
+      this.searchInput.addEventListener('focus', () => this.handleFocus());
       this.searchInput.addEventListener('blur', () => {
         setTimeout(() => this.hideSuggestions(), 150);
       });
@@ -142,7 +143,13 @@ export default class SlopSearch {
     this.currentQuery = query.trim();
     this.keystrokeCount++;
     this.lastKeystrokeTime = now;
-    
+
+    // Typing a text query supersedes an active "search by launch option" filter.
+    if (this.currentQuery && this.currentFilters.optionSearch) {
+      delete this.currentFilters.optionSearch;
+      this.renderActiveFilters();
+    }
+
     // Clear existing timeouts
     clearTimeout(this.searchTimeout);
     clearTimeout(this.suggestionsTimeout);
@@ -452,11 +459,19 @@ export default class SlopSearch {
       html += `<div class="suggestion-category-header">${category}</div>`;
       items.forEach(item => {
         const isSelected = item.originalIndex === this.selectedSuggestionIndex;
+        const isOption = item.type === 'option';
+        // Launch options render as a monospace command + a muted description so
+        // people can recognize what a flag does without knowing it beforehand.
+        const body = isOption
+          ? `<code class="suggestion-cmd">${this.highlightMatch(item.value, this.currentQuery)}</code>` +
+            (item.description ? `<span class="suggestion-desc">${this.escapeHtml(item.description)}</span>` : '')
+          : `<span class="suggestion-value">${this.highlightMatch(item.value, this.currentQuery)}</span>`;
         html += `
-          <div class="suggestion-item ${isSelected ? 'highlighted' : ''}" 
+          <div class="suggestion-item ${isSelected ? 'highlighted' : ''} ${isOption ? 'suggestion-option' : ''}"
               data-index="${item.originalIndex}"
+              data-type="${this.escapeHtml(item.type || '')}"
               data-value="${this.escapeHtml(item.value)}">
-            <span class="suggestion-value">${this.highlightMatch(item.value, this.currentQuery)}</span>
+            ${body}
           </div>
         `;
       });
@@ -515,12 +530,25 @@ export default class SlopSearch {
     const suggestion = this.suggestions[index];
     if (!suggestion) return;
 
+    clearTimeout(this.searchTimeout);
+
+    // Picking a launch option searches by that command (not the title). Clear
+    // the text query and record it as an active filter so the user can remove it.
+    if (suggestion.type === 'option') {
+      this.currentFilters.optionSearch = suggestion.value;
+      this.currentQuery = '';
+      if (this.searchInput) this.searchInput.value = '';
+      this.hideSuggestions();
+      this.renderActiveFilters();
+      this.notifyFilterChange();
+      return;
+    }
+
     this.searchInput.value = suggestion.value;
     this.currentQuery = suggestion.value;
     this.hideSuggestions();
-    
+
     // Immediate search when selecting a suggestion
-    clearTimeout(this.searchTimeout);
     console.log('⚡ Immediate search triggered by suggestion selection');
     this.executeSearch();
   }
@@ -630,6 +658,7 @@ export default class SlopSearch {
     const displayNames = {
       category: 'Category',
       risk: 'Risk',
+      optionSearch: 'Launch option',
       developer: 'Developer',
       engine: 'Engine',
       options: 'Launch Options',
@@ -689,6 +718,10 @@ export default class SlopSearch {
     Object.keys(this.filterElements).forEach((key) => {
       allFilters[key] = this.currentFilters[key] || '';
     });
+
+    // optionSearch has no DOM control (it's set by picking an option suggestion),
+    // so include it explicitly — and always send it so clearing it propagates.
+    allFilters.optionSearch = this.currentFilters.optionSearch || '';
 
     if (this.onFilterChange && typeof this.onFilterChange === 'function') {
       this.onFilterChange(allFilters);
@@ -766,6 +799,27 @@ export default class SlopSearch {
   showSuggestions() {
     if (this.suggestionsDropdown && this.suggestions.length > 0) {
       this.suggestionsDropdown.style.display = 'block';
+    }
+  }
+
+  /**
+   * On focus: if the box is empty, surface popular launch options so people can
+   * discover and pick one without knowing the exact flag. Otherwise, reveal any
+   * existing suggestions.
+   */
+  handleFocus() {
+    const q = (this.searchInput.value || '').trim();
+    if (!q && Array.isArray(this.popularOptions) && this.popularOptions.length) {
+      this.suggestions = this.popularOptions.map(o => ({
+        type: 'option',
+        value: o.command,
+        description: o.description || '',
+        category: 'Popular launch options'
+      }));
+      this.selectedSuggestionIndex = -1;
+      this.renderSuggestions();
+    } else {
+      this.showSuggestions();
     }
   }
 

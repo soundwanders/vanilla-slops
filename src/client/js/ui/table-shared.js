@@ -36,7 +36,7 @@ export const TableState = {
   openLaunchOptionsRows: new Set(),
   currentStats: { withOptions: 0, withoutOptions: 0, total: 0 },
   currentFilters: {},
-  activeOptionFilter: { category: '', risk: '' },
+  activeOptionFilter: { category: '', risk: '', command: '' },
   sortConfig: {},
   isInitialized: false,
   isMobile: false,

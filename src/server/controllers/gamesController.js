@@ -115,6 +115,7 @@ function buildFilters(query, logger) {
     // Launch-option attribute filters (feedback #1)
     category: query.category || '',
     risk: query.risk || '',
+    optionSearch: query.optionSearch || '',
 
     // Special filters
     options: query.options || '',

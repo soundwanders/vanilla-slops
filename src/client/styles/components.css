@@ -237,6 +237,45 @@
 
 .suggestion-item:last-child { border-bottom: none; }
 
+/* Launch-option suggestions: monospace command + a muted description so people
+   can recognize what a flag does without knowing it in advance. */
+.suggestion-option {
+  flex-wrap: wrap;
+  column-gap: var(--space-3);
+  row-gap: 2px;
+}
+
+.suggestion-cmd {
+  font-family: var(--font-family-mono);
+  font-size: 0.9em;
+  font-weight: var(--font-weight-medium);
+  /* theme-safe pairing — surface-subtle + text-primary both flip with the theme
+     (the code-background/text pairing rendered dark-on-dark in light mode) */
+  color: var(--color-text-primary);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  padding: 0.05em 0.4em;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+/* Theme-aware match highlight (overrides the browser's default yellow <mark>) */
+.suggestion-item mark {
+  background: var(--color-accent-subtle);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.suggestion-desc {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .suggestion-item:hover,
 .suggestion-item.highlighted {
   background: var(--color-interactive-hover);

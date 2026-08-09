@@ -76,6 +76,7 @@ export async function fetchGames({
   developer = '',
   category = '',
   risk = '',
+  optionSearch = '',
   options = '',
   year = '',
   releaseYear = '',
@@ -93,10 +94,12 @@ export async function fetchGames({
     const genreFilter = genre || '';
 
     // Launch-option attribute filters (feedback #1): narrow to games that have
-    // at least one option matching the chosen category and/or risk level.
+    // at least one option matching the chosen category, risk level, and/or a
+    // command search (e.g. "-novid" → games that use it).
     const optionCategory = (category || '').trim();
     const optionRisk = (risk || '').trim();
-    const hasOptionAttrFilter = Boolean(optionCategory) || Boolean(optionRisk);
+    const optionCommand = (optionSearch || '').replace(/[%,()]/g, ' ').trim();
+    const hasOptionAttrFilter = Boolean(optionCategory) || Boolean(optionRisk) || Boolean(optionCommand);
 
     const offset = (page - 1) * limit;
 
@@ -127,7 +130,7 @@ export async function fetchGames({
     });
 
     // Apply launch-option attribute filters on the embedded resource
-    query = applyOptionAttributeFilter(query, { category: optionCategory, risk: optionRisk });
+    query = applyOptionAttributeFilter(query, { category: optionCategory, risk: optionRisk, command: optionCommand });
 
     // Apply sorting
     query = applySorting(query, sort, order);
@@ -278,13 +281,19 @@ function applySearchFilters(query, filters) {
  * @param {string} [attrs.risk] - Risk level: safe | caution | experimental
  * @returns {Object} Modified query
  */
-function applyOptionAttributeFilter(query, { category, risk } = {}) {
+function applyOptionAttributeFilter(query, { category, risk, command } = {}) {
   if (risk) {
     query = query.eq('game_launch_options.launch_options.risk_level', risk);
   }
   if (category) {
     // categories is text[]; `contains` matches rows whose array includes the value
     query = query.contains('game_launch_options.launch_options.categories', [category]);
+  }
+  if (command) {
+    // Command search (feedback: "search by the actual launch option"): games
+    // that have an option whose command matches. Substring so partial/typed
+    // queries work; the suggestion dropdown resolves fuzzy intent to a command.
+    query = query.ilike('game_launch_options.launch_options.command', `%${command}%`);
   }
   return query;
 }
@@ -355,10 +364,15 @@ export async function getSearchSuggestions(query, limit = 10) {
   try {
     if (!query || query.length < 2) return [];
 
+    // Strip characters that would break PostgREST's or-filter grammar or act as
+    // ilike wildcards, so a stray comma/percent can't corrupt the query.
+    const safe = query.replace(/[%,()]/g, ' ').trim();
+    if (!safe) return [];
+
     const { data, error } = await supabase
       .from('games')
       .select('title, developer, publisher')
-      .or(`title.ilike.%${query}%,developer.ilike.%${query}%,publisher.ilike.%${query}%`)
+      .or(`title.ilike.%${safe}%,developer.ilike.%${safe}%,publisher.ilike.%${safe}%`)
       .limit(limit * 3); // Get more to filter duplicates
 
     if (error) {
@@ -368,35 +382,65 @@ export async function getSearchSuggestions(query, limit = 10) {
 
     const suggestions = new Map(); // Use Map to avoid duplicates
     const queryLower = query.toLowerCase();
-    
+
     data?.forEach(game => {
       // Add matching titles
       if (game.title && game.title.toLowerCase().includes(queryLower)) {
-        suggestions.set(`title_${game.title}`, { 
-          type: 'title', 
-          value: game.title, 
-          category: 'Games' 
+        suggestions.set(`title_${game.title}`, {
+          type: 'title',
+          value: game.title,
+          category: 'Games'
         });
       }
       // Add matching developers
       if (game.developer && game.developer.toLowerCase().includes(queryLower)) {
-        suggestions.set(`developer_${game.developer}`, { 
-          type: 'developer', 
-          value: game.developer, 
-          category: 'Developers' 
+        suggestions.set(`developer_${game.developer}`, {
+          type: 'developer',
+          value: game.developer,
+          category: 'Developers'
         });
       }
       // Add matching publishers
       if (game.publisher && game.publisher.toLowerCase().includes(queryLower)) {
-        suggestions.set(`publisher_${game.publisher}`, { 
-          type: 'publisher', 
-          value: game.publisher, 
-          category: 'Publishers' 
+        suggestions.set(`publisher_${game.publisher}`, {
+          type: 'publisher',
+          value: game.publisher,
+          category: 'Publishers'
         });
       }
     });
 
-    return Array.from(suggestions.values()).slice(0, limit);
+    const gameSuggestions = Array.from(suggestions.values()).slice(0, limit);
+
+    // Launch-option matches — the discovery path. Match on the command AND the
+    // description, so someone who doesn't know the flag can type what they want
+    // ("skip intro", "vsync") and still find `-novid`, etc.
+    const { data: optData } = await supabase
+      .from('launch_options')
+      .select('command, description')
+      .or(`command.ilike.%${safe}%,description.ilike.%${safe}%`)
+      .limit(12);
+
+    const optionSuggestions = [];
+    const seenCmd = new Set();
+    (optData || []).forEach((o) => {
+      if (!o.command || seenCmd.has(o.command)) return;
+      seenCmd.add(o.command);
+      optionSuggestions.push({
+        type: 'option',
+        value: o.command,
+        description: o.description || '',
+        category: 'Launch options'
+      });
+    });
+    // Command matches are the strongest signal — surface those first.
+    optionSuggestions.sort((a, b) => {
+      const aCmd = a.value.toLowerCase().includes(queryLower) ? 0 : 1;
+      const bCmd = b.value.toLowerCase().includes(queryLower) ? 0 : 1;
+      return aCmd - bCmd;
+    });
+
+    return [...gameSuggestions, ...optionSuggestions.slice(0, 6)];
   } catch (error) {
     console.error('Error in getSearchSuggestions:', error);
     return [];
@@ -435,10 +479,11 @@ export async function getFacets(searchQuery = '') {
       getFacetValues('publisher', searchQuery),
       getOptionsCountRanges(),
       getReleaseYears(searchQuery),
-      getOptionAttributeFacets()
+      getOptionAttributeFacets(),
+      getPopularOptions()
     ];
 
-    const [developers, engines, publishers, optionsRanges, releaseYears, optionAttrs] = await Promise.all(facetPromises);
+    const [developers, engines, publishers, optionsRanges, releaseYears, optionAttrs, popularOptions] = await Promise.all(facetPromises);
 
     const result = {
       developers: developers || [],
@@ -449,7 +494,8 @@ export async function getFacets(searchQuery = '') {
       optionsRanges: optionsRanges || [],
       releaseYears: releaseYears || [],
       categories: optionAttrs?.categories || [],
-      riskLevels: optionAttrs?.riskLevels || []
+      riskLevels: optionAttrs?.riskLevels || [],
+      popularOptions: popularOptions || []
     };
 
     if (!searchQuery) {
@@ -469,8 +515,48 @@ export async function getFacets(searchQuery = '') {
       optionsRanges: [],
       releaseYears: [],
       categories: [],
-      riskLevels: []
+      riskLevels: [],
+      popularOptions: []
     };
+  }
+}
+
+/**
+ * Most-used launch options across the catalog (by number of games), for the
+ * "browse without knowing the flag" list shown when the search box is focused
+ * but empty. Cached with the rest of the facets.
+ *
+ * @param {number} [topN=8]
+ * @returns {Promise<Array<{command:string, description:string, count:number}>>}
+ */
+async function getPopularOptions(topN = 8) {
+  try {
+    // Each game_launch_options row is a unique (game, option) link, so counting
+    // rows per command == number of games that use that command.
+    const rows = await fetchAllRows((from, to) =>
+      supabase
+        .from('game_launch_options')
+        .select('launch_option_id, launch_options!inner(command, description)')
+        .order('launch_option_id', { ascending: true })
+        .range(from, to)
+    );
+
+    const counts = {};
+    rows.forEach((r) => {
+      const lo = r.launch_options;
+      if (!lo || !lo.command) return;
+      if (!counts[lo.command]) {
+        counts[lo.command] = { command: lo.command, description: lo.description || '', count: 0 };
+      }
+      counts[lo.command].count++;
+    });
+
+    return Object.values(counts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, topN);
+  } catch (error) {
+    console.error('Error in getPopularOptions:', error);
+    return [];
   }
 }
 

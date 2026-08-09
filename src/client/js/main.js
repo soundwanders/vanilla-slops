@@ -28,6 +28,7 @@ const stateManager = new StateManager({
     search: '',
     category: '',
     risk: '',
+    optionSearch: '',
     developer: '',
     engine: '',
     options: '',
@@ -83,6 +84,11 @@ async function initializeFilters() {
     // filter returns games, so a count here would mislead)
     populateFilterDropdown('categoryFilter', (facets.categories || []).map(c => c.value), 'All Categories');
     populateRiskFilter(facets.riskLevels);
+
+    // Hand popular launch options to the search box so it can offer a
+    // browse-and-pick list on focus (discovery without knowing the flag).
+    const searchInstance = stateManager.getState().searchInstance;
+    if (searchInstance) searchInstance.popularOptions = facets.popularOptions || [];
     
     // Remove loading state
     filterSelects.forEach(select => {
@@ -430,6 +436,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
         onSortChange: handleSortChange,
         activeCategory: filters.category,
         activeRisk: filters.risk,
+        activeCommand: filters.optionSearch,
       });
     }
     
@@ -585,12 +592,18 @@ function updateResultsCount(total) {
 
   // When an option-attribute filter is active, spell out what the games share
   // (e.g. "2,271 games with a Safe option"); otherwise the plain results line.
-  const { category, risk } = getCleanFilters(stateManager.getState());
+  const { category, risk, optionSearch } = getCleanFilters(stateManager.getState());
+  const n = total.toLocaleString();
+
+  if (optionSearch) {
+    resultsCount.textContent = `${n} game${total !== 1 ? 's' : ''} with the ${optionSearch} launch option`;
+    return;
+  }
+
   const attrs = [];
   if (risk) attrs.push(RISK_LABELS[risk] || risk);
   if (category) attrs.push(category);
 
-  const n = total.toLocaleString();
   resultsCount.textContent = attrs.length
     ? `${n} game${total !== 1 ? 's' : ''} with a ${attrs.join(' ')} option`
     : `${total} result${total !== 1 ? 's' : ''} found`;

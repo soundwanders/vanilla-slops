@@ -42,6 +42,7 @@ const stateActions = {
       search: '',
       category: '',
       risk: '',
+      optionSearch: '',
       developer: '',
       engine: '',
       options: '',

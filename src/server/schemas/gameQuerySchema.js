@@ -21,6 +21,9 @@ export const querySchema = z.object({
   risk: z.enum(['safe', 'caution', 'experimental'])
     .optional()
     .catch(undefined),
+  // `optionSearch` filters games that have a launch option whose command
+  // matches (e.g. "-novid"). Powers "search by the actual launch option".
+  optionSearch: z.string().max(100).optional(),
   // Retired values (performance/graphics) and any stale value degrade to
   // "no options filter" via .catch() rather than 400ing old bookmarked URLs.
   options: z.enum(['has-options', 'no-options', 'many-options', 'few-options'])

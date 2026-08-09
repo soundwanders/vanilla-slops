@@ -37,7 +37,8 @@ export function renderTable(games, showLoading = false, tableOptions = {}) {
   // highlight and float the matching options (feedback #1 payoff).
   TableState.activeOptionFilter = {
     category: tableOptions.activeCategory || '',
-    risk: tableOptions.activeRisk || ''
+    risk: tableOptions.activeRisk || '',
+    command: tableOptions.activeCommand || ''
   };
   renderGamesTable(container, games);
   setupTableEventListeners();
@@ -327,10 +328,12 @@ function setupOptionFilter(row) {
 // it — i.e. it's (one of) the option(s) that made its game match the filter.
 function optionMatchesActiveFilter(option) {
   const f = TableState.activeOptionFilter || {};
-  if (!f.category && !f.risk) return false;
+  if (!f.category && !f.risk && !f.command) return false;
   const riskOk = !f.risk || option.risk_level === f.risk;
   const catOk = !f.category || (Array.isArray(option.categories) && option.categories.includes(f.category));
-  return riskOk && catOk;
+  const cmd = (option.command || option.option || '').toLowerCase();
+  const cmdOk = !f.command || cmd.includes(f.command.toLowerCase());
+  return riskOk && catOk && cmdOk;
 }
 
 function createOptionsHTML(colspan, launchOptions, gameId) {

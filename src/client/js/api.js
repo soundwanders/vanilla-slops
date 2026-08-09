@@ -183,6 +183,7 @@ export async function fetchGames({
   search = '',
   category = '',
   risk = '',
+  optionSearch = '',
   developer = '',
   engine = '', // NEW ENGINE PARAMETER
   options = '',
@@ -198,6 +199,7 @@ export async function fetchGames({
     search,
     category,
     risk,
+    optionSearch,
     developer,
     engine, // NEW ENGINE PARAM
     options,
