@@ -1,194 +1,163 @@
-# slop-scraper → vanilla-slops Handoff — Round 1 Follow-Through
+# slop-scraper → vanilla-slops — Round 1 Follow-Through (FINAL)
 
-> **Purpose:** Documents what changed in `slop-scraper` in response to the
-> Round 1 user-testing handoff, what's already live in production, and what
-> the website needs to account for. Read it before touching launch-option
-> rendering code — several assumptions from the Round 1 doc's DB-only snapshot
-> turned out to be incomplete once checked against the actual scraper code.
+> **Purpose:** What changed in `slop-scraper`, what is live in production now,
+> and what the website should expect. Supersedes the earlier draft of this
+> file — the coverage numbers in that version were mid-flight and are now
+> stale. Everything below is measured against the live database.
 
-_Last updated: 2026-08-08 · Source: live `launch_options` snapshot below (524 rows, post-migration)._
-
----
-
-## 0. Headline: a data-quality bug was found and fixed, not just tagging gaps
-
-The Round 1 doc's "39% Uncategorized" number wasn't purely a tagging gap. **55
-rows were confirmed to be scraper junk, not real launch options** — prose
-fragments pulled out of PCGamingWiki wiki-page sentences (`-based`,
-`-related`, `-protected`), page-title fragments (`-doom-ii`, `-saboteur`),
-and two raw hash/GUID fragments. All had the literal fallback description
-`"Launch option from PCGamingWiki"`, which is exactly the string the scraper
-writes when it found a token but no real description to go with it — a
-reliable tell in hindsight. These were deleted from production (55
-`launch_options` rows, 72 `game_launch_options` links). **Total row count
-dropped from 579 to 524.** If anything on the frontend caches or hardcodes
-row counts, refresh it.
+_Last updated: 2026-08-09 · live `launch_options` snapshot: **541 rows**._
 
 ---
 
-## 1. Schema — already applied, act accordingly
+## 0. Headline
 
-`migrations/002_add_source_url_and_verification.sql` has been run in
-Supabase. `launch_options` now has, in addition to the `risk_level` /
-`categories` / `engine_compatibility` columns from the prior round:
+Two rounds of work: provenance/freshness columns were added and populated, and
+a description-quality bug was root-caused and fixed at the source.
 
-```sql
-source_url            TEXT          -- nullable
-last_verified_at      TIMESTAMPTZ   -- nullable
-verification_method   TEXT          -- nullable
-usage_example         TEXT          -- nullable
-effect                TEXT          -- nullable
-```
+**The frontend needs no changes for any of this.** Every column the
+vanilla-slops v1.2.2 release wired defensively now has real data flowing into
+it. The conditional `source_url` link and the "Last checked" chip will simply
+start appearing on far more rows.
 
-### Coverage right now — mostly empty, this is expected, not a bug
+---
 
-| Column | Populated | Notes |
+## 1. Coverage — what actually has data now
+
+| Column | Populated | Change this round |
 |---|---|---|
-| `source_url` | 50 / 524 (ProtonDB only) | See §2 |
-| `last_verified_at` | 0 / 524 | See §3 |
-| `verification_method` | 0 / 524 | Fills alongside `last_verified_at` |
-| `usage_example` | 0 / 524 | Not populated by the scraper at all yet — treat as always-null for now |
-| `effect` | 0 / 524 | Same — always-null for now |
+| `source_url` | **387 / 541 (72%)** | was 50 |
+| `last_verified_at` | **339 / 541 (63%)** | was 0 |
+| `verification_method` | 339 / 541 | was 0 |
+| `description` | 427 / 541 (79%) | 114 deliberately empty — see §3 |
+| `usage_example` | 0 | still unpopulated |
+| `effect` | 0 | still unpopulated |
 
-**Frontend implication:** render `source_url` conditionally (null ≠ broken
-link, it means "not backfilled yet" or "no stable per-option URL exists for
-this source"). Don't build a "usage example" or "effect" UI element that
-assumes data is there — there's nothing to show yet for any row.
+`source_url` by source: PCGamingWiki 201, Steam Community 80, ProtonDB 58,
+manual_curation 23, plus documentation sources.
 
----
-
-## 2. `source_url` — how it fills in from here
-
-- **ProtonDB**: backfilled deterministically where a command is linked to
-  exactly one game (`app_id` → `https://www.protondb.com/app/{app_id}`).
-  50 of 83 ProtonDB rows got a URL this way; the other 33 are shared
-  wrapper commands (`gamemode`, `mangohud`, etc.) linked to many unrelated
-  games — there's no single correct ProtonDB page for those, so they were
-  deliberately left null rather than guessed. They'll likely stay null
-  permanently; that's correct, not missing data.
-- **PCGamingWiki / Steam Community**: NOT retroactively backfilled (would
-  require live re-lookups against PCGamingWiki, which risks tripping its
-  circuit breaker for ~209 historical rows with no urgent need). Both
-  scrapers now capture `source_url` at scrape time going forward, AND the
-  save path stamps it onto any existing row the scraper re-encounters with
-  a fresh URL. **Practical effect: `source_url` coverage will climb on its
-  own as normal scraping/`--rescan` runs happen** — no separate script
-  needed, but also no fixed timeline. Don't build a UI that assumes >50
-  rows have a URL any time soon.
+`verification_method` values in use: `pcgamingwiki-scrape`,
+`steam-community-scrape`, `protondb-scrape`. (`manual` and `curated` exist in
+the code but no rows carry them yet.)
 
 ---
 
-## 3. `last_verified_at` / `verification_method` — read this before showing a "freshness" badge
+## 2. The single most important number for the UI
 
-**Every row shows `last_verified_at = NULL` right now**, including options
-scraped weeks ago. This is because stamping only happens when a game is
-*re-scraped* (normal run or `--rescan`), and none have been re-scraped since
-the migration landed. This is NOT the same as "never verified" in a
-concerning sense — it's "not yet touched under the new tracking system."
+Of the 114 rows with no description:
 
-**Important framing for the UI**: if you show a "last verified" badge,
-`NULL` should read as something neutral like *"not yet re-checked"*, not as
-a red flag — otherwise literally the entire catalog will look stale on day
-one, which is misleading. Once `--rescan` passes happen periodically,
-coverage will grow organically.
+- **95 have a `source_url`** → the site renders the provenance link, which is
+  the intended fallback.
+- **19 have neither** → these render blank. That is the true remaining gap,
+  down from 103 mid-round.
 
-`verification_method` values (once populated): `pcgamingwiki-scrape`,
-`protondb-scrape`, `steam-community-scrape`, `manual`, or `curated` (for
-game_specific.py's static engine-tagged lists and documentation-derived
-sources — these are re-emitted from a fixed list each run, not freshly
-fetched from the web, so "curated" rather than implying a live check).
+So "missing description" is now overwhelmingly a *handled* state, not a hole.
+**Do not treat a null description as an error condition** — it is a deliberate
+signal (see §3), and in 83% of cases there is a link to show instead.
 
 ---
 
-## 4. `risk_level` — distribution changed significantly, not just a few rows
+## 3. Descriptions: why 114 are intentionally empty
 
-| | Before this round | After |
-|---|---|---|
-| `safe` | 146 | 305 |
-| `experimental` | 425 | 211 |
-| `caution` | 8 | 8 |
-| Total | 579 | 524 |
+Three bugs in the PCGamingWiki wikitext parser were writing text that was
+wrong rather than merely thin:
 
-The classifier now promotes options already recognized as
-Display/Performance/Skip-Intro/Audio to `safe` (previously only an exact,
-narrowly-curated flag list qualified). Network and Debug-Dev were
-deliberately left conservative — those can touch multiplayer integrity or
-anti-cheat, so they still default to `experimental` pending case-by-case
-review. **If any frontend copy or color-coding assumed "most options are
-experimental," that assumption no longer holds** — the catalog now skews
-majority-safe (58%), which is a more accurate and less alarming picture for
-users browsing options.
+1. **Mismatch (worst).** The parser searched a ~500-character window for any
+   `description=` template parameter and bound the first hit to the current
+   command — so a *neighbouring* option's text got attached to the wrong flag.
+   `-resx=1920` was documented as "Enable Direct3D 11";
+   `-localization=english` as "Disable SLI/Crossfire". Confidently wrong data.
+2. **Mangling.** The command was deleted from anywhere in the sentence,
+   shredding prose: "Use the `-hz`=x command line argument" → "Use the =x
+   command line argument".
+3. **Markup leakage** — template syntax surviving into descriptions.
 
----
+All three are fixed. 119 corrupted rows were repaired or cleared, including
+every confirmed-wrong one.
 
-## 5. `categories` — Uncategorized is now more trustworthy, still not zero
+**Policy going forward, and the reason for the empty rows:** a description
+that is wrong, circular ("Use the -nomovie"), a pasted list of *other* flags,
+or a non-answer ("Not tested yet") is stored as **NULL** rather than kept.
+The site showing a source link is more honest than text that looks like an
+answer without being one. This is enforced on the write path
+(`validation/description_quality.py`), not by a cleanup script — an earlier
+attempt that only cleaned the database was silently undone the moment the
+scraper ran again.
 
-172 / 524 (33%) remain `Uncategorized`, down from 225/579 (39%) — the drop
-is entirely from junk deletion (§0), not new tagging logic. The classifier
-itself wasn't changed for categories this round. Residual Uncategorized rows
-are genuinely obscure game-specific flags (e.g. `-force_device_id`,
-`-eac_launcher`, `-EpicPortal` — all real, just not fitting the existing
-category taxonomy) — expected, not a gap to chase to zero.
-
----
-
-## 6. Pipeline facts for the "How This Works" methodology page
-
-Verified against the actual code, not assumed:
-
-1. **Source order per game**: `game_specific.py` (curated engine-specific +
-   manual_curation lists) → PCGamingWiki → Steam Community guides →
-   ProtonDB, in that sequence.
-2. **Cadence**: on-demand only. No cron job or scheduler exists anywhere in
-   `slop-scraper` — it runs when the maintainer runs it manually via CLI.
-   Don't imply a fixed refresh schedule in copy.
-3. **Risk/category computation**: a pure function of the command string
-   (+ source) — no ML, no network calls, a curated rule set of exact flags
-   and keyword patterns (`validation/metadata_tagging.py`).
-4. **What "validation" means today**: a save-gate rejects malformed/junk
-   commands before insert; `last_verified_at` will track re-confirmation
-   freshness going forward (see §3); **voting is schema-present but
-   completely unwired** (0 upvotes/downvotes across every row, untouched
-   this round) — don't claim it works in copy.
-5. **Dedup**: `command` is a unique key in `launch_options` — the same flag
-   found for multiple games is stored once and shared via the
-   `game_launch_options` junction table.
+**Consequence worth knowing:** description coverage will not climb much from
+re-scraping. The good text mostly is not in the source in a form that can be
+attributed safely, and the parser now declines to guess. Raising this number
+requires the curated flag dictionary (§6), not more crawling.
 
 ---
 
-## 7. Not done this round — still open
+## 4. `risk_level` and `categories`
 
-- `usage_example` / `effect` columns exist but are entirely unpopulated —
-  no scraper or backfill writes to them yet.
-- Description quality: 67 / 524 rows still have descriptions under 25
-  characters (unchanged from Round 1 — not addressed this pass).
-- Voting system: still unwired, as noted in §6.
-- `verified` column: still legacy/retired from UI per Round 1 guidance — no
-  change.
-- PCGamingWiki/Steam Community `source_url` backfill: will happen
-  organically, not on a guaranteed timeline (see §2).
+| risk_level | rows |
+|---|---|
+| safe | 310 |
+| experimental | 223 |
+| caution | 8 |
+
+The catalogue is now **majority-safe (57%)**, reversed from the 73%-experimental
+skew reported in Round 1. Any copy or color logic assuming "most options are
+experimental" is out of date.
+
+Categories: Display 156, Proton-Deck 85, Performance 63, Skip-Intro 28,
+Audio 23, Debug-Dev 23, Network 12, **Uncategorized 184 (34%)**. The
+Uncategorized remainder is genuinely obscure game-specific flags
+(`-force_device_id`, `-EpicPortal`, `-uplay_steam_mode`), not a classifier
+gap to chase to zero.
 
 ---
 
-## vanilla-slops side — what was wired in response (2026-08-08)
+## 5. Pipeline facts for the "How This Works" page
 
-- **`source_url` plumbed through** `fetchLaunchOptionsForGame` (the single
-  query behind both the SPA table expansion and the SEO game page). The
-  already-shipped link-ready `renderSource` now emits real
-  `target="_blank" rel="noopener"` links for the ~51 rows that have a URL;
-  everything else stays plain text. Verified live: `-columns` →
-  `https://www.protondb.com/app/6200`.
-- **`last_verified_at` / `verification_method` plumbed through** and a
-  conditional "Last checked {date}" chip added to each option (SPA + SEO).
-  It renders **only** when `last_verified_at` is present — null is omitted,
-  never shown as "stale" — exactly per §3. Grows organically as `--rescan`
-  runs.
-- **`usage_example` / `effect`**: intentionally NOT wired (no data, no UI)
-  per §1/§7. Revisit when the scraper starts populating them.
-- **Counts**: no fix needed — statistics/counts are computed live from the
-  DB, so 524 was reflected automatically.
-- **Risk copy/color**: verified no "mostly experimental" assumption existed;
-  updated a stale CSS comment now that `safe` is the majority level.
-- **Still open on this side (Phase B):** attribute filter by category/risk
-  (#1) and the "How This Works" page (#4) — the §6 facts above unblock the
-  latter.
+Verified against the code, not assumed:
+
+1. **Source order per game:** `game_specific.py` (curated engine lists +
+   manual_curation) → PCGamingWiki → Steam Community guides → ProtonDB.
+2. **Cadence:** on-demand only. No cron or scheduler exists in the repo — it
+   runs when the maintainer runs it. Do not imply a refresh schedule.
+3. **Risk/category computation:** a pure function of the command string and
+   source. No ML, no network calls — a curated rule set
+   (`validation/metadata_tagging.py`).
+4. **What "validation" means today:** a save gate rejects malformed commands
+   and non-descriptions before insert; `last_verified_at` records when an
+   option was last re-confirmed at its source. **Voting remains entirely
+   unwired** (0 upvotes/downvotes across all rows) — do not claim it works.
+5. **Dedup:** `command` is unique in `launch_options`; a flag found for many
+   games is stored once and shared via the `game_launch_options` junction.
+6. **Honest caveat worth publishing:** PCGamingWiki simply does not document
+   launch options for most games. Verified directly — Dark Souls II, INSIDE
+   and Beat Saber have zero documented flags on their wiki pages. A game with
+   no options is usually accurate, not a scraper failure.
+
+---
+
+## 6. Still open
+
+- **`usage_example` / `effect`: still 0 rows.** The frontend renders them when
+  present, so populating them is purely scraper-side work.
+- **Curated flag dictionary** — the highest-value remaining item. Most
+  well-known flags (Source, Unity, Unreal, Proton, id Tech) have authoritative
+  documented meanings. A hand-verified `command → {description, effect,
+  usage_example}` map would fix thin descriptions *and* seed the usage-docs UI
+  in one pass. This is the only thing that meaningfully raises description
+  coverage.
+- **19 rows with neither description nor link** — the residual gap.
+- **136 rows still lacking a `source_url`** (PCGamingWiki 80, Steam Community
+  56). These are options the scraper could not re-find on the page it
+  originally came from, so no URL could be attributed honestly. Not fixable
+  by re-crawling.
+- **Voting** — still unwired.
+- **`verified` column** — still legacy/retired from the UI.
+
+---
+
+## 7. What the vanilla-slops side already shipped (v1.2.2)
+
+For continuity, from the previous handoff: `source_url` links,
+conditional "Last checked" chip, defensive `effect`/`usage_example`
+rendering, category/risk attribute filter, `/how-it-works`, "Added" dates,
+and the "Suggest an option" flow. **All of it now has substantially more data
+behind it than when it was built.**
