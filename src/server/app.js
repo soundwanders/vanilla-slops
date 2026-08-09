@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Sentry, sentryEnabled } from './instrument.js';
 import gamesRoutes from './routes/gamesRoutes.js';
-import { gamePageController, sitemapController } from './controllers/seoController.js';
+import { gamePageController, sitemapController, howItWorksController } from './controllers/seoController.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
 
@@ -148,6 +148,7 @@ app.get('/api/status', (req, res) => {
 // SEO routes — server-rendered game pages + sitemap.
 // MUST be registered before the SPA catch-all below, or index.html shadows them.
 app.get('/sitemap.xml', sitemapController);
+app.get('/how-it-works', howItWorksController);
 app.get('/game/:appid/:slug?', gamePageController);
 
 // Handle SPA routing (must be after static file serving and API routes)

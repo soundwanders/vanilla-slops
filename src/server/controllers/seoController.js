@@ -203,6 +203,7 @@ function renderGamePage(game, slug) {
         <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
       </a>
     </p>
+    <p class="footer-line"><a href="/how-it-works" class="footer-link">How Vanilla Slops works</a></p>
     <p class="footer-line">Community-verified Steam launch options</p>
     <p class="footer-line">Not affiliated with Valve Corporation</p>
   </footer>
@@ -311,6 +312,182 @@ function render404() {
 }
 
 /**
+ * GET /how-it-works — server-rendered methodology page. Static, honest content
+ * about how the catalog is sourced, tagged, and validated. Facts confirmed
+ * against the slop-scraper code (see docs/slop-scraper-followthrough.md §6).
+ */
+export function howItWorksController(req, res) {
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('html').send(renderHowItWorks());
+}
+
+function renderHowItWorks() {
+  const canonical = `${SITE_URL}/how-it-works`;
+  const pageTitle = 'How Vanilla Slops Works — Sourcing, Tagging & Validation';
+  const metaDesc = truncate(
+    'Where our Steam launch options come from, how they are categorized and ' +
+    'risk-rated, what "verified" actually means, and how to apply them.', 160
+  );
+  const css = getCssHref();
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Vanilla Slops', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'How it works', item: canonical },
+    ],
+  };
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(metaDesc)}" />
+  <link rel="canonical" href="${canonical}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${escapeHtml(pageTitle)}" />
+  <meta property="og:description" content="${escapeHtml(metaDesc)}" />
+  <meta property="og:url" content="${canonical}" />
+  <meta property="og:site_name" content="Vanilla Slops" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
+  <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
+  <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+  ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
+  <script src="/game-theme.js"></script>
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body class="seo-page">
+  <header class="seo-header">
+    <a href="/" class="seo-home" aria-label="Vanilla Slops home">
+      <img src="/slops-logo.png" alt="" width="40" height="40" />
+      <span>Vanilla Slops</span>
+    </a>
+    <a href="/" class="seo-cta">Search all games →</a>
+    <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
+      <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.34" y1="17.66" x2="4.93" y2="19.07"/><line x1="19.07" y1="4.93" x2="17.66" y2="6.34"/></svg>
+      <span class="sr-only">Toggle Theme</span>
+    </button>
+  </header>
+
+  <main class="seo-main how-it-works-page">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>How it works</span>
+    </nav>
+
+    <span class="seo-eyebrow">Methodology</span>
+    <h1 class="seo-title">How Vanilla Slops works</h1>
+    <p class="seo-subtitle">
+      Vanilla Slops is a searchable catalog of community-sourced Steam launch
+      options. Here's exactly where the data comes from, how it's organized,
+      and — just as importantly — what we don't yet claim about it.
+    </p>
+
+    <section class="hiw-section" aria-labelledby="hiw-sources">
+      <h2 id="hiw-sources">Where the launch options come from</h2>
+      <p>Each option is gathered by an open-source crawler (<em>slop-scraper</em>)
+      that reads from established community sources, in this priority order:</p>
+      <ol class="hiw-list">
+        <li><strong>Curated & engine-specific lists</strong> — hand-maintained
+          options for known engines, plus a small manually curated set.</li>
+        <li><strong>PCGamingWiki</strong> — the community wiki's per-game pages.</li>
+        <li><strong>Steam Community guides</strong> — player-written guides.</li>
+        <li><strong>ProtonDB</strong> — Linux/Steam Deck reports and tweaks.</li>
+      </ol>
+      <p>The same command found for several games is stored once and shared, so a
+      flag like <code>-windowed</code> isn't duplicated across the catalog.</p>
+    </section>
+
+    <section class="hiw-section" aria-labelledby="hiw-cadence">
+      <h2 id="hiw-cadence">How often it updates</h2>
+      <p>Honestly: on demand. The crawler runs when the maintainer runs it —
+      there is no fixed daily or weekly schedule. New options and refreshes
+      appear in batches, which is why each option shows an <strong>Added</strong>
+      date rather than implying a live feed.</p>
+    </section>
+
+    <section class="hiw-section" aria-labelledby="hiw-tagging">
+      <h2 id="hiw-tagging">How options are categorized and risk-rated</h2>
+      <p>Categories and risk levels are computed by a transparent rule set based
+      on the command itself (and its source) — no machine learning and no guesses
+      about your specific system. A flag recognized as a display, performance,
+      audio, or skip-intro tweak is graded <strong>Safe</strong>; options that can
+      affect multiplayer integrity or anti-cheat (network and debug flags) stay
+      <strong>Experimental</strong> until reviewed individually.</p>
+    </section>
+
+    <section class="hiw-section" aria-labelledby="hiw-validation">
+      <h2 id="hiw-validation">What "verified" means here — and what it doesn't</h2>
+      <p>We want to be straight with you about trust signals:</p>
+      <ul class="hiw-list">
+        <li><strong>What we do:</strong> a save-gate rejects malformed or junk
+          entries before they enter the database, so what you see are real,
+          well-formed commands from the sources above.</li>
+        <li><strong>What we're building:</strong> a <strong>Last checked</strong>
+          date that appears once an option has been re-confirmed against its
+          source. Coverage grows over time; if an option has no "Last checked"
+          date yet, it simply hasn't been re-checked under this system — not that
+          it's broken.</li>
+        <li><strong>What we don't claim:</strong> options are <em>sourced</em>,
+          not functionally tested on every game. Community voting is not live yet,
+          so we don't show vote counts as a trust signal. Always skim an option's
+          description before using it.</li>
+      </ul>
+    </section>
+
+    <section class="hiw-section" aria-labelledby="hiw-glossary">
+      <h2 id="hiw-glossary">Field glossary</h2>
+      <dl class="hiw-glossary">
+        <dt><span class="risk-badge risk-safe">Safe</span></dt>
+        <dd>Well-understood, low-impact tweaks (display, performance, audio,
+          skip-intro).</dd>
+        <dt><span class="risk-badge risk-caution">Caution</span></dt>
+        <dd>Works, but can change behavior in ways worth understanding first.</dd>
+        <dt><span class="risk-badge risk-experimental">Experimental</span></dt>
+        <dd>Unproven, niche, or able to affect multiplayer/anti-cheat — try
+          carefully.</dd>
+        <dt>Category</dt>
+        <dd>What an option does: Display, Performance, Audio, Network,
+          Proton-Deck, Skip-Intro, or Debug-Dev. Some obscure flags remain
+          Uncategorized.</dd>
+        <dt>Source</dt>
+        <dd>Where the option was found. When a stable link exists (e.g. ProtonDB),
+          the source is clickable; otherwise it's shown as plain text.</dd>
+        <dt>Added</dt>
+        <dd>When the option entered the database.</dd>
+        <dt>Last checked</dt>
+        <dd>When it was last re-confirmed against its source (shown only when
+          available).</dd>
+      </dl>
+    </section>
+${HOW_TO_APPLY_HTML}
+    <p class="seo-footer-cta">
+      <a href="/" class="seo-cta">Browse the full catalog of Steam launch options →</a>
+    </p>
+  </main>
+
+  <footer class="seo-foot">
+    <p class="footer-name">
+      <a href="/" class="footer-link">Vanilla Slops</a>
+      <span class="footer-sep" aria-hidden="true">&middot;</span>
+      <a href="https://github.com/soundwanders/vanilla-slops"
+         target="_blank" rel="noopener noreferrer" class="footer-link footer-icon-link" aria-label="GitHub">
+        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </p>
+    <p class="footer-line">Community-sourced Steam launch options</p>
+    <p class="footer-line">Not affiliated with Valve Corporation</p>
+  </footer>
+</body>
+</html>`;
+}
+
+/**
  * GET /sitemap.xml — lists the homepage plus every game-with-options page.
  */
 export async function sitemapController(req, res) {
@@ -318,6 +495,7 @@ export async function sitemapController(req, res) {
     const games = await getGamesForSitemap();
     const urls = [
       `  <url><loc>${SITE_URL}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+      `  <url><loc>${SITE_URL}/how-it-works</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
       ...games.map((g) => {
         const loc = `${SITE_URL}/game/${g.app_id}/${slugify(g.title)}`;
         const lastmod = g.updated_at ? `<lastmod>${new Date(g.updated_at).toISOString().slice(0, 10)}</lastmod>` : '';
