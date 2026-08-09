@@ -300,7 +300,10 @@ function formatAddedDate(iso) {
 
 function renderOption(opt) {
   const command = opt.command || opt.option || '';
-  const description = opt.description && opt.description !== 'No description available' ? opt.description : '';
+  // Drop placeholder/non-answer descriptions so the source link shows instead.
+  const rawDesc = (opt.description || '').trim();
+  const isPlaceholder = ['no description available', 'launch option from pcgamingwiki'].includes(rawDesc.toLowerCase());
+  const description = isPlaceholder ? '' : rawDesc;
   const addedDate = formatAddedDate(opt.created_at);
   const verifiedDate = formatAddedDate(opt.last_verified_at);
   // `verified` retired in favour of risk_level + future community votes

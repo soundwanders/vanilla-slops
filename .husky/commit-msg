@@ -1,0 +1,10 @@
+# Block any Claude/Anthropic co-authorship or attribution from entering a commit
+# message. This is what GitHub counts toward the contributors list, so keeping it
+# out of every commit prevents Claude from ever reappearing as a contributor.
+# The commit-message file path is passed as $1.
+if grep -qiE 'co-authored-by:[[:space:]]*.*(claude|anthropic)|noreply@anthropic\.com|generated with \[?claude|🤖 generated with' "$1"; then
+  echo "" >&2
+  echo "✖ Commit blocked: Claude/Anthropic attribution found in the commit message." >&2
+  echo "  Remove any 'Co-Authored-By: Claude', anthropic email, or 'Generated with Claude' line and recommit." >&2
+  exit 1
+fi

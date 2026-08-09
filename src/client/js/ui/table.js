@@ -425,6 +425,17 @@ function createNoOptionsHTML(colspan, gameId, gameTitle = '') {
   `;
 }
 
+// Placeholder/non-answer descriptions the scraper leaves behind. Render the
+// source link instead (honest fallback) rather than a description that isn't one.
+const PLACEHOLDER_DESCRIPTIONS = new Set([
+  'no description available',
+  'launch option from pcgamingwiki'
+]);
+function cleanDescription(desc) {
+  const d = (desc || '').trim();
+  return PLACEHOLDER_DESCRIPTIONS.has(d.toLowerCase()) ? '' : d;
+}
+
 function createLaunchOptionHTML(option) {
   // `verified` retired in favour of risk_level (consistent, computed) + community
   // votes as the future human signal — see the metadata trust model.
@@ -439,8 +450,9 @@ function createLaunchOptionHTML(option) {
   const matchFlag = isMatch
     ? '<span class="option-match-flag" title="Matches your active filter">Matches filter</span>'
     : '';
+  const description = cleanDescription(option.description);
   // Lowercased haystack for the in-expansion filter (command + description)
-  const searchText = escapeHtml(`${command} ${option.description || ''}`.toLowerCase().trim());
+  const searchText = escapeHtml(`${command} ${description}`.toLowerCase().trim());
 
   return `
     <li class="${CONFIG.CLASSES.launchOption} ${mobileClass}${isMatch ? ' option-match' : ''}" data-search="${searchText}">
@@ -457,9 +469,9 @@ function createLaunchOptionHTML(option) {
           <span class="copy-word">Copy</span>
         </span>
       </div>
-      ${option.description ? `
+      ${description ? `
         <div class="option-description ${TableState.isMobile ? 'mobile-description' : ''}">
-          ${escapeHtml(option.description)}
+          ${escapeHtml(description)}
         </div>
       ` : ''}
       ${(option.effect || option.usage_example) ? `
