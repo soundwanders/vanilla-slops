@@ -9,6 +9,7 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/game/:path*", "destination": "/api/index.js" },
+    { "source": "/how-it-works", "destination": "/api/index.js" },
     { "source": "/sitemap.xml", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
