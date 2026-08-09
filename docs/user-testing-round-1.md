@@ -109,9 +109,10 @@ short, and none carry structured "example / effect / where to enter."
 
 Surfaced while investigating — worth fixing alongside:
 
-1. **`supabase/schema.sql` is stale** — missing `risk_level`, `categories`,
-   `engine_compatibility` (added via migration but never written back). Any fresh
-   DB from this file would be wrong. Fix in handoff §1.
+1. ~~**`supabase/schema.sql` is stale**~~ — **resolved.** The `supabase/` dir was
+   a gitignored, never-tracked backup left over from the old DB migration; its
+   `seed.sql` self-dated to a 2025-08-22 backup and had drifted from prod. Deleted
+   it — the live Supabase DB is the source of truth.
 2. **Voting is unwired** — 0 up/0 down across all 579 options. Either implement
    it or avoid implying it exists (relevant to #3, #4 trust copy).
 3. **`verified` is legacy** — 119 `true`, retired from the UI. Decide keep vs
@@ -123,11 +124,12 @@ Surfaced while investigating — worth fixing alongside:
 
 ## Suggested sequencing
 
-**Phase A — vanilla-slops quick wins (no scraper dependency):**
-1. Fix the misleading Source affordance + humanize labels (#2 frontend).
-2. Show "Added {date}" from `created_at` (#3 frontend).
-3. "How to apply in Steam" general usage section (#5 general).
-4. Regenerate `supabase/schema.sql` (crack #1).
+**Phase A — vanilla-slops quick wins (no scraper dependency): ✅ DONE**
+1. [x] Fix the misleading Source affordance + humanize labels, link-ready (#2
+   frontend) — SPA (`table.js`) + SEO game page (`seoController.js`).
+2. [x] Show "Added {date}" from `created_at` (#3 frontend) — SPA + SEO.
+3. [x] "How to apply on Steam" general usage section (#5 general) — SEO game page.
+4. [x] ~~Regenerate `supabase/schema.sql`~~ — obviated (dir deleted, see cracks §1).
 
 **Phase B — vanilla-slops feature (uses existing data):**
 5. Attribute filter by category/risk (#1 API + UI).

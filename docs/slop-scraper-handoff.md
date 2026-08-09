@@ -34,8 +34,9 @@ one used here lived outside the repo.)
 ## 1. Schema changes
 
 All of these are additive (safe to ship before backfill). Apply to the live DB
-**and** update `supabase/schema.sql` in vanilla-slops (currently stale — it is
-already missing `risk_level`, `categories`, `engine_compatibility`).
+and record them in whatever canonical DDL `slop-scraper` keeps (vanilla-slops no
+longer carries a schema file — the old `supabase/` backup dir was deleted as a
+stale migration remnant; the live Supabase DB is the source of truth).
 
 ```sql
 -- Feedback #2 — real source links
@@ -57,10 +58,10 @@ alter table launch_options add column if not exists effect       text; -- one-li
 > the UI show `created_at` as "Added". Keep `last_verified_at` regardless — it is
 > the important one.
 
-### Also fix the stale schema file
-`supabase/schema.sql` must be regenerated to include the previously-added
-`risk_level` (text), `categories` (text[]), `engine_compatibility` (text[])
-columns plus everything above, so a fresh `schema.sql` run reproduces prod.
+> **Note:** the metadata columns `risk_level` (text), `categories` (text[]),
+> `engine_compatibility` (text[]) are already live in prod (added via an earlier
+> migration). Whatever canonical DDL slop-scraper maintains should include them
+> plus everything above so a fresh build reproduces prod.
 
 ---
 
@@ -127,7 +128,9 @@ there yet):
 
 ## 5. Loose ends / cracks surfaced during analysis
 
-- [ ] `supabase/schema.sql` is stale (see §1).
+- [x] ~~`supabase/schema.sql` is stale~~ — resolved: the `supabase/` dir was a
+  stale migration backup (gitignored, never tracked) and has been deleted. Live
+  Supabase DB is the source of truth.
 - [ ] Voting is unwired — 0/0 across all rows. Either wire it up or don't imply
   it in the UI/methodology copy.
 - [ ] `verified` column is legacy (retired from UI). Decide: drop it, or keep as

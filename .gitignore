@@ -40,7 +40,7 @@ docs/supabase-setup.md
 scripts/*
 src/scripts
 
-# PostgreSQL database backup files (data extracted into supabase/seed.sql)
+# PostgreSQL database backup files
 *.backup
 *.backup.gz
 src/scripts/appdetails_cache.json
@@ -70,9 +70,6 @@ lib-cov
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
-
-# Supabase
-/supabase
 
 # Dependency directories
 node_modules/
