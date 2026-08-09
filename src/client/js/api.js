@@ -182,6 +182,7 @@ export async function fetchGames({
   limit = DEFAULT_PAGE_SIZE,
   search = '',
   category = '',
+  risk = '',
   developer = '',
   engine = '', // NEW ENGINE PARAMETER
   options = '',
@@ -190,12 +191,13 @@ export async function fetchGames({
   order = 'asc',
   useCache = true
 } = {}) {
-  
+
   const queryParams = buildQueryParams({
     page,
     limit,
     search,
     category,
+    risk,
     developer,
     engine, // NEW ENGINE PARAM
     options,

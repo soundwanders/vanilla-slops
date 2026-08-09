@@ -142,9 +142,12 @@ Surfaced while investigating — worth fixing alongside:
 3. [x] "How to apply on Steam" general usage section (#5 general) — SEO game page.
 4. [x] ~~Regenerate `supabase/schema.sql`~~ — obviated (dir deleted, see cracks §1).
 
-**Phase B — vanilla-slops feature (uses existing data): ⬅ NEXT**
-5. Attribute filter by category/risk (#1 API + UI) — now viable on real data.
-6. "How This Works" page (#4) — unblocked; pipeline facts confirmed (followthrough §6).
+**Phase B — vanilla-slops feature (uses existing data): ✅ DONE**
+5. [x] Attribute filter by category/risk (#1 API + UI) — games are filtered to
+   those with ≥1 option matching the chosen category and/or risk, via an
+   embedded inner-join (distinct-game count verified against ground truth).
+   Category + Risk dropdowns added, fed by new launch-option facets.
+6. [x] "How This Works" page (#4) — shipped at `/how-it-works`.
 
 **Phase C — slop-scraper side (done), wired up in vanilla-slops:**
 7. [x] `source_url` → real source links (#2) — scraper adds it; SPA + SEO now

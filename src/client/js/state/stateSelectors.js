@@ -18,6 +18,7 @@ export const getCleanFilters = (state) => {
   return {
     search: filters.search || '',
     category: filters.category || '',
+    risk: filters.risk || '',
     developer: filters.developer || '',
     engine: filters.engine || '',
     options: filters.options || '',
@@ -53,6 +54,7 @@ export const getBaseFiltersFromURL = (urlParams) => {
   return {
     search: urlParams.get('search') || '',
     category: urlParams.get('category') || '',
+    risk: urlParams.get('risk') || '',
     developer: urlParams.get('developer') || '',
     engine: urlParams.get('engine') || '',
     options: urlParams.get('options') || '',
@@ -72,6 +74,7 @@ export const getAPIFilters = (state) => {
   return {
     search: filters.search,
     category: filters.category,
+    risk: filters.risk,
     developer: filters.developer,
     options: filters.options,
     year: filters.year,
@@ -109,6 +112,7 @@ export const hasActiveFilters = (state) => {
   return !!(
     filters.search ||
     filters.category ||
+    filters.risk ||
     filters.developer ||
     filters.engine ||
     filters.options ||

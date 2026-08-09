@@ -41,6 +41,7 @@ const stateActions = {
     filters: {
       search: '',
       category: '',
+      risk: '',
       developer: '',
       engine: '',
       options: '',

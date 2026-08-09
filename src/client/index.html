@@ -129,7 +129,23 @@
                 <option value="no-options">No Launch Options</option>
               </select>
             </div>
-            
+
+            <!-- Filter by a launch-option category (Display, Performance, …) -->
+            <div class="filter-group">
+              <label class="filter-label" for="categoryFilter">Option Category</label>
+              <select class="filter-select" id="categoryFilter" aria-label="Filter by launch option category" name="category">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+
+            <!-- Filter by a launch-option risk level -->
+            <div class="filter-group">
+              <label class="filter-label" for="riskFilter">Risk Level</label>
+              <select class="filter-select" id="riskFilter" aria-label="Filter by launch option risk level" name="risk">
+                <option value="">Any Risk</option>
+              </select>
+            </div>
+
             <!-- Row 3: Release Year -->
             <div class="filter-group">
               <label class="filter-label" for="yearFilter">Release Year</label>

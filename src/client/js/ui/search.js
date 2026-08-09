@@ -619,8 +619,9 @@ export default class SlopSearch {
   getFilterDisplayName(key) {
     const displayNames = {
       category: 'Category',
+      risk: 'Risk',
       developer: 'Developer',
-      engine: 'Engine', 
+      engine: 'Engine',
       options: 'Launch Options',
       year: 'Year',
       platform: 'Platform'

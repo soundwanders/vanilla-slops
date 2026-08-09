@@ -75,6 +75,7 @@ export async function fetchGames({
   platform = '',
   developer = '',
   category = '',
+  risk = '',
   options = '',
   year = '',
   releaseYear = '',
@@ -89,14 +90,28 @@ export async function fetchGames({
     // Use search or searchQuery (support both frontend conventions)
     const searchTerm = search || searchQuery || '';
     const yearFilter = year || releaseYear || '';
-    const genreFilter = genre || category || '';
-    
+    const genreFilter = genre || '';
+
+    // Launch-option attribute filters (feedback #1): narrow to games that have
+    // at least one option matching the chosen category and/or risk level.
+    const optionCategory = (category || '').trim();
+    const optionRisk = (risk || '').trim();
+    const hasOptionAttrFilter = Boolean(optionCategory) || Boolean(optionRisk);
+
     const offset = (page - 1) * limit;
-    
-    // Build the main query
+
+    // When filtering by option attributes we embed the junction + options as an
+    // INNER join so PostgREST filters games down to those with a matching option
+    // (count stays a distinct-games count — verified against ground truth). The
+    // embedded rows are stripped before returning; the SPA fetches options
+    // separately. Without an attribute filter we keep the lean `*` select.
+    const selectClause = hasOptionAttrFilter
+      ? '*, game_launch_options!inner(launch_options!inner(risk_level, categories))'
+      : '*';
+
     let query = supabase
       .from('games')
-      .select('*', { count: 'exact' });
+      .select(selectClause, { count: 'exact' });
 
     // Apply search filters
     query = applySearchFilters(query, {
@@ -111,24 +126,38 @@ export async function fetchGames({
       maxOptionsCount
     });
 
+    // Apply launch-option attribute filters on the embedded resource
+    query = applyOptionAttributeFilter(query, { category: optionCategory, risk: optionRisk });
+
     // Apply sorting
     query = applySorting(query, sort, order);
-    
+
     // Apply pagination
     query = query.range(offset, offset + limit - 1);
 
     const { data, count, error } = await query;
-    
+
     if (error) {
       console.error('Supabase query error:', error);
       throw new Error('Failed to fetch games from database');
     }
 
+    // Strip the embedded junction/options rows used only for filtering, so the
+    // response shape stays identical to the unfiltered case.
+    let games = data || [];
+    if (hasOptionAttrFilter) {
+      games = games.map((row) => {
+        const copy = { ...row };
+        delete copy.game_launch_options;
+        return copy;
+      });
+    }
+
     // Fetch facets for dynamic UI generation
     const facets = await getFacets(searchTerm);
-    
+
     return {
-      games: data || [],
+      games,
       total: count || 0,
       totalPages: Math.ceil((count || 0) / limit),
       currentPage: page,
@@ -237,9 +266,33 @@ function applySearchFilters(query, filters) {
 }
 
 /**
+ * Applies launch-option attribute filters to an embedded-resource query.
+ * Both conditions target the same inner-joined launch_options row, so passing
+ * category AND risk means "has an option that is both" — the intuitive reading.
+ * Assumes the query was built with the game_launch_options!inner(launch_options!inner(...))
+ * embed; a no-op when neither filter is set.
+ *
+ * @param {Object} query - Supabase query builder with the options embed
+ * @param {Object} attrs
+ * @param {string} [attrs.category] - Launch-option category (e.g. "Display")
+ * @param {string} [attrs.risk] - Risk level: safe | caution | experimental
+ * @returns {Object} Modified query
+ */
+function applyOptionAttributeFilter(query, { category, risk } = {}) {
+  if (risk) {
+    query = query.eq('game_launch_options.launch_options.risk_level', risk);
+  }
+  if (category) {
+    // categories is text[]; `contains` matches rows whose array includes the value
+    query = query.contains('game_launch_options.launch_options.categories', [category]);
+  }
+  return query;
+}
+
+/**
  * Applies sorting to query with field validation and mapping
  * Maps frontend sort field names to database column names
- * 
+ *
  * @function applySorting
  * @param {Object} query - Supabase query builder instance
  * @param {string} sort - Sort field name from frontend
@@ -381,10 +434,11 @@ export async function getFacets(searchQuery = '') {
       getFacetValues('engine', searchQuery),
       getFacetValues('publisher', searchQuery),
       getOptionsCountRanges(),
-      getReleaseYears(searchQuery)
+      getReleaseYears(searchQuery),
+      getOptionAttributeFacets()
     ];
 
-    const [developers, engines, publishers, optionsRanges, releaseYears] = await Promise.all(facetPromises);
+    const [developers, engines, publishers, optionsRanges, releaseYears, optionAttrs] = await Promise.all(facetPromises);
 
     const result = {
       developers: developers || [],
@@ -393,7 +447,9 @@ export async function getFacets(searchQuery = '') {
       genres: [],
       platforms: [],
       optionsRanges: optionsRanges || [],
-      releaseYears: releaseYears || []
+      releaseYears: releaseYears || [],
+      categories: optionAttrs?.categories || [],
+      riskLevels: optionAttrs?.riskLevels || []
     };
 
     if (!searchQuery) {
@@ -411,8 +467,58 @@ export async function getFacets(searchQuery = '') {
       genres: [],
       platforms: [],
       optionsRanges: [],
-      releaseYears: []
+      releaseYears: [],
+      categories: [],
+      riskLevels: []
     };
+  }
+}
+
+/**
+ * Get the launch-option attribute facets that drive the category and risk
+ * filters (feedback #1). Reads directly from launch_options (well under the
+ * 1000-row cap) and aggregates in JS. Counts are per-option (how many options
+ * carry the value), used only to order the dropdowns — the filtered results are
+ * games, so counts are not surfaced as game totals in the UI.
+ *
+ * @returns {Promise<{categories: Array<{value:string,count:number}>, riskLevels: Array<{value:string,count:number}>}>}
+ */
+async function getOptionAttributeFacets() {
+  try {
+    const { data, error } = await supabase
+      .from('launch_options')
+      .select('risk_level, categories');
+
+    if (error) {
+      console.error('Error fetching option attribute facets:', error);
+      return { categories: [], riskLevels: [] };
+    }
+
+    const catCounts = {};
+    const riskCounts = {};
+    (data || []).forEach((o) => {
+      if (o.risk_level) riskCounts[o.risk_level] = (riskCounts[o.risk_level] || 0) + 1;
+      if (Array.isArray(o.categories)) {
+        o.categories.forEach((c) => {
+          // "Uncategorized" isn't a useful filter choice — omit it
+          if (c && c !== 'Uncategorized') catCounts[c] = (catCounts[c] || 0) + 1;
+        });
+      }
+    });
+
+    const categories = Object.entries(catCounts)
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count);
+
+    const riskOrder = { safe: 0, caution: 1, experimental: 2 };
+    const riskLevels = Object.entries(riskCounts)
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => (riskOrder[a.value] ?? 9) - (riskOrder[b.value] ?? 9));
+
+    return { categories, riskLevels };
+  } catch (error) {
+    console.error('Error in getOptionAttributeFacets:', error);
+    return { categories: [], riskLevels: [] };
   }
 }
 

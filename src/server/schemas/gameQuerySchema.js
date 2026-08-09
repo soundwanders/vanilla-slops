@@ -13,7 +13,14 @@ export const querySchema = z.object({
   engine: z.string().optional(),
   platform: z.string().optional(),
   developer: z.string().optional(),
+  // `category` filters by a launch-option category (Display, Performance, …);
+  // it filters games that have at least one option in that category.
   category: z.string().optional(),
+  // `risk` filters games that have at least one option at this risk level.
+  // Stale/unknown values degrade to "no risk filter" rather than 400ing.
+  risk: z.enum(['safe', 'caution', 'experimental'])
+    .optional()
+    .catch(undefined),
   // Retired values (performance/graphics) and any stale value degrade to
   // "no options filter" via .catch() rather than 400ing old bookmarked URLs.
   options: z.enum(['has-options', 'no-options', 'many-options', 'few-options'])

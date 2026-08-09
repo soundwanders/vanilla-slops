@@ -108,12 +108,14 @@ function buildFilters(query, logger) {
     searchQuery: query.search || '',
     
     // Category filters
-    genre: query.genre || query.category || '',
+    genre: query.genre || '',
     engine: query.engine || '',
     platform: query.platform || '',
     developer: query.developer || '',
+    // Launch-option attribute filters (feedback #1)
     category: query.category || '',
-    
+    risk: query.risk || '',
+
     // Special filters
     options: query.options || '',
     year: query.year || '',

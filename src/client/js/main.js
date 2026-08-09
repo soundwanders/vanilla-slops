@@ -26,6 +26,7 @@ const stateManager = new StateManager({
   filters: {
     search: '',
     category: '',
+    risk: '',
     developer: '',
     engine: '',
     options: '',
@@ -77,6 +78,10 @@ async function initializeFilters() {
     populateFilterDropdown('engineFilter', facets.engines, 'All Engines');
     populateYearFilter(facets.releaseYears);
     populateOptionsFilter();
+    // Category names only (no counts — facet counts are per-option, but the
+    // filter returns games, so a count here would mislead)
+    populateFilterDropdown('categoryFilter', (facets.categories || []).map(c => c.value), 'All Categories');
+    populateRiskFilter(facets.riskLevels);
     
     // Remove loading state
     filterSelects.forEach(select => {
@@ -293,6 +298,37 @@ function populateOptionsFilter() {
   // Restore value
   if (currentValue && [...optionsFilter.options].some(opt => opt.value === currentValue)) {
     optionsFilter.value = currentValue;
+  }
+}
+
+/**
+ * Populate the risk-level filter with human-readable labels.
+ * @param {Array<{value:string,count:number}>|Array<string>} riskLevels
+ */
+function populateRiskFilter(riskLevels) {
+  const el = document.getElementById('riskFilter');
+  if (!el) return;
+
+  const labels = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
+  const currentValue = el.value;
+  el.innerHTML = '';
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Any Risk';
+  el.appendChild(defaultOption);
+
+  (Array.isArray(riskLevels) ? riskLevels : []).forEach(item => {
+    const value = typeof item === 'string' ? item : item && item.value;
+    if (!value) return;
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = labels[value] || value;
+    el.appendChild(option);
+  });
+
+  if (currentValue && [...el.options].some(opt => opt.value === currentValue)) {
+    el.value = currentValue;
   }
 }
 
@@ -600,8 +636,10 @@ function initializeSearchComponent() {
       sortId: 'sortSelect',
       filters: {
         developer: 'developerFilter',
-        engine: 'engineFilter', 
+        engine: 'engineFilter',
         options: 'optionsFilter',
+        category: 'categoryFilter',
+        risk: 'riskFilter',
         year: 'yearFilter'
       }
     };
