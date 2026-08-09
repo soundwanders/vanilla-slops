@@ -49,6 +49,12 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "https://*.supabase.co"],
       fontSrc: ["'self'", "https:", "data:"],
+      // helmet adds `upgrade-insecure-requests` by default, which forces the
+      // browser to fetch assets over https. Over local http that upgrades
+      // http://localhost/... → https://localhost/... which fails, blocking all
+      // CSS/JS (blank, unstyled page). Disable it locally; production is https
+      // so it keeps the default there.
+      upgradeInsecureRequests: null,
     },
   },
   crossOriginEmbedderPolicy: false

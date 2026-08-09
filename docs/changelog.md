@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-08-09 — Balanced filter grid
+
+### Changed
+- The desktop filter toolbar now lays out as a balanced **3 × 2** grid instead
+  of an orphaned 4 + 2. Collapses to 2 columns on tablet and 1–2 on mobile as
+  before.
+
+### Fixed
+- Local dev/preview over http no longer renders unstyled. Helmet's default
+  `upgrade-insecure-requests` was forcing asset requests to https on
+  `localhost`, blocking all CSS/JS; it's now disabled in the development CSP
+  branch only (the production https CSP is unchanged).
+
 ## [1.2.3] - 2026-08-09 — Header polish
 
 ### Fixed

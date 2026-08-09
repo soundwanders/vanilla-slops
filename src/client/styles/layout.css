@@ -144,7 +144,9 @@
 
 .app-filters .filter-fieldset {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Six filters lay out as a balanced 3 × 2 on desktop (was repeat(4) → an
+     orphaned 4 + 2). Collapses to 2 columns on tablet/mobile below. */
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-3) var(--space-4);
   border: 0;
   margin: 0;
