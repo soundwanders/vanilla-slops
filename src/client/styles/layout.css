@@ -73,6 +73,11 @@
   min-width: 0;
   max-width: 620px;
   margin: 0 auto;
+  /* Lift the whole search subtree above the filters row, whose animated
+     opacity creates its own stacking context — otherwise the expanded
+     suggestions dropdown can be painted behind the filters. */
+  position: relative;
+  z-index: var(--z-sticky);
 }
 
 .app-search .search-input-wrapper { position: relative; }

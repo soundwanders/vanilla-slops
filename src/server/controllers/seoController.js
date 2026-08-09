@@ -390,8 +390,8 @@ ${seoHeader({ current: 'how-it-works' })}
     <h1 class="seo-title">How Vanilla Slops works</h1>
     <p class="seo-subtitle">
       Vanilla Slops is a searchable catalog of community-sourced Steam launch
-      options. No mystery meat. Here's exactly where the data comes from, how
-      it's organized, and (just as important) what we don't claim about it yet.
+      options. No smoke and mirrors. Here's exactly where the data comes from,
+      how it's organized, and (just as important) what we don't claim about it yet.
     </p>
 
     <section class="hiw-section" aria-labelledby="hiw-sources">
@@ -414,10 +414,11 @@ ${seoHeader({ current: 'how-it-works' })}
 
     <section class="hiw-section" aria-labelledby="hiw-cadence">
       <h2 id="hiw-cadence">How often it updates</h2>
-      <p>Honestly? On demand. The crawler runs when the maintainer runs it, so
-      there is no fixed daily or weekly schedule. New options and refreshes
-      arrive in batches, which is exactly why every option wears an
-      <strong>Added</strong> date instead of pretending to be a live feed.</p>
+      <p>Updates happen on demand. This is a hands-on project, so the crawler
+      runs when there's time to run it rather than on a fixed daily or weekly
+      schedule. New options and refreshes arrive in batches, which is why every
+      option wears an <strong>Added</strong> date instead of pretending to be a
+      live feed.</p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-tagging">
