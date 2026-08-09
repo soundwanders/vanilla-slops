@@ -414,6 +414,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
 
     // Update UI
     updateResultsCount(response.total || 0);
+    syncSortControl();
     clearResults();
     const { filters } = stateManager.getState();
     const games = response.games || [];
@@ -557,6 +558,18 @@ function showErrorState(message) {
 
   tableContainer.querySelector('.table-error-retry')
     .addEventListener('click', () => loadPage(stateManager.getState().currentPage, true, 'retry'));
+}
+
+// Keep the Sort dropdown reflecting the active sort — it can also be changed by
+// clicking a column header, so re-sync on every load.
+function syncSortControl() {
+  const sortSelect = document.getElementById('sortSelect');
+  if (!sortSelect) return;
+  const { sort, order } = getCleanFilters(stateManager.getState());
+  const value = `${sort}-${order}`;
+  if ([...sortSelect.options].some(o => o.value === value)) {
+    sortSelect.value = value;
+  }
 }
 
 const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };

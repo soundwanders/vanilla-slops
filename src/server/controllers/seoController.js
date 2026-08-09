@@ -53,6 +53,30 @@ function truncate(s, n) {
   return str.length <= n ? str : str.slice(0, n - 1).trimEnd() + '…';
 }
 
+// Prefilled GitHub "new issue" URL for launch-option suggestions — a contribution
+// path that needs no write API on our side.
+const REPO_URL = 'https://github.com/soundwanders/vanilla-slops';
+function suggestIssueUrl() {
+  const params = new URLSearchParams({
+    title: 'Launch option suggestion',
+    labels: 'option-suggestion',
+    body: [
+      '**Game:**',
+      '',
+      '**Launch option(s):**',
+      '```',
+      '-your_option_here',
+      '```',
+      '',
+      '**What it does / effect:**',
+      '',
+      '**Where you found it (source, if any):**',
+      ''
+    ].join('\n')
+  });
+  return `${REPO_URL}/issues/new?${params.toString()}`;
+}
+
 /**
  * Shared header for server-rendered pages: logo, "Search all games" CTA, a
  * "How it works" nav link, and the theme toggle. Pass current:'how-it-works'
@@ -63,7 +87,7 @@ function seoHeader({ current } = {}) {
   const hiwAttrs = current === 'how-it-works' ? ' aria-current="page"' : '';
   return `  <header class="seo-header">
     <a href="/" class="seo-home" aria-label="Vanilla Slops home">
-      <img src="/slops-logo.png" alt="" width="40" height="40" />
+      <img src="/slops-logo.png" alt="" width="40" height="40" decoding="async" />
       <span>Vanilla Slops</span>
     </a>
     <a href="/" class="seo-cta">Search all games →</a>
@@ -156,6 +180,8 @@ function renderGamePage(game, slug) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${canonical}" />
@@ -165,6 +191,7 @@ function renderGamePage(game, slug) {
   <meta property="og:url" content="${canonical}" />
   <meta property="og:image" content="${steamImage}" />
   <meta property="og:site_name" content="Vanilla Slops" />
+  <link rel="preconnect" href="https://cdn.cloudflare.steamstatic.com" crossorigin />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
@@ -362,6 +389,8 @@ function renderHowItWorks() {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${canonical}" />
@@ -478,6 +507,13 @@ ${seoHeader({ current: 'how-it-works' })}
       </dl>
     </section>
 ${HOW_TO_APPLY_HTML}
+    <section class="hiw-section" aria-labelledby="hiw-contribute">
+      <h2 id="hiw-contribute">Know one we're missing?</h2>
+      <p>This catalog grows with the community. If you know a launch option that
+      isn't here, <a href="${suggestIssueUrl()}" target="_blank" rel="noopener noreferrer">suggest
+      it on GitHub</a> and we'll review it against the sources above.</p>
+    </section>
+
     <p class="hiw-signoff">Happy hunting. <span class="hiw-frog" aria-hidden="true">🐸</span></p>
 
     <p class="seo-footer-cta">

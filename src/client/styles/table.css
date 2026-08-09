@@ -30,6 +30,26 @@
   color: var(--color-text-tertiary);
 }
 
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.sort-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.results-header .sort-select {
+  width: auto;
+  min-width: 9rem;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-6) var(--space-1) var(--space-2);
+}
+
 .games-table {
   width: 100%;
   border-collapse: separate;
@@ -343,6 +363,46 @@
 }
 
 /* Launch options list */
+/* In-expansion filter for games with many options */
+.option-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.option-filter-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 22rem;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.option-filter-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
+.option-filter-count {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.option-filter-empty {
+  margin: 0;
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
 .launch-options-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -880,6 +940,13 @@ a.option-source:hover {
   height: auto !important;
   overflow: visible !important;
   display: block !important;
+}
+
+.suggest-option-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-top: var(--space-4);
+  text-decoration: none;
 }
 
 .no-options::before,

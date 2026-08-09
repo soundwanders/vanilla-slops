@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
     <title>Vanilla Slops — Steam Launch Options Database</title>
 
     <meta name="description" content="Search community-verified Steam launch options (SLOPS) for hundreds of games. Find performance tweaks, graphics settings, and hidden features through community-curated command-line parameters." />
@@ -173,6 +175,17 @@
         <!-- Results Header -->
         <div class="results-header" id="resultsHeader">
           <span class="results-count" id="resultsCount" role="status" aria-live="polite">Loading games...</span>
+          <div class="sort-control">
+            <label for="sortSelect" class="sort-label">Sort</label>
+            <select id="sortSelect" class="sort-select" aria-label="Sort games by">
+              <option value="total_options_count-desc">Most options</option>
+              <option value="created_at-desc">Newest added</option>
+              <option value="release_date-desc">Newest release</option>
+              <option value="release_date-asc">Oldest release</option>
+              <option value="title-asc">Title A–Z</option>
+              <option value="title-desc">Title Z–A</option>
+            </select>
+          </div>
         </div>
         
         <!-- Table will be rendered here with proper data-label attributes -->

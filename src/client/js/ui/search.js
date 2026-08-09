@@ -588,7 +588,13 @@ export default class SlopSearch {
       `;
     }).join('');
 
-    this.activeFilters.innerHTML = filterTags;
+    // Offer a one-click "Clear all" once more than one filter is active
+    const activeCount = Object.keys(this.currentFilters).length;
+    const clearAll = activeCount > 1
+      ? `<button class="filter-clear-all" type="button" aria-label="Clear all filters">Clear all</button>`
+      : '';
+
+    this.activeFilters.innerHTML = filterTags + clearAll;
 
     // Add remove handlers
     this.activeFilters.querySelectorAll('.filter-remove').forEach(button => {
@@ -597,6 +603,9 @@ export default class SlopSearch {
         this.removeFilter(filterKey);
       });
     });
+
+    const clearAllBtn = this.activeFilters.querySelector('.filter-clear-all');
+    if (clearAllBtn) clearAllBtn.addEventListener('click', () => this.reset());
   }
 
   /**
@@ -815,7 +824,7 @@ export default class SlopSearch {
       if (element) element.value = '';
     });
     
-    if (this.sortSelect) this.sortSelect.value = 'title';
+    if (this.sortSelect) this.sortSelect.value = 'title-asc';
     
     this.renderActiveFilters();
     this.hideSuggestions();

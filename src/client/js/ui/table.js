@@ -283,17 +283,44 @@ function displayLaunchOptions(gameId, launchOptions) {
   launchOptionsRow.dataset.gameId = gameId;
 
   const colspan = gameRow.children.length;
+  const gameTitle = gameRow.querySelector('.game-page-link')?.textContent?.trim() || '';
 
   launchOptionsRow.innerHTML = launchOptions.length === 0
-    ? createNoOptionsHTML(colspan, gameId)
+    ? createNoOptionsHTML(colspan, gameId, gameTitle)
     : createOptionsHTML(colspan, launchOptions, gameId);
 
   gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
   setupLaunchOptionsRowEvents(launchOptionsRow);
+  setupOptionFilter(launchOptionsRow);
 
   if (TableState.isMobile) buffMobileOptions(launchOptionsRow);
 
   requestAnimationFrame(() => { launchOptionsRow.style.display = 'table-row'; });
+}
+
+// A game's expansion this size or larger gets an in-place filter input.
+const OPTION_FILTER_THRESHOLD = 8;
+
+// Wire the in-expansion filter input to show/hide options as the user types.
+function setupOptionFilter(row) {
+  const input = row.querySelector('.option-filter-input');
+  if (!input) return;
+  const items = [...row.querySelectorAll('.launch-option')];
+  const counter = row.querySelector('.option-filter-count');
+  const empty = row.querySelector('.option-filter-empty');
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    let visible = 0;
+    items.forEach((li) => {
+      const hay = li.dataset.search || li.textContent.toLowerCase();
+      const show = !q || hay.includes(q);
+      li.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    if (counter) counter.textContent = q ? `${visible} of ${items.length} shown` : '';
+    if (empty) empty.hidden = !(q && visible === 0);
+  });
 }
 
 // True when a category/risk filter is active and this option satisfies all of
@@ -320,11 +347,24 @@ function createOptionsHTML(colspan, launchOptions, gameId) {
   const optionsHTML = ordered.map(option => createLaunchOptionHTML(option)).join('');
   const mobileClass = TableState.isMobile ? 'mobile-options-content' : '';
 
+  // For long lists, offer an in-place filter so users can narrow to a command
+  // without scrolling the whole set.
+  const showFilter = launchOptions.length >= OPTION_FILTER_THRESHOLD;
+  const filterHTML = showFilter ? `
+      <div class="option-filter">
+        <input type="search" class="option-filter-input"
+               placeholder="Filter these ${launchOptions.length} options…"
+               aria-label="Filter this game's launch options" />
+        <span class="option-filter-count" role="status" aria-live="polite"></span>
+      </div>` : '';
+
   return `
     <td colspan="${colspan}" class="${CONFIG.CLASSES.launchOptionsCell} ${mobileClass}" data-label="Launch Options Details">
+      ${filterHTML}
       <ul class="launch-options-list ${TableState.isMobile ? 'mobile-options-list' : ''}">
         ${optionsHTML}
       </ul>
+      <p class="option-filter-empty" hidden>No options match that filter.</p>
       <div class="launch-options-close-container ${TableState.isMobile ? 'mobile-close-container' : ''}">
         <button class="launch-options-close ${TableState.isMobile ? 'mobile-close-btn' : ''}" data-game-id="${gameId}">
           <span class="close-text">Hide Options</span>
@@ -334,8 +374,32 @@ function createOptionsHTML(colspan, launchOptions, gameId) {
   `;
 }
 
-function createNoOptionsHTML(colspan, gameId) {
+// Build a prefilled GitHub "new issue" URL so contributors can suggest an
+// option without any write API on our side. Game context is filled in when known.
+const REPO_URL = 'https://github.com/soundwanders/vanilla-slops';
+function suggestOptionUrl(gameTitle, gameId) {
+  const label = gameTitle || (gameId ? `game ${gameId}` : '');
+  const title = label ? `Launch option suggestion: ${label}` : 'Launch option suggestion';
+  const body = [
+    `**Game:** ${gameTitle || '(name)'}${gameId ? ` (Steam App ID: ${gameId})` : ''}`,
+    '',
+    '**Launch option(s):**',
+    '```',
+    '-your_option_here',
+    '```',
+    '',
+    '**What it does / effect:**',
+    '',
+    '**Where you found it (source, if any):**',
+    ''
+  ].join('\n');
+  const params = new URLSearchParams({ title, body, labels: 'option-suggestion' });
+  return `${REPO_URL}/issues/new?${params.toString()}`;
+}
+
+function createNoOptionsHTML(colspan, gameId, gameTitle = '') {
   const mobileClass = TableState.isMobile ? 'mobile-no-options' : '';
+  const btnClass = TableState.isMobile ? 'btn mobile-btn' : 'btn';
 
   return `
     <td colspan="${colspan}" class="${CONFIG.CLASSES.launchOptionsCell} ${mobileClass}" data-label="Launch Options Details">
@@ -343,7 +407,10 @@ function createNoOptionsHTML(colspan, gameId) {
         <div class="no-options-icon">🔍</div>
         <h4>No Launch Options Available</h4>
         <p>This game doesn't have any community-verified launch options yet.</p>
-        <p>Consider contributing if you know of effective launch options!</p>
+        <p>Know one that works? Help the next player out.</p>
+        <a class="${btnClass} btn-secondary suggest-option-btn"
+           href="${suggestOptionUrl(gameTitle, gameId)}"
+           target="_blank" rel="noopener noreferrer">Suggest a launch option ↗</a>
       </div>
       <div class="launch-options-close-container ${TableState.isMobile ? 'mobile-close-container' : ''}">
         <button class="launch-options-close ${TableState.isMobile ? 'mobile-close-btn' : ''}" data-game-id="${gameId}">
@@ -369,9 +436,11 @@ function createLaunchOptionHTML(option) {
   const matchFlag = isMatch
     ? '<span class="option-match-flag" title="Matches your active filter">Matches filter</span>'
     : '';
+  // Lowercased haystack for the in-expansion filter (command + description)
+  const searchText = escapeHtml(`${command} ${option.description || ''}`.toLowerCase().trim());
 
   return `
-    <li class="${CONFIG.CLASSES.launchOption} ${mobileClass}${isMatch ? ' option-match' : ''}">
+    <li class="${CONFIG.CLASSES.launchOption} ${mobileClass}${isMatch ? ' option-match' : ''}" data-search="${searchText}">
       <div class="${CONFIG.CLASSES.optionCommand} ${TableState.isMobile ? 'mobile-command' : ''}"
            data-command="${escapeHtml(command)}"
            role="button"
