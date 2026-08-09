@@ -224,7 +224,7 @@ const HOW_TO_APPLY_HTML = `
         <li><strong>Right-click</strong> the game and choose <strong>Properties</strong>.</li>
         <li>On the <strong>General</strong> tab, find the <strong>Launch Options</strong> field.</li>
         <li>Type or paste the option (e.g. <code>-windowed</code>) into the field. To use several at once, separate them with spaces (e.g. <code>-windowed -novid</code>).</li>
-        <li>Close Properties — Steam saves automatically. The option applies next time you launch the game.</li>
+        <li>Close Properties. Steam saves automatically, and the option applies next time you launch the game.</li>
       </ol>
       <p class="how-to-note">To remove one, reopen the same field and delete the text. Options are game-specific; an option that helps one game may do nothing (or misbehave) in another.</p>
     </section>`;
@@ -384,59 +384,64 @@ function renderHowItWorks() {
     <h1 class="seo-title">How Vanilla Slops works</h1>
     <p class="seo-subtitle">
       Vanilla Slops is a searchable catalog of community-sourced Steam launch
-      options. Here's exactly where the data comes from, how it's organized,
-      and — just as importantly — what we don't yet claim about it.
+      options. No mystery meat. Here's exactly where the data comes from, how
+      it's organized, and (just as important) what we don't claim about it yet.
     </p>
 
     <section class="hiw-section" aria-labelledby="hiw-sources">
       <h2 id="hiw-sources">Where the launch options come from</h2>
-      <p>Each option is gathered by an open-source crawler (<em>slop-scraper</em>)
-      that reads from established community sources, in this priority order:</p>
+      <p>Every option is gathered by an open-source crawler we call
+      <em>slop-scraper</em>, which reads from the places players already trust,
+      in this order:</p>
       <ol class="hiw-list">
-        <li><strong>Curated & engine-specific lists</strong> — hand-maintained
-          options for known engines, plus a small manually curated set.</li>
-        <li><strong>PCGamingWiki</strong> — the community wiki's per-game pages.</li>
-        <li><strong>Steam Community guides</strong> — player-written guides.</li>
-        <li><strong>ProtonDB</strong> — Linux/Steam Deck reports and tweaks.</li>
+        <li><strong>Curated &amp; engine-specific lists.</strong> Hand-picked
+          options for known engines, plus a small set we curate ourselves.</li>
+        <li><strong>PCGamingWiki.</strong> The community wiki's per-game pages.</li>
+        <li><strong>Steam Community guides.</strong> Written by players who have
+          already been there.</li>
+        <li><strong>ProtonDB.</strong> Linux and Steam Deck reports and tweaks.</li>
       </ol>
-      <p>The same command found for several games is stored once and shared, so a
-      flag like <code>-windowed</code> isn't duplicated across the catalog.</p>
+      <p>Found the same command for a dozen games? We store it once and share it,
+      so a flag like <code>-windowed</code> never clutters the catalog with
+      copies.</p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-cadence">
       <h2 id="hiw-cadence">How often it updates</h2>
-      <p>Honestly: on demand. The crawler runs when the maintainer runs it —
+      <p>Honestly? On demand. The crawler runs when the maintainer runs it, so
       there is no fixed daily or weekly schedule. New options and refreshes
-      appear in batches, which is why each option shows an <strong>Added</strong>
-      date rather than implying a live feed.</p>
+      arrive in batches, which is exactly why every option wears an
+      <strong>Added</strong> date instead of pretending to be a live feed.</p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-tagging">
       <h2 id="hiw-tagging">How options are categorized and risk-rated</h2>
-      <p>Categories and risk levels are computed by a transparent rule set based
-      on the command itself (and its source) — no machine learning and no guesses
-      about your specific system. A flag recognized as a display, performance,
-      audio, or skip-intro tweak is graded <strong>Safe</strong>; options that can
-      affect multiplayer integrity or anti-cheat (network and debug flags) stay
-      <strong>Experimental</strong> until reviewed individually.</p>
+      <p>Categories and risk levels come from a transparent rule set that looks
+      at the command itself (and where it came from). No machine learning, no
+      guessing about your specific rig. A flag we recognize as a display,
+      performance, audio, or skip-intro tweak earns a <strong>Safe</strong>
+      grade. Anything that could poke at multiplayer integrity or anti-cheat,
+      like network and debug flags, stays <strong>Experimental</strong> until a
+      human signs off.</p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-validation">
-      <h2 id="hiw-validation">What "verified" means here — and what it doesn't</h2>
-      <p>We want to be straight with you about trust signals:</p>
+      <h2 id="hiw-validation">What "verified" means here (and what it doesn't)</h2>
+      <p>We would rather under-promise than oversell, so here's the straight
+      version:</p>
       <ul class="hiw-list">
-        <li><strong>What we do:</strong> a save-gate rejects malformed or junk
-          entries before they enter the database, so what you see are real,
-          well-formed commands from the sources above.</li>
-        <li><strong>What we're building:</strong> a <strong>Last checked</strong>
-          date that appears once an option has been re-confirmed against its
-          source. Coverage grows over time; if an option has no "Last checked"
-          date yet, it simply hasn't been re-checked under this system — not that
-          it's broken.</li>
-        <li><strong>What we don't claim:</strong> options are <em>sourced</em>,
-          not functionally tested on every game. Community voting is not live yet,
-          so we don't show vote counts as a trust signal. Always skim an option's
-          description before using it.</li>
+        <li><strong>What we do.</strong> A save-gate turns away malformed or junk
+          entries at the door, so what you see are real, well-formed commands
+          from the sources above.</li>
+        <li><strong>What we're building.</strong> A <strong>Last checked</strong>
+          date that shows up once an option has been re-confirmed against its
+          source. Coverage grows over time. If an option has no "Last checked"
+          date yet, it simply hasn't come up for review. That is not the same as
+          broken.</li>
+        <li><strong>What we don't claim.</strong> Options are <em>sourced</em>,
+          not personally tested on every game. Community voting isn't live yet,
+          so we don't dangle vote counts as a trust signal. Give an option's
+          description a quick read before you paste it in.</li>
       </ul>
     </section>
 
@@ -449,14 +454,14 @@ function renderHowItWorks() {
         <dt><span class="risk-badge risk-caution">Caution</span></dt>
         <dd>Works, but can change behavior in ways worth understanding first.</dd>
         <dt><span class="risk-badge risk-experimental">Experimental</span></dt>
-        <dd>Unproven, niche, or able to affect multiplayer/anti-cheat — try
-          carefully.</dd>
+        <dd>Unproven, niche, or able to touch multiplayer and anti-cheat, so
+          try it carefully.</dd>
         <dt>Category</dt>
         <dd>What an option does: Display, Performance, Audio, Network,
-          Proton-Deck, Skip-Intro, or Debug-Dev. Some obscure flags remain
+          Proton-Deck, Skip-Intro, or Debug-Dev. Some obscure flags stay
           Uncategorized.</dd>
         <dt>Source</dt>
-        <dd>Where the option was found. When a stable link exists (e.g. ProtonDB),
+        <dd>Where the option was found. When a stable link exists (say, ProtonDB),
           the source is clickable; otherwise it's shown as plain text.</dd>
         <dt>Added</dt>
         <dd>When the option entered the database.</dd>
@@ -466,6 +471,8 @@ function renderHowItWorks() {
       </dl>
     </section>
 ${HOW_TO_APPLY_HTML}
+    <p class="hiw-signoff">Happy hunting. <span class="hiw-frog" aria-hidden="true">🐸</span></p>
+
     <p class="seo-footer-cta">
       <a href="/" class="seo-cta">Browse the full catalog of Steam launch options →</a>
     </p>

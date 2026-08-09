@@ -211,7 +211,19 @@
 
 /* "How this works" methodology page (#4) */
 .how-it-works-page .hiw-section {
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
+  /* Negative side margins + padding let the hover tint breathe past the text
+     column while the text itself stays aligned with the rest of the page. */
+  padding: var(--space-3) var(--space-4);
+  margin-left: calc(var(--space-4) * -1);
+  margin-right: calc(var(--space-4) * -1);
+  border-radius: var(--radius-lg);
+  transition: background 0.3s ease;
+}
+
+/* Each section quietly lights up as you read down the page */
+.how-it-works-page .hiw-section:hover {
+  background: var(--color-surface-subtle);
 }
 
 .hiw-section h2 {
@@ -219,6 +231,25 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin-bottom: var(--space-3);
+}
+
+/* A small brand-colored diamond gives headings a bit of character and does a
+   playful quarter-turn when its section is hovered. */
+.hiw-section h2::before {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.55em;
+  vertical-align: middle;
+  border-radius: 2px;
+  background: var(--color-accent);
+  transform: rotate(45deg);
+  transition: transform 0.3s ease;
+}
+
+.hiw-section:hover h2::before {
+  transform: rotate(135deg) scale(1.15);
 }
 
 .hiw-section p {
@@ -273,6 +304,67 @@
   .hiw-glossary dd {
     margin-bottom: var(--space-3);
   }
+}
+
+/* Glossary risk badges give a little hop when you point at their term */
+.hiw-glossary .risk-badge {
+  transition: transform 0.2s ease;
+}
+.hiw-glossary dt:hover .risk-badge {
+  transform: translateY(-2px) scale(1.06);
+}
+
+/* Whimsical closing line + a frog that gently bobs (and hops on hover) */
+.hiw-signoff {
+  margin-top: var(--space-8);
+  text-align: center;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+.hiw-frog {
+  display: inline-block;
+  will-change: transform;
+}
+.hiw-signoff:hover .hiw-frog {
+  animation-play-state: paused;
+  transform: translateY(-5px) rotate(-10deg);
+}
+
+/* Motion is opt-in: a gentle staggered rise on load + a bobbing frog, all of
+   which vanish for anyone who prefers reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .how-it-works-page .seo-eyebrow,
+  .how-it-works-page .seo-title,
+  .how-it-works-page .seo-subtitle,
+  .how-it-works-page .hiw-section,
+  .how-it-works-page .how-to-apply,
+  .how-it-works-page .hiw-signoff {
+    animation: hiw-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .how-it-works-page .seo-title { animation-delay: 0.04s; }
+  .how-it-works-page .seo-subtitle { animation-delay: 0.10s; }
+  .how-it-works-page .hiw-section:nth-of-type(1) { animation-delay: 0.16s; }
+  .how-it-works-page .hiw-section:nth-of-type(2) { animation-delay: 0.22s; }
+  .how-it-works-page .hiw-section:nth-of-type(3) { animation-delay: 0.28s; }
+  .how-it-works-page .hiw-section:nth-of-type(4) { animation-delay: 0.34s; }
+  .how-it-works-page .hiw-section:nth-of-type(5) { animation-delay: 0.40s; }
+  .how-it-works-page .how-to-apply { animation-delay: 0.46s; }
+
+  .hiw-frog {
+    animation: hiw-frog-bob 3.5s ease-in-out infinite;
+    transition: transform 0.3s ease;
+  }
+}
+
+@keyframes hiw-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hiw-frog-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 .seo-footer-cta {
