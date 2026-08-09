@@ -165,22 +165,13 @@ export default class SlopSearch {
       this.hideSuggestions();
     }
 
-    // TIER 2: Deliberate search (smart debouncing)
-    if (query.length >= this.config.minCharsForSearch) {
-      const searchDelay = this.calculateSearchDelay();
-      
-      this.searchTimeout = setTimeout(() => {
-        // Only search if this is still the current query
-        if (this.currentQuery === query.trim()) {
-          console.log(`🔍 Executing search after ${searchDelay}ms delay for: "${query}"`);
-          this.executeSearch();
-        }
-      }, searchDelay);
-      
-      // Show visual feedback that search is pending
-      this.showSearchPending();
-    } else if (query.length === 0) {
-      // Immediate search when clearing the field
+    // TIER 2: The table no longer refetches on every keystroke — that caused
+    // the results to churn and flash skeletons as you typed. Live suggestions
+    // (TIER 1) give the as-you-type feedback; the table updates only on an
+    // explicit action: Enter, picking a suggestion, clicking away, or clearing
+    // the box (which restores the full list immediately, below).
+    this.hideSearchPending();
+    if (query.length === 0) {
       this.executeSearch();
     }
   }

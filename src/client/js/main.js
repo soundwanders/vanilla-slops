@@ -528,7 +528,11 @@ function showLoadingState(clearContent = false) {
   const tableContainer = document.getElementById('table-container');
   if (tableContainer && clearContent) {
     const scrollInfo = getScrollInfo(stateManager.getState());
-    if (!scrollInfo.shouldPreventScroll) {
+    // Skeleton only on the FIRST load, when there's no table yet. For searches
+    // and filter changes we keep the current results on screen and let them swap
+    // in when ready — no more skeleton flashing on every update.
+    const hasResults = !!document.querySelector('.games-table');
+    if (!hasResults && !scrollInfo.shouldPreventScroll) {
       renderSkeletonTable();
     }
   }
