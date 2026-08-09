@@ -187,6 +187,8 @@ function renderGamePage(game, slug) {
       ${optionsHtml}
     </section>
 
+    ${options.length ? HOW_TO_APPLY_HTML : ''}
+
     <p class="seo-footer-cta">
       <a href="/" class="seo-cta">Browse ${escapeHtml(title)} and thousands more on Vanilla Slops →</a>
     </p>
@@ -210,10 +212,53 @@ function renderGamePage(game, slug) {
 
 const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
 
+// Static, game-agnostic explainer for feedback #5 (general usage docs). The
+// steps are identical for every game, so this is rendered once per page rather
+// than per option.
+const HOW_TO_APPLY_HTML = `
+    <section class="how-to-apply" aria-labelledby="how-to-apply-heading">
+      <h2 id="how-to-apply-heading">How to apply a launch option on Steam</h2>
+      <ol class="how-to-steps">
+        <li>Open <strong>Steam</strong> and go to your <strong>Library</strong>.</li>
+        <li><strong>Right-click</strong> the game and choose <strong>Properties</strong>.</li>
+        <li>On the <strong>General</strong> tab, find the <strong>Launch Options</strong> field.</li>
+        <li>Type or paste the option (e.g. <code>-windowed</code>) into the field. To use several at once, separate them with spaces (e.g. <code>-windowed -novid</code>).</li>
+        <li>Close Properties — Steam saves automatically. The option applies next time you launch the game.</li>
+      </ol>
+      <p class="how-to-note">To remove one, reopen the same field and delete the text. Options are game-specific; an option that helps one game may do nothing (or misbehave) in another.</p>
+    </section>`;
+
+// Turn a raw source slug (e.g. "manual_curation") into a readable label.
+function humanizeSource(src) {
+  const s = (src || 'Community').trim();
+  if (s.includes('_')) {
+    const spaced = s.replace(/_/g, ' ');
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+  }
+  return s;
+}
+
+// Render the source as a real link when a URL exists (slop-scraper's future
+// source_url column), otherwise plain, honest text — no fake affordance.
+function renderSource(opt) {
+  const label = escapeHtml(humanizeSource(opt.source));
+  if (opt.source_url) {
+    return `<a class="option-source" href="${escapeHtml(opt.source_url)}" target="_blank" rel="noopener noreferrer" title="Source: ${label} (opens in a new tab)">${label}</a>`;
+  }
+  return `<span class="option-source" title="Where this launch option was sourced from">${label}</span>`;
+}
+
+function formatAddedDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 function renderOption(opt) {
   const command = opt.command || opt.option || '';
   const description = opt.description && opt.description !== 'No description available' ? opt.description : '';
-  const source = opt.source || 'Community';
+  const addedDate = formatAddedDate(opt.created_at);
   // `verified` retired in favour of risk_level + future community votes
   const votes = opt.upvotes > 0 ? `<span class="option-votes">👍 ${opt.upvotes}</span>` : '';
   // Defensive metadata badges — undefined until the slop-scraper columns are live
@@ -234,7 +279,10 @@ function renderOption(opt) {
     ${description ? `<div class="option-description">${escapeHtml(description)}</div>` : ''}
     ${cats ? `<div class="option-cats">${cats}</div>` : ''}
     <div class="option-meta">
-      <span class="option-source">${escapeHtml(source)}</span>
+      <div class="option-provenance">
+        ${renderSource(opt)}
+        ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
+      </div>
       <div class="option-badges">${risk}${votes}</div>
     </div>
   </li>`;

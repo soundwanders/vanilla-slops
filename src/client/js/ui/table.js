@@ -335,6 +335,7 @@ function createLaunchOptionHTML(option) {
   const votesBadge = option.upvotes > 0 ? `<span class="option-votes">👍 ${option.upvotes}</span>` : '';
   const riskBadge = renderRiskBadge(option.risk_level);
   const categoryChips = renderCategoryChips(option.categories);
+  const addedDate = formatAddedDate(option.created_at);
   const command = option.command || option.option || '';
   const mobileClass = TableState.isMobile ? 'mobile-launch-option' : '';
 
@@ -360,7 +361,10 @@ function createLaunchOptionHTML(option) {
       ` : ''}
       ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
       <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
-        <span class="option-source">${escapeHtml(option.source || 'Community')}</span>
+        <div class="option-provenance">
+          ${renderSource(option)}
+          ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
+        </div>
         <div class="option-badges">${riskBadge}${votesBadge}</div>
       </div>
     </li>
@@ -385,6 +389,37 @@ function renderCategoryChips(categories) {
     .filter(c => c && c !== 'Uncategorized')
     .map(c => `<span class="cat-chip">${escapeHtml(c)}</span>`)
     .join('');
+}
+
+// Raw source values are sometimes slugs (e.g. "manual_curation"); present them
+// readably while leaving already-clean names (PCGamingWiki, ProtonDB) untouched.
+function humanizeSource(src) {
+  const s = (src || 'Community').trim();
+  if (s.includes('_')) {
+    const spaced = s.replace(/_/g, ' ');
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+  }
+  return s;
+}
+
+// Link-ready: renders a real link when the scraper provides source_url (see the
+// slop-scraper handoff), otherwise a plain, honest provenance label — no fake
+// "clickable" affordance.
+function renderSource(option) {
+  const label = escapeHtml(humanizeSource(option.source));
+  if (option.source_url) {
+    return `<a class="option-source" href="${escapeHtml(option.source_url)}" target="_blank" rel="noopener noreferrer" title="Source: ${label} (opens in a new tab)">${label}</a>`;
+  }
+  return `<span class="option-source" title="Where this launch option was sourced from">${label}</span>`;
+}
+
+// created_at is the date the scraper added the option to the database — a real
+// per-batch signal, shown as an "Added" date so users can gauge freshness.
+function formatAddedDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // ============================================================================

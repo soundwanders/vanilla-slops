@@ -537,15 +537,33 @@
   border-radius: var(--radius-full);
 }
 
-.option-source {
-  cursor: help;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-medium);
+.option-provenance {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.option-date {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.option-source {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-1);
+  text-decoration: none;
+}
+
+/* Only a real link (source_url present) gets an interactive affordance — a
+   plain provenance label must not pretend to be clickable. */
+a.option-source { cursor: pointer; }
+a.option-source:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
 }
 
 /* Icon comes from CSS only — table.js renders the source name as plain text */

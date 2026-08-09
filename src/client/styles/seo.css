@@ -167,6 +167,48 @@
   border-radius: var(--radius-lg);
 }
 
+/* "How to apply a launch option on Steam" — general usage explainer (#5) */
+.how-to-apply {
+  margin-top: var(--space-8);
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.how-to-apply h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.how-to-steps {
+  margin: 0;
+  padding-left: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.how-to-steps code {
+  padding: 0.1em 0.4em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+  color: var(--color-text-primary);
+}
+
+.how-to-note {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  line-height: 1.6;
+}
+
 .seo-footer-cta {
   margin-top: var(--space-10);
   padding-top: var(--space-6);
