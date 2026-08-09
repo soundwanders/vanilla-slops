@@ -364,7 +364,9 @@
     padding: var(--space-2_5) var(--space-4);
     flex-wrap: wrap;
   }
-  .app-bar #theme-toggle { margin-left: auto; }   /* right-align on the brand row */
+  /* Push the nav-link + toggle cluster to the right of the brand row */
+  .app-bar .app-nav-link { margin-left: auto; }
+  .app-bar #theme-toggle { margin-left: var(--space-1); }
   .app-search {
     order: 3;
     flex-basis: 100%;

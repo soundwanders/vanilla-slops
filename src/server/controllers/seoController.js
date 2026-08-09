@@ -54,6 +54,29 @@ function truncate(s, n) {
 }
 
 /**
+ * Shared header for server-rendered pages: logo, "Search all games" CTA, a
+ * "How it works" nav link, and the theme toggle. Pass current:'how-it-works'
+ * to mark that link as the current page.
+ * @param {{current?: string}} [opts]
+ */
+function seoHeader({ current } = {}) {
+  const hiwAttrs = current === 'how-it-works' ? ' aria-current="page"' : '';
+  return `  <header class="seo-header">
+    <a href="/" class="seo-home" aria-label="Vanilla Slops home">
+      <img src="/slops-logo.png" alt="" width="40" height="40" />
+      <span>Vanilla Slops</span>
+    </a>
+    <a href="/" class="seo-cta">Search all games →</a>
+    <a href="/how-it-works" class="seo-nav-link"${hiwAttrs}>How it works</a>
+    <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
+      <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.34" y1="17.66" x2="4.93" y2="19.07"/><line x1="19.07" y1="4.93" x2="17.66" y2="6.34"/></svg>
+      <span class="sr-only">Toggle Theme</span>
+    </button>
+  </header>`;
+}
+
+/**
  * GET /game/:appid/:slug? — server-rendered game landing page.
  */
 export async function gamePageController(req, res) {
@@ -154,18 +177,7 @@ function renderGamePage(game, slug) {
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
-  <header class="seo-header">
-    <a href="/" class="seo-home" aria-label="Vanilla Slops home">
-      <img src="/slops-logo.png" alt="" width="40" height="40" />
-      <span>Vanilla Slops</span>
-    </a>
-    <a href="/" class="seo-cta">Search all games →</a>
-    <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
-      <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.34" y1="17.66" x2="4.93" y2="19.07"/><line x1="19.07" y1="4.93" x2="17.66" y2="6.34"/></svg>
-      <span class="sr-only">Toggle Theme</span>
-    </button>
-  </header>
+${seoHeader()}
 
   <main class="seo-main">
     <nav class="seo-breadcrumb" aria-label="Breadcrumb">
@@ -362,18 +374,7 @@ function renderHowItWorks() {
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
-  <header class="seo-header">
-    <a href="/" class="seo-home" aria-label="Vanilla Slops home">
-      <img src="/slops-logo.png" alt="" width="40" height="40" />
-      <span>Vanilla Slops</span>
-    </a>
-    <a href="/" class="seo-cta">Search all games →</a>
-    <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
-      <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      <svg class="theme-icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="6.34" y1="17.66" x2="4.93" y2="19.07"/><line x1="19.07" y1="4.93" x2="17.66" y2="6.34"/></svg>
-      <span class="sr-only">Toggle Theme</span>
-    </button>
-  </header>
+${seoHeader({ current: 'how-it-works' })}
 
   <main class="seo-main how-it-works-page">
     <nav class="seo-breadcrumb" aria-label="Breadcrumb">

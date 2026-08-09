@@ -43,9 +43,15 @@
 @media (max-width: 640px) {
   .seo-page .seo-home { order: 1; }
 
-  .seo-page #theme-toggle {
+  /* "How it works" + toggle stay grouped at the top-right of the logo row */
+  .seo-page .seo-nav-link {
     order: 2;
     margin-left: auto;
+  }
+
+  .seo-page #theme-toggle {
+    order: 2;
+    margin-left: var(--space-3);
   }
 
   .seo-page .seo-cta {
@@ -63,6 +69,29 @@
 }
 
 .seo-cta:hover { text-decoration: underline; }
+
+/* "How it works" header nav link, grouped with the CTA + toggle on the right */
+.seo-nav-link {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.seo-nav-link:hover,
+.seo-nav-link:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* Current page (the How It Works page's own link) reads as a label, not a link */
+.seo-nav-link[aria-current="page"] {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  cursor: default;
+  pointer-events: none;
+}
 
 .seo-main {
   max-width: 900px;

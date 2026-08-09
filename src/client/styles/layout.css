@@ -48,6 +48,25 @@
 
 .wm-accent { color: var(--color-accent-warm); }
 
+/* Header nav link (e.g. "How it works") — sits to the right, by the toggle */
+.app-nav-link {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: var(--space-2) var(--space-2_5);
+  border-radius: var(--radius-md);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.app-nav-link:hover,
+.app-nav-link:focus-visible {
+  color: var(--color-accent);
+  background: var(--color-surface-subtle);
+}
+
 /* Search — prominent but inline, no longer a landing-page block */
 .app-search {
   flex: 1;
