@@ -21,9 +21,10 @@ appdetails_cache.json
 dist
 build
 
-# claude testing guide
+# local-only dev references and tooling — never commit
 CLAUDE.md
 docs/supabase-setup.md
+.claude/
 
 # dotenv environment variable files
 .env
