@@ -259,6 +259,7 @@ function renderOption(opt) {
   const command = opt.command || opt.option || '';
   const description = opt.description && opt.description !== 'No description available' ? opt.description : '';
   const addedDate = formatAddedDate(opt.created_at);
+  const verifiedDate = formatAddedDate(opt.last_verified_at);
   // `verified` retired in favour of risk_level + future community votes
   const votes = opt.upvotes > 0 ? `<span class="option-votes">👍 ${opt.upvotes}</span>` : '';
   // Defensive metadata badges — undefined until the slop-scraper columns are live
@@ -282,6 +283,7 @@ function renderOption(opt) {
       <div class="option-provenance">
         ${renderSource(opt)}
         ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
+        ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
       </div>
       <div class="option-badges">${risk}${votes}</div>
     </div>

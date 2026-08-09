@@ -336,6 +336,7 @@ function createLaunchOptionHTML(option) {
   const riskBadge = renderRiskBadge(option.risk_level);
   const categoryChips = renderCategoryChips(option.categories);
   const addedDate = formatAddedDate(option.created_at);
+  const verifiedDate = formatAddedDate(option.last_verified_at);
   const command = option.command || option.option || '';
   const mobileClass = TableState.isMobile ? 'mobile-launch-option' : '';
 
@@ -364,6 +365,7 @@ function createLaunchOptionHTML(option) {
         <div class="option-provenance">
           ${renderSource(option)}
           ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
+          ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
         </div>
         <div class="option-badges">${riskBadge}${votesBadge}</div>
       </div>

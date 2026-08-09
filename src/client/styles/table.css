@@ -514,7 +514,7 @@
   background: var(--color-warning-subtle);
 }
 
-/* experimental is the common default — kept quiet so safe/caution stand out */
+/* kept quiet so safe/caution stand out (safe is now the majority risk level) */
 .risk-experimental {
   color: var(--color-text-tertiary);
   background: var(--color-surface-subtle);
@@ -547,6 +547,12 @@
 .option-date {
   color: var(--color-text-tertiary);
   font-size: var(--font-size-xs);
+}
+
+/* "Last checked {date}" — a positive freshness signal, shown only when the
+   scraper has re-verified the option (null is simply omitted, never "stale"). */
+.option-verified {
+  color: var(--color-success);
 }
 
 .option-source {

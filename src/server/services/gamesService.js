@@ -751,7 +751,10 @@ export async function fetchLaunchOptionsForGame(gameId) {
           downvotes,
           verified,
           source,
+          source_url,
           created_at,
+          last_verified_at,
+          verification_method,
           risk_level,
           categories,
           engine_compatibility
@@ -775,13 +778,20 @@ export async function fetchLaunchOptionsForGame(gameId) {
         command: option.command,
         description: option.description || 'No description available',
         source: option.source || 'Community',
+        // Nullable — only ~50 rows (ProtonDB) have a URL so far; grows as the
+        // scraper re-encounters options. null means "no link", not "broken".
+        source_url: option.source_url || null,
         upvotes: option.upvotes || 0,
         downvotes: option.downvotes || 0,
         verified: option.verified || false,
         risk_level: option.risk_level || null,
         categories: option.categories || [],
         engine_compatibility: option.engine_compatibility || [],
-        created_at: option.created_at
+        created_at: option.created_at,
+        // Freshness signals — currently null across the catalog; populate as
+        // --rescan passes run. null must read as "not yet re-checked", not stale.
+        last_verified_at: option.last_verified_at || null,
+        verification_method: option.verification_method || null
       }));
   } catch (error) {
     console.error(`Error in fetchLaunchOptionsForGame(${gameId}):`, error.message);
