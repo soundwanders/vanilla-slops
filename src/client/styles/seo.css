@@ -84,15 +84,6 @@
   text-decoration: underline;
 }
 
-/* Current page (the How It Works page's own link) reads as a label, not a link */
-.seo-nav-link[aria-current="page"] {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
-  text-decoration: none;
-  cursor: default;
-  pointer-events: none;
-}
-
 .seo-main {
   max-width: 900px;
   margin: 0 auto;

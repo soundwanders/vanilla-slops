@@ -20,6 +20,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-08-09 — Header polish
+
+### Fixed
+- The "How It Works" page header no longer wraps the theme toggle onto a second
+  line — the redundant self-link to the current page is now omitted there (the
+  link still appears in the header on every other page).
+
+## [1.2.2] - 2026-08-09 — Round 1: filter payoff, usage docs & contribution path
+
+### Added
+- **Filter payoff:** when a Category/Risk filter is active, the matching options
+  float to the top of a game's expansion with a "Matches filter" marker, and the
+  results line reads e.g. "2,271 games with a Safe option".
+- **Sort control** in the results header (most options, newest added,
+  newest/oldest release, title A–Z / Z–A) plus a "Clear all" filter reset.
+- **"Suggest an option"** contribution path — a prefilled GitHub issue from the
+  per-game empty state and the How It Works page (no write API needed).
+- Per-option **Effect / Example** rows, rendered whenever that data is present.
+- **In-expansion filter** for games with 8+ launch options.
+- Filter-aware empty state that lists the active filters.
+
+### Changed
+- Warmer, less formal How It Works copy.
+- Performance/SEO: `theme-color` on all pages, Steam-CDN preconnect on game
+  pages, async image decoding.
+
+### Fixed
+- The search suggestions dropdown could render behind the filters row; it now
+  always sits in front.
+- Active-filter chip labels are capitalized ("Risk: Safe"); the results count is
+  now an ARIA live region for screen readers.
+
+## [1.2.1] - 2026-08-09 — Round 1: honest provenance, freshness, filters & How It Works
+
+### Added
+- Server-rendered **/how-it-works** methodology page — sourcing, update cadence,
+  how options are tagged/validated, a field glossary, and "how to apply on Steam".
+- **Category / Risk filters**: filter by the launch options' own attributes, not
+  just how many a game has.
+- Real **source links** on options that have a source URL (e.g. ProtonDB).
+- **"Added {date}"** on every option, plus a conditional **"Last checked {date}"**
+  freshness chip that appears once an option has been re-verified.
+- "How It Works" link in the site header.
+
+### Fixed
+- The misleading source "?" affordance (looked interactive but did nothing) is
+  gone; raw source labels are now humanized (e.g. "Manual curation").
+
 ## [1.2.0] - 2026-07-26 — Facelift & mobile polish
 
 ### Changed
