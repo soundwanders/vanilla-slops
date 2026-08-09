@@ -576,12 +576,13 @@ export default class SlopSearch {
 
     const filterTags = Object.entries(this.currentFilters).map(([key, value]) => {
       const displayKey = this.getFilterDisplayName(key);
+      const displayValue = this.getFilterDisplayValue(key, value);
       return `
         <span class="filter-tag">
           <span class="filter-key">${displayKey}:</span>
-          <span class="filter-value" title="${this.escapeHtml(value)}">${this.escapeHtml(value)}</span>
+          <span class="filter-value" title="${this.escapeHtml(displayValue)}">${this.escapeHtml(displayValue)}</span>
           <button class="filter-remove" data-key="${key}"
-                  aria-label="Remove ${displayKey} filter: ${this.escapeHtml(value)}"
+                  aria-label="Remove ${displayKey} filter: ${this.escapeHtml(displayValue)}"
                   title="Remove filter">×</button>
         </span>
       `;
@@ -627,6 +628,29 @@ export default class SlopSearch {
       platform: 'Platform'
     };
     return displayNames[key] || key;
+  }
+
+  /**
+   * Human-readable value for a filter chip (e.g. risk "safe" -> "Safe").
+   * @param {string} key - Filter key
+   * @param {string} value - Raw filter value
+   * @returns {string} Display value
+   */
+  getFilterDisplayValue(key, value) {
+    if (key === 'risk') {
+      const riskLabels = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
+      return riskLabels[value] || value;
+    }
+    if (key === 'options') {
+      const optionLabels = {
+        'has-options': 'Has options',
+        'no-options': 'No options',
+        'many-options': '5+ options',
+        'few-options': '1–4 options'
+      };
+      return optionLabels[value] || value;
+    }
+    return value;
   }
 
   /**

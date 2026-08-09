@@ -1,5 +1,5 @@
 import { fetchGames, preloadPopularContent, fetchGameStatistics} from './api.js';
-import { renderTable, renderSkeletonTable } from './ui/table.js';
+import { renderTable, renderSkeletonTable, renderEmptyState } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
 import { StateManager } from './state/StateManager.js';
@@ -13,6 +13,7 @@ import {
   getCurrentURL,
   hasActiveFilters,
   getCleanFilters,
+  getGameStats,
   getSearchSyncData
 } from './state/stateSelectors.js';
 
@@ -415,11 +416,21 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     updateResultsCount(response.total || 0);
     clearResults();
     const { filters } = stateManager.getState();
-    renderTable(response.games || [], false, {
-      sort: filters.sort,
-      order: filters.order,
-      onSortChange: handleSortChange,
-    });
+    const games = response.games || [];
+
+    if (games.length === 0) {
+      // Filter-aware empty state (explains which filters are active, offers to
+      // clear them) instead of the generic "no games found" fallback.
+      renderEmptyState(getCleanFilters(stateManager.getState()), getGameStats(stateManager.getState()));
+    } else {
+      renderTable(games, false, {
+        sort: filters.sort,
+        order: filters.order,
+        onSortChange: handleSortChange,
+        activeCategory: filters.category,
+        activeRisk: filters.risk,
+      });
+    }
     
     // Get fresh state for pagination rendering
     const currentState = stateManager.getState();
@@ -548,10 +559,28 @@ function showErrorState(message) {
     .addEventListener('click', () => loadPage(stateManager.getState().currentPage, true, 'retry'));
 }
 
+const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
+
 function updateResultsCount(total) {
   const resultsCount = document.getElementById('resultsCount');
   if (!resultsCount) return;
-  resultsCount.textContent = total > 0 ? `${total} result${total !== 1 ? 's' : ''} found` : '';
+
+  if (!total || total <= 0) {
+    resultsCount.textContent = '';
+    return;
+  }
+
+  // When an option-attribute filter is active, spell out what the games share
+  // (e.g. "2,271 games with a Safe option"); otherwise the plain results line.
+  const { category, risk } = getCleanFilters(stateManager.getState());
+  const attrs = [];
+  if (risk) attrs.push(RISK_LABELS[risk] || risk);
+  if (category) attrs.push(category);
+
+  const n = total.toLocaleString();
+  resultsCount.textContent = attrs.length
+    ? `${n} game${total !== 1 ? 's' : ''} with a ${attrs.join(' ')} option`
+    : `${total} result${total !== 1 ? 's' : ''} found`;
 }
 
 function clearResults() {

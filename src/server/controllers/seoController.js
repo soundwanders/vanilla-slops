@@ -291,6 +291,11 @@ function renderOption(opt) {
       </span>
     </div>
     ${description ? `<div class="option-description">${escapeHtml(description)}</div>` : ''}
+    ${(opt.effect || opt.usage_example) ? `
+    <dl class="option-usage">
+      ${opt.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(opt.effect)}</dd></div>` : ''}
+      ${opt.usage_example ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(opt.usage_example)}</code></dd></div>` : ''}
+    </dl>` : ''}
     ${cats ? `<div class="option-cats">${cats}</div>` : ''}
     <div class="option-meta">
       <div class="option-provenance">

@@ -33,6 +33,12 @@ export function renderTable(games, showLoading = false, tableOptions = {}) {
   }
 
   TableState.sortConfig = tableOptions;
+  // Remember which option attributes are being filtered so expansions can
+  // highlight and float the matching options (feedback #1 payoff).
+  TableState.activeOptionFilter = {
+    category: tableOptions.activeCategory || '',
+    risk: tableOptions.activeRisk || ''
+  };
   renderGamesTable(container, games);
   setupTableEventListeners();
 
@@ -290,8 +296,28 @@ function displayLaunchOptions(gameId, launchOptions) {
   requestAnimationFrame(() => { launchOptionsRow.style.display = 'table-row'; });
 }
 
+// True when a category/risk filter is active and this option satisfies all of
+// it — i.e. it's (one of) the option(s) that made its game match the filter.
+function optionMatchesActiveFilter(option) {
+  const f = TableState.activeOptionFilter || {};
+  if (!f.category && !f.risk) return false;
+  const riskOk = !f.risk || option.risk_level === f.risk;
+  const catOk = !f.category || (Array.isArray(option.categories) && option.categories.includes(f.category));
+  return riskOk && catOk;
+}
+
 function createOptionsHTML(colspan, launchOptions, gameId) {
-  const optionsHTML = launchOptions.map(option => createLaunchOptionHTML(option)).join('');
+  const f = TableState.activeOptionFilter || {};
+  const filterActive = Boolean(f.category || f.risk);
+
+  // When a filter is active, float the matching options to the top so the user
+  // immediately sees why this game matched. (Array sort is stable in modern JS.)
+  const ordered = filterActive
+    ? [...launchOptions].sort((a, b) =>
+        (optionMatchesActiveFilter(b) ? 1 : 0) - (optionMatchesActiveFilter(a) ? 1 : 0))
+    : launchOptions;
+
+  const optionsHTML = ordered.map(option => createLaunchOptionHTML(option)).join('');
   const mobileClass = TableState.isMobile ? 'mobile-options-content' : '';
 
   return `
@@ -339,9 +365,13 @@ function createLaunchOptionHTML(option) {
   const verifiedDate = formatAddedDate(option.last_verified_at);
   const command = option.command || option.option || '';
   const mobileClass = TableState.isMobile ? 'mobile-launch-option' : '';
+  const isMatch = optionMatchesActiveFilter(option);
+  const matchFlag = isMatch
+    ? '<span class="option-match-flag" title="Matches your active filter">Matches filter</span>'
+    : '';
 
   return `
-    <li class="${CONFIG.CLASSES.launchOption} ${mobileClass}">
+    <li class="${CONFIG.CLASSES.launchOption} ${mobileClass}${isMatch ? ' option-match' : ''}">
       <div class="${CONFIG.CLASSES.optionCommand} ${TableState.isMobile ? 'mobile-command' : ''}"
            data-command="${escapeHtml(command)}"
            role="button"
@@ -360,6 +390,12 @@ function createLaunchOptionHTML(option) {
           ${escapeHtml(option.description)}
         </div>
       ` : ''}
+      ${(option.effect || option.usage_example) ? `
+        <dl class="option-usage">
+          ${option.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(option.effect)}</dd></div>` : ''}
+          ${option.usage_example ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(option.usage_example)}</code></dd></div>` : ''}
+        </dl>
+      ` : ''}
       ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
       <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
         <div class="option-provenance">
@@ -367,7 +403,7 @@ function createLaunchOptionHTML(option) {
           ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
           ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
         </div>
-        <div class="option-badges">${riskBadge}${votesBadge}</div>
+        <div class="option-badges">${matchFlag}${riskBadge}${votesBadge}</div>
       </div>
     </li>
   `;

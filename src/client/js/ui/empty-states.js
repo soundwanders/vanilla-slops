@@ -152,11 +152,15 @@ function createDefaultEmptyHTML(stats) {
   `;
 }
 
+const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
+
 function getActiveFiltersDescription(filters) {
   const active = [];
   if (filters.search) active.push(`Search: "${filters.search}"`);
   if (filters.developer) active.push(`Developer: ${filters.developer}`);
+  if (filters.engine) active.push(`Engine: ${filters.engine}`);
   if (filters.category) active.push(`Category: ${filters.category}`);
+  if (filters.risk) active.push(`Risk: ${RISK_LABELS[filters.risk] || filters.risk}`);
   if (filters.year) active.push(`Year: ${filters.year}`);
   if (filters.options) active.push(`Options: ${filters.options}`);
 

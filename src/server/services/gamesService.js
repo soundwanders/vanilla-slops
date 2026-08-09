@@ -861,6 +861,8 @@ export async function fetchLaunchOptionsForGame(gameId) {
           created_at,
           last_verified_at,
           verification_method,
+          usage_example,
+          effect,
           risk_level,
           categories,
           engine_compatibility
@@ -897,7 +899,11 @@ export async function fetchLaunchOptionsForGame(gameId) {
         // Freshness signals — currently null across the catalog; populate as
         // --rescan passes run. null must read as "not yet re-checked", not stale.
         last_verified_at: option.last_verified_at || null,
-        verification_method: option.verification_method || null
+        verification_method: option.verification_method || null,
+        // Per-option usage docs — columns exist but the scraper doesn't populate
+        // them yet, so these are null for now; the UI renders them only when set.
+        usage_example: option.usage_example || null,
+        effect: option.effect || null
       }));
   } catch (error) {
     console.error(`Error in fetchLaunchOptionsForGame(${gameId}):`, error.message);

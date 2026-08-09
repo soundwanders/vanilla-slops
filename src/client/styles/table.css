@@ -395,6 +395,26 @@
   transform: none;
 }
 
+/* Options that satisfy the active category/risk filter are floated to the top
+   (see createOptionsHTML) and ringed so the user sees why the game matched. */
+.launch-option.option-match {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.option-match-flag {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  padding: 0.1em 0.55em;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
 /* Command display — code on the left, an always-visible copy affordance on the right */
 .option-command {
   display: flex;
@@ -472,6 +492,47 @@
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
+}
+
+/* Per-option usage docs (Effect / Example) — rendered only when the scraper has
+   populated usage_example/effect, so it's simply absent until then. */
+.option-usage {
+  margin: 0 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1_5);
+}
+
+.option-usage-row {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.option-usage-row dt {
+  flex-shrink: 0;
+  min-width: 4.5em;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-tertiary);
+  padding-top: 0.15em;
+}
+
+.option-usage-row dd {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.option-usage-row dd code {
+  font-family: var(--font-family-mono);
+  background: var(--color-code-background);
+  color: var(--color-code-text);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-sm);
+  font-size: 0.95em;
 }
 
 /* Option meta information */
