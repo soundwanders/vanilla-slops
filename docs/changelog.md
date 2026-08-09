@@ -20,6 +20,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-08-09 — Search by launch option
+
+### Added
+- **Search by launch option.** Type a flag you know (`-novid`) or a concept you
+  don't (`skip`, `fps`, `vsync`) into the search bar to find the games that use
+  it — suggestions match on the command *and* its description. Focusing the
+  empty box shows a "Popular launch options" browse list so you can discover and
+  pick one without knowing the flag. Selecting it filters to the matching games
+  with a removable chip and highlights the option in each game's expansion.
+
+### Changed
+- **Calmer search.** Typing now updates the live suggestions only; the results
+  table updates on an explicit action (Enter, picking a suggestion, clearing the
+  box, or clicking away) instead of refetching on every keystroke. The skeleton
+  loader shows only on the first load rather than flashing on every update.
+- Option cards no longer show placeholder descriptions ("Launch option from
+  PCGamingWiki") — they show the source link instead.
+
+### Internal
+- Added a commit-message guard hook to prevent stray co-author attribution;
+  synced the slop-scraper follow-through doc to the latest snapshot.
+
 ## [1.2.4] - 2026-08-09 — Balanced filter grid
 
 ### Changed
