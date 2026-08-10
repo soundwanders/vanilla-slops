@@ -47,7 +47,7 @@ const stateActions = {
       engine: '',
       options: '',
       year: '',
-      sort: 'options',
+      sort: 'total_options_count',
       order: 'desc',
       ...payload // Allow partial overrides
     }

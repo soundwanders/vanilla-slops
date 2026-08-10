@@ -24,8 +24,8 @@ export const getCleanFilters = (state) => {
     engine: filters.engine || '',
     options: filters.options || '',
     year: filters.year || '',
-    sort: filters.sort || 'title',
-    order: filters.order || 'asc'
+    sort: filters.sort || 'total_options_count',
+    order: filters.order || 'desc'
   };
 };
 
@@ -61,8 +61,8 @@ export const getBaseFiltersFromURL = (urlParams) => {
     engine: urlParams.get('engine') || '',
     options: urlParams.get('options') || '',
     year: urlParams.get('year') || '',
-    sort: urlParams.get('sort') || 'title',
-    order: urlParams.get('order') || 'asc'
+    sort: urlParams.get('sort') || 'total_options_count',
+    order: urlParams.get('order') || 'desc'
   };
 };
 
@@ -121,8 +121,8 @@ export const hasActiveFilters = (state) => {
     filters.engine ||
     filters.options ||
     filters.year ||
-    filters.sort !== 'title' ||
-    filters.order !== 'asc'
+    filters.sort !== 'total_options_count' ||
+    filters.order !== 'desc'
   );
 };
 

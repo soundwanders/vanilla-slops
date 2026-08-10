@@ -1,4 +1,4 @@
-import { fetchGames, preloadPopularContent, fetchGameStatistics} from './api.js';
+import { fetchGames, fetchGameStatistics} from './api.js';
 import { renderTable, renderSkeletonTable, renderEmptyState } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
@@ -33,8 +33,8 @@ const stateManager = new StateManager({
     engine: '',
     options: '',
     year: '',
-    sort: 'title',
-    order: 'asc'
+    sort: 'total_options_count',
+    order: 'desc'
   },
   totalPages: 0,
   searchInstance: null,
@@ -789,12 +789,9 @@ async function initializeApp() {
       state.searchInstance.renderActiveFilters();
     }
     
-    // Preload popular content
-    preloadPopularContent().catch(err => 
-      console.warn('Failed to preload popular content:', err)
-    );
-    
-    // Initial page load
+    // Initial page load (facets were already fetched by initializeFilters, and
+    // this fetches page 1 — no separate "preload" pass, which was duplicating
+    // both requests and firing a second identical /api/games call on startup).
     await loadPage(stateManager.getState().currentPage, true, 'initial-load');
     
     // Add visual feedback that app is ready
