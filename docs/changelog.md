@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-08-09 — Popular landing, faster startup, header fix
+
+### Changed
+- The homepage now leads with the games that have the **most launch options**
+  (Counter-Strike, Dota, GTA…) instead of an alphabetical list, so the first
+  games you see are recognizable and useful rather than obscure A–Z entries.
+
+### Fixed
+- Removed a redundant startup pass that fired the initial games request (and the
+  facets request) **twice** on page load.
+- The game / SEO page header no longer wraps the theme toggle onto its own line
+  on narrow screens — the logo and toggle share the top row, with the "Search
+  all games" and "How it works" links on the row below.
+
 ## [1.2.5] - 2026-08-09 — Search by launch option
 
 ### Added
