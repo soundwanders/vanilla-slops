@@ -38,25 +38,25 @@
   margin-left: var(--space-4);
 }
 
-/* Narrow screens: keep the toggle on the logo's line (top-right) and drop the
-   CTA to its own full-width row, rather than pairing CTA + toggle on line two. */
+/* Narrow screens: the logo and the theme toggle share the top row (toggle
+   pinned right); the "Search all games" CTA and "How it works" link wrap onto
+   the row below together. This keeps the toggle from ever being pushed onto a
+   line by itself once the header has more than a couple of items. */
 @media (max-width: 640px) {
   .seo-page .seo-home { order: 1; }
 
-  /* "How it works" + toggle stay grouped at the top-right of the logo row */
-  .seo-page .seo-nav-link {
+  .seo-page #theme-toggle {
     order: 2;
     margin-left: auto;
   }
 
-  .seo-page #theme-toggle {
-    order: 2;
-    margin-left: var(--space-3);
-  }
-
   .seo-page .seo-cta {
     order: 3;
-    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .seo-page .seo-nav-link {
+    order: 4;
     margin-left: 0;
   }
 }
