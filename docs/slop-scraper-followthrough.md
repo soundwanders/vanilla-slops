@@ -16,12 +16,13 @@ below is new and does affect what is safe to build next.
 
 **The one thing that actually matters:**
 
-> **Do not build engine filtering or display on `games.engine` yet.** §5 is
-> entirely new. Engine detection was fabricating labels — from the publisher,
-> from unbounded substring matches, from game price, and from Steam app-ID
-> ranges. 386 wrong labels have been cleared and the field is mid-correction.
-> The earlier copy of this document said nothing about this, so if anything
-> was built against that field, check §5.
+> ~~**Do not build engine filtering or display on `games.engine` yet.**~~
+> **RESOLVED (2026-08-09):** the engine backfill has landed — fabricated labels
+> removed, real detection in place, Unknown down to 38%. Engine filtering/display
+> is fine again; vanilla-slops keeps its Engine filter + column and omits
+> "Unknown" from the dropdown. See §5. (Original warning kept below for history:
+> engine detection had been fabricating labels from publisher, substring
+> matches, price, and Steam app-ID ranges.)
 
 **Good news, no action needed:**
 
@@ -139,7 +140,19 @@ text.
 
 ---
 
-## 5. `games.engine` is being corrected and will look sparser
+## 5. `games.engine` — CORRECTED & now usable ✅ (2026-08-09)
+
+> **Update — resolved.** The engine backfill has landed in production. The
+> fabricated "(heuristic)" labels are gone and real detection replaced the bad
+> data. Live distribution now: **Unknown 892 (38%, down from ~62%)**, Unity 359,
+> Unreal 222, Source 42, id Tech 29, Gamebryo 26, PopCap 23, Telltale 21,
+> GameMaker 21, Adobe AIR 16, CryEngine/IW 14, RE Engine 13, Frostbite 12,
+> GoldSrc 11 … ~40 legitimate engines. **The earlier "do not build engine
+> filtering / suppress (heuristic)" caveat no longer applies.** vanilla-slops
+> keeps its Engine filter + column (verified working), and now omits "Unknown"
+> from the Engine dropdown (it's the absence of data, not a useful choice —
+> consistent with "Uncategorized" for categories). The historical detail below
+> is kept for the record.
 
 Engine detection classified by **publisher** and by **unbounded substring
 match**. `'rage'` matched "storage", `'dice'` matched any description
@@ -205,8 +218,8 @@ Verified against the code:
 
 ## 7. Still open
 
-- **267 fabricated "Unity Engine (heuristic)" labels** — currently being
-  removed; treat as obsolete / no longer relevant.
+- ~~**267 fabricated "Unity Engine (heuristic)" labels**~~ — **resolved (2026-08-09):**
+  removed and replaced by real engine detection; engine field is now usable (see §5).
 - **`Uncategorized` 184 / 532 (35%)** — genuinely obscure game-specific flags,
   not a classifier gap to chase to zero.
 - **117 rows still hold a generic placeholder description** ("Launch option

@@ -662,11 +662,13 @@ async function getFacetValues(field, searchQuery = '') {
         .range(from, to);
     });
 
-    // Count occurrences
+    // Count occurrences. "Unknown" isn't a useful filter choice (it's the
+    // absence of data, ~38% of games for engine), so omit it from the dropdown —
+    // consistent with how "Uncategorized" is dropped from the category facet.
     const counts = {};
     data?.forEach(item => {
       const value = item[field];
-      if (value && value.trim()) {
+      if (value && value.trim() && value.trim().toLowerCase() !== 'unknown') {
         counts[value] = (counts[value] || 0) + 1;
       }
     });
