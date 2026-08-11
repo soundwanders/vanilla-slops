@@ -221,7 +221,11 @@ function applySearchFilters(query, filters) {
 
   // Exact match filters (only apply if the field exists in the database)
   if (developer) query = query.ilike('developer', `%${developer}%`);
-  if (engine) query = query.ilike('engine', `%${engine}%`);
+  // Engine is an exact match — the value comes from the facet dropdown (a real
+  // DB family), and the families are distinct, not spelling variants: a
+  // substring match would let "Source" pull in "Source 2" and "Source Engine",
+  // and "id Tech" is a family whose games shouldn't merge across versions here.
+  if (engine) query = query.eq('engine', engine);
   
   // Handle special launch options filters
   if (options) {
@@ -415,10 +419,17 @@ export async function getSearchSuggestions(query, limit = 10) {
     // Launch-option matches — the discovery path. Match on the command AND the
     // description, so someone who doesn't know the flag can type what they want
     // ("skip intro", "vsync") and still find `-novid`, etc.
+    // `!inner` on the junction table excludes orphan options (0 linked games):
+    // an option that no game actually uses would yield 0 results if picked, so
+    // it doesn't belong in suggestions. This is dynamic and self-reversing — the
+    // filter is "has ≥1 game" at query time, not a hardcoded exclusion list, so
+    // if a game is later added with that option it becomes searchable again on
+    // its own. The embedded rows are capped at 1 (existence is all we need).
     const { data: optData } = await supabase
       .from('launch_options')
-      .select('command, description')
+      .select('command, description, game_launch_options!inner(game_app_id)')
       .or(`command.ilike.%${safe}%,description.ilike.%${safe}%`)
+      .limit(1, { referencedTable: 'game_launch_options' })
       .limit(12);
 
     const optionSuggestions = [];

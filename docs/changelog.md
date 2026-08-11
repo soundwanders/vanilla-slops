@@ -20,6 +20,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.9] - 2026-08-10 — Engine accuracy & honest suggestions
+
+### Changed
+- **Engine filter is now an exact match.** Filtering by an engine returns only
+  that exact family — picking "Source Engine" no longer sweeps in "Source 2",
+  and families like GoldSrc, id Tech, and Gamebryo each stand on their own
+  instead of bleeding into one another via substring matches.
+- **Game pages show the exact engine version when we have it.** A game whose
+  engine we've pinned down (e.g. "id Tech 3") now displays that, falling back to
+  the broader family ("id Tech") otherwise. Unknown engines are simply omitted.
+- **Search suggestions no longer offer launch options that no game uses.** An
+  option linked to zero games would return an empty result if picked, so those
+  57 orphans are filtered out of suggestions. The filter is dynamic — the moment
+  a game is added with one of those options, it becomes searchable again on its
+  own, with no manual list to maintain.
+
+### Docs
+- **How It Works audit.** Added a section on why a description — or an entire
+  game's option list — can be deliberately blank rather than broken, corrected
+  the risk-rating explanation to match the deterministic rule set (no "human
+  sign-off" step that doesn't exist), and documented the Engine field.
+
 ## [1.2.8] - 2026-08-10 — Launch-option card polish
 
 ### Changed

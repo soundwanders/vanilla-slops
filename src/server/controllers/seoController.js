@@ -135,7 +135,12 @@ function renderGamePage(game, slug) {
   const developer = game.developer || '';
   const publisher = game.publisher || '';
   const releaseDate = game.release_date || '';
-  const engine = game.engine && game.engine !== 'Unknown' ? game.engine : '';
+  // Prefer the exact engine version (engine_detail, e.g. "id Tech 3") for
+  // display, falling back to the family (game.engine, e.g. "id Tech"). Both skip
+  // the "Unknown" placeholder — absence of data isn't worth a meta row.
+  const engineFamily = game.engine && game.engine !== 'Unknown' ? game.engine : '';
+  const engineDetail = game.engine_detail && game.engine_detail !== 'Unknown' ? game.engine_detail : '';
+  const engine = engineDetail || engineFamily;
   const options = Array.isArray(game.launchOptions) ? game.launchOptions : [];
   const canonical = `${SITE_URL}/game/${game.app_id}/${slug}`;
   const steamImage = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.app_id}/header.jpg`;
@@ -458,13 +463,29 @@ ${seoHeader({ current: 'how-it-works' })}
 
     <section class="hiw-section" aria-labelledby="hiw-tagging">
       <h2 id="hiw-tagging">How options are categorized and risk-rated</h2>
-      <p>Categories and risk levels come from a transparent rule set that looks
-      at the command itself (and where it came from). No machine learning, no
+      <p>Categories and risk levels come from a transparent rule set that reads
+      the command itself (and where it came from) — the same input always
+      produces the same grade. No machine learning, no network calls, no
       guessing about your specific rig. A flag we recognize as a display,
       performance, audio, or skip-intro tweak earns a <strong>Safe</strong>
-      grade. Anything that could poke at multiplayer integrity or anti-cheat,
-      like network and debug flags, stays <strong>Experimental</strong> until a
-      human signs off.</p>
+      grade. Anything that could poke at multiplayer integrity or anti-cheat —
+      network and debug flags, say — is held at <strong>Experimental</strong> by
+      default: the conservative call for options whose effects are harder to
+      pin down.</p>
+    </section>
+
+    <section class="hiw-section" aria-labelledby="hiw-null">
+      <h2 id="hiw-null">When a field is blank on purpose</h2>
+      <p>Now and then you'll open an option and find no description — just a
+      source link. That's deliberate. When the only text a source offered was
+      wrong, circular (<em>"use the -nomovie flag"</em>), or a pasted list of
+      <em>other</em> flags, we store nothing and show you the link instead. A
+      source you can follow is more honest than a confident-sounding guess, so a
+      <strong>blank description is a decision, not a missing field</strong>.</p>
+      <p>The same holds for a game that lists no options at all. Most games
+      simply don't have documented launch options — we checked, and even big
+      names like Dark Souls II and INSIDE have none on their wiki pages. An empty
+      result is usually the plain truth, not a scraper that came up short.</p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-validation">
@@ -502,6 +523,11 @@ ${seoHeader({ current: 'how-it-works' })}
         <dd>What an option does: Display, Performance, Audio, Network,
           Proton-Deck, Skip-Intro, or Debug-Dev. Some obscure flags stay
           Uncategorized.</dd>
+        <dt>Engine</dt>
+        <dd>The game's engine, shown on its page when we know it — the exact
+          version where we have it (<em>id Tech 3</em>), otherwise the family
+          (<em>id Tech</em>). When the engine is unknown we leave it off rather
+          than guess.</dd>
         <dt>Source</dt>
         <dd>Where the option was found. When a stable link exists (say, ProtonDB),
           the source is clickable; otherwise it's shown as plain text.</dd>
