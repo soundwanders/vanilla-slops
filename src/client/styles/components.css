@@ -757,6 +757,17 @@ fieldset,
   border-color: var(--color-border);
   color: var(--color-text-primary);
 }
+/* The accent-filled buttons need dark text on the bright ice-blue accent — the
+   rule above (same specificity as .pagination-btn-active/-go) was overriding
+   their color to muted gray, killing contrast. Restore the inverse text. */
+[data-theme="dark"] .pagination-btn-active,
+[data-theme="dark"] .pagination-btn-go {
+  color: var(--color-text-inverse);
+}
+[data-theme="dark"] .pagination-btn-active:hover,
+[data-theme="dark"] .pagination-btn-go:hover {
+  color: var(--color-text-inverse);
+}
 [data-theme="dark"] .pagination-jump-input {
   background-color: var(--color-surface);
   border-color: var(--color-border);

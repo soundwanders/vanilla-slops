@@ -20,6 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-08-09 — Cosmetic contrast & shape fixes
+
+### Fixed
+- **Pagination contrast in dark mode.** The active page button and "Go" button
+  showed muted-gray text on the bright accent (a specificity collision let the
+  generic dark `.pagination-btn` color win). They now use high-contrast dark
+  text on the accent.
+- **Theme toggle shape on mobile.** The global 48px touch-target `min-height`
+  was stretching the 40px-wide toggle into a vertical oval; its width is now
+  pinned to match, so it stays a clean circle (and a comfortable touch target).
+
 ## [1.2.6] - 2026-08-09 — Popular landing, faster startup, header fix
 
 ### Changed

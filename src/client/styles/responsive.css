@@ -367,6 +367,14 @@
   /* Push the nav-link + toggle cluster to the right of the brand row */
   .app-bar .app-nav-link { margin-left: auto; }
   .app-bar #theme-toggle { margin-left: var(--space-1); }
+  /* The global 48px min-height touch rule stretches the square toggle into a
+     vertical oval — pin the width to match so it stays a circle (and a
+     comfortable touch target). Applies to the app + SEO/game-page headers. */
+  #theme-toggle {
+    width: var(--space-12);
+    height: var(--space-12);
+    min-width: var(--space-12);
+  }
   .app-search {
     order: 3;
     flex-basis: 100%;
