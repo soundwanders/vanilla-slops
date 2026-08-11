@@ -20,6 +20,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-08-10 — Launch-option card polish
+
+### Changed
+- **Launch-option cards now have a clear internal hierarchy.** The description
+  reads as the primary answer, and the curated Effect/Example docs are grouped
+  into their own inset panel — so cards with a lot of content no longer collapse
+  into one undifferentiated block of gray text.
+- **Experimental risk badge is now a striking violet** instead of gray. Gray
+  read as "mundane / safe"; the violet marks Experimental as its own category,
+  distinct from Caution's amber, without being an alarming red.
+- **"Unknown" is omitted from the Engine filter** dropdown — it's the absence of
+  data, not a useful choice to filter by (consistent with how "Uncategorized"
+  is handled for categories).
+
+### Fixed
+- **Long commands no longer wrap onto a second line.** Commands now always fit a
+  single row: the text scales down just enough to fit its container (one
+  mechanism, no per-breakpoint tweaking), on both the main table and the
+  server-rendered game pages. The full command is always preserved for copying.
+
 ## [1.2.7] - 2026-08-09 — Cosmetic contrast & shape fixes
 
 ### Fixed

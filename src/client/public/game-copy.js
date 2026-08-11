@@ -23,12 +23,37 @@
       .catch(function () { flash(el, 'copy-failed', 'Failed'); });
   }
 
+  // One row = always. Reset to the CSS base size, then shrink the font just
+  // enough that each command fits its box on a single line. The full command
+  // lives in data-command (used for copy), so the ellipsis safety net (see
+  // .option-command code in table.css) never loses data.
+  function fitCommands() {
+    var codes = document.querySelectorAll('.option-command code');
+    for (var i = 0; i < codes.length; i++) {
+      var code = codes[i];
+      code.style.fontSize = '';
+      if (!code.clientWidth) continue;
+      var size = parseFloat(getComputedStyle(code).fontSize) || 16;
+      var guard = 16;
+      while (code.scrollWidth > code.clientWidth + 1 && size > 11 && guard-- > 0) {
+        size -= 1;
+        code.style.fontSize = size + 'px';
+      }
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.option-command[data-command]').forEach(function (el) {
       el.addEventListener('click', function () { copy(el); });
       el.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(el); }
       });
+    });
+    fitCommands();
+    var raf = 0;
+    window.addEventListener('resize', function () {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fitCommands);
     });
   });
 })();

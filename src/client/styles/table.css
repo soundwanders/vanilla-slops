@@ -501,7 +501,12 @@
 .option-command code {
   flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  /* Always one row — JS fit-to-width (fitCommandText) scales the font down to
+     fit; ellipsis is only the last-resort safety net. Full command lives in
+     data-command, so copy is never truncated. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   background: none;
   border: none;
   padding: 0;
@@ -542,9 +547,10 @@
   z-index: var(--z-raised);
 }
 
-/* Option description */
+/* Option description — the primary human answer ("what does this do"), so it
+   reads a step above the muted supporting metadata below it. */
 .option-description {
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   margin-bottom: var(--space-3);
   line-height: var(--line-height-relaxed);
   font-size: var(--font-size-sm);
@@ -560,7 +566,13 @@
   margin: 0 0 var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1_5);
+  gap: var(--space-2);
+  /* Grouped into its own inset panel so the curated how-to reads as a distinct
+     block instead of blending into the free-text description above it. */
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
 }
 
 .option-usage-row {
@@ -635,11 +647,11 @@
   background: var(--color-warning-subtle);
 }
 
-/* kept quiet so safe/caution stand out (safe is now the majority risk level) */
+/* Striking violet — its own risk category, never mistaken for "safe" gray. */
 .risk-experimental {
-  color: var(--color-text-tertiary);
-  background: var(--color-surface-subtle);
-  border: 1px solid var(--color-border);
+  color: var(--color-experimental);
+  background: var(--color-experimental-subtle);
+  border: 1px solid transparent;
 }
 
 .option-cats {

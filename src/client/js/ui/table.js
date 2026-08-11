@@ -296,7 +296,43 @@ function displayLaunchOptions(gameId, launchOptions) {
 
   if (TableState.isMobile) buffMobileOptions(launchOptionsRow);
 
-  requestAnimationFrame(() => { launchOptionsRow.style.display = 'table-row'; });
+  requestAnimationFrame(() => {
+    launchOptionsRow.style.display = 'table-row';
+    // Row must be laid out (display set) before we can measure command widths.
+    fitCommandText(launchOptionsRow);
+    bindCommandFitResize();
+  });
+}
+
+// Keep single-line command codes fitted as the viewport reflows. Scales the
+// currently-open rows only; closed rows are refitted when they next open.
+let commandFitResizeBound = false;
+function bindCommandFitResize() {
+  if (commandFitResizeBound) return;
+  commandFitResizeBound = true;
+  let raf = 0;
+  window.addEventListener('resize', () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => fitCommandText(document));
+  });
+}
+
+// One row = always. Reset to the CSS base size, then shrink the font just enough
+// that the command fits its box on a single line. The full command lives in
+// data-command (used for copy), so the ellipsis safety net never loses data.
+function fitCommandText(scope) {
+  const MIN_PX = 11;
+  const codes = scope.querySelectorAll('.option-command code');
+  codes.forEach((code) => {
+    code.style.fontSize = '';
+    if (!code.clientWidth) return;
+    let size = parseFloat(getComputedStyle(code).fontSize) || 16;
+    let guard = 16;
+    while (code.scrollWidth > code.clientWidth + 1 && size > MIN_PX && guard-- > 0) {
+      size -= 1;
+      code.style.fontSize = `${size}px`;
+    }
+  });
 }
 
 // A game's expansion this size or larger gets an in-place filter input.

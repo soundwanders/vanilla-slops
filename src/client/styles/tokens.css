@@ -261,7 +261,12 @@
   --color-warning: var(--warning-600);
   --color-warning-hover: var(--warning-700);
   --color-warning-subtle: var(--warning-50);
-  
+
+  /* Experimental risk — a striking violet, its own category apart from caution's
+     amber. On light a deeper violet holds contrast; dark gets the neon sheen. */
+  --color-experimental: #6d28d9;
+  --color-experimental-subtle: rgba(124, 58, 237, 0.10);
+
   --color-info: var(--info-600);
   --color-info-hover: var(--info-700);
   --color-info-subtle: var(--info-50);
@@ -337,7 +342,11 @@
   --color-warning: var(--warning-500);
   --color-warning-hover: var(--warning-400);
   --color-warning-subtle: rgba(245, 158, 11, 0.1);
-  
+
+  /* Luminous neon violet — the dark-theme counterpart to the ice-blue accent. */
+  --color-experimental: #b794ff;
+  --color-experimental-subtle: rgba(167, 139, 250, 0.16);
+
   --color-info: var(--info-500);
   --color-info-hover: var(--info-400);
   --color-info-subtle: rgba(59, 130, 246, 0.1);

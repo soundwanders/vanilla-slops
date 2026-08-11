@@ -340,7 +340,6 @@
     color: var(--color-text-primary);
     cursor: pointer;
     transition: all var(--transition-fast);
-    word-break: break-all;
     user-select: all;
     position: relative;
     overflow: hidden;
