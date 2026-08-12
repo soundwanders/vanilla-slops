@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { fetchGameWithLaunchOptions, getGamesForSitemap } from '../services/gamesService.js';
+import { fetchGameWithLaunchOptions, getGamesForSitemap, getCatalogStats } from '../services/gamesService.js';
 import { slugify } from '../utils/slugify.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -371,12 +371,47 @@ function render404() {
  * about how the catalog is sourced, tagged, and validated. Facts confirmed
  * against the slop-scraper code (see docs/slop-scraper-followthrough.md §6).
  */
-export function howItWorksController(req, res) {
-  res.set('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(renderHowItWorks());
+export async function howItWorksController(req, res) {
+  // Figures are decorative-if-absent (getCatalogStats never throws), so the page
+  // renders either way.
+  const stats = await getCatalogStats();
+  // Only cache in production. Locally, an hour-long cache means every rebuild
+  // leaves the browser holding HTML that points at a bundle hash which no longer
+  // exists, so the page renders unstyled until a hard refresh.
+  res.set('Cache-Control', process.env.NODE_ENV === 'production'
+    ? 'public, max-age=3600'
+    : 'no-store');
+  res.type('html').send(renderHowItWorks(stats));
 }
 
-function renderHowItWorks() {
+/**
+ * The three-figure line under the subtitle. Omitted entirely when the counts
+ * aren't available — a half-empty stat row looks broken in a way that no stat
+ * row does. Deliberately excludes a "sources" count: the numbered list of
+ * sources sits a few inches below it.
+ */
+function renderFigures({ games, options, lastUpdated } = {}) {
+  if (!games || !options) return '';
+  const updated = formatAddedDate(lastUpdated);
+  const parts = [
+    `<span><strong>${games.toLocaleString('en-US')}</strong> games catalogued</span>`,
+    `<span><strong>${options.toLocaleString('en-US')}</strong> launch options</span>`,
+  ];
+  if (updated) {
+    parts.push(`<span>last updated <strong>${escapeHtml(updated)}</strong></span>`);
+  }
+  return `    <p class="hiw-figures">${parts.join('<span class="hiw-figures-sep" aria-hidden="true">·</span>')}</p>\n`;
+}
+
+/** A chapter marker between the page's three movements. */
+function movement(number, label) {
+  return `    <div class="hiw-movement" role="separator" aria-label="${escapeHtml(label)}">
+      <span class="hiw-movement-num">${number}</span>
+      <span class="hiw-movement-label">${escapeHtml(label)}</span>
+    </div>`;
+}
+
+function renderHowItWorks(stats) {
   const canonical = `${SITE_URL}/how-it-works`;
   const pageTitle = 'How Vanilla Slops Works — Sourcing, Tagging & Validation';
   const metaDesc = truncate(
@@ -426,20 +461,37 @@ ${seoHeader({ current: 'how-it-works' })}
       <a href="/">Home</a> <span aria-hidden="true">/</span> <span>How it works</span>
     </nav>
 
-    <span class="seo-eyebrow">Methodology</span>
     <h1 class="seo-title">How Vanilla Slops works</h1>
     <p class="seo-subtitle">
-      Vanilla Slops is a searchable catalog of community-sourced Steam launch
-      options. No smoke and mirrors. Here's exactly where the data comes from,
-      how it's organized, and (just as important) what we don't claim about it yet.
+      A searchable catalog of community-sourced Steam launch options. Here's
+      where the data comes from, what every field on it means, and — just as
+      important — what we don't claim about it yet.
     </p>
+${renderFigures(stats)}
+    <div class="hiw-layout">
+      <nav class="hiw-toc" aria-label="On this page">
+        <div class="hiw-toc-inner">
+          <p class="hiw-toc-title">On this page</p>
+          <ol class="hiw-toc-list">
+            <li><a href="#hiw-sources">Where the options come from</a></li>
+            <li><a href="#hiw-tagging">How they're categorized and rated</a></li>
+            <li><a href="#hiw-glossary">Field glossary</a></li>
+            <li><a href="#how-to-apply-heading">Applying one on Steam</a></li>
+            <li><a href="#hiw-validation">What we claim, and don't</a></li>
+            <li><a href="#hiw-contribute">Suggesting an option</a></li>
+          </ol>
+        </div>
+      </nav>
+
+      <div class="hiw-body">
+${movement('I', 'Where the data comes from')}
 
     <section class="hiw-section" aria-labelledby="hiw-sources">
       <h2 id="hiw-sources">Where the launch options come from</h2>
       <p>Every option is gathered by an open-source crawler we call
       <em>slop-scraper</em>, which reads from the places players already trust,
       in this order:</p>
-      <ol class="hiw-list">
+      <ol class="hiw-pipeline">
         <li><strong>Curated &amp; engine-specific lists.</strong> Hand-picked
           options for known engines, plus a small set we curate ourselves.</li>
         <li><strong>PCGamingWiki.</strong> The community wiki's per-game pages.</li>
@@ -447,13 +499,14 @@ ${seoHeader({ current: 'how-it-works' })}
           already been there.</li>
         <li><strong>ProtonDB.</strong> Linux and Steam Deck reports and tweaks.</li>
       </ol>
+      <p>A few options carry the source <strong>Universal</strong> instead of
+      naming a site. Those are the flags that work across many games whatever
+      the engine — <code>-windowed</code>, <code>-novid</code>,
+      <code>-high</code> — collected by hand rather than lifted from any one
+      game's page, which is why most of them have no link to follow.</p>
       <p>Found the same command for a dozen games? We store it once and share it,
       so a flag like <code>-windowed</code> never clutters the catalog with
       copies.</p>
-    </section>
-
-    <section class="hiw-section" aria-labelledby="hiw-cadence">
-      <h2 id="hiw-cadence">How often it updates</h2>
       <p>Updates happen on demand. This is a hands-on project, so the crawler
       runs when there's time to run it rather than on a fixed daily or weekly
       schedule. New options and refreshes arrive in batches, which is why every
@@ -474,39 +527,7 @@ ${seoHeader({ current: 'how-it-works' })}
       pin down.</p>
     </section>
 
-    <section class="hiw-section" aria-labelledby="hiw-null">
-      <h2 id="hiw-null">When a field is blank on purpose</h2>
-      <p>Now and then you'll open an option and find no description — just a
-      source link. That's deliberate. When the only text a source offered was
-      wrong, circular (<em>"use the -nomovie flag"</em>), or a pasted list of
-      <em>other</em> flags, we store nothing and show you the link instead. A
-      source you can follow is more honest than a confident-sounding guess, so a
-      <strong>blank description is a decision, not a missing field</strong>.</p>
-      <p>The same holds for a game that lists no options at all. Most games
-      simply don't have documented launch options — we checked, and even big
-      names like Dark Souls II and INSIDE have none on their wiki pages. An empty
-      result is usually the plain truth, not a scraper that came up short.</p>
-    </section>
-
-    <section class="hiw-section" aria-labelledby="hiw-validation">
-      <h2 id="hiw-validation">What "verified" means here (and what it doesn't)</h2>
-      <p>We would rather under-promise than oversell, so here's the straight
-      version:</p>
-      <ul class="hiw-list">
-        <li><strong>What we do.</strong> A save-gate turns away malformed or junk
-          entries at the door, so what you see are real, well-formed commands
-          from the sources above.</li>
-        <li><strong>What we're building.</strong> A <strong>Last checked</strong>
-          date that shows up once an option has been re-confirmed against its
-          source. Coverage grows over time. If an option has no "Last checked"
-          date yet, it simply hasn't come up for review. That is not the same as
-          broken.</li>
-        <li><strong>What we don't claim.</strong> Options are <em>sourced</em>,
-          not personally tested on every game. Community voting isn't live yet,
-          so we don't dangle vote counts as a trust signal. Give an option's
-          description a quick read before you paste it in.</li>
-      </ul>
-    </section>
+${movement('II', 'What you\'re looking at')}
 
     <section class="hiw-section" aria-labelledby="hiw-glossary">
       <h2 id="hiw-glossary">Field glossary</h2>
@@ -539,6 +560,47 @@ ${seoHeader({ current: 'how-it-works' })}
       </dl>
     </section>
 ${HOW_TO_APPLY_HTML}
+${movement('III', 'What we claim, and what we don\'t')}
+
+    <section class="hiw-section" aria-labelledby="hiw-validation">
+      <h2 id="hiw-validation">What "verified" means here (and what it doesn't)</h2>
+      <p>We would rather under-promise than oversell, so here's the straight
+      version:</p>
+      <ul class="hiw-claims">
+        <li>
+          <h3>What we do</h3>
+          <p>A save-gate turns away malformed or junk entries at the door, so
+          what you see are real, well-formed commands from the sources above.</p>
+        </li>
+        <li>
+          <h3>What we're building</h3>
+          <p>A <strong>Last checked</strong> date that appears once an option has
+          been re-confirmed against its source. Coverage grows over time. No date
+          yet means it hasn't come up for review — not that it's broken.</p>
+        </li>
+        <li>
+          <h3>What we don't claim</h3>
+          <p>Options are <em>sourced</em>, not personally tested on every game.
+          Community voting isn't live, so we don't dangle vote counts as a trust
+          signal. Read an option's description before you paste it in.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="hiw-section" aria-labelledby="hiw-null">
+      <h2 id="hiw-null">When a field is blank on purpose</h2>
+      <p>Now and then you'll open an option and find no description — just a
+      source link. That's deliberate. When the only text a source offered was
+      wrong, circular (<em>"use the -nomovie flag"</em>), or a pasted list of
+      <em>other</em> flags, we store nothing and show you the link instead. A
+      source you can follow is more honest than a confident-sounding guess, so a
+      <strong>blank description is a decision, not a missing field</strong>.</p>
+      <p>The same holds for a game that lists no options at all. Most games
+      simply don't have documented launch options — we checked, and even big
+      names like Dark Souls II and INSIDE have none on their wiki pages. An empty
+      result is usually the plain truth, not a scraper that came up short.</p>
+    </section>
+
     <section class="hiw-section" aria-labelledby="hiw-contribute">
       <h2 id="hiw-contribute">Know one we're missing?</h2>
       <p>This catalog grows with the community. If you know a launch option that
@@ -546,6 +608,11 @@ ${HOW_TO_APPLY_HTML}
       it on GitHub</a> and we'll review it against the sources above.</p>
     </section>
 
+      </div>
+    </div>
+
+    <!-- Outside .hiw-layout on purpose: centred on the page shell, so these line
+         up with the site footer below them instead of with the prose column. -->
     <p class="hiw-signoff">Happy hunting. <span class="hiw-frog" aria-hidden="true">🐸</span></p>
 
     <p class="seo-footer-cta">

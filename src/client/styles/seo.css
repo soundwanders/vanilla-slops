@@ -228,22 +228,160 @@
   color: var(--color-text-tertiary);
   line-height: 1.6;
 }
+/* ===========================================================================
+   "How it works" methodology page
 
-/* "How this works" methodology page (#4) */
-.how-it-works-page .hiw-section {
-  margin-top: var(--space-6);
-  /* Negative side margins + padding let the hover tint breathe past the text
-     column while the text itself stays aligned with the rest of the page. */
-  padding: var(--space-3) var(--space-4);
-  margin-left: calc(var(--space-4) * -1);
-  margin-right: calc(var(--space-4) * -1);
-  border-radius: var(--radius-lg);
-  transition: background 0.3s ease;
+   Layout rules, in order of how much they matter:
+
+   1. MEASURE. The shared .seo-main column is 900px wide; at the 18px body size
+      that is ~95 characters per line, well past the 60-75 that reads
+      comfortably. The page keeps its overall width and spends the excess on a
+      sticky table of contents instead, which right-sizes the prose column to
+      ~66ch AND makes the page's length navigable rather than endless.
+   2. PROSE NARROW, STRUCTURE WIDE. Paragraphs and the source pipeline hold the
+      66ch measure. The glossary, the claims cards and the how-to-apply box use
+      the full track — they are scanned, not read line by line, and going
+      horizontal is where the page's height actually comes back.
+   3. NO HOVER AFFORDANCE ON TEXT. Sections used to tint and rotate a diamond on
+      hover, which promises interactivity that isn't there — the same mistake as
+      the old cursor:help on .option-source. Static now.
+   =========================================================================== */
+
+.how-it-works-page {
+  max-width: 1000px;
 }
 
-/* Each section quietly lights up as you read down the page */
-.how-it-works-page .hiw-section:hover {
-  background: var(--color-surface-subtle);
+.hiw-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 165px;
+  gap: var(--space-8);
+}
+
+/* Explicit placement keeps the nav first in the DOM (screen readers and the
+   single-column fallback both want it there) while it sits to the right of the
+   prose visually, so the h1 and the body text share a left edge. */
+.hiw-body {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+/* The rail stretches to the full row height and the sticky behaviour lives on
+   the inner wrapper. Sticking the grid item itself only works while its area is
+   tall enough to scroll within — with align-items:start that area collapses to
+   the nav's own height, so the contents list vanished a screen in and left a
+   dead column down the rest of the page. */
+.hiw-toc {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: stretch;
+  padding-left: var(--space-5);
+  border-left: 1px solid var(--color-border-subtle);
+}
+
+.hiw-toc-inner {
+  position: sticky;
+  top: var(--space-6);
+}
+
+.hiw-toc-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+}
+
+.hiw-toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2_5);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.hiw-toc-list a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.hiw-toc-list a:hover,
+.hiw-toc-list a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* Header block aligns to the prose measure, not the full shell — a 95ch
+   subtitle is exactly the problem this page is fixing. */
+.how-it-works-page .seo-title,
+.how-it-works-page .seo-subtitle {
+  max-width: 60ch;
+}
+
+/* Catalog figures. One quiet line: the counts are a trust signal, not a
+   dashboard, so no cards, no big numerals competing with the h1 above them. */
+.hiw-figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-8);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.hiw-figures strong {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.hiw-figures-sep {
+  color: var(--color-border);
+}
+
+/* Chapter marker between the page's three movements: a numeral, a small label,
+   and a rule running to the edge. Enough to break seven sections into three
+   readable acts without introducing another heading level. */
+.hiw-movement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-12) 0 var(--space-6);
+}
+
+.hiw-movement:first-child {
+  margin-top: 0;
+}
+
+.hiw-movement::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-subtle);
+}
+
+.hiw-movement-num {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-accent);
+  letter-spacing: 0.06em;
+}
+
+.hiw-movement-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-tertiary);
+}
+
+.how-it-works-page .hiw-section {
+  margin-top: var(--space-7);
 }
 
 .hiw-section h2 {
@@ -251,10 +389,10 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin-bottom: var(--space-3);
+  scroll-margin-top: var(--space-6);
 }
 
-/* A small brand-colored diamond gives headings a bit of character and does a
-   playful quarter-turn when its section is hovered. */
+/* Static brand diamond. It marks a heading; it is not a control. */
 .hiw-section h2::before {
   content: "";
   display: inline-block;
@@ -265,17 +403,13 @@
   border-radius: 2px;
   background: var(--color-accent);
   transform: rotate(45deg);
-  transition: transform 0.3s ease;
-}
-
-.hiw-section:hover h2::before {
-  transform: rotate(135deg) scale(1.15);
 }
 
 .hiw-section p {
   color: var(--color-text-secondary);
-  line-height: 1.7;
+  line-height: 1.6;
   margin-bottom: var(--space-3);
+  max-width: 66ch;
 }
 
 .hiw-section code {
@@ -294,15 +428,115 @@
   flex-direction: column;
   gap: var(--space-2);
   color: var(--color-text-secondary);
-  line-height: 1.7;
+  line-height: 1.6;
+  max-width: 66ch;
 }
 
+/* The source list IS a priority order, so it gets a rail that says so faster
+   than the words "in this order" do. */
+.hiw-pipeline {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  counter-reset: hiw-step;
+  max-width: 66ch;
+}
+
+.hiw-pipeline li {
+  position: relative;
+  counter-increment: hiw-step;
+  padding-left: var(--space-9);
+  padding-bottom: var(--space-4);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.hiw-pipeline li:last-child {
+  padding-bottom: 0;
+}
+
+.hiw-pipeline li::before {
+  content: counter(hiw-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-subtle);
+  border: 1px solid var(--color-accent-muted);
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Connector between steps, stopping at the last one. */
+.hiw-pipeline li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  top: 1.75rem;
+  bottom: 0.25rem;
+  width: 1px;
+  background: var(--color-border-subtle);
+}
+
+.hiw-pipeline strong {
+  color: var(--color-text-primary);
+}
+
+/* Three claims side by side. Breaks the prose measure on purpose: these are
+   compared against each other, not read in sequence.
+
+   The vertical padding runs one step larger than the horizontal so the cards get
+   room to breathe without any of it coming out of the text width — the middle
+   card carries the most words and sets the feel of the row. */
+.hiw-claims {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.hiw-claims li {
+  padding: var(--space-5) var(--space-4);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.hiw-claims h3 {
+  margin: 0 0 var(--space-2_5);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.hiw-claims p {
+  margin: 0;
+  max-width: none;
+  font-size: var(--font-size-sm);
+  line-height: 1.65;
+  color: var(--color-text-secondary);
+}
+
+/* Term in a fixed left gutter, definition beside it, one pair per row. A
+   two-pairs-per-row version saved height but baseline-aligned rows of unequal
+   definitions pulled the terms far away from their text — the compactness is
+   the whole point of a glossary, so this stays single-column at every width. */
 .hiw-glossary {
   margin: 0;
   display: grid;
-  grid-template-columns: minmax(140px, max-content) 1fr;
-  gap: var(--space-3) var(--space-5);
+  grid-template-columns: minmax(120px, max-content) 1fr;
+  gap: var(--space-2_5) var(--space-5);
   align-items: baseline;
+  max-width: 66ch;
 }
 
 .hiw-glossary dt {
@@ -313,7 +547,53 @@
 .hiw-glossary dd {
   margin: 0;
   color: var(--color-text-secondary);
-  line-height: 1.6;
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}
+
+/* Glossary risk badges give a little hop when you point at their term */
+.hiw-glossary .risk-badge {
+  transition: transform 0.2s ease;
+}
+
+.hiw-glossary dt:hover .risk-badge {
+  transform: translateY(-2px) scale(1.06);
+}
+
+.how-it-works-page .how-to-apply h2 {
+  scroll-margin-top: var(--space-6);
+}
+
+/* Single column below the rail's breakpoint: the contents list moves above the
+   body as a compact box, which is useful on a phone rather than dead weight. */
+@media (max-width: 900px) {
+  .hiw-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .hiw-toc {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: auto;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-subtle);
+  }
+
+  .hiw-toc-inner {
+    position: static;
+  }
+
+  .hiw-body {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .hiw-toc-list {
+    gap: var(--space-2);
+  }
 }
 
 @media (max-width: 600px) {
@@ -321,65 +601,40 @@
     grid-template-columns: 1fr;
     gap: var(--space-1) 0;
   }
+
   .hiw-glossary dd {
     margin-bottom: var(--space-3);
   }
 }
 
-/* Glossary risk badges give a little hop when you point at their term */
-.hiw-glossary .risk-badge {
-  transition: transform 0.2s ease;
-}
-.hiw-glossary dt:hover .risk-badge {
-  transform: translateY(-2px) scale(1.06);
-}
-
 /* Whimsical closing line + a frog that gently bobs (and hops on hover) */
 .hiw-signoff {
-  margin-top: var(--space-8);
+  margin-top: var(--space-10);
   text-align: center;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
 }
+
 .hiw-frog {
   display: inline-block;
   will-change: transform;
 }
+
 .hiw-signoff:hover .hiw-frog {
   animation-play-state: paused;
   transform: translateY(-5px) rotate(-10deg);
 }
 
-/* Motion is opt-in: a gentle staggered rise on load + a bobbing frog, all of
-   which vanish for anyone who prefers reduced motion. */
+/* The staggered page-load rise is gone: it delayed content on a page whose only
+   job is being read, and its nth-of-type delays covered five of eight sections
+   so the tail arrived out of rhythm. The frog stays — it's at the end, after
+   the reading is done. */
 @media (prefers-reduced-motion: no-preference) {
-  .how-it-works-page .seo-eyebrow,
-  .how-it-works-page .seo-title,
-  .how-it-works-page .seo-subtitle,
-  .how-it-works-page .hiw-section,
-  .how-it-works-page .how-to-apply,
-  .how-it-works-page .hiw-signoff {
-    animation: hiw-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .how-it-works-page .seo-title { animation-delay: 0.04s; }
-  .how-it-works-page .seo-subtitle { animation-delay: 0.10s; }
-  .how-it-works-page .hiw-section:nth-of-type(1) { animation-delay: 0.16s; }
-  .how-it-works-page .hiw-section:nth-of-type(2) { animation-delay: 0.22s; }
-  .how-it-works-page .hiw-section:nth-of-type(3) { animation-delay: 0.28s; }
-  .how-it-works-page .hiw-section:nth-of-type(4) { animation-delay: 0.34s; }
-  .how-it-works-page .hiw-section:nth-of-type(5) { animation-delay: 0.40s; }
-  .how-it-works-page .how-to-apply { animation-delay: 0.46s; }
-
   .hiw-frog {
     animation: hiw-frog-bob 3.5s ease-in-out infinite;
     transition: transform 0.3s ease;
   }
-}
-
-@keyframes hiw-rise {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
 }
 
 @keyframes hiw-frog-bob {

@@ -168,6 +168,15 @@ app.get('*', (req, res) => {
     });
   }
   
+  // A path with a file extension is a missing asset, not an SPA route. Falling
+  // through to index.html hands the browser HTML with a text/html content-type
+  // where it asked for CSS or JS, and it fails silently — no console error, just
+  // an unstyled page. That is exactly what a client holding cached HTML sees
+  // after a rebuild changes the bundle hash. 404 so the failure is visible.
+  if (path.extname(req.path)) {
+    return res.status(404).type('txt').send('Not found');
+  }
+
   // Serve index.html for all other routes (SPA routing)
   const indexPath = path.join(clientBuildPath, 'index.html');
   

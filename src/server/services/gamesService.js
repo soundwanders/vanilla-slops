@@ -3,6 +3,13 @@ import supabase from '../config/supabaseClient.js';
 const FACETS_TTL_MS = 5 * 60 * 1000;
 const _facetsCache = { data: null, expiresAt: 0 };
 
+// Catalog totals for the /how-it-works figures line. Deliberately NOT folded
+// into _facetsCache: that cache sits on the hot path of every initial catalog
+// load, and these counts belong to a page most visitors never open. Its own
+// long TTL means ~24 DB reads a day total, whatever the traffic.
+const STATS_TTL_MS = 60 * 60 * 1000;
+const _statsCache = { data: null, expiresAt: 0 };
+
 /**
  * @fileoverview Games service layer providing data access
  * Handles logic database operations for Steam games and their launch options
@@ -459,15 +466,62 @@ export async function getSearchSuggestions(query, limit = 10) {
 }
 
 /**
+ * Catalog totals for the /how-it-works figures line: how many games, how many
+ * distinct options, and when the newest option landed.
+ *
+ * `lastUpdated` is the one that earns its place — it makes the "runs on demand,
+ * arrives in batches" claim on that page checkable instead of a promise.
+ *
+ * Never throws. The figures line is a nice-to-have on an otherwise static page,
+ * so a database hiccup returns nulls and the caller omits the line rather than
+ * failing the page.
+ *
+ * @returns {Promise<{games: number|null, options: number|null, lastUpdated: string|null}>}
+ */
+export async function getCatalogStats() {
+  const now = Date.now();
+  if (_statsCache.data && now < _statsCache.expiresAt) {
+    return _statsCache.data;
+  }
+
+  const empty = { games: null, options: null, lastUpdated: null };
+
+  try {
+    const [games, options, newest] = await Promise.all([
+      supabase.from('games').select('*', { count: 'exact', head: true }),
+      supabase.from('launch_options').select('*', { count: 'exact', head: true }),
+      supabase.from('launch_options')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const result = {
+      games: games.error ? null : games.count,
+      options: options.error ? null : options.count,
+      lastUpdated: newest.error ? null : (newest.data?.created_at ?? null),
+    };
+
+    _statsCache.data = result;
+    _statsCache.expiresAt = now + STATS_TTL_MS;
+    return result;
+  } catch (error) {
+    console.error('Error in getCatalogStats:', error);
+    return empty;
+  }
+}
+
+/**
  * Retrieves filter facets for dynamic UI generation
  * Provides available filter options with occurrence counts
- * 
+ *
  * @async
- * @function getFacets  
+ * @function getFacets
  * @param {string} [searchQuery=''] - Optional search context for filtering facets
  * @returns {Promise<Object>} Object containing arrays of available filter options
  * @property {Array} developers - Available developers with counts
- * @property {Array} engines - Available engines with counts  
+ * @property {Array} engines - Available engines with counts
  * @property {Array} publishers - Available publishers with counts
  * @property {Array} genres - Available genres (empty in current schema)
  * @property {Array} platforms - Available platforms (empty in current schema)

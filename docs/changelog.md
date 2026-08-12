@@ -20,6 +20,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Retiring the `manual_curation` source.** Migration 004 promotes the rows a
+  live scrape has since confirmed to PCGamingWiki / Steam Community, and renames
+  the rest to **Universal**. The How It Works copy below already describes the
+  new name; the data change lands once the current rescan finishes.
+
+## [1.2.10] - 2026-08-12 — How It Works, rebuilt
+
+### Changed
+- **How It Works is reorganized into three movements** — where the data comes
+  from, what you're looking at, and what we claim and don't — with chapter
+  markers between them. The field glossary and the Steam how-to were buried at
+  the bottom of a flat run of eight sections; they now sit in the middle, where
+  someone looking up what a badge means will actually find them. Update cadence
+  folds into the sourcing section and the two "honesty about gaps" sections are
+  merged, taking eight headings down to six.
+- **The page reads at a sane line length.** Body text ran ~95 characters per
+  line, well past the 60–75 that reads comfortably. The prose column is now
+  capped at 66 characters and the reclaimed width holds a sticky table of
+  contents, so the page's length is navigable instead of endless. Paragraphs
+  stay narrow while the glossary, claims cards, and how-to box use the full
+  width — they're scanned, not read line by line.
+- **The three "verified" claims are now cards** rather than bullets, and the
+  source list is a numbered pipeline with a connector rail, since it genuinely
+  is a priority order.
+
+### Added
+- **Catalog figures on How It Works** — games catalogued, launch options, and
+  when the newest option landed. The last of those makes the "runs on demand, in
+  batches" claim checkable rather than a promise. Backed by its own hour-long
+  cache, deliberately separate from the facets cache that sits on the catalog's
+  hot path, so it costs about 24 database reads a day whatever the traffic. The
+  line is omitted entirely if the counts aren't available.
+
+### Fixed
+- **Missing static assets no longer return HTML.** The SPA catch-all served
+  `index.html` for any unmatched path, including `/assets/*.css`, so a browser
+  holding cached HTML after a deploy changed the bundle hash would request a
+  stylesheet, receive HTML, and silently render the page unstyled. Paths with a
+  file extension now 404.
+- **How It Works is no longer cached for an hour in development**, where that
+  guaranteed a stale bundle hash after every rebuild. Production caching is
+  unchanged.
+
+### Removed
+- **Hover tint and rotating diamond on How It Works sections.** Hover feedback
+  on a block of text promises interactivity that isn't there — the same mistake
+  as the old `cursor: help` on option sources.
+- **The staggered page-load animation**, which delayed content on a page whose
+  only job is being read, and whose delays covered five of eight sections so the
+  rest arrived out of rhythm.
+
 ## [1.2.9] - 2026-08-10 — Engine accuracy & honest suggestions
 
 ### Changed
