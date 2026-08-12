@@ -20,14 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- **Retiring the `manual_curation` source.** Migration 004 promotes the rows a
-  live scrape has since confirmed to PCGamingWiki / Steam Community, and renames
-  the rest to **Universal**. The How It Works copy below already describes the
-  new name; the data change lands once the current rescan finishes.
-
-## [1.2.10] - 2026-08-12 — How It Works, rebuilt
+## [1.2.10] - 2026-08-12 — How It Works rebuilt, and the end of manual_curation
 
 ### Changed
+- **The `manual_curation` source is retired.** It was a frozen batch of 42 rows
+  from the first data load — the generic cross-game flags (`-novid`,
+  `-windowed`, `-high`, `-dx11`) typed in by hand before the scraper pipeline
+  existed. No scraper has ever emitted it. Every other value in the column names
+  a *place*; this one named a *process*, which is why it read as a placeholder,
+  and it reached further than its row count suggests: those options are attached
+  to 500 games, about 11% of all game↔option links. It had also started
+  contradicting itself, since later scrapes backfilled real source URLs onto
+  rows still labelled "Manual curation". Migration 004 promotes the rows a live
+  scrape has since confirmed to **PCGamingWiki** or **Steam Community**, and
+  renames the remainder to **Universal** — the value the scraper already emits
+  for this class of flag, describing what the option *is* rather than how it got
+  here. How It Works explains the new name.
 - **How It Works is reorganized into three movements** — where the data comes
   from, what you're looking at, and what we claim and don't — with chapter
   markers between them. The field glossary and the Steam how-to were buried at
