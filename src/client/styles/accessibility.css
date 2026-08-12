@@ -177,7 +177,7 @@ textarea:focus-visible {
     animation: none;
   }
   
-  .launch-options-row[style*="table-row"],
+  .launch-options-row.is-open,
   .launch-options-row[style*="none"] {
     animation: none;
   }

@@ -254,7 +254,7 @@ async function handleLaunchOptionsClick(e) {
 
   try {
     const existingRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
-    if (existingRow && existingRow.style.display !== 'none') {
+    if (existingRow && existingRow.classList.contains('is-open')) {
       closeLaunchOptions(gameId);
       return;
     }
@@ -280,7 +280,13 @@ function displayLaunchOptions(gameId, launchOptions) {
   if (existingRow) existingRow.remove();
 
   const launchOptionsRow = document.createElement('tr');
-  launchOptionsRow.className = `${CONFIG.CLASSES.launchOptionsRow} ${TableState.isMobile ? 'mobile-options-row' : ''}`;
+  // `is-open` is the marker for "this expansion is showing" (see
+  // CONFIG.SELECTORS.launchOptionsRow). Deliberately NOT an inline display:
+  // the mobile card layout sets every table element to `display: block`, and an
+  // inline `table-row` outranks that media query — the row would then get its
+  // own anonymous table box, which sizes to content and pushes ~20px past the
+  // viewport, clipping the option cards' right border.
+  launchOptionsRow.className = `${CONFIG.CLASSES.launchOptionsRow} is-open ${TableState.isMobile ? 'mobile-options-row' : ''}`;
   launchOptionsRow.dataset.gameId = gameId;
 
   const colspan = gameRow.children.length;
@@ -297,8 +303,7 @@ function displayLaunchOptions(gameId, launchOptions) {
   if (TableState.isMobile) buffMobileOptions(launchOptionsRow);
 
   requestAnimationFrame(() => {
-    launchOptionsRow.style.display = 'table-row';
-    // Row must be laid out (display set) before we can measure command widths.
+    // Row must be laid out before we can measure command widths.
     fitCommandText(launchOptionsRow);
     bindCommandFitResize();
   });
@@ -793,6 +798,7 @@ function closeLaunchOptions(gameId) {
   const button = document.querySelector(`.launch-options-btn[data-game-id="${gameId}"]`);
 
   if (row) {
+    row.classList.remove('is-open');
     row.style.display = 'none';
     setTimeout(() => row.remove(), CONFIG.ANIMATION_DELAY);
   }
@@ -808,7 +814,7 @@ export function closeAllLaunchOptions() {
 
   openRows.forEach(row => {
     const gameId = row.dataset.gameId;
-    if (gameId && row.style.display !== 'none') {
+    if (gameId && row.classList.contains('is-open')) {
       closeLaunchOptions(gameId);
       closedCount++;
     }
@@ -827,7 +833,7 @@ function showLaunchOptionsError(gameId, errorMessage) {
   if (existingRow) existingRow.remove();
 
   const launchOptionsRow = document.createElement('tr');
-  launchOptionsRow.className = `${CONFIG.CLASSES.launchOptionsRow} ${TableState.isMobile ? 'mobile-error-row' : ''}`;
+  launchOptionsRow.className = `${CONFIG.CLASSES.launchOptionsRow} is-open ${TableState.isMobile ? 'mobile-error-row' : ''}`;
   launchOptionsRow.dataset.gameId = gameId;
 
   const colspan = gameRow.children.length;
@@ -856,8 +862,6 @@ function showLaunchOptionsError(gameId, errorMessage) {
     const errorButton = launchOptionsRow.querySelector('.launch-options-close');
     if (errorButton) ensureTouchTarget(errorButton);
   }
-
-  launchOptionsRow.style.display = 'table-row';
 }
 
 // ============================================================================

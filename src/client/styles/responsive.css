@@ -785,8 +785,13 @@
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
+  /* On a phone the expansion already sits inside two nested paddings (the card
+     row, then this cell). The base 28px side padding on top of that leaves the
+     option cards barely 300px wide, which forces fitCommandText to shrink long
+     commands to the 11px floor and ellipsize. Trim the sides to buy back ~32px.
+     !important is required to beat the base rule's own !important (table.css). */
   .table-container .launch-options-cell {
-    padding: var(--space-6);
+    padding: var(--space-6) var(--space-3) !important;
     background: var(--color-surface);
   }
 

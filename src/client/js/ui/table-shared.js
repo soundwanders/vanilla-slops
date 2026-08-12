@@ -8,7 +8,7 @@ export const CONFIG = {
   TOUCH_TARGET_MIN: TOUCH_TARGET_MIN_PX,
   SELECTORS: {
     tableContainer: '#table-container',
-    launchOptionsRow: '.launch-options-row[style*="table-row"]',
+    launchOptionsRow: '.launch-options-row.is-open',
     launchOptionsBtn: '.launch-options-btn',
     closeAllBtn: '#close-all-launch-options-btn'
   },

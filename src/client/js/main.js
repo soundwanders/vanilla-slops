@@ -660,7 +660,7 @@ function handleSortChange(field, order) {
  */
 function handleFilterChange(newFilters, reason = 'user-filter') {
   // Determine if this is likely a user interaction with launch options
-  const isLaunchOptionsInteraction = document.querySelector('.launch-options-row[style*="table-row"]') !== null;
+  const isLaunchOptionsInteraction = document.querySelector('.launch-options-row.is-open') !== null;
   
   if (isLaunchOptionsInteraction) {
     // User is viewing launch options, preserve their scroll position
