@@ -16,6 +16,13 @@ src/client/api-test/*
 docs/sql-snippets.sql
 appdetails_cache.json
 */appdetails_cache.json
+docs/user-testing-round-1.md
+
+# throwaway scratch scripts and scratch output — never commit
+.tmp-*
+*.tmp.mjs
+*.tmp.js
+
 
 # build files
 dist
