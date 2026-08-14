@@ -425,8 +425,9 @@
 
 
   .active-filters { padding: 0 var(--space-4); gap: var(--space-2); }
-  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 100%; }
-  .filter-remove { width: var(--space-4); height: var(--space-4); font-size: calc(var(--font-size-xs) * 0.75); flex-shrink: 0; margin-left: var(--space-1); }
+  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-3); max-width: 100%; }
+  /* Sized for legibility, not for tapping — the tag itself is the target */
+  .filter-remove { width: var(--space-5); height: var(--space-5); font-size: var(--font-size-sm); margin-left: var(--space-1); }
 }
 
 @media (max-width: 480px) {
@@ -441,8 +442,8 @@
 
 
   .active-filters { padding: 0 var(--space-3); gap: var(--space-1); }
-  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-2); max-width: 100%; }
-  .filter-remove { width: var(--space-4); height: var(--space-4); font-size: calc(var(--font-size-xs) * 0.75); }
+  .filter-tag { font-size: calc(var(--font-size-xs) * 0.85); padding: var(--space-1) var(--space-3); max-width: 100%; }
+  .filter-remove { width: var(--space-5); height: var(--space-5); font-size: var(--font-size-sm); }
 }
 
 /* =============================================================================
@@ -873,7 +874,8 @@
     border-color: var(--color-border-strong);
   }
 
-  /* Filter tags */
+  /* Filter tags — the whole tag is the remove button, so it gets the full
+     44px touch target rather than the ~24px the × used to offer. */
   .active-filters .filter-tag {
     position: relative;
     transform: translateZ(0);
@@ -881,30 +883,20 @@
     border: 1px solid var(--color-border);
     background: var(--color-surface-raised);
     box-shadow: var(--shadow-xs);
-    min-height: 32px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     touch-action: manipulation;
   }
 
-  .active-filters .filter-tag:active { transform: scale(0.96) translateZ(0); box-shadow: var(--shadow-sm); }
-
-  .active-filters .filter-remove {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-full);
-    transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: translateZ(0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 24px;
-    min-width: 24px;
+  /* Press feedback now belongs to the tag, which is what is actually pressed */
+  .active-filters .filter-tag:active {
+    transform: scale(0.96) translateZ(0);
+    box-shadow: var(--shadow-sm);
+    background: rgba(239, 68, 68, 0.12);
   }
 
-  .active-filters .filter-remove:active {
-    transform: scale(0.9) translateZ(0);
-    background: rgba(239, 68, 68, 0.2);
-  }
+  .active-filters .filter-tag:active .filter-remove { color: var(--color-error); }
 
   /* Loading */
   .table-loading {

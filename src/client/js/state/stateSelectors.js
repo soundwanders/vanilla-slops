@@ -24,7 +24,7 @@ export const getCleanFilters = (state) => {
     engine: filters.engine || '',
     options: filters.options || '',
     year: filters.year || '',
-    sort: filters.sort || 'total_options_count',
+    sort: filters.sort || 'featured',
     order: filters.order || 'desc'
   };
 };
@@ -61,7 +61,7 @@ export const getBaseFiltersFromURL = (urlParams) => {
     engine: urlParams.get('engine') || '',
     options: urlParams.get('options') || '',
     year: urlParams.get('year') || '',
-    sort: urlParams.get('sort') || 'total_options_count',
+    sort: urlParams.get('sort') || 'featured',
     order: urlParams.get('order') || 'desc'
   };
 };

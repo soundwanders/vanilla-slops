@@ -20,6 +20,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.12] - 2026-08-13 — A curated front page
+
+### A change in approach: the catalog now has an editorial layer
+
+Every ordering in this project has so far been derived straight from the data —
+option counts, release dates, titles. That is the right default for a catalog
+whose whole pitch is that it doesn't overclaim, and it stays the rule
+everywhere a number is reported. But the homepage is not a query result. It is
+the first ten seconds of the project, and ranking it by `total_options_count`
+optimised for *where we hold the most data* rather than *what a visitor
+recognises*. Those two goals agree almost everywhere and diverge at precisely
+the position where it costs the most: the top of page one.
+
+The concrete symptom was Counter-Strike. The 2000 original carries 29 options
+and Counter-Strike 2 carries 24, so a catalog of Steam launch options opened
+with a game superseded a decade ago in its second row, five rows above its own
+successor. Nothing about that was a data error — 1.6 genuinely has more
+documented flags — which is exactly why no amount of better data would have
+fixed it. It needed a judgement call.
+
+So this release introduces a deliberately small editorial layer, bounded by
+three rules that keep it from leaking into anything the project asserts:
+
+1. **It decides reading order, and nothing else.** No game is hidden, no count
+   is inflated, no row's claims change. Counter-Strike 1.6 still appears with
+   its honest 29 options — at #18 instead of #2.
+2. **The honest ordering stays one click away and keeps its name.** "Most
+   options" remains in the sort dropdown and still returns the pure
+   `total_options_count` order. Curation became a *new* sort value rather than
+   a silent reshuffle of the existing one, so no control in the UI misreports
+   what it does.
+3. **The visitor's intent always wins.** Any active search or filter takes
+   precedence over the lineup; featured games that don't match simply drop out.
+
+The lineup is also short on purpose — sixteen entries against a twenty-row
+page — so the tail of page one is still ranked by evidence and the catalog
+visibly stops being hand-built before the first scroll ends.
+
+**The rule for what earns a slot** matters more than today's list, and lives in
+`src/server/config/featuredGames.js`: recognisable on sight, current rather
+than merely famous, real data behind it. The subtle one is *current*: age alone
+is not disqualifying — Team Fortress 2 is from 2007 and belongs there because
+it is still the live product — but where the catalog holds a successor, the
+successor is featured. That is the distinction between TF2 and CS 1.6, and it
+is written down so future edits don't have to rediscover it.
+
+### Added
+- **A curated "Featured" ordering, now the catalog's default view.** Sixteen
+  flagship games lead, then the list falls through to option count. Implemented
+  as a real sort value (`sort=featured`) with its own pagination path, since the
+  result set is two differently-ordered blocks and the seam between them has to
+  stay coherent across pages — `app_id` breaks option-count ties so rows can't
+  repeat or vanish between page requests.
+- Test coverage for the lineup's invariants and the new sort default.
+
+### Changed
+- **"Most options" is now an explicit choice rather than the silent default.**
+  Unchanged in behaviour; it simply no longer doubles as the landing order.
+- **The whole active-filter tag is now the remove button**, not the ~24px `×`
+  inside it. The mobile styles already gave the full tag a press-down state, so
+  the smaller hit target was contradicting the affordance it advertised; the tag
+  now carries a 44px touch target and the `×` is decoration, hidden from
+  assistive tech. Removal is also one delegated listener that survives
+  re-renders rather than a fresh set of handlers per tag.
+- Reworded the How It Works subtitle: "and, just as importantly, what we don't
+  claim about it yet" became a short closing sentence.
+
+### Fixed
+- Filter values containing a quote (`Bloody "Nine" Games`) could close an HTML
+  attribute early in the active-filter markup — `escapeHtml()` serialises a text
+  node and leaves quotes intact, which is correct for element content but not
+  for attribute positions. Attribute values now escape through `escapeAttr()`.
+
 ## [1.2.11] - 2026-08-13 — Published figures, and a How It Works copy pass
 
 ### Changed

@@ -1411,6 +1411,9 @@ a.option-source:hover {
   justify-content: center;
 }
 
+/* Rendered as a <button> inside .active-filters and as a plain <span> in the
+   empty-state summary, so the shared look carries the button resets and the
+   interactive rules below stay scoped to .active-filters. */
 .filter-tag {
   display: inline-flex;
   align-items: center;
@@ -1418,11 +1421,31 @@ a.option-source:hover {
   padding: var(--space-1) var(--space-3);
   background: var(--color-accent-subtle);
   color: var(--color-accent);
+  border: none;
   border-radius: var(--radius-full);
+  font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+  text-align: left;
   max-width: 100%;
   min-width: 0;
+}
+
+/* The whole tag removes the filter — the × is decoration, not the target */
+.active-filters .filter-tag {
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.active-filters .filter-tag:hover {
+  background: var(--color-accent-muted);
+}
+
+/* Hovering anywhere reddens the × so the outcome of the click is obvious.
+   Matches the red press tint the mobile styles already use. */
+.active-filters .filter-tag:hover .filter-remove,
+.active-filters .filter-tag:focus-visible .filter-remove {
+  color: var(--color-error);
 }
 
 /* "Developer:" — never shrinks or wraps */
@@ -1443,7 +1466,8 @@ a.option-source:hover {
   white-space: nowrap;
 }
 
-/* The remove button must always stay visible and tappable */
+/* Decoration only — the parent .filter-tag button is the hit target, so this
+   is aria-hidden and carries no pointer or focus behaviour of its own. */
 .filter-remove {
   flex-shrink: 0;
   display: inline-flex;
@@ -1451,19 +1475,11 @@ a.option-source:hover {
   justify-content: center;
   width: var(--space-5);
   height: var(--space-5);
-  padding: 0;
-  background: transparent;
-  border: none;
   border-radius: var(--radius-full);
   color: inherit;
   font-size: var(--font-size-base);
   line-height: 1;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.filter-remove:hover {
-  background: var(--color-accent-muted);
+  transition: color var(--transition-fast);
 }
 
 .empty-suggestion {

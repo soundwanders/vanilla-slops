@@ -123,8 +123,8 @@ function buildFilters(query, logger) {
     releaseYear: query.year || '',
     
     // Pagination and sorting
-    sort: query.sort || 'title',
-    order: query.order || 'asc',
+    sort: query.sort || 'featured',
+    order: query.order || 'desc',
     page: parseInt(query.page, 10) || 1,
     limit: parseInt(query.limit, 10) || 20
   };

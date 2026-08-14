@@ -32,10 +32,10 @@ export const querySchema = z.object({
   year: z.string().optional(),
 
   // Sorting
-  sort: z.enum(['title', 'name', 'year', 'options', 'relevance', 'total_options_count', 'created_at', 'developer', 'release_date'])
+  sort: z.enum(['featured', 'title', 'name', 'year', 'options', 'relevance', 'total_options_count', 'created_at', 'developer', 'release_date'])
     .optional()
-    .default('total_options_count')
-    .describe('Sort field (default: total_options_count for options-first)'),
+    .default('featured')
+    .describe('Sort field (default: featured — curated lineup first, then by option count)'),
     
   order: z.enum(['asc', 'desc'])
     .optional()

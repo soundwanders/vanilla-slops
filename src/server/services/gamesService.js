@@ -1,4 +1,5 @@
 import supabase from '../config/supabaseClient.js';
+import { FEATURED_APP_IDS, FEATURED_RANK, FEATURED_ID_LIST } from '../config/featuredGames.js';
 
 const FACETS_TTL_MS = 5 * 60 * 1000;
 const _facetsCache = { data: null, expiresAt: 0 };
@@ -119,37 +120,49 @@ export async function fetchGames({
       ? '*, game_launch_options!inner(launch_options!inner(risk_level, categories))'
       : '*';
 
-    let query = supabase
-      .from('games')
-      .select(selectClause, { count: 'exact' });
+    // Every query variant below starts from the same filtered base. The
+    // featured path needs to run two of them (curated block, then the tail),
+    // and a Supabase query builder can only be awaited once.
+    const buildFilteredQuery = (countOption) => {
+      let q = supabase
+        .from('games')
+        .select(selectClause, countOption ? { count: 'exact' } : undefined);
 
-    // Apply search filters
-    query = applySearchFilters(query, {
-      searchTerm,
-      genre: genreFilter,
-      engine,
-      platform,
-      developer,
-      options,
-      yearFilter,
-      minOptionsCount,
-      maxOptionsCount
-    });
+      q = applySearchFilters(q, {
+        searchTerm,
+        genre: genreFilter,
+        engine,
+        platform,
+        developer,
+        options,
+        yearFilter,
+        minOptionsCount,
+        maxOptionsCount
+      });
 
-    // Apply launch-option attribute filters on the embedded resource
-    query = applyOptionAttributeFilter(query, { category: optionCategory, risk: optionRisk, command: optionCommand });
+      return applyOptionAttributeFilter(q, {
+        category: optionCategory,
+        risk: optionRisk,
+        command: optionCommand
+      });
+    };
 
-    // Apply sorting
-    query = applySorting(query, sort, order);
+    let data;
+    let count;
 
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
+    if (sort === 'featured') {
+      ({ data, count } = await fetchFeaturedPage(buildFilteredQuery, { offset, limit }));
+    } else {
+      let query = buildFilteredQuery(true);
+      query = applySorting(query, sort, order);
+      query = query.range(offset, offset + limit - 1);
 
-    const { data, count, error } = await query;
-
-    if (error) {
-      console.error('Supabase query error:', error);
-      throw new Error('Failed to fetch games from database');
+      const result = await query;
+      if (result.error) {
+        console.error('Supabase query error:', result.error);
+        throw new Error('Failed to fetch games from database');
+      }
+      ({ data, count } = result);
     }
 
     // Strip the embedded junction/options rows used only for filtering, so the
@@ -307,6 +320,78 @@ function applyOptionAttributeFilter(query, { category, risk, command } = {}) {
     query = query.ilike('game_launch_options.launch_options.command', `%${command}%`);
   }
   return query;
+}
+
+/**
+ * Fetches one page of the "Featured" ordering.
+ *
+ * The conceptual result set is the curated lineup (in its hand-picked order)
+ * followed by everything else by option count — so pagination has to walk a
+ * seam between two differently-ordered blocks. Rather than trying to express
+ * that as a single SQL ordering, this runs the curated block as its own small
+ * query (capped at the lineup's length, so it is cheap) and slices the page
+ * across the boundary.
+ *
+ * Active filters apply to both blocks, so searching or filtering simply
+ * removes featured games that no longer match — the lineup never overrides a
+ * user's own query.
+ *
+ * @async
+ * @function fetchFeaturedPage
+ * @param {(countOption?: boolean) => Object} buildFilteredQuery - Factory returning a fresh filtered query
+ * @param {Object} pagination - Page window
+ * @param {number} pagination.offset - Zero-based index of the first row wanted
+ * @param {number} pagination.limit - Rows per page
+ * @returns {Promise<{data: Array<Object>, count: number}>} Page rows and total match count
+ * @throws {Error} When either underlying query fails
+ */
+async function fetchFeaturedPage(buildFilteredQuery, { offset, limit }) {
+  // Block one: the curated lineup, ordered in JS by its editorial position
+  // rather than by any database column.
+  const featuredResult = await buildFilteredQuery()
+    .in('app_id', FEATURED_APP_IDS)
+    .limit(FEATURED_APP_IDS.length);
+
+  if (featuredResult.error) {
+    console.error('Supabase featured query error:', featuredResult.error);
+    throw new Error('Failed to fetch games from database');
+  }
+
+  const featured = (featuredResult.data || [])
+    .sort((a, b) => FEATURED_RANK.get(a.app_id) - FEATURED_RANK.get(b.app_id));
+
+  const pageFeatured = featured.slice(offset, offset + limit);
+  const remaining = limit - pageFeatured.length;
+
+  // Block two: everything else, by option count. Once the curated block is
+  // exhausted the offset continues into this block, so subtract the rows the
+  // lineup already consumed. `app_id` breaks ties for stable pagination —
+  // without it, equal option counts can reshuffle between page requests and
+  // drop or repeat a row.
+  let tailQuery = buildFilteredQuery(true)
+    .not('app_id', 'in', FEATURED_ID_LIST)
+    .order('total_options_count', { ascending: false, nullsFirst: false })
+    .order('app_id', { ascending: true });
+
+  const tailOffset = Math.max(0, offset - featured.length);
+  // When the page is already full we still need the tail's total for the
+  // pagination footer, so ask for the narrowest possible window rather than
+  // skipping the query.
+  tailQuery = remaining > 0
+    ? tailQuery.range(tailOffset, tailOffset + remaining - 1)
+    : tailQuery.range(0, 0);
+
+  const tailResult = await tailQuery;
+
+  if (tailResult.error) {
+    console.error('Supabase query error:', tailResult.error);
+    throw new Error('Failed to fetch games from database');
+  }
+
+  return {
+    data: remaining > 0 ? [...pageFeatured, ...(tailResult.data || [])] : pageFeatured,
+    count: featured.length + (tailResult.count || 0)
+  };
 }
 
 /**

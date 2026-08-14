@@ -52,6 +52,7 @@ export default class SlopSearch {
     this.suggestions = [];
     this.popularOptions = []; // set from facets by main.js; shown on empty focus
     this.selectedSuggestionIndex = -1;
+    this.activeFiltersBound = false; // active-filter clicks use one delegated listener
     
     // Timing controls
     this.suggestionsTimeout = null;
@@ -504,6 +505,17 @@ export default class SlopSearch {
   }
 
   /**
+   * Escape a value destined for a quoted HTML attribute.
+   *
+   * escapeHtml() serialises a text node, which leaves quotes alone — fine for
+   * element content, but a value like `Bloody "Nine" Games` would close the
+   * attribute early. Attribute positions need this instead.
+   */
+  escapeAttr(text) {
+    return this.escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /**
    * Select suggestion and trigger immediate search
    * This is called when a suggestion is clicked or selected via keyboard
    * @param {number} index - The index of the suggestion to select
@@ -589,6 +601,12 @@ export default class SlopSearch {
 
   /**
    * Render active filters display
+   *
+   * The whole tag is the remove button, not just the `×`. A tag-sized target is
+   * reachable on touch where a ~24px glyph is not, and the mobile styles already
+   * gave the full tag a press-down state, so anything smaller was a lie. The `×`
+   * is kept as a decorative affordance and hidden from assistive tech — the
+   * label lives on the button that actually does the work.
    */
   renderActiveFilters() {
     if (!this.activeFilters) return;
@@ -596,14 +614,15 @@ export default class SlopSearch {
     const filterTags = Object.entries(this.currentFilters).map(([key, value]) => {
       const displayKey = this.getFilterDisplayName(key);
       const displayValue = this.getFilterDisplayValue(key, value);
+      // Doubles as the hover tooltip, so a truncated value stays readable
+      const label = `Remove ${displayKey} filter: ${displayValue}`;
       return `
-        <span class="filter-tag">
-          <span class="filter-key">${displayKey}:</span>
-          <span class="filter-value" title="${this.escapeHtml(displayValue)}">${this.escapeHtml(displayValue)}</span>
-          <button class="filter-remove" data-key="${key}"
-                  aria-label="Remove ${displayKey} filter: ${this.escapeHtml(displayValue)}"
-                  title="Remove filter">×</button>
-        </span>
+        <button type="button" class="filter-tag" data-key="${this.escapeAttr(key)}"
+                aria-label="${this.escapeAttr(label)}" title="${this.escapeAttr(label)}">
+          <span class="filter-key">${this.escapeHtml(displayKey)}:</span>
+          <span class="filter-value">${this.escapeHtml(displayValue)}</span>
+          <span class="filter-remove" aria-hidden="true">×</span>
+        </button>
       `;
     }).join('');
 
@@ -615,16 +634,19 @@ export default class SlopSearch {
 
     this.activeFilters.innerHTML = filterTags + clearAll;
 
-    // Add remove handlers
-    this.activeFilters.querySelectorAll('.filter-remove').forEach(button => {
-      button.addEventListener('click', () => {
-        const filterKey = button.dataset.key;
-        this.removeFilter(filterKey);
+    // One delegated listener survives every re-render, so it is bound once
+    if (!this.activeFiltersBound) {
+      this.activeFilters.addEventListener('click', (event) => {
+        // Clear-all is a sibling of the tags — check it before the tag lookup
+        if (event.target.closest('.filter-clear-all')) {
+          this.reset();
+          return;
+        }
+        const tag = event.target.closest('.filter-tag');
+        if (tag && tag.dataset.key) this.removeFilter(tag.dataset.key);
       });
-    });
-
-    const clearAllBtn = this.activeFilters.querySelector('.filter-clear-all');
-    if (clearAllBtn) clearAllBtn.addEventListener('click', () => this.reset());
+      this.activeFiltersBound = true;
+    }
   }
 
   /**

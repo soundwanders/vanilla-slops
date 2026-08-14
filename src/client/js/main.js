@@ -33,7 +33,7 @@ const stateManager = new StateManager({
     engine: '',
     options: '',
     year: '',
-    sort: 'total_options_count',
+    sort: 'featured',
     order: 'desc'
   },
   totalPages: 0,
