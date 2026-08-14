@@ -233,14 +233,22 @@ footer p {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
   letter-spacing: -0.01em;
 }
 
+/* Each line is its own statement, not a paragraph. A tighter line-height keeps
+   any one line compact while the margin below does the separating, so the three
+   lines read as a list instead of a block of running text. */
 .footer-line {
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-relaxed);
-  opacity: 0.85;
+  font-size: 0.75rem;
+  line-height: var(--line-height-snug);
+  letter-spacing: 0.01em;
+  opacity: 0.8;
+}
+
+.footer-line + .footer-line {
+  margin-top: var(--space-3);
 }
 
 .footer-sep {

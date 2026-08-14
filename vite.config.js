@@ -6,8 +6,23 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
+    // The server-rendered routes must be proxied to Express, not handled by
+    // Vite. Vite's SPA fallback answers any unmatched path with index.html, so
+    // an unproxied /how-it-works silently renders the home screen in dev while
+    // working correctly in production (where vercel.json rewrites it to the
+    // serverless function). Keep this list in sync with vercel.json's rewrites.
     proxy: {
       '/api': 'http://localhost:8000',
+      '^/game/': 'http://localhost:8000',
+      '/how-it-works': 'http://localhost:8000',
+      '/sitemap.xml': 'http://localhost:8000',
+      // The server-rendered pages link the *built* hashed bundle, which they
+      // read out of dist/index.html. Vite dev serves source (styles/main.css)
+      // and has nothing at /assets, so without this the SEO pages arrive
+      // unstyled in dev while being fine in prod. Safe to proxy: /assets only
+      // exists in the build output — there is no src/client/public/assets.
+      // Note this serves the last `npm run build` CSS, so it will not hot-reload.
+      '/assets': 'http://localhost:8000',
     },
   },
   

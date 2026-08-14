@@ -274,6 +274,7 @@ const HOW_TO_APPLY_HTML = `
         <li>Close Properties. Steam saves automatically, and the option applies next time you launch the game.</li>
       </ol>
       <p class="how-to-note">To remove one, reopen the same field and delete the text. Options are game-specific; an option that helps one game may do nothing (or misbehave) in another.</p>
+      <p class="how-to-warning"><strong>Worth knowing:</strong> a launch option can break a game's rendering, reset local settings, or trip anti-cheat in multiplayer. Read the description first, add one at a time, and treat anything rated above <strong>Safe</strong> as a deliberate experiment.</p>
     </section>`;
 
 // Turn a raw source slug (e.g. "manual_curation") into a readable label.
@@ -464,8 +465,8 @@ ${seoHeader({ current: 'how-it-works' })}
     <h1 class="seo-title">How Vanilla Slops works</h1>
     <p class="seo-subtitle">
       A searchable catalog of community-sourced Steam launch options. Here's
-      where the data comes from, what every field on it means, and — just as
-      important — what we don't claim about it yet.
+      where the data comes from, what every field on it means, and, just as
+      importantly, what we don't claim about it yet.
     </p>
 ${renderFigures(stats)}
     <div class="hiw-layout">
@@ -479,6 +480,7 @@ ${renderFigures(stats)}
             <li><a href="#how-to-apply-heading">Applying one on Steam</a></li>
             <li><a href="#hiw-validation">What we claim, and don't</a></li>
             <li><a href="#hiw-contribute">Suggesting an option</a></li>
+            <li><a href="#hiw-ethos">Why this exists</a></li>
           </ol>
         </div>
       </nav>
@@ -501,13 +503,13 @@ ${movement('I', 'Where the data comes from')}
       </ol>
       <p>A few options carry the source <strong>Universal</strong> instead of
       naming a site. Those are the flags that work across many games whatever
-      the engine — <code>-windowed</code>, <code>-novid</code>,
-      <code>-high</code> — collected by hand rather than lifted from any one
-      game's page, which is why most of them have no link to follow.</p>
+      the engine (<code>-high</code>, <code>-fullscreen</code>,
+      <code>-console</code>), collected by hand rather than lifted from any one
+      game's page.</p>
       <p>Found the same command for a dozen games? We store it once and share it,
       so a flag like <code>-windowed</code> never clutters the catalog with
       copies.</p>
-      <p>Updates happen on demand. This is a hands-on project, so the crawler
+      <p>Updates happen on demand. This is a deliberately hands-on project, so the scraper
       runs when there's time to run it rather than on a fixed daily or weekly
       schedule. New options and refreshes arrive in batches, which is why every
       option wears an <strong>Added</strong> date instead of pretending to be a
@@ -516,15 +518,13 @@ ${movement('I', 'Where the data comes from')}
 
     <section class="hiw-section" aria-labelledby="hiw-tagging">
       <h2 id="hiw-tagging">How options are categorized and risk-rated</h2>
-      <p>Categories and risk levels come from a transparent rule set that reads
-      the command itself (and where it came from) — the same input always
-      produces the same grade. No machine learning, no network calls, no
-      guessing about your specific rig. A flag we recognize as a display,
-      performance, audio, or skip-intro tweak earns a <strong>Safe</strong>
-      grade. Anything that could poke at multiplayer integrity or anti-cheat —
-      network and debug flags, say — is held at <strong>Experimental</strong> by
-      default: the conservative call for options whose effects are harder to
-      pin down.</p>
+      <p>Categories and risk levels come from a fixed rule set that reads the
+      command itself and where it came from, so the same input always produces
+      the same grade. Display, performance, audio and skip-intro flags we
+      recognize earn a <strong>Safe</strong> grade. Network and debug flags,
+      which can reach multiplayer integrity and anti-cheat, sit at
+      <strong>Experimental</strong> by default, since their effects are harder
+      to pin down.</p>
     </section>
 
 ${movement('II', 'What you\'re looking at')}
@@ -545,7 +545,7 @@ ${movement('II', 'What you\'re looking at')}
           Proton-Deck, Skip-Intro, or Debug-Dev. Some obscure flags stay
           Uncategorized.</dd>
         <dt>Engine</dt>
-        <dd>The game's engine, shown on its page when we know it — the exact
+        <dd>The game's engine, shown on its page when we know it: the exact
           version where we have it (<em>id Tech 3</em>), otherwise the family
           (<em>id Tech</em>). When the engine is unknown we leave it off rather
           than guess.</dd>
@@ -576,7 +576,7 @@ ${movement('III', 'What we claim, and what we don\'t')}
           <h3>What we're building</h3>
           <p>A <strong>Last checked</strong> date that appears once an option has
           been re-confirmed against its source. Coverage grows over time. No date
-          yet means it hasn't come up for review — not that it's broken.</p>
+          yet means it hasn't come up for review, not that it's broken.</p>
         </li>
         <li>
           <h3>What we don't claim</h3>
@@ -589,16 +589,14 @@ ${movement('III', 'What we claim, and what we don\'t')}
 
     <section class="hiw-section" aria-labelledby="hiw-null">
       <h2 id="hiw-null">When a field is blank on purpose</h2>
-      <p>Now and then you'll open an option and find no description — just a
-      source link. That's deliberate. When the only text a source offered was
-      wrong, circular (<em>"use the -nomovie flag"</em>), or a pasted list of
-      <em>other</em> flags, we store nothing and show you the link instead. A
-      source you can follow is more honest than a confident-sounding guess, so a
+      <p>Now and then you'll open an option and find no description, just a
+      source link. When the only text a source offered was wrong, circular
+      (<em>"use the -nomovie flag"</em>), or a pasted list of <em>other</em>
+      flags, we store nothing and show you the link instead. A
       <strong>blank description is a decision, not a missing field</strong>.</p>
       <p>The same holds for a game that lists no options at all. Most games
-      simply don't have documented launch options — we checked, and even big
-      names like Dark Souls II and INSIDE have none on their wiki pages. An empty
-      result is usually the plain truth, not a scraper that came up short.</p>
+      simply don't have documented launch options. We checked: even big names
+      like Dark Souls II and INSIDE have none on their wiki pages.</p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-contribute">
@@ -606,6 +604,25 @@ ${movement('III', 'What we claim, and what we don\'t')}
       <p>This catalog grows with the community. If you know a launch option that
       isn't here, <a href="${suggestIssueUrl()}" target="_blank" rel="noopener noreferrer">suggest
       it on GitHub</a> and we'll review it against the sources above.</p>
+    </section>
+
+    <section class="hiw-section hiw-ethos" aria-labelledby="hiw-ethos">
+      <h2 id="hiw-ethos">Why this exists</h2>
+      <p>Launch options are scattered. One lives in a wiki paragraph, the next
+      halfway down a Steam guide, the one after that in a ProtonDB report or a
+      forum thread from 2013. Finding the right flag for a single game usually
+      costs you a search, four tabs, and a guess about whether any of it is
+      still true. We went looking for one credible place that simply listed
+      them, couldn't find it, and built it instead.</p>
+      <p>What that means in practice is a short list of commitments. The catalog
+      is free and needs no account. There are no ads and no analytics, the site
+      sets no cookies, and the only thing it remembers is whether you picked the
+      light or dark theme, which stays in your own browser. The crawler that
+      gathers the data is open source, every option names where it came from,
+      and when we don't know something we leave it blank rather than fill it in
+      with something that sounds right.</p>
+      <p>This is a small, hands-on project and it will stay one. The goal isn't
+      to be the biggest catalog. It's to be one you can check.</p>
     </section>
 
       </div>

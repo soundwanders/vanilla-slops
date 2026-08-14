@@ -8,7 +8,10 @@ lerna-debug.log*
 .pnpm-debug.log*
 node_modules
 **/__pycache__
-**/slops-setup-guide.md
+
+# build files
+dist
+build
 
 # MISC PROJECT FILES
 src/client/api-test
@@ -17,16 +20,13 @@ docs/sql-snippets.sql
 appdetails_cache.json
 */appdetails_cache.json
 docs/user-testing-round-1.md
+docs/slop-scraper-followthrough.md
 
 # throwaway scratch scripts and scratch output — never commit
 .tmp-*
 *.tmp.mjs
 *.tmp.js
-
-
-# build files
-dist
-build
+**/slops-setup-guide.md
 
 # local-only dev references and tooling — never commit
 CLAUDE.md

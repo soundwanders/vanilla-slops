@@ -472,6 +472,17 @@ export async function getSearchSuggestions(query, limit = 10) {
  * `lastUpdated` is the one that earns its place — it makes the "runs on demand,
  * arrives in batches" claim on that page checkable instead of a promise.
  *
+ * Counts come from `public_launch_options`, not the `launch_options` table. The
+ * view is the set the project is willing to stand behind; the raw table also
+ * holds rows that are unlinked or unsourced, most of which no user can navigate
+ * to. Publishing the table count would advertise a catalog larger than the one
+ * you can actually search, on the very page that promises the opposite. The
+ * figure is deliberately the conservative one.
+ *
+ * Note the rest of the service still reads the raw table (suggestions, facets,
+ * game pages). Migrating those is a separate job with product implications —
+ * this is only the published headline number.
+ *
  * Never throws. The figures line is a nice-to-have on an otherwise static page,
  * so a database hiccup returns nulls and the caller omits the line rather than
  * failing the page.
@@ -489,8 +500,8 @@ export async function getCatalogStats() {
   try {
     const [games, options, newest] = await Promise.all([
       supabase.from('games').select('*', { count: 'exact', head: true }),
-      supabase.from('launch_options').select('*', { count: 'exact', head: true }),
-      supabase.from('launch_options')
+      supabase.from('public_launch_options').select('*', { count: 'exact', head: true }),
+      supabase.from('public_launch_options')
         .select('created_at')
         .order('created_at', { ascending: false })
         .limit(1)

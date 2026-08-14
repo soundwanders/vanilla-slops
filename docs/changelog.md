@@ -20,6 +20,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.11] - 2026-08-13 — Published figures, and a How It Works copy pass
+
+### Changed
+- **Catalog figures now count `public_launch_options` instead of the raw table.**
+  The figures line advertised 518 launch options; the view the project is willing
+  to stand behind holds 421. The 97-row gap is rows that are unlinked or lack
+  provenance, and 88 of the 97 are unreachable from any game page — so the larger
+  number claimed a catalog bigger than the one you can actually search, on the
+  page that promises the opposite. `getCatalogStats` now reads the view for both
+  the count and the `lastUpdated` timestamp, so the two cannot drift apart. The
+  rest of the service (suggestions, facets, game pages) still reads the raw
+  table; migrating those is a separate pass with its own product decisions.
+- **How It Works copy pass.** Em dashes removed from the body copy entirely (ten
+  of them). The "how options are categorized and risk-rated" section is cut by
+  about a third and no longer leans on a rhetorical triple to make its point —
+  determinism is stated plainly instead. "When a field is blank on purpose" loses
+  two sentences that restated the payoff.
+- **Footer lines are separated rather than stacked.** Three paragraphs at
+  `margin: 0` and `line-height: 1.625` read as one block of running text. Line
+  height is tightened and the breathing room moved between the lines, where it
+  does the work.
+
+### Added
+- **A launch-option safety notice** in the shared "how to apply" block, so it
+  appears on every game page as well as How It Works: a flag can break rendering,
+  reset local settings, or trip anti-cheat, and anything above Safe deserves a
+  deliberate try. Carries a caution-toned rule rather than an alert box.
+- **A closing "Why this exists" section** on How It Works, covering the scattered
+  state of launch-option documentation and what the project commits to. Every
+  privacy claim in it was checked against the code first: no analytics of any
+  kind, no cookies or session middleware, and theme preference as the only
+  client-side storage. It stops short of claiming nothing is ever collected,
+  because Sentry receives server-side error reports.
+
+### Fixed
+- **The Universal source example named two options that are no longer Universal.**
+  1.2.10's migration 004 promoted `-novid` to PCGamingWiki and `-windowed` to
+  Steam Community, leaving `-high` as the only Universal flag of the three the
+  page cited — the copy went stale the moment the migration ran. Examples are now
+  `-high`, `-fullscreen` and `-console`, all verified against the view. The same
+  sentence claimed most Universal options have no link to follow; 7 of 9 do, so
+  that claim is gone.
+- **Server-rendered routes fell through to the SPA home page in local dev.** The
+  Vite dev server proxied only `/api`, so `/how-it-works`, `/game/:appid` and
+  `/sitemap.xml` never reached Express and its SPA fallback answered with
+  `index.html`. Production was unaffected. `/assets` is proxied too, because
+  those pages link the hashed bundle from `dist/index.html`, which Vite does not
+  serve from source — the cause of their arriving unstyled in dev.
+
 ## [1.2.10] - 2026-08-12 — How It Works rebuilt, and the end of manual_curation
 
 ### Changed
