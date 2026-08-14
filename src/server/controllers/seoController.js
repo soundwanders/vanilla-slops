@@ -465,8 +465,8 @@ ${seoHeader({ current: 'how-it-works' })}
     <h1 class="seo-title">How Vanilla Slops works</h1>
     <p class="seo-subtitle">
       A searchable catalog of community-sourced Steam launch options. Here's
-      where the data comes from, what every field on it means, and, just as
-      importantly, what we don't claim about it yet.
+      where the data comes from, what every field on it means, and what we
+      don't claim about it yet. That last part matters.
     </p>
 ${renderFigures(stats)}
     <div class="hiw-layout">
