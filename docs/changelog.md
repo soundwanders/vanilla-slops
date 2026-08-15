@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **How It Works subtitle, second pass.** "What we don't claim about it yet"
+  described a hole; "where we draw the line" describes a decision, which is the
+  truer frame for a project whose nulls are deliberate. Also dropped "on it"
+  from "what every field on it means" — the pronoun reached back two clauses to
+  "the data" and read like nothing anyone says aloud — and softened "every" to
+  "each", since the glossary walks the fields rather than promising to exhaust
+  them.
+
 ## [1.2.12] - 2026-08-13 — A curated front page
 
 ### A change in approach: the catalog now has an editorial layer
