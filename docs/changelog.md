@@ -20,7 +20,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.13] - 2026-08-14 — Clearing filters actually clears them
+
+### The bug that only happened sometimes
+
+Filter yourself into a corner — an engine, then a year, then a category — until
+the catalog runs out of matches and offers to clear everything for you. Click
+the offer. Some of the time you land back on the front page. Some of the time
+the chips vanish, the filters really are gone, and the page underneath doesn't
+move: you are still looking at "no games match your filters", now with nothing
+to clear.
+
+It looked like a network problem, and in a sense it was — but the network only
+decided which way a race fell. The button cleared the search box and then fired
+a change event at each of the six filter dropdowns in turn, which produced seven
+filter-change notifications inside a single synchronous burst. The loader
+guarded against overlapping requests by dropping any that arrived while one was
+in flight, so the first notification took the lock and the other six were
+discarded. The one that survived had been assembled before a single dropdown was
+touched. It went out still carrying every filter the user was trying to escape,
+came back empty, and redrew the same dead end.
+
+The six discarded calls had already updated the app's state, which is why the
+chips cleared correctly and the results didn't. Whether it looked broken came
+down to cache temperature: with a warm cache the first request could finish in
+the gap between two event handlers, releasing the lock in time for a later one
+to get through with the real query. Cold cache or a slow connection, and the
+screen simply stopped responding to the button.
+
+### Fixed
+
+- **"Clear all filters" now goes through one path and sends one request.** The
+  search component already owned the query, the filters and the sort order, and
+  already knew how to reset all three and announce it once — the active-filter
+  "Clear all" chip used that path and never had the bug. The empty-state button
+  now uses it too, instead of reaching in and poking each control by hand.
+- **A filter change made while a request is in flight is no longer thrown
+  away.** The loader queues the newest one and runs it when the current request
+  settles, and because the query is built from state at send time, a burst of
+  changes collapses into a single request for the final state. Dropping was the
+  underlying mistake: the discarded call had already changed the app's state, so
+  discarding it left the screen describing a query nobody had asked for.
+- **An unfiltered empty result no longer blames your filters.** The empty state
+  decided whether filters were active by testing every key on the filter object,
+  and sort and order always carry a value — so "your filters are too
+  restrictive" was the verdict even with nothing filtered, above an active-filter
+  list reading "No specific filters". Only real filters count now.
+- **The first filter change no longer knocks the front page off Featured.** The
+  search component's sort defaulted to Title A–Z while the app's state defaulted
+  to Featured, and every filter notification carries a sort — so on a fresh
+  visit, touching any filter silently swapped the curated ordering introduced in
+  1.2.12 for an alphabetical one. The default now lives in one place that all
+  three of the state, the URL and the search component read from.
+- **Empty-state buttons no longer stack duplicate click handlers.** The handlers
+  are delegated off the document and already survived redraws, but they were
+  being rebound on every render, so each visit to an empty state added another
+  copy that re-ran the same click.
+
 ### Changed
+
+- **Filters, search, sort and page now live in the URL.** Only sort changes ever
+  reached the address bar, so a reload restored whatever stale query happened to
+  still be sitting in it — including, after all of the above, the filters you had
+  just cleared. A filtered view is now something you can reload, bookmark or send
+  to somebody.
+
+  The URL is written at the moment a request goes out rather than from each
+  control, which means it always describes the results on screen: changes that
+  get coalesced away leave no trace, and a failed request leaves the address bar
+  alone. Filter, search, sort and page changes are treated as navigation and get
+  a history entry, so Back steps through them one at a time instead of dropping
+  you off the site; startup, retries and reconnects replace the entry rather than
+  adding one. Defaults stay out of the query string, so an unfiltered catalog is
+  a bare URL again — which is what clearing every filter should leave you
+  looking at.
+
 - **How It Works subtitle, second pass.** "What we don't claim about it yet"
   described a hole; "where we draw the line" describes a decision, which is the
   truer frame for a project whose nulls are deliberate. Also dropped "on it"

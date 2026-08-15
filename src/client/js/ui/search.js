@@ -12,8 +12,10 @@
  * @requires constants.js
  * @requires SlopSearchConfig.js
  * @requires SlopSearchUtils.js
- * 
+ *
  */
+import { DEFAULT_SORT, DEFAULT_ORDER } from '../constants.js';
+
 export default class SlopSearch {
   constructor({
     inputId = 'searchInput',
@@ -22,7 +24,9 @@ export default class SlopSearch {
     resultsCountId = 'resultsCount',
     activeFiltersId = 'activeFilters',
     sortId = 'sortSelect',
-    filters = {}
+    filters = {},
+    defaultSort = DEFAULT_SORT,
+    defaultOrder = DEFAULT_ORDER
   } = {}) {
     
     // DOM element references
@@ -44,11 +48,15 @@ export default class SlopSearch {
       }
     });
 
-    // State management
+    // State management. Sort defaults must match the app's initial state — this
+    // component sends sort/order on every notify, so a mismatch here silently
+    // knocks the front page off "featured" the first time a filter changes.
+    this.defaultSort = defaultSort;
+    this.defaultOrder = defaultOrder;
     this.currentQuery = '';
     this.currentFilters = {};
-    this.currentSort = 'title';
-    this.currentOrder = 'asc';
+    this.currentSort = defaultSort;
+    this.currentOrder = defaultOrder;
     this.suggestions = [];
     this.popularOptions = []; // set from facets by main.js; shown on empty focus
     this.selectedSuggestionIndex = -1;
@@ -876,8 +884,8 @@ export default class SlopSearch {
   reset() {
     this.currentQuery = '';
     this.currentFilters = {};
-    this.currentSort = 'title';
-    this.currentOrder = 'asc';
+    this.currentSort = this.defaultSort;
+    this.currentOrder = this.defaultOrder;
     this.keystrokeCount = 0;
     
     // Clear timeouts
@@ -891,8 +899,8 @@ export default class SlopSearch {
       if (element) element.value = '';
     });
     
-    if (this.sortSelect) this.sortSelect.value = 'title-asc';
-    
+    if (this.sortSelect) this.sortSelect.value = `${this.defaultSort}-${this.defaultOrder}`;
+
     this.renderActiveFilters();
     this.hideSuggestions();
     this.hideSearchPending();

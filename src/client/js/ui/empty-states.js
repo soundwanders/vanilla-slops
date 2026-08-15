@@ -26,9 +26,17 @@ export function renderBasicEmptyState(container) {
   `;
 }
 
-function determineEmptyStateType(filters, stats) {
+// Only these count as "filters" for empty-state purposes. sort/order always
+// carry a value, so testing every key made hasFilters permanently true and
+// showed "your filters are too restrictive" on an unfiltered empty result.
+const FILTER_KEYS = [
+  'search', 'category', 'risk', 'optionSearch',
+  'developer', 'engine', 'options', 'year'
+];
+
+export function determineEmptyStateType(filters, stats) {
   const hasSearch = filters.search && filters.search.trim();
-  const hasFilters = Object.entries(filters).some(([, val]) => val && val.toString().trim());
+  const hasFilters = FILTER_KEYS.some(key => filters[key] && filters[key].toString().trim());
 
   if (stats.total === 0) return 'database-empty';
   if (hasSearch) return 'search-no-results';
@@ -169,7 +177,15 @@ function getActiveFiltersDescription(filters) {
     : '<span class="no-filters">No specific filters</span>';
 }
 
+// renderEmptyState calls this on every render, but the listeners are delegated
+// off document and so survive re-renders. Binding them again stacked a fresh
+// copy each time, and every stacked copy re-ran the click handler.
+let emptyStateListenersBound = false;
+
 export function setupEmptyStateEventListeners() {
+  if (emptyStateListenersBound) return;
+  emptyStateListenersBound = true;
+
   document.addEventListener('click', (e) => {
     const action = e.target.dataset.action;
     if (!action) return;
@@ -199,13 +215,28 @@ export function triggerClearSearch() {
   }
 }
 
+/**
+ * Clear everything and go back to the full list.
+ *
+ * The search component owns query, filters and sort, so it does the clearing —
+ * one notification, one request. Poking each control by hand fired one filter
+ * change per control, and only the first survived the in-flight request guard,
+ * so the request that actually carried the cleared filters never went out.
+ *
+ * main.js calls preventDefault() to claim the event; the DOM fallback below
+ * runs only if nothing is listening (search component failed to initialize).
+ */
 export function triggerClearFilters() {
+  const claimed = !document.dispatchEvent(
+    new CustomEvent('clearAllFilters', { cancelable: true })
+  );
+  if (claimed) return;
+
   triggerClearSearch();
   document.querySelectorAll('.filter-select').forEach(select => {
     select.selectedIndex = 0;
     select.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  document.dispatchEvent(new CustomEvent('clearAllFilters'));
 }
 
 export function triggerSearch(searchTerm) {

@@ -3,6 +3,8 @@
  * These functions eliminate repeated state access patterns
  */
 
+import { DEFAULT_SORT, DEFAULT_ORDER } from '../constants.js';
+
 /**
  * @module FilterSelectors
  * @description Functions for handling filter-related state operations
@@ -24,8 +26,8 @@ export const getCleanFilters = (state) => {
     engine: filters.engine || '',
     options: filters.options || '',
     year: filters.year || '',
-    sort: filters.sort || 'featured',
-    order: filters.order || 'desc'
+    sort: filters.sort || DEFAULT_SORT,
+    order: filters.order || DEFAULT_ORDER
   };
 };
 
@@ -61,8 +63,8 @@ export const getBaseFiltersFromURL = (urlParams) => {
     engine: urlParams.get('engine') || '',
     options: urlParams.get('options') || '',
     year: urlParams.get('year') || '',
-    sort: urlParams.get('sort') || 'featured',
-    order: urlParams.get('order') || 'desc'
+    sort: urlParams.get('sort') || DEFAULT_SORT,
+    order: urlParams.get('order') || DEFAULT_ORDER
   };
 };
 
@@ -121,8 +123,8 @@ export const hasActiveFilters = (state) => {
     filters.engine ||
     filters.options ||
     filters.year ||
-    filters.sort !== 'total_options_count' ||
-    filters.order !== 'desc'
+    filters.sort !== DEFAULT_SORT ||
+    filters.order !== DEFAULT_ORDER
   );
 };
 
@@ -153,11 +155,14 @@ export const getFormattedStats = (state) => {
 export const getURLParams = (state) => {
   const params = new URLSearchParams();
   const filters = getCleanFilters(state);
-  
+  const defaults = { sort: DEFAULT_SORT, order: DEFAULT_ORDER };
+
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '' && value.toString().trim()) {
-      params.set(key, value);
-    }
+    if (value === undefined || value === null || !value.toString().trim()) return;
+    // Defaults are what you get with no params at all, so writing them only
+    // makes the URL noisy — and leaves a cleared view looking filtered.
+    if (defaults[key] === value) return;
+    params.set(key, value);
   });
 
   if ((state.currentPage || 1) > 1) {

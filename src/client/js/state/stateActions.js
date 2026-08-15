@@ -1,3 +1,5 @@
+import { DEFAULT_SORT, DEFAULT_ORDER } from '../constants.js';
+
 const stateActions = {
   // Loading state management
   SET_LOADING: (state, payload) => ({
@@ -47,8 +49,8 @@ const stateActions = {
       engine: '',
       options: '',
       year: '',
-      sort: 'featured',
-      order: 'desc',
+      sort: DEFAULT_SORT,
+      order: DEFAULT_ORDER,
       ...payload // Allow partial overrides
     }
   }),

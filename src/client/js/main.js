@@ -16,9 +16,18 @@ import {
   getGameStats,
   getSearchSyncData
 } from './state/stateSelectors.js';
+import { DEFAULT_SORT, DEFAULT_ORDER } from './constants.js';
 
 const PAGE_SIZE = 20;
 let lastFetchTime = 0;
+
+/**
+ * Newest load request that arrived while another was in flight, run once that
+ * one settles. Held here rather than dropped: query params are read from state
+ * at send time, so a dropped call also drops the state change that prompted it.
+ * @type {{page: number, replace: boolean, reason: string}|null}
+ */
+let pendingLoad = null;
 
 /** State manager */
 const stateManager = new StateManager({
@@ -33,8 +42,8 @@ const stateManager = new StateManager({
     engine: '',
     options: '',
     year: '',
-    sort: 'featured',
-    order: 'desc'
+    sort: DEFAULT_SORT,
+    order: DEFAULT_ORDER
   },
   totalPages: 0,
   searchInstance: null,
@@ -178,10 +187,36 @@ async function refreshFilterStatistics() {
   }
 }
 
-function updateURL() {
-  // Get complete URL using selector
+/**
+ * Loads that must not create a history entry. Either the URL already describes
+ * the state (the user just navigated to it) or nothing about the query changed,
+ * so a new entry would only give Back something inert to walk through.
+ */
+const URL_REPLACE_REASONS = new Set(['initial-load', 'retry', 'online-recovery']);
+
+/**
+ * Write the current state to the address bar.
+ *
+ * Called from loadPage rather than from each handler, so the URL describes the
+ * request that was actually sent — changes that get coalesced away never leave
+ * a history entry behind, and a failed request leaves the URL alone.
+ *
+ * @param {string} reason - The loadPage reason, which decides push vs replace
+ */
+function syncURL(reason) {
+  // popstate already moved history; writing here would fight the back button
+  if (reason === 'navigation') return;
+
   const newURL = getCurrentURL(stateManager.getState());
-  window.history.replaceState(null, '', newURL);
+  if (newURL === `${window.location.pathname}${window.location.search}`) return;
+
+  if (URL_REPLACE_REASONS.has(reason)) {
+    window.history.replaceState(null, '', newURL);
+  } else {
+    // Filter, search, sort and page changes are navigations — Back should undo
+    // them one at a time instead of dropping the user off the site.
+    window.history.pushState(null, '', newURL);
+  }
 }
 
 /**
@@ -390,9 +425,15 @@ function restoreScrollPosition() {
  * 
  */
 async function loadPage(page = 1, replace = true, reason = 'search') {
-  // Clean loading check using selector
-  if (isLoading(stateManager.getState())) return;
-  
+  // A request is already out. Queue this one instead of dropping it — the
+  // in-flight request was built from filters that have since changed, so
+  // dropping leaves the screen showing results the user already replaced.
+  if (isLoading(stateManager.getState())) {
+    pendingLoad = { page, replace, reason };
+    return;
+  }
+
+  pendingLoad = null;
   stateManager.dispatch('SET_LOADING', true);
   
   // Store scroll position before loading if user is interacting with content
@@ -417,6 +458,9 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     // Clear state updates using actions
     stateManager.dispatch('SET_CURRENT_PAGE', page);
     stateManager.dispatch('SET_TOTAL_PAGES', response.totalPages || 0);
+
+    // State now matches what came back, so the URL can describe it
+    syncURL(reason);
 
     // Update UI
     updateResultsCount(response.total || 0);
@@ -469,6 +513,14 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
       el.disabled = false;
       el.style.opacity = '';
     });
+
+    // Run whatever arrived while this was in flight. It picks up current state,
+    // so several queued changes collapse into one request for the latest.
+    if (pendingLoad) {
+      const next = pendingLoad;
+      pendingLoad = null;
+      await loadPage(next.page, next.replace, next.reason);
+    }
   }
 }
 
@@ -650,7 +702,6 @@ function parseURLParams() {
 
 function handleSortChange(field, order) {
   stateManager.dispatch('SET_SORT', { sort: field, order });
-  updateURL();
   loadPage(1, true, 'sort-change');
 }
 
@@ -700,7 +751,9 @@ function initializeSearchComponent() {
         category: 'categoryFilter',
         risk: 'riskFilter',
         year: 'yearFilter'
-      }
+      },
+      defaultSort: DEFAULT_SORT,
+      defaultOrder: DEFAULT_ORDER
     };
 
     const searchInstance = new SlopSearch(searchConfig);
@@ -811,6 +864,16 @@ function setupEventListeners() {
   window.addEventListener('popstate', () => {
     parseURLParams();
     loadPage(stateManager.getState().currentPage, true, 'navigation');
+  });
+
+  // "Clear all filters" from an empty state. The search component holds query,
+  // filters and sort, so it clears them and notifies once — preventDefault
+  // tells empty-states.js not to fall back to poking each control by hand.
+  document.addEventListener('clearAllFilters', (event) => {
+    const { searchInstance } = stateManager.getState();
+    if (!searchInstance) return;
+    event.preventDefault();
+    searchInstance.reset();
   });
 }
 
