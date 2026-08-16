@@ -813,9 +813,20 @@ async function initializeApp() {
     setupScrollTracking();
     setupOfflineDetection();
 
-    // Initialize filters before loading data
-    await initializeFilters();
-    
+    // The table and the filter dropdowns are independent: the table renders
+    // from /api/games, the dropdowns from /api/games/facets, and neither needs
+    // the other's data. Awaiting facets first meant the games table could not
+    // paint until two requests had completed in sequence — on a cold function
+    // that was the difference between one round trip and two.
+    //
+    // The sync block below still has to wait for facets, because it assigns
+    // values to <select> elements and an assignment is dropped if the matching
+    // <option> has not been added yet.
+    const filtersReady = initializeFilters();
+    const firstPageReady = loadPage(stateManager.getState().currentPage, true, 'initial-load');
+
+    await filtersReady;
+
     const state = stateManager.getState();
     if (state.searchInstance && hasActiveFilters(state)) {
       const syncData = getSearchSyncData(state);
@@ -842,11 +853,10 @@ async function initializeApp() {
       state.searchInstance.renderActiveFilters();
     }
     
-    // Initial page load (facets were already fetched by initializeFilters, and
-    // this fetches page 1 — no separate "preload" pass, which was duplicating
-    // both requests and firing a second identical /api/games call on startup).
-    await loadPage(stateManager.getState().currentPage, true, 'initial-load');
-    
+    // Page 1 was requested in parallel with the facets above; this is where we
+    // join it, so "app-ready" still means both halves have landed.
+    await firstPageReady;
+
     // Add visual feedback that app is ready
     document.body.classList.add('app-ready');
     

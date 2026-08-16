@@ -261,6 +261,15 @@ async function handleLaunchOptionsClick(e) {
 
     closeAllLaunchOptions();
 
+    // Open the row now, with a placeholder, instead of after the round trip.
+    // The wait used to be dead air followed by a whole section appearing at
+    // once; the row is the acknowledgement that the click landed. The skeleton
+    // inside it fades in on a delay (CSS), so a cache hit swaps straight to the
+    // real content and the placeholder is never seen.
+    button.classList.add('loading');
+    button.setAttribute('aria-busy', 'true');
+    showLaunchOptionsLoading(gameId);
+
     const launchOptions = await fetchLaunchOptions(gameId, true);
     displayLaunchOptions(gameId, launchOptions);
     setButtonHideState(button, originalContent);
@@ -269,17 +278,57 @@ async function handleLaunchOptionsClick(e) {
   } catch (error) {
     showLaunchOptionsError(gameId, error.message);
     setButtonShowState(button, originalContent);
+  } finally {
+    button.classList.remove('loading');
+    button.removeAttribute('aria-busy');
   }
 }
 
-function displayLaunchOptions(gameId, launchOptions) {
+/**
+ * Insert the expansion row immediately, holding a placeholder, so the click has
+ * a visible result before the data arrives. Replaced in place by
+ * displayLaunchOptions — same row element, so there is one open animation
+ * rather than two.
+ *
+ * @param {string} gameId - Steam app ID
+ */
+function showLaunchOptionsLoading(gameId) {
   const gameRow = document.querySelector(`tr[data-game-id="${gameId}"]`);
   if (!gameRow) return;
 
   const existingRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
   if (existingRow) existingRow.remove();
 
-  const launchOptionsRow = document.createElement('tr');
+  const row = document.createElement('tr');
+  row.className = `${CONFIG.CLASSES.launchOptionsRow} is-open is-loading ${TableState.isMobile ? 'mobile-options-row' : ''}`;
+  row.dataset.gameId = gameId;
+
+  const colspan = gameRow.children.length;
+  // Three bars is a shape, not a count — we don't know how many options there
+  // are yet, and guessing would make the layout jump when the truth arrives.
+  row.innerHTML = `
+    <td colspan="${colspan}" class="${CONFIG.CLASSES.launchOptionsCell}">
+      <div class="lo-skeleton" role="status" aria-live="polite">
+        <span class="sr-only">Loading launch options…</span>
+        <div class="lo-skeleton-bar"></div>
+        <div class="lo-skeleton-bar"></div>
+        <div class="lo-skeleton-bar"></div>
+      </div>
+    </td>
+  `;
+
+  gameRow.parentNode.insertBefore(row, gameRow.nextSibling);
+}
+
+function displayLaunchOptions(gameId, launchOptions) {
+  const gameRow = document.querySelector(`tr[data-game-id="${gameId}"]`);
+  if (!gameRow) return;
+
+  // Reuse the placeholder row the click already opened, so the content swaps
+  // inside a row that is on screen rather than the row being torn out and
+  // rebuilt — one open animation, and no visible collapse-then-expand.
+  const existingRow = document.querySelector(`.${CONFIG.CLASSES.launchOptionsRow}[data-game-id="${gameId}"]`);
+  const launchOptionsRow = existingRow || document.createElement('tr');
   // `is-open` is the marker for "this expansion is showing" (see
   // CONFIG.SELECTORS.launchOptionsRow). Deliberately NOT an inline display:
   // the mobile card layout sets every table element to `display: block`, and an
@@ -296,7 +345,7 @@ function displayLaunchOptions(gameId, launchOptions) {
     ? createNoOptionsHTML(colspan, gameId, gameTitle)
     : createOptionsHTML(colspan, launchOptions, gameId);
 
-  gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
+  if (!existingRow) gameRow.parentNode.insertBefore(launchOptionsRow, gameRow.nextSibling);
   setupLaunchOptionsRowEvents(launchOptionsRow);
   setupOptionFilter(launchOptionsRow);
 
@@ -895,12 +944,39 @@ function handleSortHeaderInteraction(e) {
   onSortChange(field, newOrder);
 }
 
+// Games whose options we've already asked for. Prefetch is best-effort: a
+// failure here must never surface, because the click path will request the same
+// data again and owns the error reporting.
+const _prefetchedGameIds = new Set();
+
+function prefetchLaunchOptionsFromEvent(e) {
+  const button = e.target.closest?.('.launch-options-btn');
+  if (!button) return;
+  const gameId = button.dataset.gameId;
+  if (!gameId || _prefetchedGameIds.has(gameId)) return;
+  _prefetchedGameIds.add(gameId);
+  fetchLaunchOptions(gameId, true).catch(() => {
+    // Let the click retry from scratch rather than caching a failure
+    _prefetchedGameIds.delete(gameId);
+  });
+}
+
 function setupTableEventListeners() {
   if (TableState.isInitialized) return;
 
   document.addEventListener('click', handleLaunchOptionsClick);
   document.addEventListener('click', _handleCloseAllDelegated);
   document.addEventListener('click', handleSortHeaderInteraction);
+
+  // Warm the cache before the click. The options for a game are ~130ms away and
+  // never change mid-session, so starting the fetch on intent — pointer over the
+  // button, or a finger landing on it — usually means the data is already in the
+  // LRU by the time the click resolves, and the row opens with no wait at all.
+  // `mouseover` rather than `mouseenter` because only the former bubbles to a
+  // delegated listener; the id guard makes repeats free.
+  document.addEventListener('mouseover', prefetchLaunchOptionsFromEvent);
+  document.addEventListener('touchstart', prefetchLaunchOptionsFromEvent, { passive: true });
+  document.addEventListener('focusin', prefetchLaunchOptionsFromEvent);
   document.addEventListener('keydown', _handleEscapeKey);
   document.addEventListener('keydown', (e) => {
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('th[data-sort]')) {

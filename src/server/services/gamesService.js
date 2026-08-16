@@ -176,15 +176,18 @@ export async function fetchGames({
       });
     }
 
-    // Fetch facets for dynamic UI generation
-    const facets = await getFacets(searchTerm);
-
+    // Deliberately does NOT compute facets. It used to end with
+    // `await getFacets(searchTerm)`, which made every listing request pay for
+    // the whole filter-dropdown fan-out — seven queries, one of which pages
+    // through all 16k junction rows. Nothing ever read the facets off this
+    // response (the client fetches /api/games/facets separately on boot), so
+    // it was ~2.7s and ~3.9KB spent on a field with no reader. Worse, a search
+    // term bypassed the facets cache, so every search paid it in full.
     return {
       games,
       total: count || 0,
       totalPages: Math.ceil((count || 0) / limit),
       currentPage: page,
-      facets,
       hasNextPage: page < Math.ceil((count || 0) / limit),
       hasPrevPage: page > 1
     };
@@ -697,28 +700,40 @@ export async function getFacets(searchQuery = '') {
  */
 async function getPopularOptions(topN = 8) {
   try {
-    // Each game_launch_options row is a unique (game, option) link, so counting
-    // rows per command == number of games that use that command.
-    const rows = await fetchAllRows((from, to) =>
-      supabase
-        .from('game_launch_options')
-        .select('launch_option_id, public_launch_options!inner(command, description)')
-        .order('launch_option_id', { ascending: true })
-        .range(from, to)
-    );
+    // Each game_launch_options row is a unique (game, option) link, so the
+    // number of junction rows per option == the number of games using it.
+    //
+    // PostgREST returns that count per row as an embedded resource, which makes
+    // this a single ~170ms query over 421 published options. It used to page
+    // through the junction table instead — all 16k rows in 17 sequential
+    // round trips, ~2.4s — to compute a list of eight. Server-side GROUP BY is
+    // not available (this instance rejects aggregate functions), but the
+    // embedded count is a different feature and is allowed.
+    //
+    // Ordering happens here rather than in the query: `order` on a referenced
+    // table's count is accepted and then quietly ignored, so relying on it
+    // would return eight arbitrary options. 421 rows is nothing to sort.
+    const { data, error } = await supabase
+      .from('public_launch_options')
+      .select('command, description, game_launch_options(count)');
 
-    const counts = {};
-    rows.forEach((r) => {
-      const lo = r.public_launch_options;
-      if (!lo || !lo.command) return;
-      if (!counts[lo.command]) {
-        counts[lo.command] = { command: lo.command, description: lo.description || '', count: 0 };
-      }
-      counts[lo.command].count++;
-    });
+    if (error) {
+      console.error('Error fetching popular options:', error);
+      return [];
+    }
 
-    return Object.values(counts)
-      .sort((a, b) => b.count - a.count)
+    return (data || [])
+      .map((row) => ({
+        command: row.command,
+        description: row.description || '',
+        count: row.game_launch_options?.[0]?.count ?? 0
+      }))
+      .filter((o) => o.command && o.count > 0)
+      // Ties are common — the Unity render-backend flags all sit on 817 games —
+      // and without a tie-break the list reshuffles every time the cache warms,
+      // which reads as the page changing under you. Command order is arbitrary
+      // but stable, which is what a browse list needs.
+      .sort((a, b) => b.count - a.count || a.command.localeCompare(b.command))
       .slice(0, topN);
   } catch (error) {
     console.error('Error in getPopularOptions:', error);

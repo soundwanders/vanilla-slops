@@ -232,8 +232,9 @@ export async function fetchGames({
       totalPages: typeof data.totalPages === 'number' ? data.totalPages : 0,
       currentPage: typeof data.currentPage === 'number' ? data.currentPage : page,
       hasNextPage: typeof data.hasNextPage === 'boolean' ? data.hasNextPage : false,
-      hasPrevPage: typeof data.hasPrevPage === 'boolean' ? data.hasPrevPage : false,
-      facets: data.facets || {}
+      hasPrevPage: typeof data.hasPrevPage === 'boolean' ? data.hasPrevPage : false
+      // No `facets` — the listing endpoint no longer returns them, and nothing
+      // downstream read this key. fetchFacets() is the one source.
     };
     
     // Cache the response

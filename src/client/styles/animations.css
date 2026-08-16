@@ -715,6 +715,68 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
+/* ---------------------------------------------------------------------------
+   Launch-options expansion: placeholder + open transition
+
+   The expansion used to be dead air followed by a whole section appearing at
+   once. Two pieces fix that. The row now opens immediately holding the
+   skeleton below, and the cell settles in rather than snapping.
+
+   The skeleton's fade-in is deliberately delayed: options are prefetched on
+   hover, so most expansions resolve from cache in a few milliseconds and the
+   placeholder is replaced before it ever becomes visible. Delaying the fade
+   means the fast path shows no flash of loading state at all, while a genuinely
+   slow request still gets an answer within ~150ms of the click. This is why the
+   delay is in CSS and not a setTimeout — there is no timer to cancel, and no
+   way for a race to leave a spinner stranded on screen.
+   --------------------------------------------------------------------------- */
+.lo-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  animation: fadeIn 180ms ease 140ms both;
+}
+
+.lo-skeleton-bar {
+  height: 2.5rem;
+  border-radius: var(--radius-md, 8px);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    var(--color-interactive-hover) 50%,
+    var(--color-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Bars 2 and 3 are shorter so the block reads as content, not as a panel.
+   Three is a shape, not a prediction — the real count is unknown at this point
+   and guessing would make the layout jump when the options arrive. */
+.lo-skeleton-bar:nth-child(3) { width: 72%; }
+.lo-skeleton-bar:nth-child(4) { width: 48%; }
+
+/* Applies to the placeholder and to the real content: innerHTML replaces the
+   cell, so a fresh element runs the animation each time. */
+.launch-options-row.is-open .launch-options-cell {
+  animation: launchOptionsOpen 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes launchOptionsOpen {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Motion is decoration here — the row still opens instantly, it just stops
+   sliding, and the skeleton appears without a fade rather than not at all. */
+@media (prefers-reduced-motion: reduce) {
+  .lo-skeleton,
+  .launch-options-row.is-open .launch-options-cell {
+    animation: none;
+  }
+  .lo-skeleton-bar { animation: none; }
+}
+
 /* Column width variation */
 .skeleton-row td:nth-child(1) .skeleton-cell { width: 80%; }
 .skeleton-row td:nth-child(2) .skeleton-cell { width: 65%; }

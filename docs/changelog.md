@@ -20,6 +20,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.15] - 2026-08-15 — The cold start
+
+### Where three seconds actually went
+
+The catalogue took up to three seconds to appear, on every device and every
+connection, and searching took just under three seconds *every single time* —
+warm, cold, ethernet, 4G. That consistency was the clue: a problem that ignores
+the network is not a network problem.
+
+It was one line. `fetchGames` ended by computing the filter facets and attaching
+them to its response. Facets fan out into seven queries, and one of them counted
+launch-option popularity by paging the entire 16,466-row junction table in
+seventeen sequential round trips — to produce a list of eight. Every request for
+a page of games paid for that.
+
+Nothing ever read the result. The only two references were the server attaching
+the field and the client copying it into an object nobody consulted. So the most
+expensive thing the listing did was assemble a value with no reader.
+
+Search was worse than the rest because the facets cache is skipped whenever a
+search term is present, on the reasoning that facets should reflect the search.
+That made the cache useless exactly when someone was waiting.
+
+And the cache barely helped anyway. It lives in module scope, and every cold
+serverless invocation gets a fresh module scope — so on a site with modest
+traffic it was empty far more often than it was warm. The 3-second load was not
+an occasional unlucky request. It was the normal one.
+
+| | before | after |
+|---|---|---|
+| Catalogue, cold start | 3.00s | **1.04s** |
+| **Search** | **2.71s** | **0.25s** |
+| Filter dropdowns, cold start | 2.60s | 0.56s |
+| Response size | 11.0KB | **7.1KB** |
+
+### Changed
+
+- **The listing no longer computes facets.** Filter dropdowns come from
+  `/api/games/facets`, which is what the site was already calling on load. This
+  is the fix behind almost all of the numbers above, and it is a deletion.
+- **Popular options are counted in one query instead of seventeen.** The
+  database can return each option's link count alongside the option, which
+  turns a full scan of the junction table into a single request over 421 rows —
+  2,820ms to 166ms. The eight results are identical; that was checked against
+  the old implementation before the old one was removed. They are now sorted
+  with a tie-break, because several flags sit on exactly the same number of
+  games and the list was quietly reordering itself every time the cache warmed.
+- **Catalogue responses are cacheable at the edge.** An in-process cache cannot
+  survive a cold start, so it was doing the least good precisely when it was
+  needed most. The CDN has no such problem: one visitor absorbs the cost and
+  everyone else gets an edge hit, and `stale-while-revalidate` means no one ever
+  waits for a refresh. Browsers still revalidate, so your own filter changes are
+  never answered from a stale copy.
+- **The table and the filter dropdowns now load at the same time.** They were
+  sequential, so the games table could not appear until two requests had
+  completed one after the other — on a cold function, two waits instead of one.
+
+### Fixed
+
+- **Expanding a game's launch options no longer feels like a stall.** The
+  suspicion was that games with many options were slow to load. They are not:
+  thirty-three options cost 23ms more than one, because the cost is per-request,
+  not per-option. There was nothing to make faster — the delay was a round trip
+  during which nothing on screen acknowledged the click, followed by an entire
+  section appearing at once.
+
+  Three changes, none of which touch the query. Options are **prefetched when
+  the pointer reaches the button** (or a finger lands on it, or it takes keyboard
+  focus), so by the time the click resolves the data is usually already in hand.
+  The row **opens immediately** holding a placeholder, so the click has a visible
+  result before the data arrives. And the content **settles in** rather than
+  snapping into place.
+
+  The placeholder's fade-in is delayed slightly, which means a prefetched
+  expansion replaces it before it is ever seen — no flash of loading state on the
+  fast path, and no dead air on the slow one. That delay lives in CSS rather than
+  in a timer, so there is no race that can leave a spinner stranded.
+
+### Removed
+
+- **A dead duplicate router** (`src/server/routes.js`). Nothing imported it, and
+  its own imports pointed at a directory that does not exist, so it would have
+  thrown if anything ever had.
+
 ## [1.2.14] - 2026-08-15 — Reading the published catalogue
 
 ### A partial switch looks exactly like a finished one

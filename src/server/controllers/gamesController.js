@@ -12,6 +12,33 @@ import {
  * Handles all game-related HTTP requests and coordinates with the service layer
  */
 
+/**
+ * Let the CDN answer for read-only catalogue data.
+ *
+ * `s-maxage` targets shared caches (Vercel's edge) rather than the browser, so
+ * a user still sees fresh data after their own filter change while repeat and
+ * first-time visitors get an edge hit instead of a cold function. The catalogue
+ * only changes when the scraper is run by hand, so short staleness is cheap.
+ *
+ * `stale-while-revalidate` is the part that matters for cold starts: once the
+ * window lapses the edge serves the stale copy immediately and refreshes behind
+ * the request, so nobody is made to wait for a re-computation.
+ *
+ * @param {Object} res - Express response
+ * @param {number} sMaxAge - Seconds the edge may serve without revalidating
+ * @param {number} swr - Extra seconds it may serve stale while refreshing
+ */
+function setListCacheHeaders(res, sMaxAge, swr) {
+  // Dev servers have no CDN in front and caching only hides fresh data
+  if (process.env.NODE_ENV !== 'production') {
+    res.set('Cache-Control', 'no-store');
+    return;
+  }
+  // max-age=0 keeps the *browser* revalidating, so a user's own filter change
+  // is never answered from their local cache; only the shared edge holds copies.
+  res.set('Cache-Control', `public, max-age=0, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`);
+}
+
 // ============================================================================
 // LOGGING UTILITIES
 // ============================================================================
@@ -245,7 +272,8 @@ export async function gamesController(req, res) {
       currentPage: result.currentPage || 1,
       hasNextPage: result.hasNextPage || false,
       hasPrevPage: result.hasPrevPage || false,
-      facets: result.facets || {},
+      // No `facets` key — the listing no longer computes them and nothing read
+      // them here. Filter dropdowns come from GET /api/games/facets.
       // Debug info (remove in production)
       ...(process.env.NODE_ENV === 'development' && {
         debug: {
@@ -267,6 +295,11 @@ export async function gamesController(req, res) {
       responseSize: response.games.length,
       total: response.total
     });
+
+    // Shorter window than the facets: a listing URL is far more specific (every
+    // filter combination is its own cache entry), so the edge hit rate is lower
+    // and the value is mostly in absorbing repeat traffic to the front page.
+    setListCacheHeaders(res, 60, 600);
 
     res.json(response);
 
@@ -320,11 +353,20 @@ export async function filterFacetsController(req, res) {
     
     const facets = await getFacets(searchQuery);
     
-    logger.success('FACETS', 'Facets retrieved', { 
+    logger.success('FACETS', 'Facets retrieved', {
       facetCount: Object.keys(facets).length,
       categories: Object.keys(facets)
     });
-    
+
+    // The in-process facets cache dies with every cold serverless invocation,
+    // so on a low-traffic site it is empty more often than it is warm. A CDN
+    // cache does not have that problem: one visitor pays for the computation
+    // and everyone else gets an edge hit. Facets are near-static — they only
+    // move when the scraper runs, which is on-demand — so a stale response for
+    // a few minutes costs a filter dropdown that is briefly missing a value,
+    // and stale-while-revalidate means nobody waits for the refresh.
+    setListCacheHeaders(res, 300, 3600);
+
     res.json(facets);
   } catch (err) {
     logger.error('FACETS', 'Failed to fetch facets', { error: err.message });
