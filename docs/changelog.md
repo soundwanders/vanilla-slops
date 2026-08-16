@@ -20,6 +20,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.14] - 2026-08-15 — Reading the published catalogue
+
+### A partial switch looks exactly like a finished one
+
+The database grew a rule this round that the pipeline had only been following by
+hand: a row that cannot answer *what confirmed this is real?* does not ship. That
+rule lives in two views — `public_launch_options`, which hides 97 of 518 option
+rows, and `public_games`, which hides 6 of 2,452 games that Steam publishes twice
+under different App IDs.
+
+The site was reading one of them, in one place. `getCatalogStats` counted through
+`public_launch_options` while every query that actually served data still read
+the tables underneath. So the headline figures described the published catalogue
+and the catalogue itself didn't — the difference applied at the only spot where
+it was invisible. Nothing errored, no page looked broken, and the numbers agreed
+with themselves. That is what made it worth going after: there was no symptom to
+notice.
+
+This release finishes the switch. Every read the site serves now goes through a
+view, and the published totals are **2,446 games and 421 launch options**.
+
+### Fixed
+
+- **Duplicate games no longer appear twice in the catalogue.** Steam publishes
+  Counter-Strike: Condition Zero as both app 80 and app 100, and Black Ops II as
+  both 202970 and 202990 — same title, same options, two rows. The listing showed
+  each of them twice. Searching "Condition Zero" now returns one game.
+- **A URL for the hidden App ID still works.** `/game/100` redirects to the
+  canonical game rather than disappearing, which is the same "one URL per game"
+  rule the slug redirect already applied. All six duplicate IDs resolve.
+- **Filter chips can no longer offer a value that returns nothing.** The category
+  and risk facets were built from the whole options table, so a value carried
+  only by unpublished rows could appear in the dropdown and then match no games.
+  The same was true of the release-year and option-count facets.
+- **Game pages no longer show options with no provenance.** Joining through the
+  junction table can't reach an *unlinked* row, but it can still reach an
+  unsourced one — the view is what keeps a page from listing an option the
+  catalogue can't say where it found.
+- **The sitemap no longer publishes duplicate URLs.** It was generated from the
+  games table, so both App IDs of the same game were submitted for indexing.
+- **The copy button was handing out a string that does nothing.** `gamemode` and
+  `mangohud` are stored as bare tool names, and Steam substitutes `%command%`
+  with the game's executable — so a wrapper tool has to wrap it
+  (`gamemoderun %command%`). Pasted as stored, neither did anything, across
+  roughly 4,000 game-option links. The button now offers the working form.
+
+  The rule is deliberately narrow: it triggers only when a usage example wraps
+  `%command%`, never on a list of tool names, so a wrapper documented later needs
+  no code change — and, more importantly, an option whose example is merely
+  *illustrative* is left alone. `-w 640` documents `-w 1920 -h 1080`; copying
+  that would have handed over a different resolution than the one clicked.
+
+### Changed
+
+- **`npm run db:verify` now checks both views**, and reports a zero count as a
+  failure rather than a pass — a missing GRANT surfaces as an empty result, not
+  as an error, which is precisely the case worth catching.
+- **Vocabulary note:** `source = 'manual_curation'` no longer exists; those rows
+  became PCGamingWiki, Steam Community and a new `Universal` value. Nothing in
+  the UI was keyed on it, so no filter broke — the source label renderer handles
+  it generically.
+- Corrected four code comments that the data has outgrown — `usage_example` and
+  `effect` described as unpopulated (46 rows, covering 90% of game-option pairs),
+  freshness signals as null across the catalogue (390 of 421), `source_url` as
+  "~50 rows" (411 of 421), and the metadata badges as reading columns not yet in
+  the query.
+
 ## [1.2.13] - 2026-08-14 — Clearing filters actually clears them
 
 ### The bug that only happened sometimes

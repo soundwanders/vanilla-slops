@@ -71,6 +71,30 @@ async function verifyDatabase() {
       console.log(`   📝 Sample options:`, options?.map(o => `${o.command}: ${o.description?.substring(0, 50)}...`));
     }
     
+    // 3b. Check the published views — what the site actually reads.
+    // A missing GRANT shows up here as an empty result rather than an error,
+    // so a zero count is reported as a failure, not a pass.
+    console.log('\n🔎 Checking PUBLISHED VIEWS (what the site reads)...');
+    for (const [view, table, stored] of [
+      ['public_games', 'games', gamesCount],
+      ['public_launch_options', 'launch_options', optionsCount]
+    ]) {
+      const { error: viewError, count: viewCount } = await supabase
+        .from(view)
+        .select('*', { count: 'exact', head: true });
+
+      if (viewError) {
+        console.log(`   ❌ ${view}: ${viewError.message}`);
+        console.log(`      💡 Re-apply the GRANTs in the Supabase SQL editor`);
+      } else if (!viewCount) {
+        console.log(`   ❌ ${view}: 0 rows — a missing GRANT reads as empty, not as an error`);
+      } else {
+        const hidden = typeof stored === 'number' ? stored - viewCount : null;
+        console.log(`   ✅ ${view}: ${viewCount} published`
+          + (hidden === null ? '' : ` (${hidden} of ${stored} hidden in ${table})`));
+      }
+    }
+
     // 4. Test a specific game's launch options flow
     if (games?.length > 0 && !junctionError && !optionsError) {
       console.log('\n🧪 Testing launch options flow for a sample game...');

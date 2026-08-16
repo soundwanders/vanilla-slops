@@ -59,3 +59,28 @@ export function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+/**
+ * The string a user should actually paste into Steam.
+ *
+ * Usually that is the stored command. The exception is a wrapper tool: Steam
+ * substitutes `%command%` with the game's executable, so `gamemode` and
+ * `mangohud` are stored as bare tool names that do nothing on their own — the
+ * working form is `gamemoderun %command%` / `mangohud %command%`, and it lives
+ * in usage_example. Those two carry ~4,000 game-option links between them, a
+ * quarter of the catalogue, so the difference is not a corner case.
+ *
+ * Keyed on the example wrapping `%command%` rather than on a hardcoded list of
+ * tool names, so a third wrapper documented later needs no code change. It must
+ * stay this narrow: most usage examples are illustrative rather than literal
+ * (`-w 640`'s example is `-w 1920 -h 1080`), so copying the example wholesale
+ * would hand over a different setting than the one that was clicked.
+ *
+ * @param {Object} option - Launch option record
+ * @param {string} command - The stored command, already resolved
+ * @returns {string} The command as it should be pasted
+ */
+export function pasteableCommand(option, command) {
+  const example = option.usage_example || '';
+  return example.includes('%command%') ? example : command;
+}

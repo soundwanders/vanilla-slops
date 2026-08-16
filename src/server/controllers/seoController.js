@@ -120,6 +120,16 @@ export async function gamePageController(req, res) {
   }
   if (!game) return res.status(404).type('html').send(render404());
 
+  // Steam publishes some products under two App IDs (Condition Zero is 80 and
+  // 100). `duplicate_of` names the surviving row, and public_games hides the
+  // other — but this page still reads the table, precisely so a link to the
+  // hidden ID can be honoured instead of 404ing. Send it to the canonical game,
+  // which is the same "one URL per game" rule the slug redirect below applies;
+  // the slug-less target picks up its own 301 from that rule.
+  if (game.duplicate_of) {
+    return res.redirect(301, `/game/${game.duplicate_of}`);
+  }
+
   // Redirect to the canonical slug if it's missing or wrong (one URL per game)
   const canonicalSlug = slugify(game.title);
   if (req.params.slug !== canonicalSlug) {
@@ -277,7 +287,10 @@ const HOW_TO_APPLY_HTML = `
       <p class="how-to-warning"><strong>Worth knowing:</strong> a launch option can break a game's rendering, reset local settings, or trip anti-cheat in multiplayer. Read the description first, add one at a time, and treat anything rated above <strong>Safe</strong> as a deliberate experiment.</p>
     </section>`;
 
-// Turn a raw source slug (e.g. "manual_curation") into a readable label.
+// Turn a raw source slug into a readable label. `manual_curation` was the only
+// underscored value and it is gone — its rows became PCGamingWiki, Steam
+// Community and Universal — so this is now defensive against a future slug
+// rather than something the current data exercises.
 function humanizeSource(src) {
   const s = (src || 'Community').trim();
   if (s.includes('_')) {
@@ -306,6 +319,14 @@ function formatAddedDate(iso) {
 
 function renderOption(opt) {
   const command = opt.command || opt.option || '';
+  // Wrapper tools (`gamemode`, `mangohud`) store a bare tool name that does
+  // nothing pasted on its own — Steam substitutes %command% with the executable,
+  // so the working form is the usage example. Same rule as the SPA's
+  // pasteableCommand(); keyed on the example wrapping %command% rather than a
+  // list of tool names, and kept narrow because most examples are illustrative
+  // (`-w 640` documents `-w 1920 -h 1080`) rather than literal.
+  const pasteable = (opt.usage_example || '').includes('%command%') ? opt.usage_example : command;
+  const showExample = opt.usage_example && opt.usage_example !== pasteable;
   // Drop placeholder/non-answer descriptions so the source link shows instead.
   const rawDesc = (opt.description || '').trim();
   const isPlaceholder = ['no description available', 'launch option from pcgamingwiki'].includes(rawDesc.toLowerCase());
@@ -314,15 +335,16 @@ function renderOption(opt) {
   const verifiedDate = formatAddedDate(opt.last_verified_at);
   // `verified` retired in favour of risk_level + future community votes
   const votes = opt.upvotes > 0 ? `<span class="option-votes">👍 ${opt.upvotes}</span>` : '';
-  // Defensive metadata badges — undefined until the slop-scraper columns are live
-  // and added to the query (see gamesService.js). Render nothing when absent.
+  // Metadata badges. risk_level is set on every published row; categories can be
+  // absent or Uncategorized (36% of rows — obscure game-specific flags, not a
+  // classifier gap). Render nothing when absent.
   const risk = RISK_LABELS[opt.risk_level] ? `<span class="risk-badge risk-${opt.risk_level}">${RISK_LABELS[opt.risk_level]}</span>` : '';
   const cats = Array.isArray(opt.categories)
     ? opt.categories.filter(c => c && c !== 'Uncategorized').map(c => `<span class="cat-chip">${escapeHtml(c)}</span>`).join('')
     : '';
   return `  <li class="launch-option">
-    <div class="option-command" data-command="${escapeHtml(command)}" role="button" tabindex="0" aria-label="Copy launch option: ${escapeHtml(command)}">
-      <code>${escapeHtml(command)}</code>
+    <div class="option-command" data-command="${escapeHtml(pasteable)}" role="button" tabindex="0" aria-label="Copy launch option: ${escapeHtml(pasteable)}">
+      <code>${escapeHtml(pasteable)}</code>
       <span class="copy-indicator" aria-hidden="true">
         <svg class="ci-icon ci-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         <svg class="ci-icon ci-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -330,10 +352,10 @@ function renderOption(opt) {
       </span>
     </div>
     ${description ? `<div class="option-description">${escapeHtml(description)}</div>` : ''}
-    ${(opt.effect || opt.usage_example) ? `
+    ${(opt.effect || showExample) ? `
     <dl class="option-usage">
       ${opt.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(opt.effect)}</dd></div>` : ''}
-      ${opt.usage_example ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(opt.usage_example)}</code></dd></div>` : ''}
+      ${showExample ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(opt.usage_example)}</code></dd></div>` : ''}
     </dl>` : ''}
     ${cats ? `<div class="option-cats">${cats}</div>` : ''}
     <div class="option-meta">

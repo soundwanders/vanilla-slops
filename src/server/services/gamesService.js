@@ -117,7 +117,7 @@ export async function fetchGames({
     // embedded rows are stripped before returning; the SPA fetches options
     // separately. Without an attribute filter we keep the lean `*` select.
     const selectClause = hasOptionAttrFilter
-      ? '*, game_launch_options!inner(launch_options!inner(risk_level, categories))'
+      ? '*, game_launch_options!inner(public_launch_options!inner(risk_level, categories))'
       : '*';
 
     // Every query variant below starts from the same filtered base. The
@@ -125,7 +125,7 @@ export async function fetchGames({
     // and a Supabase query builder can only be awaited once.
     const buildFilteredQuery = (countOption) => {
       let q = supabase
-        .from('games')
+        .from('public_games')
         .select(selectClause, countOption ? { count: 'exact' } : undefined);
 
       q = applySearchFilters(q, {
@@ -294,10 +294,11 @@ function applySearchFilters(query, filters) {
 
 /**
  * Applies launch-option attribute filters to an embedded-resource query.
- * Both conditions target the same inner-joined launch_options row, so passing
- * category AND risk means "has an option that is both" — the intuitive reading.
- * Assumes the query was built with the game_launch_options!inner(launch_options!inner(...))
- * embed; a no-op when neither filter is set.
+ * Both conditions target the same inner-joined option row, so passing category
+ * AND risk means "has an option that is both" — the intuitive reading.
+ * Assumes the query was built with the
+ * game_launch_options!inner(public_launch_options!inner(...)) embed;
+ * a no-op when neither filter is set.
  *
  * @param {Object} query - Supabase query builder with the options embed
  * @param {Object} attrs
@@ -306,18 +307,21 @@ function applySearchFilters(query, filters) {
  * @returns {Object} Modified query
  */
 function applyOptionAttributeFilter(query, { category, risk, command } = {}) {
+  // Paths address the embedded resource in fetchGames' select clause, which is
+  // public_launch_options — so a filter can never match on a row the catalogue
+  // does not publish, and a facet value can never return games we can't back up.
   if (risk) {
-    query = query.eq('game_launch_options.launch_options.risk_level', risk);
+    query = query.eq('game_launch_options.public_launch_options.risk_level', risk);
   }
   if (category) {
     // categories is text[]; `contains` matches rows whose array includes the value
-    query = query.contains('game_launch_options.launch_options.categories', [category]);
+    query = query.contains('game_launch_options.public_launch_options.categories', [category]);
   }
   if (command) {
     // Command search (feedback: "search by the actual launch option"): games
     // that have an option whose command matches. Substring so partial/typed
     // queries work; the suggestion dropdown resolves fuzzy intent to a command.
-    query = query.ilike('game_launch_options.launch_options.command', `%${command}%`);
+    query = query.ilike('game_launch_options.public_launch_options.command', `%${command}%`);
   }
   return query;
 }
@@ -466,7 +470,7 @@ export async function getSearchSuggestions(query, limit = 10) {
     if (!safe) return [];
 
     const { data, error } = await supabase
-      .from('games')
+      .from('public_games')
       .select('title, developer, publisher')
       .or(`title.ilike.%${safe}%,developer.ilike.%${safe}%,publisher.ilike.%${safe}%`)
       .limit(limit * 3); // Get more to filter duplicates
@@ -511,14 +515,15 @@ export async function getSearchSuggestions(query, limit = 10) {
     // Launch-option matches — the discovery path. Match on the command AND the
     // description, so someone who doesn't know the flag can type what they want
     // ("skip intro", "vsync") and still find `-novid`, etc.
-    // `!inner` on the junction table excludes orphan options (0 linked games):
-    // an option that no game actually uses would yield 0 results if picked, so
-    // it doesn't belong in suggestions. This is dynamic and self-reversing — the
-    // filter is "has ≥1 game" at query time, not a hardcoded exclusion list, so
-    // if a game is later added with that option it becomes searchable again on
-    // its own. The embedded rows are capped at 1 (existence is all we need).
+    // Orphan options (0 linked games) would yield 0 results if picked, so they
+    // don't belong in suggestions. public_launch_options already excludes them —
+    // "linked to ≥1 game" is one of the two conditions it enforces — and the
+    // `!inner` join keeps that true independently of the view's definition. Both
+    // are dynamic: an option becomes searchable again on its own the moment a
+    // game is added with it. Embedded rows are capped at 1 (existence is all we
+    // need).
     const { data: optData } = await supabase
-      .from('launch_options')
+      .from('public_launch_options')
       .select('command, description, game_launch_options!inner(game_app_id)')
       .or(`command.ilike.%${safe}%,description.ilike.%${safe}%`)
       .limit(1, { referencedTable: 'game_launch_options' })
@@ -584,7 +589,7 @@ export async function getCatalogStats() {
 
   try {
     const [games, options, newest] = await Promise.all([
-      supabase.from('games').select('*', { count: 'exact', head: true }),
+      supabase.from('public_games').select('*', { count: 'exact', head: true }),
       supabase.from('public_launch_options').select('*', { count: 'exact', head: true }),
       supabase.from('public_launch_options')
         .select('created_at')
@@ -697,14 +702,14 @@ async function getPopularOptions(topN = 8) {
     const rows = await fetchAllRows((from, to) =>
       supabase
         .from('game_launch_options')
-        .select('launch_option_id, launch_options!inner(command, description)')
+        .select('launch_option_id, public_launch_options!inner(command, description)')
         .order('launch_option_id', { ascending: true })
         .range(from, to)
     );
 
     const counts = {};
     rows.forEach((r) => {
-      const lo = r.launch_options;
+      const lo = r.public_launch_options;
       if (!lo || !lo.command) return;
       if (!counts[lo.command]) {
         counts[lo.command] = { command: lo.command, description: lo.description || '', count: 0 };
@@ -723,8 +728,10 @@ async function getPopularOptions(topN = 8) {
 
 /**
  * Get the launch-option attribute facets that drive the category and risk
- * filters (feedback #1). Reads directly from launch_options (well under the
- * 1000-row cap) and aggregates in JS. Counts are per-option (how many options
+ * filters (feedback #1). Reads public_launch_options (well under the 1000-row
+ * cap) and aggregates in JS — reading the table instead would let a chip offer
+ * a value only unpublished rows carry, which returns nothing when picked.
+ * Counts are per-option (how many options
  * carry the value), used only to order the dropdowns — the filtered results are
  * games, so counts are not surfaced as game totals in the UI.
  *
@@ -733,7 +740,7 @@ async function getPopularOptions(topN = 8) {
 async function getOptionAttributeFacets() {
   try {
     const { data, error } = await supabase
-      .from('launch_options')
+      .from('public_launch_options')
       .select('risk_level, categories');
 
     if (error) {
@@ -802,10 +809,10 @@ async function fetchAllRows(buildQuery) {
 
 async function getFacetValues(field, searchQuery = '') {
   try {
-    // Counts cover every game, matching the default view (all games shown)
+    // Counts cover every published game, matching the default view
     const data = await fetchAllRows((from, to) => {
       let query = supabase
-        .from('games')
+        .from('public_games')
         .select(field);
 
       // Apply search filter if provided
@@ -850,7 +857,7 @@ async function getFacetValues(field, searchQuery = '') {
 async function getOptionsCountRanges() {
   try {
     const { data, error } = await supabase
-      .from('games')
+      .from('public_games')
       .select('total_options_count')
       .not('total_options_count', 'is', null);
 
@@ -877,10 +884,10 @@ async function getOptionsCountRanges() {
  */
 async function getReleaseYears(searchQuery = '') {
   try {
-    // Covers every game, paged past the 1000-row cap
+    // Covers every published game, paged past the 1000-row cap
     const data = await fetchAllRows((from, to) => {
       let query = supabase
-        .from('games')
+        .from('public_games')
         .select('release_date');
 
       if (searchQuery && searchQuery.trim()) {
@@ -952,10 +959,10 @@ export async function getGameStatistics(filters = {}) {
     // Two count-only queries (head:true transfers no rows). Counting rows in JS
     // instead would silently undercount — Supabase caps returned rows at 1000,
     // so `withOptions` would stop at 1000 while `count` stayed exact.
-    let totalQuery = supabase.from('games').select('*', { count: 'exact', head: true });
+    let totalQuery = supabase.from('public_games').select('*', { count: 'exact', head: true });
     totalQuery = applySearchFilters(totalQuery, baseFilters);
 
-    let withOptionsQuery = supabase.from('games').select('*', { count: 'exact', head: true });
+    let withOptionsQuery = supabase.from('public_games').select('*', { count: 'exact', head: true });
     withOptionsQuery = applySearchFilters(withOptionsQuery, baseFilters).gt('total_options_count', 0);
 
     const [totalRes, withRes] = await Promise.all([totalQuery, withOptionsQuery]);
@@ -1001,7 +1008,7 @@ export async function getGamesForSitemap() {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data, error } = await supabase
-      .from('games')
+      .from('public_games')
       .select('app_id, title, updated_at')
       .gt('total_options_count', 0)
       .order('app_id', { ascending: true })
@@ -1044,6 +1051,11 @@ export async function getGamesForSitemap() {
  */
 export async function fetchGameWithLaunchOptions(gameId) {
   try {
+    // Deliberately the table, not public_games: this is the only read that must
+    // still see a hidden duplicate row. A link to app 100 (Condition Zero's
+    // second App ID) should redirect to the canonical game, and it can't do that
+    // if the lookup pretends the row doesn't exist. `duplicate_of` comes back
+    // with the row and tells the caller where to send it.
     const { data: game, error: gameError } = await supabase
       .from('games')
       .select('*')
@@ -1092,13 +1104,16 @@ export async function fetchGameWithLaunchOptions(gameId) {
  */
 export async function fetchLaunchOptionsForGame(gameId) {
   try {
-    // Single query: join game_launch_options → launch_options via nested select.
+    // Single query: join game_launch_options → public_launch_options via nested
+    // select. The junction can only reach rows that exist, but it can still
+    // reach an unsourced one — so the view is what keeps a game page from
+    // showing an option the catalogue can't say where it found.
     // risk_level / categories / engine_compatibility come from the slop-scraper
     // metadata migration and drive the badge rendering on the frontend.
     const { data, error } = await supabase
       .from('game_launch_options')
       .select(`
-        launch_options (
+        public_launch_options (
           id,
           command,
           description,
@@ -1126,7 +1141,7 @@ export async function fetchLaunchOptionsForGame(gameId) {
     if (!data || data.length === 0) return [];
 
     return data
-      .map(row => row.launch_options)
+      .map(row => row.public_launch_options)
       .filter(Boolean)
       .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))
       .map(option => ({
@@ -1135,8 +1150,9 @@ export async function fetchLaunchOptionsForGame(gameId) {
         command: option.command,
         description: option.description || 'No description available',
         source: option.source || 'Community',
-        // Nullable — only ~50 rows (ProtonDB) have a URL so far; grows as the
-        // scraper re-encounters options. null means "no link", not "broken".
+        // 411 of 421 published rows carry a URL, and every published row with no
+        // description carries one — so the "no description" fallback can always
+        // render a link. null still means "no link", not "broken".
         source_url: option.source_url || null,
         upvotes: option.upvotes || 0,
         downvotes: option.downvotes || 0,
@@ -1145,12 +1161,14 @@ export async function fetchLaunchOptionsForGame(gameId) {
         categories: option.categories || [],
         engine_compatibility: option.engine_compatibility || [],
         created_at: option.created_at,
-        // Freshness signals — currently null across the catalog; populate as
-        // --rescan passes run. null must read as "not yet re-checked", not stale.
+        // Freshness signals — populated on 390 of 421 published rows. null must
+        // read as "not yet re-checked", not stale.
         last_verified_at: option.last_verified_at || null,
         verification_method: option.verification_method || null,
-        // Per-option usage docs — columns exist but the scraper doesn't populate
-        // them yet, so these are null for now; the UI renders them only when set.
+        // Per-option usage docs, from the curated flag dictionary only. Set on
+        // 46 rows — but those cover 90% of game-option pairs, because the
+        // documented flags are the ones attached to the most games. Rendered
+        // only when set.
         usage_example: option.usage_example || null,
         effect: option.effect || null
       }));

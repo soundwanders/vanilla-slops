@@ -1,6 +1,6 @@
 import { fetchLaunchOptions } from '../api.js';
 import { MOBILE_BREAKPOINT } from '../constants.js';
-import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml } from './table-shared.js';
+import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml, pasteableCommand } from './table-shared.js';
 import {
   buffMobileTableView, buffMobileTouch, buffMobileOptions,
   isMobileDevice, getSafeAreaInsets, ensureTouchTarget, setupMobileEventListeners
@@ -486,24 +486,30 @@ function createLaunchOptionHTML(option) {
   const addedDate = formatAddedDate(option.created_at);
   const verifiedDate = formatAddedDate(option.last_verified_at);
   const command = option.command || option.option || '';
+  const pasteable = pasteableCommand(option, command);
   const mobileClass = TableState.isMobile ? 'mobile-launch-option' : '';
   const isMatch = optionMatchesActiveFilter(option);
   const matchFlag = isMatch
     ? '<span class="option-match-flag" title="Matches your active filter">Matches filter</span>'
     : '';
   const description = cleanDescription(option.description);
-  // Lowercased haystack for the in-expansion filter (command + description)
+  // A wrapper tool now shows its working form as the command itself, so the
+  // Example row would just repeat it — drop the row rather than print it twice.
+  const showExample = option.usage_example && option.usage_example !== pasteable;
+  // Lowercased haystack for the in-expansion filter (command + description).
+  // Keyed on the stored command so "gamemode" still matches the row that now
+  // displays as `gamemoderun %command%`.
   const searchText = escapeHtml(`${command} ${description}`.toLowerCase().trim());
 
   return `
     <li class="${CONFIG.CLASSES.launchOption} ${mobileClass}${isMatch ? ' option-match' : ''}" data-search="${searchText}">
       <div class="${CONFIG.CLASSES.optionCommand} ${TableState.isMobile ? 'mobile-command' : ''}"
-           data-command="${escapeHtml(command)}"
+           data-command="${escapeHtml(pasteable)}"
            role="button"
            tabindex="0"
-           aria-label="Copy launch option command: ${escapeHtml(command)}"
+           aria-label="Copy launch option command: ${escapeHtml(pasteable)}"
            ${TableState.touchDevice ? 'ontouchstart=""' : ''}>
-        <code>${escapeHtml(command)}</code>
+        <code>${escapeHtml(pasteable)}</code>
         <span class="copy-indicator" aria-hidden="true">
           <svg class="ci-icon ci-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           <svg class="ci-icon ci-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
@@ -515,10 +521,10 @@ function createLaunchOptionHTML(option) {
           ${escapeHtml(description)}
         </div>
       ` : ''}
-      ${(option.effect || option.usage_example) ? `
+      ${(option.effect || showExample) ? `
         <dl class="option-usage">
           ${option.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(option.effect)}</dd></div>` : ''}
-          ${option.usage_example ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(option.usage_example)}</code></dd></div>` : ''}
+          ${showExample ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(option.usage_example)}</code></dd></div>` : ''}
         </dl>
       ` : ''}
       ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
@@ -535,10 +541,10 @@ function createLaunchOptionHTML(option) {
 }
 
 // --- Metadata badges (slop-scraper columns) --------------------------------
-// Defensive: these read risk_level / categories, which do NOT exist in the query
-// yet. Until the migration is applied AND the columns are added to
-// fetchLaunchOptionsForGame's select(), the values are undefined and nothing
-// renders. See gamesService.js for the query-change marker.
+// risk_level and categories are live and selected by fetchLaunchOptionsForGame.
+// risk_level is set on every published row; categories is often absent or
+// Uncategorized (36% — genuinely obscure game-specific flags), so both renderers
+// stay defensive and emit nothing rather than an empty badge.
 const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };
 
 function renderRiskBadge(level) {
