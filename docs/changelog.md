@@ -21,17 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **A health check that runs every two hours and emails when it fails.** The
+- **A health check that runs every four hours and emails when it fails.** The
   twice-weekly Supabase keepalive became a single `Health` workflow doing both
-  jobs: it keeps the free-tier database from being paused for inactivity, and it
-  fails loudly if the live site stops serving data. A failed scheduled run emails
-  the maintainer, so uptime alerting costs nothing and adds no third-party
-  service. The site check appends a cache-busting parameter on purpose —
-  `/api/games` sets `s-maxage`, so a plain request can be answered by the edge
-  and would stay green with the function or the database dead. Each check retries
-  three times before failing so a transient blip doesn't send mail, and the
-  Supabase ping runs even when the site check fails, since the database should
-  stay awake regardless of Vercel's state.
+  jobs with one request: it keeps the free-tier database from being paused for
+  inactivity, and it fails loudly if the live site stops serving data. A failed
+  scheduled run emails the maintainer, so uptime alerting costs nothing and adds
+  no third-party service. One request covers both jobs because the check is
+  end to end — it appends a cache-busting parameter on purpose, since
+  `/api/games` sets `s-maxage` and a plain request could be answered by the edge
+  and stay green with the function or the database dead. Past the edge, the
+  listing query is not cached in process, so a response containing game data
+  proves the database answered. It retries three times before failing, so a
+  transient blip doesn't send mail.
+
+  The workflow briefly carried a second step that pinged PostgREST directly,
+  and that step is gone. It had failed on every scheduled run since 2025,
+  because the `SUPABASE_URL` and `SUPABASE_ANON_KEY` secrets it needed were
+  never set on the repository — the failure was inherited from the old keepalive
+  and only became visible once the schedule got frequent enough to notice.
+  Setting the secrets would have bought a weaker check that duplicated the
+  end-to-end one. Nothing in the workflow needs a secret now, which is the
+  reason it stays working.
 
 ### Changed
 - **The license is no longer MIT.** MIT granted anyone the right to clone this
