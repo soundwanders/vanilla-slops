@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subtitle opens by promising to say where the line is drawn, and this is that
   sentence finishing.
 
+### Fixed
+- **How It Works no longer calls the crawler open source.** Both repositories
+  publish their source to be read rather than licensing it for reuse, which is
+  source-available, not open source. The claim appeared twice, and one of the two
+  sat inside the paragraph making the site's transparency commitments — the worst
+  possible place to overstate one. What is actually true is the stronger claim
+  anyway: the crawler is published for anyone to read.
+
 ## [1.2.16] - 2026-08-15 — The copy button told the truth about the wrong flag
 
 ### Fixed

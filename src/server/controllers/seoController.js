@@ -518,9 +518,8 @@ ${movement('I', 'Where the data comes from')}
 
     <section class="hiw-section" aria-labelledby="hiw-sources">
       <h2 id="hiw-sources">Where the launch options come from</h2>
-      <p>Every option is gathered by an open-source crawler we call
-      <em>slop-scraper</em>, which reads from the places players already trust,
-      in this order:</p>
+      <p>Every option is gathered by a crawler we call <em>slop-scraper</em>,
+      which reads from the places players already trust, in this order:</p>
       <ol class="hiw-pipeline">
         <li><strong>Curated &amp; engine-specific lists.</strong> Hand-picked
           options for known engines, plus a small set we curate ourselves.</li>
@@ -641,9 +640,9 @@ ${movement('III', 'What we claim, and what we don\'t')}
       is free and needs no account. There are no ads and no analytics, the site
       sets no cookies, and the only thing it remembers is whether you picked the
       light or dark theme, which stays in your own browser. The crawler that
-      gathers the data is open source, every option names where it came from,
-      and when we don't know something we leave it blank rather than fill it in
-      with something that sounds right.</p>
+      gathers the data is published for anyone to read, every option names where
+      it came from, and when we don't know something we leave it blank rather
+      than fill it in with something that sounds right.</p>
       <p>This is a small project, maintained by hand. The goal isn't to be the
       biggest catalog; it's to be the fastest way to an option you can trust.</p>
     </section>
