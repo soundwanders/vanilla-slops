@@ -1,0 +1,79 @@
+name: Health
+
+# Runs every two hours and does two jobs at once:
+#
+#   1. Uptime. Fails loudly if the live site stops serving data, and GitHub
+#      emails on a failed scheduled run, so this is the alerting channel with no
+#      third-party service and no account to manage.
+#   2. Supabase keepalive. The free tier pauses a project after a stretch of
+#      inactivity; a request every two hours is far more than enough to prevent
+#      it, and replaces the twice-weekly ping this workflow grew out of.
+#
+# Actions minutes are unmetered on public repositories, so the run frequency
+# costs nothing. The real cost of checking more often is inbox noise from
+# transient blips, which is why each check retries before it fails.
+#
+# Caveat worth knowing: GitHub disables scheduled workflows on a public repo
+# after 60 days with no repository activity. Ordinary commits reset that clock.
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch:
+
+# Scheduled runs can be delayed under load. Don't let a backlog stack up.
+concurrency:
+  group: health
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Site serves live data end to end
+        run: |
+          # `_hc` busts the CDN cache deliberately. /api/games sets s-maxage, so
+          # without it this could be answered by a stale edge copy and stay green
+          # with the function or the database completely dead. Once every two
+          # hours, one uncached request is free in every sense that matters.
+          for attempt in 1 2 3; do
+            RESPONSE=$(curl -sS --max-time 20 -w $'\n%{http_code}' \
+              "https://launchoptions.dev/api/games?limit=1&_hc=$(date +%s)") || RESPONSE=""
+            CODE=$(printf '%s' "$RESPONSE" | tail -n1)
+            if [ "$CODE" = "200" ] && printf '%s' "$RESPONSE" | grep -q '"games"'; then
+              echo "Site OK on attempt $attempt"
+              exit 0
+            fi
+            echo "Attempt $attempt failed (status: ${CODE:-no response})"
+            if [ "$attempt" -lt 3 ]; then sleep 30; fi
+          done
+          echo "::error::launchoptions.dev did not serve game data after 3 attempts"
+          exit 1
+
+      # always() so a site outage never skips the keepalive — the database
+      # should stay awake regardless of whether Vercel is having a bad day.
+      - name: Supabase project is awake
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          for attempt in 1 2 3; do
+            CODE=$(curl -sS -o /dev/null --max-time 20 -w '%{http_code}' \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              "$SUPABASE_URL/rest/v1/games?select=count&limit=1") || CODE=""
+            if [ "$CODE" = "200" ]; then
+              echo "Supabase OK on attempt $attempt"
+              exit 0
+            fi
+            echo "Attempt $attempt failed (status: ${CODE:-no response})"
+            if [ "$attempt" -lt 3 ]; then sleep 30; fi
+          done
+          echo "::error::Supabase did not respond 200 after 3 attempts"
+          exit 1

@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **A health check that runs every two hours and emails when it fails.** The
+  twice-weekly Supabase keepalive became a single `Health` workflow doing both
+  jobs: it keeps the free-tier database from being paused for inactivity, and it
+  fails loudly if the live site stops serving data. A failed scheduled run emails
+  the maintainer, so uptime alerting costs nothing and adds no third-party
+  service. The site check appends a cache-busting parameter on purpose —
+  `/api/games` sets `s-maxage`, so a plain request can be answered by the edge
+  and would stay green with the function or the database dead. Each check retries
+  three times before failing so a transient blip doesn't send mail, and the
+  Supabase ping runs even when the site check fails, since the database should
+  stay awake regardless of Vercel's state.
+
 ### Changed
 - **The license is no longer MIT.** MIT granted anyone the right to clone this
   site, rebrand it and sell it — the opposite of what a live product with its own
@@ -81,6 +94,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   counts are zero and will work unchanged if voting is ever activated.
 
 ### Fixed
+- **`/health` was unreachable in production.** The route is registered on the
+  server and documented in the README, but `vercel.json` had no rewrite for it,
+  so the catch-all sent it to `index.html` and it answered every request with the
+  client shell and a 200. Anything monitoring it would have reported the service
+  healthy while the backend was down. It now routes to the function.
 - **How It Works no longer calls the crawler open source.** Both repositories
   publish their source to be read rather than licensing it for reuse, which is
   source-available, not open source. The claim appeared twice, and one of the two
