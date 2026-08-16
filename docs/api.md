@@ -181,8 +181,6 @@ curl "https://launchoptions.dev/api/games/440"
       "command": "-windowed",
       "description": "Runs the game in windowed mode",
       "source": "PCGamingWiki",
-      "upvotes": 245,
-      "downvotes": 12,
       "risk_level": "safe",
       "categories": ["display"],
       "engine_compatibility": ["Source"]
@@ -206,8 +204,6 @@ Retrieve only the launch options for a specific game (lighter response).
     "command": "-windowed",
     "description": "Runs the game in windowed mode",
     "source": "PCGamingWiki",
-    "upvotes": 245,
-    "downvotes": 12,
     "risk_level": "safe",
     "categories": ["display"],
     "engine_compatibility": ["Source"]
@@ -217,8 +213,6 @@ Retrieve only the launch options for a specific game (lighter response).
     "command": "-high",
     "description": "Sets high CPU priority",
     "source": "Community",
-    "upvotes": 189,
-    "downvotes": 5,
     "risk_level": "caution",
     "categories": ["performance"],
     "engine_compatibility": []
@@ -463,13 +457,11 @@ Most errors share this shape:
 | `command` | string | Launch option command |
 | `description` | string | Human-readable description |
 | `source` | string | Provenance (e.g. PCGamingWiki, ProtonDB, Community) |
-| `upvotes` | integer | Community upvotes |
-| `downvotes` | integer | Community downvotes |
 | `risk_level` | string | `safe`, `caution`, or `experimental` — computed risk classification |
 | `categories` | string[] | Tags such as `performance`, `display`, `compatibility` |
 | `engine_compatibility` | string[] | Engines the option is known to apply to |
 
-> **Note:** A legacy `verified` boolean still exists in the schema but is no longer surfaced in the UI. Trust signals are now conveyed by `risk_level` (computed), `source` (provenance), and community votes. Treat `verified` as deprecated.
+> **Note:** A legacy `verified` boolean still exists in the schema but is no longer surfaced in the UI. Trust signals are conveyed by `risk_level` (computed) and `source` (provenance). Treat `verified` as deprecated.
 
 ## CORS Policy
 

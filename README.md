@@ -10,9 +10,9 @@
 <p align="center">
   <a href="#features">Features</a> •
   <a href="#architecture">Architecture</a> •
-  <a href="#quick-start">Quick Start</a> •
+  <a href="#local-development">Local Development</a> •
   <a href="#api-documentation">API</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="#reporting-a-bug">Report a Bug</a>
 </p>
 
 ---
@@ -61,15 +61,14 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 
 ---
 
-## Quick Start
+## Local Development
 
-### Installation
+> Maintainer reference. Vanilla Slops is not licensed for use or deployment by
+> others — see [License](#license).
+
+### Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/soundwanders/vanilla-slops.git
-cd vanilla-slops
-
 # Install dependencies
 npm install
 
@@ -167,7 +166,6 @@ Retrieve launch options for a specific game.
     "command": "-windowed",
     "description": "Runs the game in windowed mode",
     "source": "PCGamingWiki",
-    "upvotes": 245,
     "risk_level": "safe",
     "categories": ["display"]
   }
@@ -176,32 +174,26 @@ Retrieve launch options for a specific game.
 
 ---
 
-## Contributing
+## Reporting a Bug
 
-Vanilla Slops is a welcoming place for all developers. No matter whether you're a greenhorn or an old sage, share your ideas freely.
-Contributions can only make the project better, and maybe we'll both learn something along the way. 
+Vanilla Slops is built and maintained by one person, and the codebase is closed
+to outside contributions. Bug reports and launch-option submissions are still
+very welcome, and they're the most useful thing you can send.
 
-[**Contributing Guidelines**](./CONTRIBUTING.md) | [**Issue Templates**](./github/ISSUE_TEMPLATE/)
+- 🐛 **Something broken?** → [Open a bug report](https://github.com/soundwanders/vanilla-slops/issues/new?template=bug_report.md)
+- 🎮 **Know a launch option we're missing?** → [Submit it here](https://github.com/soundwanders/vanilla-slops/issues/new?template=launch_option.md)
 
-### **Ways to Contribute**
-- 🎮 **Launch Options** - Submit verified launch options for games, so we can grow the database
-- 🐛 **Bug Reports** - Issues, broken things, silly things, or things that just don't make no sense
-- ✨ **Feature Requests** - Any ideas for new features, or improving on currently implemented features
-- 📝 **Documentation** - Help improve our docs and test-coverage
-
-### **Example Workflow**
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with tests
-4. Commit with conventional commits (`git commit -m 'feat: add amazing feature'`)
-5. Push to your branch (`git push origin feature/amazing-feature`)
-6. Open a Pull Request
+Pull requests are not accepted.
 
 ---
 
 ## License
 
-MIT License - please see the [LICENSE](LICENSE) file for details.
+**Copyright © 2025-2026 soundwanders. All rights reserved.**
+
+This source is published for transparency and review. It is **not** open source
+and carries no license to use, copy, modify, deploy, or redistribute it. Please
+see the [LICENSE](LICENSE) file for the full terms.
 
 ---
 

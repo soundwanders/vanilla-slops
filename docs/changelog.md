@@ -21,6 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **The license is no longer MIT.** MIT granted anyone the right to clone this
+  site, rebrand it and sell it — the opposite of what a live product with its own
+  domain and its own database wants. The source stays public to read, which was
+  never the problem; it now carries an all-rights-reserved notice that grants no
+  right to use, copy, modify, deploy or redistribute it. Two limits are stated
+  explicitly in the notice: third-party dependencies keep their own licenses, and
+  the launch-option data is drawn from community sources and is not this
+  project's to claim. Commits published before this change keep their MIT grant
+  permanently — a license already given cannot be withdrawn, only ended going
+  forward.
+- **`package.json` declares the new terms.** `license` reads
+  `SEE LICENSE IN LICENSE`, the npm convention for terms that aren't a
+  recognised open-source identifier, and `private: true` prevents an accidental
+  `npm publish`.
+- **The README stops inviting contributions.** The Contributing section became
+  "Reporting a Bug", which states plainly that the codebase is closed and pull
+  requests are not accepted while keeping the two things outside readers can
+  usefully send — bug reports and missing launch options — as direct
+  issue-template links. Quick Start became "Local Development" and no longer
+  opens with `git clone`, because that instruction described a permission the
+  license no longer grants.
 - **How It Works, trimmed where it kept talking after making its point.** The
   sources section carried three trailing paragraphs of unrelated facts; the two
   that belong together — one command shared across many games, and updates
@@ -43,6 +64,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   any page on the internet. "The rest is up to you" closes *this* one — the
   subtitle opens by promising to say where the line is drawn, and this is that
   sentence finishing.
+
+### Removed
+- **`CONTRIBUTING.md` and the feature-request template.** The contributing guide
+  opened by telling readers to fork the repository, which now contradicts the
+  license outright. Beyond the mismatch, accepting outside pull requests without
+  a contributor agreement would leave each contributor holding copyright over
+  their own contribution, splitting ownership of a codebase that needs to stay
+  wholly the maintainer's. The bug-report and launch-option issue templates are
+  kept — neither is a copyrightable contribution, and both are useful.
+- **Vote counts from the API documentation.** The response examples and the field
+  table advertised `upvotes` and `downvotes`, and a note credited "community
+  votes" as a trust signal. Voting has never been wired up and every stored count
+  is zero, so the documentation was describing a feature that does not exist. The
+  read path in the server and table stays as it is — it renders nothing while the
+  counts are zero and will work unchanged if voting is ever activated.
 
 ### Fixed
 - **How It Works no longer calls the crawler open source.** Both repositories

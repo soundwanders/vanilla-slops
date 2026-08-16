@@ -2,6 +2,7 @@
   "type": "module",
   "name": "vanilla-slops",
   "version": "1.2.16",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
@@ -31,7 +32,7 @@
     "slops"
   ],
   "author": "soundwanders",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "description": "Vanilla Slops",
   "dependencies": {
     "@sentry/node": "^10.66.0",

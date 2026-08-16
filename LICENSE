@@ -1,16 +1,39 @@
-MIT License
+Copyright (c) 2025-2026 soundwanders. All rights reserved.
 
-Copyright (c) 2025 soundwanders
+Vanilla Slops is a proprietary work. Its source code is published publicly for
+the purposes of transparency, review, and evaluation only.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+GRANT OF RIGHTS
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+You may view and read this source code.
+
+That is the entire grant. No other rights are given.
+
+RESERVATION OF RIGHTS
+
+Except as expressly stated above, no permission is granted to any person to
+use, copy, modify, adapt, merge, publish, distribute, sublicense, sell, host,
+deploy, or create derivative works from this software or any portion of it,
+for any purpose, whether commercial or non-commercial.
+
+Forking this repository through GitHub's interface, or otherwise obtaining a
+copy of it, does not grant any of the rights reserved above. Neither does the
+public visibility of this repository.
+
+This license covers the source code of this project. It makes no claim over
+the launch-option data served by the application, which is drawn from
+community sources and governed by their own terms.
+
+Requests for permission beyond this grant may be directed to the copyright
+holder via https://github.com/soundwanders/vanilla-slops/issues.
+
+THIRD-PARTY COMPONENTS
+
+This project depends on third-party packages that are distributed under their
+own licenses. Those licenses govern those components and are unaffected by
+this notice.
+
+NO WARRANTY
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
