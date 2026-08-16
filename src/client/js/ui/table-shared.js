@@ -71,10 +71,18 @@ export function escapeHtml(text) {
  * quarter of the catalogue, so the difference is not a corner case.
  *
  * Keyed on the example wrapping `%command%` rather than on a hardcoded list of
- * tool names, so a third wrapper documented later needs no code change. It must
- * stay this narrow: most usage examples are illustrative rather than literal
- * (`-w 640`'s example is `-w 1920 -h 1080`), so copying the example wholesale
- * would hand over a different setting than the one that was clicked.
+ * tool names, so a wrapper documented later needs no code change.
+ *
+ * Two conditions, and the second one is not optional. Most usage examples are
+ * illustrative rather than literal — `-w 640` is documented as
+ * `-w 1920 -h 1080` — so an example may describe a *different setting* than the
+ * option it hangs off. The dictionary also attaches one example per Proton
+ * variable name to rows carrying different values, which is the case that bit:
+ * `PROTON_NO_ESYNC=0` is documented as `PROTON_NO_ESYNC=1 %command%`, and
+ * substituting on the wrap alone offered someone the flag that *enables* esync
+ * from the row for disabling it. Requiring the example to start with the stored
+ * command keeps the substitution to examples that are the same option, spelled
+ * runnably.
  *
  * @param {Object} option - Launch option record
  * @param {string} command - The stored command, already resolved
@@ -82,5 +90,7 @@ export function escapeHtml(text) {
  */
 export function pasteableCommand(option, command) {
   const example = option.usage_example || '';
-  return example.includes('%command%') ? example : command;
+  const isRunnableFormOfThisCommand =
+    example.includes('%command%') && example.startsWith(command);
+  return isRunnableFormOfThisCommand ? example : command;
 }

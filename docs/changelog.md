@@ -20,6 +20,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.16] - 2026-08-15 — The copy button told the truth about the wrong flag
+
+### Fixed
+
+- **A launch option could offer the opposite of what it said.** 1.2.14 taught the
+  copy control that some options are stored in a form that does nothing when
+  pasted: Steam replaces `%command%` with the game's executable, so `gamemode`
+  has to be given as `gamemoderun %command%`. The rule was to prefer the usage
+  example whenever that example wraps `%command%`.
+
+  That was sufficient for the two wrapper tools it was written against. It stopped
+  being sufficient the moment Proton environment variables were documented,
+  because the dictionary carries one example per variable *name* while the
+  catalogue carries a row per variable *value*. `PROTON_NO_ESYNC=0` is documented
+  as `PROTON_NO_ESYNC=1 %command%` — so the row for **disabling** esync displayed
+  and copied the flag that **enables** it. Six rows were affected, and three
+  values of the same variable all rendered as the same string, which made them
+  read as duplicates of each other.
+
+  The example is now used only when it starts with the option's own command —
+  when it is the same option spelled runnably, rather than a different one that
+  happens to share a prefix of its name. Checked against every published row that
+  wraps `%command%`: nine substitutions, all correct; seven correctly declined.
+
+  The same narrowness already protected the illustrative examples — `-w 640` is
+  documented as `-w 1920 -h 1080` and must never be copied in its place. This was
+  that failure arriving through a different door, and the test suite now covers
+  both doors.
+
+### Notes
+
+- **Catalogue figures are measured, never written down.** Every count the site
+  shows — the How It Works figures, the results count, the empty-state
+  statistics — is an exact count against `public_games` / `public_launch_options`
+  at request time. When a published total disagrees with a document, the site is
+  the one telling the truth: hidden rows re-enter the view on their own as the
+  scraper re-confirms their provenance, so the number moves without anyone
+  changing it.
+
 ## [1.2.15] - 2026-08-15 — The cold start
 
 ### Where three seconds actually went

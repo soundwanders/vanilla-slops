@@ -319,13 +319,19 @@ function formatAddedDate(iso) {
 
 function renderOption(opt) {
   const command = opt.command || opt.option || '';
-  // Wrapper tools (`gamemode`, `mangohud`) store a bare tool name that does
-  // nothing pasted on its own — Steam substitutes %command% with the executable,
-  // so the working form is the usage example. Same rule as the SPA's
-  // pasteableCommand(); keyed on the example wrapping %command% rather than a
-  // list of tool names, and kept narrow because most examples are illustrative
-  // (`-w 640` documents `-w 1920 -h 1080`) rather than literal.
-  const pasteable = (opt.usage_example || '').includes('%command%') ? opt.usage_example : command;
+  // Wrapper tools (`gamemode`, `mangohud`) and Proton environment variables
+  // store a form that does nothing pasted on its own — Steam substitutes
+  // %command% with the executable, so the working form is the usage example.
+  // Same rule as the SPA's pasteableCommand(), and it must stay in step with it.
+  // Both conditions matter: an example may document a *different* setting than
+  // the row it hangs off (`-w 640` is documented as `-w 1920 -h 1080`, and
+  // `PROTON_NO_ESYNC=0` as `PROTON_NO_ESYNC=1 %command%`), so the example is
+  // only used when it starts with this command — i.e. is the same option,
+  // spelled runnably.
+  const example = opt.usage_example || '';
+  const pasteable = example.includes('%command%') && example.startsWith(command)
+    ? example
+    : command;
   const showExample = opt.usage_example && opt.usage_example !== pasteable;
   // Drop placeholder/non-answer descriptions so the source link shows instead.
   const rawDesc = (opt.description || '').trim();
