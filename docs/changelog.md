@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **How It Works, trimmed where it kept talking after making its point.** The
+  sources section carried three trailing paragraphs of unrelated facts; the two
+  that belong together — one command shared across many games, and updates
+  running on demand — are now one. The blank-field section stated a single
+  principle twice and proved it with two named games, which spent a reader's
+  attention on something they had already accepted; it is one paragraph, and the
+  principle now covers both cases it applies to.
+- **The closing section says what it is.** "Why this exists" described only its
+  first paragraph while the second listed operating commitments, so it is now
+  "Where it came from, and what it stands for". The opening paragraph spent three
+  sentences setting a scene before reaching its point and now takes one, and
+  names what was actually missing from the alternatives: not a list, a list that
+  cites its sources.
+- **The closer drops a promise nobody asked for.** "This is a small project and
+  it will stay one" read as hedging against the project's own growth. It now
+  states the goal rather than a ceiling — the fastest way to an option you can
+  trust — using *option* rather than *flag*, which is what Steam's own field
+  calls it and what the page already says four times as often.
+- **A sign-off only this site would write.** "Happy hunting" could have closed
+  any page on the internet. "The rest is up to you" closes *this* one — the
+  subtitle opens by promising to say where the line is drawn, and this is that
+  sentence finishing.
+
 ## [1.2.16] - 2026-08-15 — The copy button told the truth about the wrong flag
 
 ### Fixed

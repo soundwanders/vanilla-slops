@@ -508,7 +508,7 @@ ${renderFigures(stats)}
             <li><a href="#how-to-apply-heading">Applying one on Steam</a></li>
             <li><a href="#hiw-validation">What we claim, and don't</a></li>
             <li><a href="#hiw-contribute">Suggesting an option</a></li>
-            <li><a href="#hiw-ethos">Why this exists</a></li>
+            <li><a href="#hiw-ethos">What it stands for</a></li>
           </ol>
         </div>
       </nav>
@@ -529,17 +529,14 @@ ${movement('I', 'Where the data comes from')}
           already been there.</li>
         <li><strong>ProtonDB.</strong> Linux and Steam Deck reports and tweaks.</li>
       </ol>
-      <p>A few options carry the source <strong>Universal</strong> instead of
-      naming a site. Those are the flags that work across many games whatever
-      the engine (<code>-high</code>, <code>-fullscreen</code>,
-      <code>-console</code>), collected by hand rather than lifted from any one
-      game's page.</p>
-      <p>Found the same command for a dozen games? We store it once and share it,
-      so a flag like <code>-windowed</code> never clutters the catalog with
-      copies.</p>
-      <p>Updates happen on demand. This is a deliberately hands-on project, so the scraper
-      runs when there's time to run it rather than on a fixed daily or weekly
-      schedule. New options and refreshes arrive in batches, which is why every
+      <p>A few options carry the source <strong>Universal</strong> rather than a
+      site name &mdash; flags that work across many games whatever the engine
+      (<code>-high</code>, <code>-fullscreen</code>, <code>-console</code>),
+      collected by hand rather than lifted from any one game's page.</p>
+      <p>Find the same command on a dozen games and we store it once and share
+      it, so <code>-windowed</code> never fills the catalog with copies. Updates
+      run on demand rather than on a schedule &mdash; the scraper runs when
+      there's time to run it, and new options arrive in batches. That's why every
       option wears an <strong>Added</strong> date instead of pretending to be a
       live feed.</p>
     </section>
@@ -620,11 +617,10 @@ ${movement('III', 'What we claim, and what we don\'t')}
       <p>Now and then you'll open an option and find no description, just a
       source link. When the only text a source offered was wrong, circular
       (<em>"use the -nomovie flag"</em>), or a pasted list of <em>other</em>
-      flags, we store nothing and show you the link instead. A
-      <strong>blank description is a decision, not a missing field</strong>.</p>
-      <p>The same holds for a game that lists no options at all. Most games
-      simply don't have documented launch options. We checked: even big names
-      like Dark Souls II and INSIDE have none on their wiki pages.</p>
+      flags, we store nothing and show the link instead. The same goes for a
+      game that lists no options at all: most games simply don't have any
+      documented. <strong>A blank field is a decision, not a missing
+      one.</strong></p>
     </section>
 
     <section class="hiw-section" aria-labelledby="hiw-contribute">
@@ -635,13 +631,12 @@ ${movement('III', 'What we claim, and what we don\'t')}
     </section>
 
     <section class="hiw-section hiw-ethos" aria-labelledby="hiw-ethos">
-      <h2 id="hiw-ethos">Why this exists</h2>
-      <p>Launch options are scattered. One lives in a wiki paragraph, the next
-      halfway down a Steam guide, the one after that in a ProtonDB report or a
-      forum thread from 2013. Finding the right flag for a single game usually
-      costs you a search, four tabs, and a guess about whether any of it is
-      still true. We went looking for one credible place that simply listed
-      them, couldn't find it, and built it instead.</p>
+      <h2 id="hiw-ethos">Where it came from, and what it stands for</h2>
+      <p>Launch options are scattered across wikis, Steam guides and decade-old
+      forum threads, and finding the right flag for one game costs you a handful
+      of tabs and a guess about whether any of it is still true. We went looking
+      for a single searchable place that listed them and cited its sources,
+      couldn't find one, and built it.</p>
       <p>What that means in practice is a short list of commitments. The catalog
       is free and needs no account. There are no ads and no analytics, the site
       sets no cookies, and the only thing it remembers is whether you picked the
@@ -649,8 +644,8 @@ ${movement('III', 'What we claim, and what we don\'t')}
       gathers the data is open source, every option names where it came from,
       and when we don't know something we leave it blank rather than fill it in
       with something that sounds right.</p>
-      <p>This is a small, hands-on project and it will stay one. The goal isn't
-      to be the biggest catalog. It's to be one you can check.</p>
+      <p>This is a small project, maintained by hand. The goal isn't to be the
+      biggest catalog; it's to be the fastest way to an option you can trust.</p>
     </section>
 
       </div>
@@ -658,7 +653,7 @@ ${movement('III', 'What we claim, and what we don\'t')}
 
     <!-- Outside .hiw-layout on purpose: centred on the page shell, so these line
          up with the site footer below them instead of with the prose column. -->
-    <p class="hiw-signoff">Happy hunting. <span class="hiw-frog" aria-hidden="true">🐸</span></p>
+    <p class="hiw-signoff">The rest is up to you. <span class="hiw-frog" aria-hidden="true">🐸</span></p>
 
     <p class="seo-footer-cta">
       <a href="/" class="seo-cta">Browse the full catalog of Steam launch options →</a>
