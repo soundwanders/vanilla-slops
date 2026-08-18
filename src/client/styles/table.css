@@ -529,7 +529,12 @@
   font-family: var(--font-family-base);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-tertiary);
+  /* Not text-tertiary: this sits inside .option-command, which is a dark panel
+     in both themes, so it is the one place that token is used against dark.
+     Tertiary measured 4.95:1 here in light and 3.74:1 in dark, and darkening
+     the token for light backgrounds would have pushed this to 3.49:1.
+     gray-400 is 7.03:1 on the panel and identical in both themes. */
+  color: var(--gray-400);
   transition: color var(--transition-fast);
   user-select: none;
 }

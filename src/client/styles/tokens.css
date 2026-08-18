@@ -230,7 +230,10 @@
   /* Text colors — softened off pure black */
   --color-text-primary: #1a2230;
   --color-text-secondary: #545f6e;
-  --color-text-tertiary: #7c8797;
+  /* Darkened from #7c8797, which measured 3.18:1 on the page background —
+     under the 4.5:1 WCAG AA asks for text this size. Same hue and
+     saturation, ~10% less lightness, so it still reads as the quiet grey. */
+  --color-text-tertiary: #646e7d;
   --color-text-placeholder: var(--gray-400);
   --color-text-disabled: var(--gray-300);
   --color-text-inverse: var(--color-white);
@@ -310,7 +313,9 @@
   /* Text colors — off-white, not pure white, to cut glare */
   --color-text-primary: #e6e9ef;
   --color-text-secondary: #9aa6b4;
-  --color-text-tertiary: #69737f;
+  /* Lightened from #69737f (3.20:1 on the elevated surface). Same hue and
+     saturation, ~10% more lightness. */
+  --color-text-tertiary: #828c98;
   --color-text-placeholder: var(--gray-500);
   --color-text-disabled: var(--gray-600);
   --color-text-inverse: var(--gray-900);

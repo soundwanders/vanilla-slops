@@ -120,6 +120,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   counts are zero and will work unchanged if voting is ever activated.
 
 ### Fixed
+- **The quiet grey failed WCAG AA everywhere it was used.**
+  `--color-text-tertiary` carries the breadcrumb, the footer, pagination, option
+  dates and provenance, the How It Works figures — 23 distinct places per theme.
+  Measured against the backgrounds it actually lands on, it was 3.18:1 in light
+  and 3.20:1 in dark, against the 4.5:1 WCAG AA asks for text this size. It is
+  now `#646e7d` in light and `#828c98` in dark: the same hue and saturation,
+  about ten percent of lightness in each direction, which clears 4.5:1 on the
+  worst background in both themes while still reading as the quiet grey. Every
+  one of the 46 usages now passes.
+- **The copy affordance stopped borrowing a light-surface colour.** `.copy-indicator`
+  was the one place that token was used against a dark background — it sits
+  inside the command block, which is dark in both themes — so darkening the token
+  for light backgrounds would have dragged it from 4.95:1 down to 3.49:1. It now
+  uses `gray-400` directly, which is 7.03:1 on that panel and the same in both
+  themes, and fixes the 3.74:1 it was already failing at in dark.
 - **The launch-option count was the least readable thing on its own button.**
   The count badge used `brand-300` on a 12%-alpha wash of the same blue, over an
   accent-gradient button. Measured, that is 1.19:1 in dark and 1.44:1 in light,
