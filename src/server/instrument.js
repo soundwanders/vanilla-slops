@@ -14,6 +14,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import * as Sentry from '@sentry/node';
+import { APP_VERSION } from './config/version.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -30,6 +31,10 @@ if (sentryEnabled) {
   Sentry.init({
     dsn,
     environment: process.env.NODE_ENV || 'development',
+
+    // Tags every event with the version that produced it, so an error can be
+    // traced to a release instead of just a timestamp.
+    release: APP_VERSION,
 
     // Errors only. Performance tracing would burn the free tier's quota fast
     // and we have no latency problem to investigate.

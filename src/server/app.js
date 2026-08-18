@@ -10,6 +10,7 @@ import gamesRoutes from './routes/gamesRoutes.js';
 import { gamePageController, sitemapController, howItWorksController } from './controllers/seoController.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
+import { APP_VERSION } from './config/version.js';
 
 /**
  * Express application for Vanilla Slops
@@ -123,7 +124,7 @@ app.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'Vanilla Slops - Steam Launch Options API',
-    version: process.env.npm_package_version || '1.0.0',
+    version: APP_VERSION,
     environment: process.env.NODE_ENV || 'development',
     uptime: process.uptime(),
     staticFiles: fs.existsSync(clientBuildPath) ? 'available' : 'missing',
@@ -141,6 +142,7 @@ app.get('/api/status', (req, res) => {
   res.json({
     api: 'Vanilla Slops API',
     status: 'operational',
+    version: APP_VERSION,
     timestamp: new Date().toISOString(),
     endpoints: {
       games: '/api/games',

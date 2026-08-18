@@ -18,6 +18,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [Unreleased]
+
+### Fixed
+- **The version was read from somewhere that is empty in production.** `/health`
+  reported the app version from `process.env.npm_package_version`, which npm only
+  sets for processes npm itself starts. Vercel invokes the function directly, so
+  the variable was never set and the endpoint fell back to its hardcoded
+  `"1.0.0"` — wrong from the first release onward, and wrong quietly, since the
+  fallback looks like a plausible version rather than a failure. It now reads
+  `package.json`, which is the one place a version is written. `/api/status`
+  reports it too, and Sentry tags every event with it as the release, so an error
+  can be traced to a version instead of only a timestamp. A test asserts the
+  exported constant equals `package.json` and fails if the `1.0.0` fallback ever
+  returns.
+
+### Changed
+- **`.env.example` drops `SUPABASE_ANON_KEY`.** Nothing reads it. The browser
+  never talks to Supabase directly — every read goes through the Express API on
+  the service_role key — and the last thing that referenced the anon key, the
+  workflow's direct PostgREST ping, is gone. Listing it invited someone to set a
+  variable that does nothing.
+
 ## [1.3.0] - 2026-08-17 — Every game page was a dead end
 
 ### Added
