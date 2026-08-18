@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
-## [Unreleased]
+## [1.3.0] - 2026-08-17 — Every game page was a dead end
 
 ### Added
 - **Game pages link to related games.** Every game page was a leaf: the sitemap
@@ -120,6 +120,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   counts are zero and will work unchanged if voting is ever activated.
 
 ### Fixed
+- **The launch-option count was the least readable thing on its own button.**
+  The count badge used `brand-300` on a 12%-alpha wash of the same blue, over an
+  accent-gradient button. Measured, that is 1.19:1 in dark and 1.44:1 in light,
+  against the 4.5:1 WCAG asks for text this size — light blue on light blue, which
+  read as muddy rather than as a number. It is now a solid white chip with a
+  `brand-700` numeral, 5.93:1 in both themes, and the count reads as clearly as
+  the word next to it. Only the badge changed; `--color-accent-subtle` is used in
+  a dozen other places and was left alone.
 - **`/health` was unreachable in production.** The route is registered on the
   server and documented in the README, but `vercel.json` had no rewrite for it,
   so the catch-all sent it to `index.html` and it answered every request with the

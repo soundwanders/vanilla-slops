@@ -317,15 +317,21 @@
   z-index: var(--z-raised);
 }
 
-/* Options count badge */
+/* Options count badge.
+   The count sits on the accent gradient, so it needs its own contrast rather
+   than a tint of the button underneath it. It previously used brand-300 on a
+   12%-alpha brand wash, which measured 1.19:1 in dark and 1.44:1 in light —
+   the number was the least readable thing on a button whose whole purpose is
+   to report it. A solid white chip with a dark brand numeral clears 6:1 in
+   both themes and keeps the chip reading as a chip. */
 .options-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: var(--space-6);
   height: var(--space-6);
-  background: var(--color-accent-subtle);
-  color: var(--color-launch-options);
+  background: var(--color-white);
+  color: var(--brand-700);
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);

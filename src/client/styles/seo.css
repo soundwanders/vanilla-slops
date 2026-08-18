@@ -763,9 +763,13 @@
   white-space: nowrap;
 }
 
+/* Secondary rather than tertiary: this line carries the count and the reason,
+   which is the information the link is asking to be clicked on. Tertiary is the
+   site's decorative grey and lands at 3.4:1 on this panel, under WCAG AA. The
+   title above still outweighs it on size and weight, so the hierarchy holds. */
 .related-game-meta {
   font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .related-game-sep {
