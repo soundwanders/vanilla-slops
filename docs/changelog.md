@@ -21,6 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Game pages link to related games.** Every game page was a leaf: the sitemap
+  told search engines it existed, but nothing on the site linked to it and it
+  linked to no other game in turn. A reader who finished one page had to go back
+  to the index and search again, and a crawler had no path from one game to the
+  next. Each page now ends with up to eight related games, drawn from two signals
+  in priority order. Engine leads, because engine is the thing that predicts
+  whether an option transfers at all — a Source 2 flag means something on another
+  Source 2 game and nothing on a Unity title, and the engine families stay
+  strictly separate, so GoldSrc never mixes with Source Engine or Source 2.
+  Developer is the softer fallback for the rest of the slots. Only games that
+  actually carry an option are eligible, since a link to an empty page wastes a
+  click and hands a crawler a dead end. Each link shows the option count and the
+  reason it is there, so it says where it leads rather than asking for a blind
+  click. Where neither signal finds anything the section simply doesn't render —
+  the same rule the rest of the catalogue follows, which is to leave a blank
+  rather than fill it with something that sounds right.
 - **A health check that runs every four hours and emails when it fails.** The
   twice-weekly Supabase keepalive became a single `Health` workflow doing both
   jobs with one request: it keeps the free-tier database from being paused for

@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { fetchGameWithLaunchOptions, getGamesForSitemap, getCatalogStats } from '../services/gamesService.js';
+import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats } from '../services/gamesService.js';
 import { slugify } from '../utils/slugify.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -136,11 +136,15 @@ export async function gamePageController(req, res) {
     return res.redirect(301, `/game/${appId}/${canonicalSlug}`);
   }
 
+  // Never let the related list take the page down with it — it returns [] on
+  // failure and the section simply doesn't render.
+  const related = await fetchRelatedGames(game);
+
   res.set('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(renderGamePage(game, canonicalSlug));
+  res.type('html').send(renderGamePage(game, canonicalSlug, related));
 }
 
-function renderGamePage(game, slug) {
+function renderGamePage(game, slug, related = []) {
   const title = game.title || 'Unknown Game';
   const developer = game.developer || '';
   const publisher = game.publisher || '';
@@ -246,6 +250,8 @@ ${seoHeader()}
 
     ${options.length ? HOW_TO_APPLY_HTML : ''}
 
+    ${renderRelatedGames(related)}
+
     <p class="seo-footer-cta">
       <a href="/" class="seo-cta">Browse ${escapeHtml(title)} and thousands more on Vanilla Slops →</a>
     </p>
@@ -266,6 +272,32 @@ ${seoHeader()}
   </footer>
 </body>
 </html>`;
+}
+
+// Internal links between game pages. Without them every game page is a leaf
+// reachable only from the sitemap: no link equity moves between them, and a
+// reader who wants the next game has to go back to the index and search again.
+// The count and the reason are shown so the link says what it leads to rather
+// than asking for a blind click.
+function renderRelatedGames(related) {
+  if (!Array.isArray(related) || related.length === 0) return '';
+
+  const items = related.map((g) => {
+    const count = g.total_options_count;
+    return `        <li class="related-game">
+          <a class="related-game-link" href="/game/${g.app_id}/${slugify(g.title)}">
+            <span class="related-game-title">${escapeHtml(g.title)}</span>
+            <span class="related-game-meta">${count} option${count === 1 ? '' : 's'}<span class="related-game-sep" aria-hidden="true">·</span>${escapeHtml(g.label || '')}</span>
+          </a>
+        </li>`;
+  }).join('\n');
+
+  return `<section class="related-games" aria-labelledby="related-games-heading">
+      <h2 id="related-games-heading">Related games</h2>
+      <ul class="related-games-list">
+${items}
+      </ul>
+    </section>`;
 }
 
 const RISK_LABELS = { safe: 'Safe', caution: 'Caution', experimental: 'Experimental' };

@@ -1,5 +1,6 @@
 import supabase from '../config/supabaseClient.js';
 import { FEATURED_APP_IDS, FEATURED_RANK, FEATURED_ID_LIST } from '../config/featuredGames.js';
+import { mergeRelatedTiers } from '../utils/relatedGames.js';
 
 const FACETS_TTL_MS = 5 * 60 * 1000;
 const _facetsCache = { data: null, expiresAt: 0 };
@@ -1190,5 +1191,70 @@ export async function fetchLaunchOptionsForGame(gameId) {
   } catch (error) {
     console.error(`Error in fetchLaunchOptionsForGame(${gameId}):`, error.message);
     throw error;
+  }
+}
+
+/**
+ * Finds games worth linking to from a game page.
+ *
+ * Two signals, in priority order. Engine leads because it is the one that
+ * predicts whether a launch option transfers at all — a Source 2 flag means
+ * something on another Source 2 game and nothing on a Unity title. Developer is
+ * the softer fallback: it groups games a reader plausibly also owns, without
+ * implying their options are interchangeable.
+ *
+ * Only games carrying at least one option are eligible. A link to an empty page
+ * wastes a reader's click and hands a crawler a dead end, which is the opposite
+ * of why this exists.
+ *
+ * Reads `public_games`, so a duplicate App ID never surfaces as its own entry.
+ *
+ * @async
+ * @function fetchRelatedGames
+ * @param {Object} game - The game being rendered; needs app_id, and engine or developer
+ * @param {number} [limit=8] - Maximum number of links to return
+ * @returns {Promise<Array<Object>>} Related games, each with app_id, title,
+ *   total_options_count, relation ('engine' | 'developer') and label
+ */
+export async function fetchRelatedGames(game, limit = 8) {
+  if (!game?.app_id) return [];
+
+  // "Unknown" is a placeholder the scraper writes, not a value worth grouping on.
+  const engine = game.engine && game.engine !== 'Unknown' ? game.engine : null;
+  const developer = game.developer && game.developer !== 'Unknown' ? game.developer : null;
+  if (!engine && !developer) return [];
+
+  // Over-fetch a little: dropping the current game and de-duplicating across the
+  // two signals would otherwise leave a short list.
+  const span = limit + 1;
+
+  const matching = (column, value) =>
+    supabase
+      .from('public_games')
+      .select('app_id, title, total_options_count')
+      .eq(column, value)
+      .neq('app_id', game.app_id)
+      .gt('total_options_count', 0)
+      .order('total_options_count', { ascending: false })
+      .limit(span);
+
+  try {
+    const [byEngine, byDeveloper] = await Promise.all([
+      engine ? matching('engine', engine) : Promise.resolve({ data: [] }),
+      developer ? matching('developer', developer) : Promise.resolve({ data: [] }),
+    ]);
+
+    if (byEngine.error) console.error('fetchRelatedGames (engine):', byEngine.error);
+    if (byDeveloper.error) console.error('fetchRelatedGames (developer):', byDeveloper.error);
+
+    return mergeRelatedTiers([
+      { rows: byEngine.data || [], relation: 'engine', label: engine },
+      { rows: byDeveloper.data || [], relation: 'developer', label: developer },
+    ], limit);
+  } catch (error) {
+    // A game page is worth serving without its related list. It is not worth
+    // failing over one.
+    console.error('Error in fetchRelatedGames:', error);
+    return [];
   }
 }

@@ -703,3 +703,71 @@
   color: var(--color-text-tertiary);
   border-top: 1px solid var(--color-border-subtle);
 }
+
+/* ============================================================================
+   RELATED GAMES
+   Internal links out of a game page. A grid rather than a prose list so the
+   block reads as a set of destinations, and so it stays scannable at the eight
+   entries the server caps it at.
+   ========================================================================== */
+
+.related-games {
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.related-games h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.related-games-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  /* auto-fill rather than auto-fit: with two or three results the cards keep a
+     readable width instead of stretching to fill the row. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.related-game-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  height: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.related-game-link:hover,
+.related-game-link:focus-visible {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.related-game-title {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  /* Long titles truncate rather than reflowing the grid row. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.related-game-meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.related-game-sep {
+  margin: 0 var(--space-2);
+}
