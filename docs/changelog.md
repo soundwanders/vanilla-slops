@@ -20,7 +20,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Browse by launch option.** Filtering the catalogue by a specific flag has
+  worked for some time, and the only way to reach it was to focus the search box
+  and type nothing — under a placeholder reading "Search games…", which
+  announces the opposite. It gets its own row beneath the filters now. The list
+  is deliberately not the top 24 by popularity: that ordering opens with
+  `gamemoderun %command%` (on 85% of the catalogue) and `mangohud %command%`
+  (84%), which filter out almost nothing, while `-novid` at 3.8% is what someone
+  playing a Source game actually came for. Options are bounded to the band that
+  narrows a search and still returns something worth looking at — 430 distinct
+  commands become 71 candidates and 24 chips.
+- **A Steam mark on each row, big enough to see.** The link out to the store was
+  a `↗` at 2.20:1 contrast in an 8.5x15px box: not subtle, invisible, and failing
+  WCAG on both counts. It now carries the Steam logo at 5.16:1 in a 24x24 target
+  (41x41 on touch), with a focus ring. The point of the change is comprehension
+  rather than loudness — a mark that says "goes to Steam" lets someone who wants
+  the store leave at a glance, and everyone else ignore it without first working
+  out what it was.
+
+### Changed
+- **Mobile option cards rest at command plus description.** Every option was
+  rendered at full detail whether or not anyone asked, so one card was 520px and
+  24 of them made a 10,082px list — 11.9 phone screens to read one game. Of that
+  520px the command itself, the only thing anyone is there to copy, was 52px.
+  The effect, example, categories and provenance now sit behind one tap. The
+  same content, deferred: 229px a card, 6.3 screens. The per-card gradient bar
+  went with it, which is what turned the expansion into a wall of blue.
+- **The controller emoji is gone from the desktop title column**, and the mobile
+  label gutter dropped from 42% to 35% — it was reserving 151px of a 360px card
+  to render the word "PUBLISHER:". Both were paying for the wider Steam link;
+  the net result is that titles wrap *less* than they did before, 4 of 20 on a
+  desktop row against 6 before.
+
 ### Fixed
+- **A game could promise more launch options than it would show.**
+  `total_options_count` is maintained by a trigger counting junction rows;
+  `public_launch_options` filters options; the difference is 55 links across 39
+  games. Team Fortress 2 advertised 28 and rendered 23. The column is correct
+  for what it measures and still drives sorting and filtering — the badge now
+  reads a count derived from the rows the page can actually serve. (slop-scraper
+  rev 14 §1f.)
+- **Searching for a launch option containing `%` found nothing.** The option
+  filter stripped `% , ( )` from the query before running it, guarding against an
+  injection this call site cannot have: the value reaches PostgREST through
+  supabase-js's `.ilike()`, which quotes it, and hostile input simply fails to
+  match. What the stripping did do was break real commands. slop-scraper rev 15
+  renamed the two highest-reach rows to `gamemoderun %command%` and
+  `mangohud %command%` — the forms that actually work when pasted into Steam —
+  and searching for either returned zero games instead of ~2,100. It had already
+  been eating the comma out of `WINEDLLOVERRIDES=xaudio2_7=n,b` for as long as
+  that row has existed.
 - **The version was read from somewhere that is empty in production.** `/health`
   reported the app version from `process.env.npm_package_version`, which npm only
   sets for processes npm itself starts. Vercel invokes the function directly, so
