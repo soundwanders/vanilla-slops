@@ -427,10 +427,15 @@
     justify-content: center;
     gap: var(--space-1);
     align-self: flex-start;
-    /* Matches the other mobile buttons in this file (48px), comfortably clear
-       of the 44px touch target this needs to be. */
-    min-height: var(--space-12);
-    padding: var(--space-2) var(--space-3);
+    /* Was 48px to match the other mobile buttons. Dropped to 36px and the touch
+       target restored by the ::after below, which costs no layout height.
+       12px per card does not sound like much until you are on a game with 24
+       options, where it is most of a phone screen of pure scrolling. The copy
+       target above is NOT shrunk — that one is the primary action and keeps its
+       full 44px. */
+    min-height: var(--space-9);
+    padding: var(--space-1) var(--space-3);
+    position: relative;
     background: none;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -441,6 +446,15 @@
     cursor: pointer;
     touch-action: manipulation;
     transition: color var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  /* Restores a 48px-tall touch target over a 36px-tall control, the same
+     trick .steam-link uses in table.css — the hit area is spent in overflow,
+     not in layout height. */
+  .table-container .option-detail-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -6px -4px;
   }
 
   .table-container .option-detail-toggle:hover,
@@ -929,8 +943,12 @@
   .table-container .launch-option {
     background: var(--color-surface-raised);
     border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    margin-bottom: var(--space-3);
+    /* Tightened from --space-4/--space-3. A card holding one flag, one line of
+       description and a toggle does not need 16px of breathing room on every
+       side; the border and the surface change already separate it from its
+       neighbour. */
+    padding: var(--space-3);
+    margin-bottom: var(--space-2);
     border: 1px solid var(--color-border-subtle);
     transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform: translateZ(0);
@@ -938,11 +956,32 @@
 
   .table-container .launch-option:last-child { margin-bottom: 0; }
 
+  /* The description is the single biggest variable in card height — a two-line
+     flag and a six-line flag produced wildly different cards, which is what
+     made a long list feel like work. Clamped to two lines while collapsed; the
+     Details toggle already exists to reveal the rest, so nothing is lost, it is
+     just no longer all shouted at once. */
+  .table-container .launch-option:not(.detail-open) .option-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: var(--space-2);
+  }
+
+  .table-container .launch-option.detail-open .option-description {
+    margin-bottom: var(--space-2);
+  }
+
   .table-container .option-command {
     background: var(--color-surface-subtle, #f8f9fa);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: var(--space-3) var(--space-4);
+    /* Horizontal padding trimmed; the 44px min-height below is untouched, so
+       the copy target keeps its full size. */
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-2);
     font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
     font-size: var(--font-size-sm);
     color: var(--color-text-primary);

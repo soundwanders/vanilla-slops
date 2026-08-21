@@ -649,6 +649,7 @@ export default class SlopSearch {
                 class="ob-chip"
                 data-command="${this.escapeHtml(o.command)}"
                 title="${this.escapeHtml(o.description || o.command)}"
+                aria-pressed="false"
                 aria-label="Filter by ${this.escapeHtml(o.command)}, used by ${o.count} games"
                 style="--ob-i:${i}">
           <code class="ob-chip-cmd">${this.escapeHtml(o.command)}</code>
@@ -679,18 +680,59 @@ export default class SlopSearch {
     chips.addEventListener('click', (e) => {
       const chip = e.target.closest('.ob-chip');
       if (!chip) return;
-      // Exactly what picking a launch option from the suggestion dropdown does
-      // — same filter key, same teardown — so the two paths cannot drift.
-      this.currentFilters.optionSearch = chip.dataset.command;
+
+      // Clicking the chip that is already applied clears it. Without this the
+      // only way back out was to find the filter tag further down the page and
+      // dismiss it there — so a mis-click cost a scroll and a second target,
+      // and the chip row lied about its own state by staying lit with no way
+      // to unlight it. A control that applies something should release it.
+      const command = chip.dataset.command;
+      const alreadyApplied = this.currentFilters.optionSearch === command;
+
+      if (alreadyApplied) {
+        delete this.currentFilters.optionSearch;
+      } else {
+        // Otherwise: exactly what picking a launch option from the suggestion
+        // dropdown does — same filter key, same teardown — so the two paths
+        // cannot drift.
+        this.currentFilters.optionSearch = command;
+      }
+
       this.currentQuery = '';
       if (this.searchInput) this.searchInput.value = '';
       this.hideSuggestions();
+      this.syncBrowseChipState();
       this.renderActiveFilters();
       this.notifyFilterChange();
+    });
+
+    this.syncBrowseChipState();
+  }
+
+  /**
+   * Mirror the applied launch-option filter onto the browse chips.
+   *
+   * The chip row and the filter tags are two views of one piece of state, so
+   * whichever one the visitor uses to change it, both have to end up agreeing.
+   * Called after a chip click, and after any path that clears filters — a tag
+   * dismissal, "Clear all", or a fresh search — so a chip can never stay lit
+   * for a filter that is no longer applied.
+   *
+   * @returns {void}
+   */
+  syncBrowseChipState() {
+    const applied = this.currentFilters?.optionSearch || null;
+    document.querySelectorAll('.ob-chip').forEach((chip) => {
+      const isOn = chip.dataset.command === applied;
+      chip.setAttribute('aria-pressed', String(isOn));
+      chip.classList.toggle('is-applied', isOn);
     });
   }
 
   renderActiveFilters() {
+    // Before the guard: the chips live outside `activeFilters`, so they still
+    // need syncing on a page where the tag strip is absent.
+    this.syncBrowseChipState();
     if (!this.activeFilters) return;
 
     const filterTags = Object.entries(this.currentFilters).map(([key, value]) => {

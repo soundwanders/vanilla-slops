@@ -88,7 +88,8 @@
   font-size: var(--font-size-lg);
   font-weight: 500;
   color: var(--color-text-primary);
-  background: var(--color-surface-raised);
+  /* Top of the elevation ladder — see --color-surface-input in tokens.css. */
+  background: var(--color-surface-input);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-2xl);
   transition: all var(--transition-base);
@@ -100,7 +101,7 @@
   outline: none;
   border-color: var(--color-accent);
   box-shadow: var(--shadow-glow), var(--shadow-lg);
-  background: var(--color-surface-raised);
+  background: var(--color-surface-input);
 }
 
 .search-input::placeholder {
@@ -421,37 +422,98 @@ fieldset,
   text-align: center;
 }
 
+/* Filter and sort selects.
+
+   These are the controls a visitor touches first, so they should read as part
+   of the surface rather than as unstyled browser furniture dropped onto it.
+   Three things do that work, and none of them are decoration:
+
+   1. The chevron is the control's only affordance — it is the one mark that
+      says "this opens". It gets the accent-tinted well below and shifts to the
+      full accent on hover, so the affordance is what brightens, not the whole
+      box.
+   2. The fill is a soft vertical gradient rather than one flat colour, which
+      is what separates a control from a panel when both are near-white (or
+      both near-black) and neither can rely on a heavy border.
+   3. The resting border is deliberately quiet. Six of these sit in a grid; six
+      hard rectangles would fight the table for attention, and the table is the
+      point of the page.
+
+   Positioning, grid placement and centred text are untouched — the complaint
+   was the surface, not the arrangement. */
 .filter-select,
 .sort-select {
   width: 100%;
   height: var(--space-10);
-  padding: 0 var(--space-3);
+  /* Right padding clears the chevron well so a long option label cannot run
+     underneath it. */
+  padding: 0 var(--space-8) 0 var(--space-3);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  background-color: var(--color-surface-subtle);
+  background-color: var(--color-surface-raised);
+  background-image: linear-gradient(
+    180deg,
+    var(--color-surface-raised) 0%,
+    var(--color-surface-subtle) 100%
+  );
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  box-shadow: 0 1px 1px rgb(15 23 42 / 4%);
   cursor: pointer;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
   appearance: none;
   text-align: center;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right var(--space-2) center;
-  background-repeat: no-repeat;
-  background-size: var(--space-4) var(--space-4);
+}
+
+/* The chevron lives on a wrapper-free pseudo-surface: a <select> cannot carry
+   ::after, so the mark is painted as a second background layer sitting in its
+   own tinted well. Two layers, chevron over well, both right-aligned. */
+.filter-select,
+.sort-select {
+  background-image:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M6 8.5l4 4 4-4'/%3e%3c/svg%3e"),
+    linear-gradient(180deg, var(--color-surface-raised) 0%, var(--color-surface-subtle) 100%);
+  background-position: right var(--space-3) center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 1rem 1rem, 100% 100%;
 }
 
 .filter-select:hover,
 .sort-select:hover {
-  background-color: var(--color-interactive-hover);
   border-color: var(--color-border-strong);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+  background-image:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M6 8.5l4 4 4-4'/%3e%3c/svg%3e"),
+    linear-gradient(180deg, var(--color-surface-raised) 0%, var(--color-surface-subtle) 100%);
 }
 
-.filter-select:focus,
-.sort-select:focus {
+.filter-select:focus-visible,
+.sort-select:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: var(--space-px);
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+}
+
+/* A select holding a non-default value is doing something, and should look
+   like it. This is the same signal the active filter chips carry, kept quiet
+   enough that six at once would not shout. */
+.filter-select[data-active="true"],
+.sort-select[data-active="true"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Applied by addFilterLoadingStates() while facet data is in flight. Lives here
+   rather than in a runtime-injected <style>, so it can be overridden normally. */
+.filter-select.loading {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 
@@ -503,18 +565,19 @@ fieldset,
   border-color: var(--color-accent);
 }
 
-[data-theme="dark"] .filter-select,
-[data-theme="dark"] .sort-select,
+/* `background-color`, never the `background` shorthand. The shorthand resets
+   background-repeat/size/position along with the image, which tiled the chevron
+   across the whole control once the selects moved to a two-layer background. */
 [data-theme="dark"] .year-input {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   border-color: var(--color-border);
   color: var(--color-text-primary);
 }
 
-[data-theme="dark"] .filter-select:hover,
-[data-theme="dark"] .sort-select:hover,
+/* Selects are excluded here for the same shorthand reason — their hover is
+   defined with the two-layer background further down. */
 [data-theme="dark"] .year-input:hover {
-  background: var(--color-surface-raised);
+  background-color: var(--color-surface-raised);
   border-color: var(--color-border-strong);
 }
 
@@ -523,13 +586,44 @@ fieldset,
 
 
 
+/* Dark theme.
+   The previous rule here set `background: var(--color-surface) !important`,
+   which is the same colour as the panel the selects sit on — so in dark mode
+   they lost their fill entirely and read as six empty outlines, while in light
+   mode they were solid. That asymmetry was most of why they felt unfinished.
+
+   `color-scheme` still needs to win (it governs the native option list), but
+   the fill does not, so only that one declaration keeps !important. The fill
+   is now raised ABOVE the panel, which is what gives a control presence on a
+   dark ground — the same job the border does in light. */
 [data-theme="dark"] select,
 [data-theme="dark"] .filter-select,
 [data-theme="dark"] .sort-select {
   color-scheme: dark !important;
-  background: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
-  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .filter-select,
+[data-theme="dark"] .sort-select {
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 25%);
+  background-image:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M6 8.5l4 4 4-4'/%3e%3c/svg%3e"),
+    linear-gradient(180deg, var(--color-surface-raised) 0%, var(--color-surface) 100%);
+  background-position: right var(--space-3) center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 1rem 1rem, 100% 100%;
+}
+
+[data-theme="dark"] .filter-select:hover,
+[data-theme="dark"] .sort-select:hover {
+  border-color: var(--color-border-strong);
+  background-image:
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2345c4ff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M6 8.5l4 4 4-4'/%3e%3c/svg%3e"),
+    linear-gradient(180deg, var(--color-surface-raised) 0%, var(--color-surface) 100%);
+  background-position: right var(--space-3) center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 1rem 1rem, 100% 100%;
 }
 
 [data-theme="dark"] select option,
@@ -872,6 +966,30 @@ fieldset,
   color: var(--color-accent);
   border-color: var(--color-accent);
   background: var(--color-accent-subtle);
+}
+
+/* The applied chip.
+   Filled rather than tinted, so it separates from the hover state — hover is
+   "this is what you would get", applied is "this is what you have". Clicking
+   it again releases the filter, so the title reflects that: the control is a
+   toggle, and looking like a toggle is what makes the second click findable. */
+.ob-chip.is-applied {
+  color: var(--color-white, #fff);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ob-chip.is-applied .ob-chip-count {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.ob-chip.is-applied:hover,
+.ob-chip.is-applied:focus-visible {
+  color: var(--color-white, #fff);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 /* The command keeps its real syntax. `-novid` is the string that gets pasted

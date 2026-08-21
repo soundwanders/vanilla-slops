@@ -215,12 +215,25 @@
      9. LIGHT THEME TOKEN ASSIGNMENTS
      ============================================================================= */
   
-  /* Surface colors — soft cool ground so white cards read as cards (no more blinding white) */
-  --color-background: #edf0f4;
-  --color-surface: var(--color-white);
-  --color-surface-raised: var(--color-white);
-  --color-surface-subtle: #f4f7fa;
+  /* Surface colors — a stepped elevation ladder, not a flat sheet of white.
+     Measured before this change: the table, the results header and the filter
+     selects all rendered at luminance 1.000, and they are the largest areas on
+     the page — which is what made light mode read as uniformly glaring rather
+     than as a set of layers.
+
+     The ladder now runs ground → subtle → surface → raised → input, and only
+     the input sits at pure white. That is deliberate: the brightest thing on a
+     light page is the most raised thing, and the search field is what we most
+     want people to reach for. Pulling the big panels a few points off white
+     costs nothing in contrast (primary text still measures >14:1 on every step)
+     and takes the overall glare down across the whole viewport. */
+  --color-background: #e9edf3;
+  --color-surface: #f7f9fc;
+  --color-surface-raised: #fbfcfe;
+  --color-surface-subtle: #f1f4f9;
   --color-surface-overlay: rgba(255, 255, 255, 0.95);
+  /* Top of the ladder — inputs only. */
+  --color-surface-input: var(--color-white);
 
   /* Border colors */
   --color-border: #dbe1e9;
@@ -298,12 +311,22 @@
    ============================================================================= */
 
 [data-theme="dark"] {
-  /* Surface colors — de-saturated ground with clearly-stepped surfaces so cards separate */
+  /* Surface colors — de-saturated ground with clearly-stepped surfaces so cards
+     separate. Same ladder as light, inverted: raised means lighter here.
+
+     --color-surface-input is the top step, and it is the one that fixes the
+     search field. Measured before this change, the field rendered at luminance
+     0.0080 against a 0.0052 ground — barely off the page — and BELOW the filter
+     selects beside it at 0.0181. So the primary input was the second-darkest
+     element on the page and sat recessed underneath its own secondary
+     controls. It is now the lightest surface in the theme, which is what a
+     raised control means in a dark UI. */
   --color-background: #0d1017;
   --color-surface: #161b24;
   --color-surface-raised: #1e2530;
   --color-surface-subtle: #12161e;
   --color-surface-overlay: rgba(13, 16, 23, 0.95);
+  --color-surface-input: #272f3d;
 
   /* Border colors */
   --color-border: #2a323d;

@@ -113,16 +113,11 @@
   }
 }
 
-@keyframes slideInLeftNoScroll {
-  from {
-    opacity: 0;
-    transform: translateX(-2rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+/* `slideInLeftNoScroll` was removed here. It was byte-identical to
+   `slideInLeft` above — the "NoScroll" name promised a variant that avoided
+   nudging the horizontal scroll width, but the declarations were the same, so
+   it never behaved differently. Its only consumer was the table row stagger,
+   which no longer moves horizontally at all. */
 
 /* =============================================================================
    4. SPECIAL EFFECT ANIMATIONS
@@ -508,12 +503,20 @@
    10. PAGE-LEVEL ANIMATIONS
    ============================================================================= */
 
-/* Main page entrance */
+/* Main page entrance.
+   Opacity only. This used to be `fadeInUp`, which translated the entire page up
+   16px while its children were separately translating sideways — the parent and
+   the child moving on different axes at once is what read as motion sickness
+   rather than as an entrance. The page now holds still and only resolves in. */
 body {
-  animation: fadeInUp 0.4s ease-out;
+  animation: fadeIn 0.4s ease-out;
 }
 
-/* Staggered component entrance */
+/* Staggered component entrance.
+   Every entrance below settles on the SAME axis (vertical, downward-to-rest) or
+   on no axis at all. Nothing slides horizontally: a horizontal entrance reads as
+   the layout being wrong and correcting itself, which is exactly the impression
+   we do not want while the first paint is still landing. */
 .search-container,
 .slops-search {
   opacity: 0;
@@ -523,13 +526,10 @@ body {
 .filters-container,
 .slops-filters {
   opacity: 0;
-  animation: slideInLeft 0.6s ease-out 0.4s both;
-}
-
-.results-container,
-.slops-results {
-  opacity: 0;
-  animation: slideInRight 0.6s ease-out 0.4s both;
+  /* Was `slideInLeft` — a 32px rightward glide that ran at the same moment as
+     the row stagger below, so the panel and the rows inside it were travelling
+     in opposite directions. */
+  animation: fadeIn 0.5s ease-out 0.15s both;
 }
 
 /* =============================================================================
@@ -563,22 +563,39 @@ body {
   left: 100%;
 }
 
-/* Table row stagger */
-.games-table tbody tr {
-  opacity: 1;
-  animation: slideInLeftNoScroll 0.3s ease-out forwards;
+/* Table row stagger.
+   Opacity only, and scoped to the skeleton.
+
+   Two separate faults lived here. The animation was `slideInLeftNoScroll`, a
+   32px rightward glide — and the selector was `.games-table tbody tr`, which
+   matches the skeleton rows AND the real rows that replace them. So every row
+   travelled 32px right as a skeleton, was swapped out, and then travelled 32px
+   right a second time once the data arrived. That second pass is the "flashes
+   in, then abruptly moves" — the flash was the swap, the move was the replay.
+
+   Now only the skeleton animates. Real rows arrive already at rest, so the
+   swap is a change of content, not a second entrance. */
+.games-table tbody tr.skeleton-row {
+  opacity: 0;
+  animation: fadeIn 0.35s ease-out forwards;
 }
 
-.games-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
-.games-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
-.games-table tbody tr:nth-child(3) { animation-delay: 0.15s; }
-.games-table tbody tr:nth-child(4) { animation-delay: 0.2s; }
-.games-table tbody tr:nth-child(5) { animation-delay: 0.25s; }
-.games-table tbody tr:nth-child(6) { animation-delay: 0.3s; }
-.games-table tbody tr:nth-child(7) { animation-delay: 0.35s; }
-.games-table tbody tr:nth-child(8) { animation-delay: 0.4s; }
-.games-table tbody tr:nth-child(9) { animation-delay: 0.45s; }
-.games-table tbody tr:nth-child(10) { animation-delay: 0.5s; }
+.games-table tbody tr.skeleton-row:nth-child(1) { animation-delay: 0.04s; }
+.games-table tbody tr.skeleton-row:nth-child(2) { animation-delay: 0.08s; }
+.games-table tbody tr.skeleton-row:nth-child(3) { animation-delay: 0.12s; }
+.games-table tbody tr.skeleton-row:nth-child(4) { animation-delay: 0.16s; }
+.games-table tbody tr.skeleton-row:nth-child(5) { animation-delay: 0.2s; }
+.games-table tbody tr.skeleton-row:nth-child(6) { animation-delay: 0.24s; }
+.games-table tbody tr.skeleton-row:nth-child(7) { animation-delay: 0.28s; }
+.games-table tbody tr.skeleton-row:nth-child(8) { animation-delay: 0.32s; }
+.games-table tbody tr.skeleton-row:nth-child(9) { animation-delay: 0.36s; }
+.games-table tbody tr.skeleton-row:nth-child(10) { animation-delay: 0.4s; }
+
+/* Real rows fade as a single block once, with no per-row stagger and no
+   movement, so a sort or a page change resolves instead of marching. */
+.games-table tbody:not(:has(.skeleton-row)) {
+  animation: fadeIn 0.25s ease-out;
+}
 
 /* Copy success feedback */
 .option-command.copied {

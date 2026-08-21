@@ -458,9 +458,14 @@ function populateSelectFilter(filterId, options, defaultText) {
  * @returns {void}
  */
 function improveFilterUI() {
-  // Add custom styling to select appearance
-  addCustomSelectStyling();
-  
+  // Select appearance is stylesheet-owned. There used to be an
+  // addCustomSelectStyling() call here that appended a <style> to <head> at
+  // runtime; because it landed after the stylesheet at equal specificity it
+  // quietly won every conflict, so the select design could not be changed from
+  // components.css at all. It also carried a broken dark-mode chevron
+  // (stroke='%9ca3af' — a malformed escape for '#9ca3af'), which is why dark
+  // mode rendered no chevron whatsoever.
+
   // Add loading states for filters
   addFilterLoadingStates();
   
@@ -468,43 +473,6 @@ function improveFilterUI() {
   addFilterClearButton();
 }
 
-/**
- * Add custom styling for select elements
- * Improves the visual appearance of dropdown filters
- *
- * @returns {void}
- */
-function addCustomSelectStyling() {
-  const style = document.createElement('style');
-  style.textContent = `
-    /* Custom select arrow styling */
-    .filter-select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 0.5rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-    }
-    
-    /* Dark theme support for custom select arrow */
-    [data-theme="dark"] .filter-select {
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%9ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    }
-    
-    /* Loading state for filters */
-    .filter-select.loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-    
-    /* Smooth transitions */
-    .filter-select {
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-    }
-  `;
-  document.head.appendChild(style);
-}
 
 /**
  * Add loading states for filters while data is being fetched

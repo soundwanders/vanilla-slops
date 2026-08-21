@@ -43,11 +43,25 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* The sort control is a compact inline control in a header strip, not one of
+   the six full-width filter selects, so it should not inherit their size.
+
+   It was inheriting `height: var(--space-10)` (40px) from .filter-select while
+   holding 12px text, and carrying a 9rem min-width for a word as short as
+   "Featured" — a tall wide box with a small centred label floating in the
+   middle of it, which is what read as goofy. Three fixes: shrink the box to
+   the text, stop centring (a short label centred in a wide box is what creates
+   the marooned look), and let the width follow the content instead of a fixed
+   floor. */
 .results-header .sort-select {
   width: auto;
-  min-width: 9rem;
+  min-width: 0;
+  height: var(--space-8);
   font-size: var(--font-size-xs);
-  padding: var(--space-1) var(--space-6) var(--space-1) var(--space-2);
+  text-align: left;
+  padding: 0 var(--space-7) 0 var(--space-3);
+  background-position: right var(--space-2) center, 0 0;
+  background-size: 0.875rem 0.875rem, 100% 100%;
 }
 
 .games-table {
@@ -161,7 +175,23 @@
 /* Game title */
 .game-title {
   font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
+  /* One step above --font-size-sm (0.875–0.9rem). The title and the Steam mark
+     sit on one line, and at the old size the 14px glyph out-measured the text's
+     ~10px cap height — so the eye read the glyph as the primary object and the
+     title as a caption beside it, which is backwards. Raising the title to
+     ~15–16px puts the cap height and the glyph within a pixel of each other,
+     and the pair reads as one line with a shared optical centre.
+
+     Kept as a clamp so it still tracks the viewport like the rest of the
+     scale, and kept below --font-size-base so the fixed-layout column is not
+     forced to rewrap "Counter-Strike 2" onto two lines.
+
+     Landed at a 15px ceiling, not 16px. The first pass capped at 1rem, which
+     was an 11% jump off the old 14.4px and tipped the title from "confident"
+     into "bloated" — at 16px it started competing with the section headings
+     rather than sitting under them. 15px keeps the gain over the old size
+     while staying a clear step below --font-size-base. */
+  font-size: clamp(0.9rem, 0.85rem + 0.25vw, 0.9375rem);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -218,8 +248,14 @@
      "Team Fortress 2" onto two lines. Row height hid it — 73px is set by the
      Options button — but the titles moved, so the box has to stay small. */
   position: relative;
-  width: 16px;
-  height: 16px;
+  /* Sized in `em`, so the mark is now locked to the title's type size instead
+     of being set independently in px. That is what actually fixes the
+     imbalance: any future change to the title size carries the glyph with it
+     and the pair cannot drift back out of harmony. 1.05em of a ~15px title is
+     ~16px — the same footprint the px value held, so the column width warning
+     below still holds. */
+  width: 1.05em;
+  height: 1.05em;
   border-radius: var(--radius-sm);
   transition: color var(--transition-fast), background-color var(--transition-fast);
 }
@@ -235,8 +271,12 @@
 }
 
 .steam-link svg {
-  width: 14px;
-  height: 14px;
+  /* ~0.92em against the title's cap height. The Steam mark is a filled circle,
+     and a filled round shape reads optically larger than letterforms of the
+     same measured height — so matching it 1:1 to the cap height would leave it
+     looking slightly too big again. It is set marginally under. */
+  width: 0.92em;
+  height: 0.92em;
   display: block;
 }
 
