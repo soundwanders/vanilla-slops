@@ -18,9 +18,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
-## [Unreleased]
+## [1.3.2] - 2026-08-21 — The page stopped moving, and the search box came out of hiding
+
+### Changed
+- **The entrance stopped sliding sideways.** Loading the catalogue read as a
+  flash followed by a lurch to the right, and the cause was four animations
+  running at once on two different axes: `<body>` translated up 16px, the filter
+  panel slid 32px right, and every table row slid 32px right on a stagger. The
+  row rule matched `.games-table tbody tr`, which covers the skeleton rows *and*
+  the real rows that replace them — so each row travelled its 32px as a
+  skeleton, was swapped out, and travelled the same 32px again once the data
+  arrived. That second pass was the lurch. Entrances are opacity-only now, the
+  stagger belongs to the skeleton alone, and real rows arrive at rest. Measured
+  peak horizontal movement during load went from 32px to zero.
+- **An elevation ladder, applied consistently in both themes.** Surfaces were
+  assigned ad hoc, and it showed most on the search box: it took
+  `--color-surface-subtle`, the *lowest* step available, which put the primary
+  input of the site below the secondary controls beside it. In dark mode it
+  measured 0.008 luminance against a 0.005 page — effectively invisible — while
+  the filter selects next to it sat at 0.018. Surfaces now run ground → subtle →
+  surface → raised → input, and the new `--color-surface-input` is the top step
+  in both themes, because a raised control means lighter on a dark ground and
+  whiter on a light one. The search box is the brightest element on the page in
+  both.
+- **Light mode is no longer uniformly bright.** The table, the results header
+  and the filter selects all rendered at luminance 1.000 — pure white across the
+  largest areas of the viewport, which is what made the theme tiring rather than
+  clean. Those panels now sit at 0.97 and 0.95 with the ground a step below
+  them. Nothing lost contrast: primary text still measures 15.6:1 in light and
+  12.7:1 in dark, well clear of what AA asks.
+- **The filter selects were given a design.** They were a flat fill, a hairline
+  border and a generic grey chevron — the arrangement was fine, the surface was
+  a placeholder. They now carry a soft vertical gradient, a quieter resting
+  border, and a chevron that takes the accent on hover, so the affordance is
+  what brightens rather than the whole control. Grid position, sizing and
+  centred labels are unchanged.
+- **Launch-option cards on mobile got denser.** A game with four options was
+  comfortable and a game with twenty-four was work. Card padding, margins and
+  the details toggle were all trimmed, and the description is clamped to two
+  lines while collapsed — the toggle already existed to reveal the rest. A
+  24-option game went from 4,469px of stack to 3,926px, 12% shorter. The copy
+  target is untouched at its full 44px, because that is the one thing on the
+  card people are actually aiming at.
+- **The game title and the Steam mark now share a scale.** At 14.4px against a
+  14px glyph the mark out-measured the title's cap height, so the eye read the
+  logo as the primary object and the title as a caption beside it. The title
+  moved up to a 15px ceiling and the mark is now sized in `em`, so it tracks the
+  title permanently instead of being set independently in pixels.
+- **The sort control stopped borrowing a filter's proportions.** It inherited a
+  40px height from `.filter-select` while holding 12px text, and held a 9rem
+  minimum width for a label as short as "Featured" — a small centred word
+  marooned in a tall wide box. It is sized to its content now.
+- **Clearer wording under the browse row.** "Showing the flags that actually
+  narrow a search. For anything else, type it into the search box above." became
+  "Pick a flag to filter by, or search above for one that isn't listed."
+
+### Removed
+- **Two pieces of dead CSS.** `slideInLeftNoScroll` was byte-identical to
+  `slideInLeft` — the name promised a variant that avoided nudging the scroll
+  width, but the declarations were the same. And the `.results-container` /
+  `.slops-results` rules matched no element in the markup, so the
+  `slideInRight` they carried had never run.
 
 ### Fixed
+- **A launch-option chip could be selected but not deselected.** Clicking a chip
+  applied the filter and clicking it again did nothing, so backing out of a
+  mis-click meant scrolling to the filter tag and dismissing it there — a second
+  target for a mistake that should have cost one click. Chips are toggles now,
+  carry `aria-pressed`, and show a filled state while applied. Dismissing the
+  tag un-lights the chip, since the two are one piece of state.
+- **The dark-mode chevron on every filter select never rendered.** Its data URI
+  read `stroke='%9ca3af'` — a malformed percent-escape for `#9ca3af` — so the
+  SVG failed to parse and dark mode drew no chevron at all. Part of why the
+  selects looked unfinished there was that they were missing their only
+  affordance.
+- **Select styling could not be changed from the stylesheet.** `filters.js`
+  appended a `<style>` block to `<head>` at runtime that re-declared the select
+  chevron and padding. Landing after the stylesheet at equal specificity, it won
+  every conflict, so edits to `components.css` silently had no effect. The block
+  is gone and the one rule worth keeping moved into CSS.
+- **A dark-mode background shorthand tiled the chevron.** Once the selects moved
+  to a two-layer background, an inherited `background:` shorthand reset
+  `background-repeat`, `size` and `position` along with the image, repeating the
+  chevron across the whole control. Those declarations are `background-color`
+  now, which was all they ever needed to set.
+
 - **Searching for a game with a comma in its title answered 500.** "Warhammer
   40,000" matches twelve games in the catalogue and returned none of them: the
   search term was interpolated straight into a PostgREST or-filter, where a
