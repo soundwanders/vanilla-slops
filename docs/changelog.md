@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
-## [Unreleased]
+## [1.3.1] - 2026-08-21 — Things you couldn't find, and numbers you couldn't trust
 
 ### Added
 - **Browse by launch option.** Filtering the catalogue by a specific flag has
