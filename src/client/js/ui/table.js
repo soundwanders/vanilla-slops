@@ -570,8 +570,8 @@ function createLaunchOptionHTML(option) {
   // Example row would just repeat it — drop the row rather than print it twice.
   const showExample = option.usage_example && option.usage_example !== pasteable;
   // Lowercased haystack for the in-expansion filter (command + description).
-  // Keyed on the stored command so "gamemode" still matches the row that now
-  // displays as `gamemoderun %command%`.
+  // Keyed on the stored command, which since slop-scraper rev 15 is already
+  // the working `gamemoderun %command%` form.
   const searchText = escapeHtml(`${command} ${description}`.toLowerCase().trim());
 
   return `

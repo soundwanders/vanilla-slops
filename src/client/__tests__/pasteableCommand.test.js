@@ -3,17 +3,30 @@ import { pasteableCommand } from '../js/ui/table-shared.js';
 
 /**
  * Steam substitutes `%command%` with the game's executable, so a wrapper tool
- * has to wrap it: `gamemoderun %command%`. Those two options are stored as bare
- * tool names (`gamemode`, `mangohud`) that do nothing when pasted on their own,
- * and between them they carry ~4,000 game-option links — a quarter of the
- * catalogue was offering an inert string as the copyable thing.
+ * has to be written in front of it: `gamemoderun %command%`.
+ *
+ * The two wrapper rows now store that working form themselves (slop-scraper
+ * rev 15); they used to store the bare names `gamemode` and `mangohud`, which
+ * do nothing when pasted, and between them they carry ~4,000 game-option links.
+ * Both shapes are covered below — the current one because it is what ships, the
+ * legacy one because a stale cached payload should still degrade quietly.
  *
  * The rule has to stay narrow. Most usage examples are illustrative, not
  * literal, so copying the example wholesale would hand the user a different
  * setting than the one they clicked — that is what the second block pins down.
  */
 describe('pasteableCommand', () => {
-  it('substitutes the working form when the example wraps %command%', () => {
+  it('returns the working form for the wrapper rows as they are stored now', () => {
+    // Post rev 15 the command already IS the working form, so this is a no-op
+    // that must stay a no-op — mangling it here would break the copy button on
+    // roughly a third of the catalogue by reach.
+    expect(pasteableCommand({ usage_example: 'gamemoderun %command%' }, 'gamemoderun %command%'))
+      .toBe('gamemoderun %command%');
+    expect(pasteableCommand({ usage_example: 'mangohud %command%' }, 'mangohud %command%'))
+      .toBe('mangohud %command%');
+  });
+
+  it('still substitutes for the legacy bare tool names', () => {
     expect(pasteableCommand({ usage_example: 'gamemoderun %command%' }, 'gamemode'))
       .toBe('gamemoderun %command%');
     expect(pasteableCommand({ usage_example: 'mangohud %command%' }, 'mangohud'))

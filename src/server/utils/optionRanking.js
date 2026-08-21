@@ -4,9 +4,10 @@
  *
  * Ranking by raw popularity is the obvious approach and it is wrong here, in a
  * way that is measurable rather than aesthetic. The most-used commands in this
- * catalogue are the ones nobody chose per game: `gamemode` and `mangohud` are
- * Linux wrappers sitting on ~85% of it, and the six `-force-*` Unity flags on
- * ~33% each because they are emitted for every Unity title. Filtering by any of
+ * catalogue are the ones nobody chose per game: `gamemoderun %command%` and
+ * `mangohud %command%` are Linux wrappers sitting on ~85% of it, and the six
+ * `-force-*` Unity flags on ~33% each because they are emitted for every Unity
+ * title. Filtering by any of
  * them removes almost nothing, so a popularity-sorted list opens with its own
  * least useful entries. Meanwhile `-novid`, on under 4% of games, is exactly
  * what someone playing a Source game came for.

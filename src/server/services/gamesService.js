@@ -116,7 +116,19 @@ export async function fetchGames({
     // command search (e.g. "-novid" → games that use it).
     const optionCategory = (category || '').trim();
     const optionRisk = (risk || '').trim();
-    const optionCommand = (optionSearch || '').replace(/[%,()]/g, ' ').trim();
+    // Passed through as typed. This used to strip `% , ( )` on the theory that
+    // they could corrupt the query, which was never true for this filter — it
+    // reaches PostgREST through supabase-js's `.ilike()`, which quotes the
+    // value, and hostile input simply fails to match (verified: parentheses,
+    // quotes and semicolons all return zero rows rather than an error).
+    //
+    // Stripping was actively wrong, and rev 15 made it visible. The two
+    // highest-reach commands in the catalogue are now stored as
+    // `gamemoderun %command%` and `mangohud %command%`, so removing `%` turned
+    // a filter that should match 2,108 games into one that matched none. It
+    // had already been breaking `WINEDLLOVERRIDES=xaudio2_7=n,b` on the comma.
+    // Length is bounded by the Zod schema (max 100).
+    const optionCommand = (optionSearch || '').trim();
     const hasOptionAttrFilter = Boolean(optionCategory) || Boolean(optionRisk) || Boolean(optionCommand);
 
     const offset = (page - 1) * limit;
@@ -327,7 +339,7 @@ function applySearchFilters(query, filters) {
  * @param {string} [attrs.risk] - Risk level: safe | caution | experimental
  * @returns {Object} Modified query
  */
-function applyOptionAttributeFilter(query, { category, risk, command } = {}) {
+export function applyOptionAttributeFilter(query, { category, risk, command } = {}) {
   // Paths address the embedded resource in fetchGames' select clause, which is
   // public_launch_options — so a filter can never match on a row the catalogue
   // does not publish, and a facet value can never return games we can't back up.

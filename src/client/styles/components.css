@@ -782,7 +782,7 @@ fieldset,
    above is a deliberate 3x2 that a seventh cell would unbalance.
 
    The list is not the top 430, or even the top 24 by popularity. Ranking by
-   raw usage puts the least useful entries first — `gamemode` is on 85% of the
+   raw usage puts the least useful entries first — `gamemoderun %command%` is on 85% of the
    catalogue, so filtering by it removes almost nothing. See getPopularOptions.
    ============================================================================= */
 

@@ -353,7 +353,7 @@ function formatAddedDate(iso) {
 
 function renderOption(opt) {
   const command = opt.command || opt.option || '';
-  // Wrapper tools (`gamemode`, `mangohud`) and Proton environment variables
+  // Wrapper tools (`gamemoderun %command%`, `mangohud %command%`) and Proton environment variables
   // store a form that does nothing pasted on its own — Steam substitutes
   // %command% with the executable, so the working form is the usage example.
   // Same rule as the SPA's pasteableCommand(), and it must stay in step with it.

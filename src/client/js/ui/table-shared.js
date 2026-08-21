@@ -64,11 +64,18 @@ export function escapeHtml(text) {
  * The string a user should actually paste into Steam.
  *
  * Usually that is the stored command. The exception is a wrapper tool: Steam
- * substitutes `%command%` with the game's executable, so `gamemode` and
- * `mangohud` are stored as bare tool names that do nothing on their own — the
- * working form is `gamemoderun %command%` / `mangohud %command%`, and it lives
- * in usage_example. Those two carry ~4,000 game-option links between them, a
- * quarter of the catalogue, so the difference is not a corner case.
+ * substitutes `%command%` with the game's executable, so the tool has to be
+ * written in front of it — `gamemoderun %command%`, `mangohud %command%`.
+ *
+ * Those two used to be stored as the bare tool names `gamemode` and `mangohud`,
+ * which do nothing at all when pasted, and this function existed to serve the
+ * working form from usage_example instead. **They now store the working form
+ * directly** (slop-scraper rev 15), so for those two rows the substitution is a
+ * no-op — the example and the command are the same string. The rule below is
+ * unchanged and still earns its place: it keys on the shape of the example, not
+ * on those two names, so it goes on covering the Proton variables and any
+ * wrapper documented later. It also still handles the old bare spellings, which
+ * costs nothing and means a stale cached payload degrades quietly.
  *
  * Keyed on the example wrapping `%command%` rather than on a hardcoded list of
  * tool names, so a wrapper documented later needs no code change.

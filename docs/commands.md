@@ -322,7 +322,7 @@ gamemoderun mangohud PROTON_NO_ESYNC=1 %command%
 - OpenGL and Vulkan preferred rendering APIs
 - **`-force-wayland`** - Experimental Wayland support (Unity)
 - Steam Linux Runtime affects option compatibility
-- See **[Linux and Proton Launch Options](#linux-and-proton-launch-options-steam-deck)** for the `PROTON_*`, `DXVK_HUD`, `gamemode`, and `mangohud` options
+- See **[Linux and Proton Launch Options](#linux-and-proton-launch-options-steam-deck)** for the `PROTON_*`, `DXVK_HUD`, `gamemoderun`, and `mangohud` options
 
 ### Steam Deck
 - Runs games through Proton — most launch options are the Proton/Wine environment variables covered in the [Linux and Proton](#linux-and-proton-launch-options-steam-deck) section

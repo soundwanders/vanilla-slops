@@ -5,8 +5,9 @@ import { rankBrowsableOptions, BROWSE_FLOOR, BROWSE_CEILING_RATIO } from '../uti
 // flag rather than an abstract diff.
 const CATALOGUE = 2478;
 const REAL = [
-  { command: 'gamemode', count: 2114 },              // Linux wrapper, 85% of catalogue
-  { command: 'mangohud', count: 2089 },              // Linux wrapper, 84%
+  // Stored with the %command% wrapper since slop-scraper rev 15.
+  { command: 'gamemoderun %command%', count: 2114 },  // Linux wrapper, 85% of catalogue
+  { command: 'mangohud %command%', count: 2089 },     // Linux wrapper, 84%
   { command: '-popupwindow', count: 819 },           // Unity-generic, 33%
   { command: '-force-d3d12', count: 818 },
   { command: '-force-opengl', count: 817 },
@@ -26,8 +27,8 @@ describe('rankBrowsableOptions — the core claim', () => {
   it('excludes the wrappers that match most of the catalogue', () => {
     // These are the two most popular commands in the database and the two
     // worst filters in it. Popularity ranking would put them first.
-    expect(commands).not.toContain('gamemode');
-    expect(commands).not.toContain('mangohud');
+    expect(commands).not.toContain('gamemoderun %command%');
+    expect(commands).not.toContain('mangohud %command%');
   });
 
   it('excludes engine-generic flags attached to every Unity game', () => {
