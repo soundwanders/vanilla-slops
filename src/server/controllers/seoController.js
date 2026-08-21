@@ -283,7 +283,9 @@ function renderRelatedGames(related) {
   if (!Array.isArray(related) || related.length === 0) return '';
 
   const items = related.map((g) => {
-    const count = g.total_options_count;
+    // Never total_options_count: it counts links the view hides, so a card
+    // would promise options the page it links to cannot show (rev 14 §1f).
+    const count = g.display_options_count ?? g.total_options_count ?? 0;
     return `        <li class="related-game">
           <a class="related-game-link" href="/game/${g.app_id}/${slugify(g.title)}">
             <span class="related-game-title">${escapeHtml(g.title)}</span>

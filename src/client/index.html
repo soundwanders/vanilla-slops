@@ -160,6 +160,24 @@
           </fieldset>
         </form>
 
+        <!--
+          Browse by launch option. A full-width row rather than a seventh cell
+          in the grid above, which would break its 3x2 balance — and a select
+          would be the wrong control anyway: there are 430 distinct commands,
+          348 of them on fewer than five games each.
+        -->
+        <section class="option-browser" id="optionBrowser" hidden>
+          <button class="ob-toggle" type="button" aria-expanded="false" aria-controls="obPanel">
+            <span class="ob-toggle-text">Browse by launch option</span>
+            <span class="ob-count" id="obCount"></span>
+            <svg class="ob-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="ob-panel" id="obPanel" hidden>
+            <ul class="ob-chips" id="obChips"></ul>
+            <p class="ob-hint">Showing the flags that actually narrow a search. For anything else, type it into the search box above.</p>
+          </div>
+        </section>
+
         <!-- Active Filters Display -->
         <section class="active-filters" id="activeFilters" role="region" aria-label="Active filters">
           <h2 class="sr-only">Currently Applied Filters</h2> 

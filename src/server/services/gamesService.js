@@ -1,6 +1,8 @@
 import supabase from '../config/supabaseClient.js';
 import { FEATURED_APP_IDS, FEATURED_RANK, FEATURED_ID_LIST } from '../config/featuredGames.js';
 import { mergeRelatedTiers } from '../utils/relatedGames.js';
+import { buildPhantomMap, withDisplayCounts } from '../utils/optionCounts.js';
+import { rankBrowsableOptions } from '../utils/optionRanking.js';
 
 const FACETS_TTL_MS = 5 * 60 * 1000;
 const _facetsCache = { data: null, expiresAt: 0 };
@@ -11,6 +13,13 @@ const _facetsCache = { data: null, expiresAt: 0 };
 // long TTL means ~24 DB reads a day total, whatever the traffic.
 const STATS_TTL_MS = 60 * 60 * 1000;
 const _statsCache = { data: null, expiresAt: 0 };
+
+// app_id → number of links pointing at options `public_launch_options` hides.
+// Small and slow-moving (39 games, 55 links at the time of writing), and only
+// changes when the scraper runs, so it gets a long TTL and is computed once
+// rather than per request.
+const PHANTOM_TTL_MS = 60 * 60 * 1000;
+const _phantomCache = { data: null, expiresAt: 0 };
 
 /**
  * @fileoverview Games service layer providing data access
@@ -176,6 +185,14 @@ export async function fetchGames({
         return copy;
       });
     }
+
+    // Stamp on the count the UI should display. `total_options_count` counts
+    // links, including ones to options the view hides, so 39 games advertise
+    // more than they can render — Team Fortress 2 says 28 and shows 23. The
+    // column stays untouched because sorting and filtering are built on it;
+    // this only adds the honest number alongside it. Cached, so it is one
+    // lookup an hour rather than a query per request.
+    games = withDisplayCounts(games, await getPhantomOptionCounts());
 
     // Deliberately does NOT compute facets. It used to end with
     // `await getFacets(searchTerm)`, which made every listing request pay for
@@ -699,7 +716,50 @@ export async function getFacets(searchQuery = '') {
  * @param {number} [topN=8]
  * @returns {Promise<Array<{command:string, description:string, count:number}>>}
  */
-async function getPopularOptions(topN = 8) {
+/**
+ * Links that point at an option `public_launch_options` will not return, keyed
+ * by game. Subtracting these turns "what the catalogue holds" into "what the
+ * page can show" — see utils/optionCounts.js for why the column itself is fine.
+ *
+ * A left join with the embedded side constrained to null asks the database for
+ * exactly the junction rows whose option the view drops — 55 rows today. The
+ * alternative was to list every stored option id, list every published one and
+ * diff them in JS, which meant reading the `launch_options` base table and
+ * moving about a thousand ids to find fifty-five links. This touches only the
+ * junction table and the view, so nothing here reads around the view at all.
+ *
+ * Fails soft. If this errors the map comes back empty, every count falls
+ * through to `total_options_count`, and the site behaves exactly as it did
+ * before this existed.
+ *
+ * @returns {Promise<Map<number, number>>}
+ */
+async function getPhantomOptionCounts() {
+  const now = Date.now();
+  if (_phantomCache.data && now < _phantomCache.expiresAt) return _phantomCache.data;
+
+  try {
+    const { data, error } = await supabase
+      .from('game_launch_options')
+      .select('game_app_id, public_launch_options!left(id)')
+      .is('public_launch_options', null);
+
+    if (error) {
+      console.error('getPhantomOptionCounts:', error);
+      return new Map();
+    }
+
+    const map = buildPhantomMap(data);
+    _phantomCache.data = map;
+    _phantomCache.expiresAt = now + PHANTOM_TTL_MS;
+    return map;
+  } catch (error) {
+    console.error('Error in getPhantomOptionCounts:', error);
+    return new Map();
+  }
+}
+
+async function getPopularOptions(topN = 24) {
   try {
     // Each game_launch_options row is a unique (game, option) link, so the
     // number of junction rows per option == the number of games using it.
@@ -723,19 +783,24 @@ async function getPopularOptions(topN = 8) {
       return [];
     }
 
-    return (data || [])
-      .map((row) => ({
+    // How many games there are, so "too broad" can be a proportion rather than
+    // a magic number that rots as the catalogue grows.
+    const { count: totalGames } = await supabase
+      .from('public_games')
+      .select('app_id', { count: 'exact', head: true });
+
+    // Selection and ordering live in utils/optionRanking.js, which explains why
+    // popularity is the wrong sort here and is unit-tested against the real
+    // shape of this catalogue.
+    return rankBrowsableOptions(
+      (data || []).map((row) => ({
         command: row.command,
         description: row.description || '',
-        count: row.game_launch_options?.[0]?.count ?? 0
-      }))
-      .filter((o) => o.command && o.count > 0)
-      // Ties are common — the Unity render-backend flags all sit on 817 games —
-      // and without a tie-break the list reshuffles every time the cache warms,
-      // which reads as the page changing under you. Command order is arbitrary
-      // but stable, which is what a browse list needs.
-      .sort((a, b) => b.count - a.count || a.command.localeCompare(b.command))
-      .slice(0, topN);
+        count: row.game_launch_options?.[0]?.count ?? 0,
+      })),
+      totalGames,
+      topN
+    );
   } catch (error) {
     console.error('Error in getPopularOptions:', error);
     return [];
@@ -1247,10 +1312,14 @@ export async function fetchRelatedGames(game, limit = 8) {
     if (byEngine.error) console.error('fetchRelatedGames (engine):', byEngine.error);
     if (byDeveloper.error) console.error('fetchRelatedGames (developer):', byDeveloper.error);
 
-    return mergeRelatedTiers([
+    // Ordering and the `> 0` filter above stay on total_options_count — they
+    // are asking "where do we hold the most", which is what that column means.
+    // Only the number printed on the card is corrected.
+    const merged = mergeRelatedTiers([
       { rows: byEngine.data || [], relation: 'engine', label: engine },
       { rows: byDeveloper.data || [], relation: 'developer', label: developer },
     ], limit);
+    return withDisplayCounts(merged, await getPhantomOptionCounts());
   } catch (error) {
     // A game page is worth serving without its related list. It is not worth
     // failing over one.

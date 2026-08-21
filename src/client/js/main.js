@@ -97,7 +97,13 @@ async function initializeFilters() {
     // Hand popular launch options to the search box so it can offer a
     // browse-and-pick list on focus (discovery without knowing the flag).
     const searchInstance = stateManager.getState().searchInstance;
-    if (searchInstance) searchInstance.popularOptions = facets.popularOptions || [];
+    if (searchInstance) {
+      searchInstance.popularOptions = facets.popularOptions || [];
+      // Same list also fills the always-visible browser below the filters. The
+      // dropdown needs an empty search box to be found at all; the browser is
+      // the discoverable path to the same thing.
+      searchInstance.renderOptionBrowser();
+    }
     
     // Remove loading state
     filterSelects.forEach(select => {

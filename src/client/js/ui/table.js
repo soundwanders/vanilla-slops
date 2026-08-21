@@ -14,6 +14,19 @@ window.addEventListener('resize', debounce(() => {
   TableState.isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
 }, 250));
 
+// The Steam wordmark-less logo, used for the secondary link out to the store.
+// It replaced a bare `↗`, which had two problems: it read as "goes somewhere"
+// rather than "goes to Steam", so noticing it cost the reader a beat to resolve;
+// and as a text glyph its presentation is platform-dependent (U+2197 carries an
+// emoji variation sequence, so some stacks paint their own palette and ignore
+// `color`). A recognisable mark lets someone who wants the store leave at a
+// glance and everyone else filter it out without thinking — which is the point,
+// since the game page is the primary destination here.
+const STEAM_ICON_SVG =
+  '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">' +
+  '<path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.627 0 11.999-5.373 11.999-12S18.605 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.999 1.314 1.25 1.297.539 2.793-.076 3.332-1.375.263-.63.264-1.319.005-1.949s-.75-1.121-1.377-1.383c-.624-.26-1.29-.249-1.878-.03l1.523.63c.956.4 1.409 1.5 1.009 2.455-.397.957-1.497 1.41-2.454 1.012H7.54zm11.415-9.303c0-1.662-1.353-3.015-3.015-3.015-1.665 0-3.015 1.353-3.015 3.015 0 1.665 1.35 3.015 3.015 3.015 1.663 0 3.015-1.35 3.015-3.015zm-5.273-.005c0-1.252 1.013-2.266 2.265-2.266 1.249 0 2.266 1.014 2.266 2.266 0 1.251-1.017 2.265-2.266 2.265-1.253 0-2.265-1.014-2.265-2.265z"/>' +
+  '</svg>';
+
 // ============================================================================
 // MAIN RENDER FUNCTIONS
 // ============================================================================
@@ -120,7 +133,11 @@ function slugify(str) {
 
 function createGameRowHTML(game) {
   const gameId = game.app_id;
-  const optionsCount = game.total_options_count || 0;
+  // `display_options_count` is what the expansion will actually render;
+  // `total_options_count` counts links to options the view hides, so a badge
+  // built on it promises rows that never arrive. Falls back to the raw column
+  // so an older cached payload still shows a number rather than a zero.
+  const optionsCount = game.display_options_count ?? game.total_options_count ?? 0;
   const releaseDate = formatDate(game.release_date);
   const slug = slugify(game.title);
   const title = escapeHtml(game.title || 'Unknown');
@@ -141,8 +158,8 @@ function createGameRowHTML(game) {
              rel="noopener noreferrer"
              class="steam-link"
              title="View ${title} on Steam"
-             aria-label="View ${title} on Steam store"
-          ><span class="steam-external-icon" aria-hidden="true">↗</span></a>
+             aria-label="View ${title} on Steam store (opens in a new tab)"
+          >${STEAM_ICON_SVG}</a>
         </div>
       </td>
       <td data-label="${CONFIG.DATA_LABELS.developer}" role="gridcell" class="game-developer-cell">
@@ -526,7 +543,14 @@ function cleanDescription(desc) {
   return PLACEHOLDER_DESCRIPTIONS.has(d.toLowerCase()) ? '' : d;
 }
 
+// Ties each option's disclosure button to the block it controls via aria-controls.
+// A counter rather than option.id: the id only has to be unique within the
+// document for the lifetime of the render, and this does not care what shape
+// the row arrives in.
+let _detailSeq = 0;
+
 function createLaunchOptionHTML(option) {
+  const detailId = `opt-detail-${++_detailSeq}`;
   // `verified` retired in favour of risk_level (consistent, computed) + community
   // votes as the future human signal — see the metadata trust model.
   const votesBadge = option.upvotes > 0 ? `<span class="option-votes">👍 ${option.upvotes}</span>` : '';
@@ -570,20 +594,29 @@ function createLaunchOptionHTML(option) {
           ${escapeHtml(description)}
         </div>
       ` : ''}
-      ${(option.effect || showExample) ? `
-        <dl class="option-usage">
-          ${option.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(option.effect)}</dd></div>` : ''}
-          ${showExample ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(option.usage_example)}</code></dd></div>` : ''}
-        </dl>
-      ` : ''}
-      ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
-      <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
-        <div class="option-provenance">
-          ${renderSource(option)}
-          ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
-          ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
+      <button class="option-detail-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="${detailId}">
+        <span class="odt-label">Details</span>
+        <svg class="odt-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="option-detail" id="${detailId}">
+        ${(option.effect || showExample) ? `
+          <dl class="option-usage">
+            ${option.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(option.effect)}</dd></div>` : ''}
+            ${showExample ? `<div class="option-usage-row"><dt>Example</dt><dd><code>${escapeHtml(option.usage_example)}</code></dd></div>` : ''}
+          </dl>
+        ` : ''}
+        ${categoryChips ? `<div class="option-cats">${categoryChips}</div>` : ''}
+        <div class="option-meta ${TableState.isMobile ? 'mobile-meta' : ''}">
+          <div class="option-provenance">
+            ${renderSource(option)}
+            ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
+            ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
+          </div>
+          <div class="option-badges">${matchFlag}${riskBadge}${votesBadge}</div>
         </div>
-        <div class="option-badges">${matchFlag}${riskBadge}${votesBadge}</div>
       </div>
     </li>
   `;
@@ -961,12 +994,31 @@ function prefetchLaunchOptionsFromEvent(e) {
   });
 }
 
+/**
+ * Per-option "Details" disclosure. Only ever visible on the mobile card — CSS
+ * hides the button and keeps `.option-detail` open at desktop widths, so the
+ * desktop layout is byte-for-byte what it was and this handler simply never
+ * fires there. Doing the collapse in CSS rather than at render time means a
+ * rotation or a resize is handled by the media query, with no re-render.
+ */
+function handleOptionDetailToggle(e) {
+  const btn = e.target.closest('.option-detail-toggle');
+  if (!btn) return;
+  const item = btn.closest(`.${CONFIG.CLASSES.launchOption}`);
+  if (!item) return;
+  const open = item.classList.toggle('detail-open');
+  btn.setAttribute('aria-expanded', String(open));
+  const label = btn.querySelector('.odt-label');
+  if (label) label.textContent = open ? 'Less' : 'Details';
+}
+
 function setupTableEventListeners() {
   if (TableState.isInitialized) return;
 
   document.addEventListener('click', handleLaunchOptionsClick);
   document.addEventListener('click', _handleCloseAllDelegated);
   document.addEventListener('click', handleSortHeaderInteraction);
+  document.addEventListener('click', handleOptionDetailToggle);
 
   // Warm the cache before the click. The options for a game are ~130ms away and
   // never change mid-session, so starting the fetch on intent — pointer over the

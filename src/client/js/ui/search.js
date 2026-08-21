@@ -616,6 +616,80 @@ export default class SlopSearch {
    * is kept as a decorative affordance and hidden from assistive tech — the
    * label lives on the button that actually does the work.
    */
+  /**
+   * Fills and wires the "Browse by launch option" row beneath the filter grid.
+   *
+   * Command filtering already worked before this existed — `optionSearch` has
+   * always been a filter, and the suggestion dropdown has always offered these
+   * same commands. The problem was that the only way to reach it was to focus
+   * the search box and type nothing, under a placeholder reading "Search
+   * games…", which announces the opposite. A browse affordance you can only
+   * find by not using the control it hides behind is not discoverable.
+   *
+   * Stays hidden until there is something to show, so a facets failure leaves
+   * no empty furniture behind.
+   */
+  renderOptionBrowser() {
+    const root = document.getElementById('optionBrowser');
+    const chips = document.getElementById('obChips');
+    const panel = document.getElementById('obPanel');
+    const toggle = root?.querySelector('.ob-toggle');
+    const count = document.getElementById('obCount');
+    if (!root || !chips || !panel || !toggle) return;
+
+    const options = Array.isArray(this.popularOptions) ? this.popularOptions : [];
+    if (!options.length) {
+      root.hidden = true;
+      return;
+    }
+
+    chips.innerHTML = options.map((o, i) => `
+      <li class="ob-chip-item">
+        <button type="button"
+                class="ob-chip"
+                data-command="${this.escapeHtml(o.command)}"
+                title="${this.escapeHtml(o.description || o.command)}"
+                aria-label="Filter by ${this.escapeHtml(o.command)}, used by ${o.count} games"
+                style="--ob-i:${i}">
+          <code class="ob-chip-cmd">${this.escapeHtml(o.command)}</code>
+          <span class="ob-chip-count">${o.count}</span>
+        </button>
+      </li>
+    `).join('');
+
+    if (count) count.textContent = String(options.length);
+    root.hidden = false;
+
+    if (root.dataset.wired === 'true') return;
+    root.dataset.wired = 'true';
+
+    toggle.addEventListener('click', () => {
+      const open = toggle.getAttribute('aria-expanded') !== 'true';
+      toggle.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+      // The stagger is an entrance, so it is re-armed on each open rather than
+      // left on the element, where it would replay on any unrelated repaint.
+      if (open) {
+        chips.classList.remove('is-entering');
+        void chips.offsetWidth;
+        chips.classList.add('is-entering');
+      }
+    });
+
+    chips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.ob-chip');
+      if (!chip) return;
+      // Exactly what picking a launch option from the suggestion dropdown does
+      // — same filter key, same teardown — so the two paths cannot drift.
+      this.currentFilters.optionSearch = chip.dataset.command;
+      this.currentQuery = '';
+      if (this.searchInput) this.searchInput.value = '';
+      this.hideSuggestions();
+      this.renderActiveFilters();
+      this.notifyFilterChange();
+    });
+  }
+
   renderActiveFilters() {
     if (!this.activeFilters) return;
 

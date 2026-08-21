@@ -172,12 +172,12 @@
   word-break: normal;
 }
 
-.game-title::before {
-  content: '🎮';
-  font-size: var(--font-size-sm);
-  opacity: 0.6;
-  flex-shrink: 0;
-}
+/* The decorative controller glyph that used to sit here is gone. It cost about
+   24px of the narrowest column in the table — GAME TITLE is allotted a flat
+   sixth, the same as RELEASE DATE, which only ever holds "Aug 20, 2012" — and
+   the column header already says what the column is. The mobile card dropped it
+   for the same redundancy long before desktop did. That reclaimed width is what
+   pays for a Steam link big enough to actually see. */
 
 /* Steam store link */
 /* Title links to the internal /game/:appid/:slug page */
@@ -199,28 +199,56 @@
   text-decoration: underline;
 }
 
-/* Secondary link out to the Steam store */
+/* Secondary link out to the Steam store.
+   Deliberately quiet at rest so the title keeps the hierarchy — the Steam mark
+   carries the meaning, so this does not also need colour to be understood.
+   Note there is no `opacity` here: it used to sit at 0.55 on top of
+   --color-text-tertiary, which composited to 2.20:1 (light) / 2.44:1 (dark) and
+   silently undid the token's AA fix. Mute with a colour, never with opacity. */
 .steam-link {
   color: var(--color-text-tertiary);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  transition: color var(--transition-fast);
+  /* The visible box stays close to the old footprint and ::after carries the
+     target. Sizing the box itself to 24x24 was tried and measured: it took ~15px
+     of width from a fixed-layout column, which pushed "Counter-Strike 2" and
+     "Team Fortress 2" onto two lines. Row height hid it — 73px is set by the
+     Options button — but the titles moved, so the box has to stay small. */
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background-color var(--transition-fast);
 }
 
-.steam-link:hover {
+/* Brings the tap area to the WCAG 2.2 SC 2.5.8 minimum of 24x24 without
+   spending layout width. The old rule had no box of its own at all and
+   measured 8.5x15.1 — sitting one 8px gap from the title link, so a near-miss
+   did not simply fail, it navigated somewhere else. */
+.steam-link::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.steam-link svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.steam-link:hover,
+.steam-link:focus-visible {
   color: var(--color-accent);
+  background: var(--color-accent-subtle);
 }
 
-.steam-external-icon {
-  font-size: 0.7em;
-  opacity: 0.55;
-  transition: opacity var(--transition-fast);
-}
-
-.steam-link:hover .steam-external-icon {
-  opacity: 1;
+.steam-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 /* Developer and publisher */
@@ -459,6 +487,15 @@
 .launch-option:has(.option-command.copied),
 .launch-option:has(.option-command.copy-failed) {
   transform: none;
+}
+
+/* Per-option disclosure. Desktop shows everything at once and always has, so
+   the button is hidden here and `.option-detail` is left alone — this whole
+   feature exists only inside the mobile media query, where a 520px card times
+   24 options came to 11.9 screens of scrolling. Collapsing in CSS rather than
+   at render time keeps a rotation or a resize correct with no re-render. */
+.option-detail-toggle {
+  display: none;
 }
 
 /* Options that satisfy the active category/risk filter are floated to the top

@@ -155,7 +155,12 @@
     display: flex;
     align-items: flex-start;
     width: 100%;
-    padding: var(--space-3) var(--space-2) var(--space-3) 40%;
+    /* 35%, down from 40% (and from 42% under 480px). The gutter only has to fit
+       the longest label — "RELEASE DATE:" measures ~99px here — and it was
+       reserving 151px on a 360px card, at the expense of the one column people
+       actually read. The reclaimed width is what keeps titles on one line now
+       that the Steam link is big enough to see. */
+    padding: var(--space-3) var(--space-2) var(--space-3) 35%;
     border: none;
     position: relative;
     min-height: var(--space-10);
@@ -170,7 +175,8 @@
     position: absolute;
     left: var(--space-2);
     top: var(--space-3);
-    width: 35%;
+    /* Stays clear of the 35% gutter above, with room to spare. */
+    width: 32%;
     font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     font-size: var(--font-size-xs);
@@ -190,7 +196,12 @@
   .table-container .games-table td:first-child::before {
     font-weight: var(--font-weight-extrabold);
     color: var(--color-accent);
-    font-size: var(--font-size-sm);
+    /* One step down from --font-size-sm, which rendered "GAME TITLE:" at ~114px
+       — wider than its own box once the gutter tightened, so it wrapped onto two
+       lines and dragged the label out of line with the title. Accent colour and
+       extrabold still mark it as the card's heading; it no longer needs to be
+       physically larger than its siblings to do that. */
+    font-size: var(--font-size-xs);
     /* Match the cell's larger top padding so the label lines up with the
        title's first line instead of floating above it. */
     top: var(--space-4);
@@ -204,11 +215,6 @@
     font-size: var(--font-size-lg);
   }
 
-  /* The GAME TITLE label already names this row, so the decorative controller
-     glyph is redundant here — and with the title wrapping to two lines it
-     floats orphaned between them. Drop it on the mobile card. */
-  .game-title::before { content: none; }
-
   /* On touch there's no hover, so the title has to read as a tappable link at
      rest: accent colour + underline, bolder. Bottom-only padding keeps a
      comfortable tap target without pushing the text below its label. */
@@ -218,6 +224,47 @@
     text-decoration: underline;
     text-underline-offset: 2px;
     padding-bottom: var(--space-1);
+  }
+
+  /* Same reasoning applied to the Steam link, which previously got no mobile
+     treatment at all: an 8px glyph with no resting affordance, sitting beside a
+     title that the rule above makes large, bold, underlined and accent-coloured.
+     With no hover to reveal anything on touch, the chip has to be visible at
+     rest — so it gets a permanent border — and 44x44 to clear the comfortable
+     touch target, well above the 24x24 minimum.
+
+     The border, not colour, is what marks it as tappable. Accent here would put
+     it level with the title and undo the hierarchy the rest of this file builds. */
+  .steam-link {
+    /* The visual chip stays small on purpose. A literal 44x44 box was tried and
+       measured: it pushed medium-length titles ("Counter-Strike 2") from one
+       line onto two and grew every card by ~22px, because the chip competes
+       with the title for the 60% of the card width the label leaves behind.
+       So the *visible* box stays near its old footprint and the ::after below
+       carries the touch target instead — the tap area grows, the layout does
+       not. */
+    position: relative;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    /* Cancels the title's `padding-bottom` so the two sit on a shared centre
+       line rather than the chip riding high against the underline. */
+    margin-bottom: var(--space-1);
+  }
+
+  /* Expands the tap area to 42x42 without affecting layout. The 8px inset is
+     exactly the flex `gap`, so the target grows flush to the title link and
+     stops — adjacent, never overlapping, which is what SC 2.5.8 asks for. */
+  .steam-link::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+
+  .steam-link svg {
+    width: 15px;
+    height: 15px;
   }
 
   .table-container .games-table td:last-child {
@@ -255,13 +302,17 @@
   .table-container .games-table tbody tr { padding: var(--space-4); margin-bottom: var(--space-4); }
 
   .table-container .games-table td {
-    padding: var(--space-2) var(--space-1) var(--space-2) 42%;
+    padding: var(--space-2) var(--space-1) var(--space-2) 35%;
     min-height: var(--space-8);
   }
 
   .table-container .games-table td::before {
-    width: 38%;
+    width: 32%;
     font-size: calc(var(--font-size-xs) * 0.9);
+    /* 0.05em left "RELEASE DATE:" — the longest label — with about a pixel of
+       margin inside its box at 360px, close enough that a different font stack
+       would wrap it. Tracking is the cheapest thing to give back here. */
+    letter-spacing: 0.02em;
     left: var(--space-1);
   }
 
@@ -333,6 +384,79 @@
   .table-container .launch-option:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
+  }
+
+  /* =========================================================================
+     Option card density.
+
+     Measured before this existed: one option card was 520px tall, and 24 of
+     them made a 10,082px list — 11.9 phone screens to read one game. The
+     breakdown was the argument for changing it. Of those 520px, the command
+     itself — the only thing anyone is here to copy — was 52px, or 10%. The
+     Effect/Example block was 176px (34%) and the provenance/risk footer 92px
+     (18%). Two thirds of every card was supporting material, rendered at full
+     size whether or not the reader had asked for it.
+
+     So the card now rests at command + description and puts the rest behind
+     one tap. Nothing is removed; it is the same content, deferred. That takes
+     the list to roughly a quarter of its height, and — the part that matters
+     more than the number — it makes the list skimmable, because a short row
+     reads as an item in a list while a 520px block reads as a page.
+     ========================================================================= */
+
+  /* The accent bar is charming once and oppressive twenty-four times: it is
+     what turned the expansion into a wall of blue. The card already has a
+     border and a shadow, which is enough separation at this size. */
+  .table-container .launch-option::before {
+    content: none;
+  }
+
+  .table-container .option-detail {
+    display: none;
+  }
+
+  .table-container .launch-option.detail-open .option-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .table-container .option-detail-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    align-self: flex-start;
+    /* Matches the other mobile buttons in this file (48px), comfortably clear
+       of the 44px touch target this needs to be. */
+    min-height: var(--space-12);
+    padding: var(--space-2) var(--space-3);
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    font-family: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+  }
+
+  .table-container .option-detail-toggle:hover,
+  .table-container .option-detail-toggle:focus-visible {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .table-container .odt-chevron {
+    width: 14px;
+    height: 14px;
+    transition: transform var(--transition-fast);
+  }
+
+  .table-container .launch-option.detail-open .odt-chevron {
+    transform: rotate(180deg);
   }
 
   .table-container .option-command {
