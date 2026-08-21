@@ -74,7 +74,9 @@ body {
   color: var(--color-text-primary);
   background-color: var(--color-background);
   transition: color var(--transition-base), background-color var(--transition-base);
-  overflow-x: hidden;
+  /* `clip`, not `hidden` — see the note on <html> above. `hidden` would make
+     <body> a scroll container in both axes and break touch scrolling. */
+  overflow-x: clip;
 }
 
 #app {

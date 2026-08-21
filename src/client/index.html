@@ -213,24 +213,5 @@
 
     <!-- Scripts -->
     <script src="./js/main.js" type="module" defer></script>
-    
-    <!-- Mobile Performance Optimization -->
-    <script>
-      // Prevent zoom on input focus for iOS
-      document.addEventListener('touchstart', function() {
-        document.querySelector('meta[name="viewport"]').setAttribute('content', 
-          'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
-        );
-      }, { once: true });
-      
-      // Restore zooming after interaction
-      document.addEventListener('touchend', function() {
-        setTimeout(function() {
-          document.querySelector('meta[name="viewport"]').setAttribute('content', 
-            'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes'
-          );
-        }, 500);
-      }, { once: true });
-    </script>
   </body>
 </html>

@@ -8,8 +8,13 @@
    ============================================================================= */
 
 @media (max-width: 768px) {
+  /* `clip`, never `hidden`. `overflow-x: hidden` on <body> forces overflow-y to
+     compute to `auto`, turning <body> into a scroll container that has nothing
+     to scroll — and the `overscroll-behavior` below then stops the gesture from
+     chaining up to the viewport, killing touch scrolling outright. `clip`
+     blocks sideways overflow without creating a scroll container. */
   html, body {
-    overflow-x: hidden !important;
+    overflow-x: clip !important;
     max-width: 100vw !important;
   }
 
@@ -594,9 +599,10 @@
 @media (max-width: 768px) {
   html { scroll-behavior: smooth; }
 
+  /* No `overscroll-behavior` on <body>: it is not the document scroller, and
+     containment here severs the touch scroll chain to the viewport. */
   body {
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
   }
 
   .suggestions-dropdown,
