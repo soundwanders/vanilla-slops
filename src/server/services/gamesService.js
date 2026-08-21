@@ -3,6 +3,7 @@ import { FEATURED_APP_IDS, FEATURED_RANK, FEATURED_ID_LIST } from '../config/fea
 import { mergeRelatedTiers } from '../utils/relatedGames.js';
 import { buildPhantomMap, withDisplayCounts } from '../utils/optionCounts.js';
 import { rankBrowsableOptions } from '../utils/optionRanking.js';
+import { sanitizeOrFilterValue, toOrFilterTerms } from '../utils/searchTerms.js';
 
 const FACETS_TTL_MS = 5 * 60 * 1000;
 const _facetsCache = { data: null, expiresAt: 0 };
@@ -256,20 +257,16 @@ function applySearchFilters(query, filters) {
     maxOptionsCount
   } = filters;
 
-  // Multi-field search
-  if (searchTerm && searchTerm.trim()) {
-    const searchTerms = searchTerm.trim().split(/\s+/);
-    
-    if (searchTerms.length === 1) {
-      // Single term - search across multiple fields
-      const term = searchTerms[0];
-      query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
-    } else {
-      // Multiple terms - each term must match at least one field
-      searchTerms.forEach(term => {
-        query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
-      });
-    }
+  // Multi-field search. Each term must match at least one field, so several
+  // words narrow the result rather than widening it. The one- and many-term
+  // cases were separate branches doing the same thing; they are one loop now.
+  //
+  // Terms are sanitised because `.or()` parses its argument as a filter
+  // expression — see utils/searchTerms.js. Until they were, a title with a
+  // comma in it took the whole request down: "Warhammer 40,000" put a bare
+  // `000%` where PostgREST expected a condition and the endpoint answered 500.
+  for (const term of toOrFilterTerms(searchTerm)) {
+    query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
   }
 
   // Exact match filters (only apply if the field exists in the database)
@@ -497,9 +494,8 @@ export async function getSearchSuggestions(query, limit = 10) {
   try {
     if (!query || query.length < 2) return [];
 
-    // Strip characters that would break PostgREST's or-filter grammar or act as
-    // ilike wildcards, so a stray comma/percent can't corrupt the query.
-    const safe = query.replace(/[%,()]/g, ' ').trim();
+    // Same rule the other or-filter paths use, defined once in utils/searchTerms.js.
+    const safe = sanitizeOrFilterValue(query);
     if (!safe) return [];
 
     const { data, error } = await supabase
@@ -909,11 +905,8 @@ async function getFacetValues(field, searchQuery = '') {
         .select(field);
 
       // Apply search filter if provided
-      if (searchQuery && searchQuery.trim()) {
-        const searchTerms = searchQuery.trim().split(/\s+/);
-        searchTerms.forEach(term => {
-          query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
-        });
+      for (const term of toOrFilterTerms(searchQuery)) {
+        query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
       }
 
       return query
@@ -983,11 +976,8 @@ async function getReleaseYears(searchQuery = '') {
         .from('public_games')
         .select('release_date');
 
-      if (searchQuery && searchQuery.trim()) {
-        const searchTerms = searchQuery.trim().split(/\s+/);
-        searchTerms.forEach(term => {
-          query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
-        });
+      for (const term of toOrFilterTerms(searchQuery)) {
+        query = query.or(`title.ilike.%${term}%,developer.ilike.%${term}%,publisher.ilike.%${term}%`);
       }
 
       return query
@@ -1312,7 +1302,15 @@ export async function fetchRelatedGames(game, limit = 8) {
       .eq(column, value)
       .neq('app_id', game.app_id)
       .gt('total_options_count', 0)
+      // `app_id` breaks ties, the same way the featured tail query does. Without
+      // it, games holding equal option counts come back in whatever order the
+      // planner chose for that connection, and `.limit(span)` then cuts among
+      // them arbitrarily — so two servers reading one database rendered
+      // different related lists for the same game, and a cached page could
+      // disagree with a fresh one. Which game wins a tie is arbitrary either
+      // way; that it is decided the same way every time is the point.
       .order('total_options_count', { ascending: false })
+      .order('app_id', { ascending: true })
       .limit(span);
 
   try {

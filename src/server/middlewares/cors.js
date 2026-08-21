@@ -1,4 +1,5 @@
 import cors from 'cors';
+import HttpError from '../models/httpError.js';
 
 // CORS configuration
 const setupCORS = () => {
@@ -56,18 +57,15 @@ const setupCORS = () => {
         return callback(null, true);
       }
       
-      // Production fallback: allow Railway domains if no specific origin set
-      if (process.env.NODE_ENV === 'production' && 
-          !process.env.CORS_ORIGIN && 
-          origin.includes('.railway.app')) {
-        console.log(`🐸 Bootstrap: Allowing Railway domain ${origin}`);
-        return callback(null, true);
-      }
-      
       // Log blocked requests for debugging
       console.warn(`❌ CORS: Blocked origin ${origin}`);
       console.warn(`   Allowed origins: ${allowedOrigins.join(', ')}`);
-      return callback(new Error('Not allowed by CORS'));
+      // A disallowed origin is a rejected request, not a server fault. Left as a
+      // bare Error it reached errorHandler with no status, defaulted to 500, and
+      // Sentry — which reports 5xx — filed every crawler sending a foreign
+      // Origin header as an incident. The browser never reads this status
+      // anyway; it blocks on the absent Access-Control-Allow-Origin header.
+      return callback(new HttpError(403, 'Not allowed by CORS', 'CORS_FORBIDDEN'));
     },
     // Read-only public API — only GET (and the OPTIONS preflight) are ever served.
     methods: ['GET', 'OPTIONS'],

@@ -9,6 +9,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats } from '../services/gamesService.js';
 import { slugify } from '../utils/slugify.js';
+import { jsonLdScript } from '../utils/jsonLdScript.js';
+import { safeHttpUrl } from '../utils/safeUrl.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_URL = (process.env.DOMAIN_URL || 'https://launchoptions.dev').replace(/\/$/, '');
@@ -218,8 +220,8 @@ function renderGamePage(game, slug, related = []) {
   <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
   <meta name="twitter:image" content="${steamImage}" />
-  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
-  <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+  <script type="application/ld+json">${jsonLdScript(jsonLd)}</script>
+  <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
   <script src="/game-copy.js" defer></script>
@@ -338,8 +340,13 @@ function humanizeSource(src) {
 // source_url column), otherwise plain, honest text — no fake affordance.
 function renderSource(opt) {
   const label = escapeHtml(humanizeSource(opt.source));
-  if (opt.source_url) {
-    return `<a class="option-source" href="${escapeHtml(opt.source_url)}" target="_blank" rel="noopener noreferrer" title="Source: ${label} (opens in a new tab)">${label}</a>`;
+  // A scheme the browser would treat as code has no business in an href, and
+  // escaping does not stop it — `javascript:` is valid attribute syntax. A
+  // rejected URL degrades to the same plain-text branch as a missing one, which
+  // is the honest outcome: no fake affordance.
+  const href = safeHttpUrl(opt.source_url);
+  if (href) {
+    return `<a class="option-source" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="Source: ${label} (opens in a new tab)">${label}</a>`;
   }
   return `<span class="option-source" title="Where this launch option was sourced from">${label}</span>`;
 }
@@ -511,7 +518,7 @@ function renderHowItWorks(stats) {
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
   <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
-  <script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>
+  <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
   <link rel="icon" href="/favicon.ico" />
