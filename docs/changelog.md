@@ -18,6 +18,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [Unreleased]
+
+### Fixed
+- **Searching for a game with a comma in its title answered 500.** "Warhammer
+  40,000" matches twelve games in the catalogue and returned none of them: the
+  search term was interpolated straight into a PostgREST or-filter, where a
+  comma separates conditions, so the query arrived with a bare `000%` where a
+  column-operator-value was expected. The sanitising rule that
+  `getSearchSuggestions` already applied now lives in one place and every query
+  path that builds an or-filter uses it. Ordinary searches are unaffected —
+  verified byte-for-byte against the previous build across the whole API.
+- **Related games could differ between one page load and the next.** The list
+  was ordered by option count with nothing to break ties, so games holding
+  equal counts came back in whatever order the database planner happened to
+  choose, and the cut to eight entries then fell somewhere arbitrary. Two
+  servers reading the same data rendered different lists for the same game.
+  Ties are settled on `app_id` now, the way the featured ordering already did.
+
+### Security
+- **Escaped the structured data on game pages.** The JSON-LD block was written
+  with `JSON.stringify`, which escapes quotes but not `<` or `/` — so a game
+  title containing a closing script tag could have ended the block early and
+  put markup into the page. The catalogue's titles come from slop-scraper
+  reading Steam, which makes them data this project publishes but does not
+  author, and encoding them on the way out is this repo's job. Search engines
+  read exactly the same document as before; only the HTML tokeniser sees a
+  difference.
+- **Provenance links are checked for their scheme, not just escaped.** Escaping
+  keeps a URL inside its attribute but does nothing about `javascript:`, which
+  is valid attribute syntax. `source_url` must now be an absolute http(s) URL;
+  anything else renders as plain text, which is the same honest fallback a
+  missing URL already had. Every one of 188 links sampled from production is
+  unaffected.
+- **Removed a CORS rule that trusted the wrong hosts.** A bootstrap branch
+  allowed any origin whose name merely *contained* `.railway.app`, which
+  `foo.railway.app.evil.com` satisfies. It was unreachable in practice — it
+  required `CORS_ORIGIN` to be unset, and it has been set since launch — and
+  the site runs on Vercel regardless. A refused origin is now a 403 rather than
+  a 500, so ordinary crawler traffic stops being reported as an outage.
+
 ## [1.3.1] - 2026-08-21 — Things you couldn't find, and numbers you couldn't trust
 
 ### Added
