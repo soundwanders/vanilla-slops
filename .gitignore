@@ -19,8 +19,8 @@ src/client/api-test/*
 docs/sql-snippets.sql
 appdetails_cache.json
 */appdetails_cache.json
-docs/user-testing-round-1.md
 docs/slop-scraper-followthrough.md
+docs/backups.md
 
 # throwaway scratch scripts and scratch output — never commit
 .tmp-*
