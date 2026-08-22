@@ -18,6 +18,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.3.4] - 2026-08-22 — Correcting the record on 1.3.3
+
+### Fixed
+- **The restore hazard described in 1.3.3 does not exist, and that entry is
+  wrong.** The rehearsal it asked for was finally run — the 2026-08-22 artifact
+  was decrypted and inspected — and it restores. Two independent reasons, both
+  checked rather than reasoned about:
+  1. the Supabase CLI's `--data-only` output **already begins with `SET
+     session_replication_role = replica;`**, so row triggers are disabled for
+     the whole data load before anything the workflow does; and
+  2. the data is emitted as **one multi-row `INSERT` per table, not `COPY`**.
+     Foreign keys are AFTER ROW triggers, which Postgres queues to *statement*
+     end, so a row referencing a row listed later in the same `INSERT` loads
+     fine. Verified on a temp table with a self-referencing foreign key: one
+     multi-row INSERT with the child before the parent succeeds; only two
+     *separate* INSERTs in that order fail (`23503`). The dump never produces
+     that shape.
+
+  pg_dump's circular-FK warning fires on detecting the structure, not on
+  establishing that a particular dump would break. 1.3.3 read a generic warning
+  as a proven failure and asserted, in the changelog and in `docs/backups.md`,
+  that the project's only backup was unrestorable. It was not. The physical-
+  ordering detail in that entry (`app_id 100` stored before `80`) is accurate
+  but irrelevant, because it only matters in a form this dump does not use.
+- **The `session_replication_role` wrapper added in 1.3.3 stays**, with an
+  honest reason. It is not what makes the artifact restorable. What it buys is
+  its closing line: the CLI sets the role and never resets it, which would
+  otherwise leave every statement run *after* a restore, in the same psql
+  session, executing with triggers disabled. It also keeps the file correct if
+  the CLI's output format ever changes to one of the shapes that would break.
+- `docs/backups.md` and the comments in `.github/workflows/backup.yml` are
+  rewritten to match, and the drop/re-add "recovery" procedure invented for
+  pre-1.3.3 artifacts is removed — there is nothing to recover from.
+
+### Added
+- **A record that the rehearsal happened.** The artifact decrypts and carries
+  2,853 games, 529 launch options and 19,051 links — an exact match for the live
+  row counts at dump time — plus both views, both triggers, twelve indexes and
+  the GRANTs. The backup is real. The claim about it was not.
+
 ## [1.3.3] - 2026-08-22 — A backup that restores, and one slug instead of two
 
 ### Fixed
