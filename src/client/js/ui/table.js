@@ -1,4 +1,9 @@
 import { fetchLaunchOptions } from '../api.js';
+// The same slug the server computes and 301-redirects to, so an internal link
+// is already canonical and a click costs no redirect hop. Imported rather than
+// transcribed: this was a hand-copied duplicate until 2026-08-22, and while the
+// two copies still matched, nothing anywhere checked that they did.
+import { slugify } from '../../../shared/slugify.js';
 import { MOBILE_BREAKPOINT } from '../constants.js';
 import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml, pasteableCommand } from './table-shared.js';
 import {
@@ -113,22 +118,6 @@ function renderGamesTable(container, games) {
   container.appendChild(table);
 
   if (TableState.isMobile) buffMobileTableView(table);
-}
-
-/**
- * URL-safe slug for /game/:appid/:slug links. Mirrors src/server/utils/slugify.js
- * so the internal link matches the server's canonical URL (no 301 hop on click).
- */
-function slugify(str) {
-  return String(str || '')
-    .replace(/[™®©]/g, '')
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80)
-    .replace(/-+$/g, '') || 'game';
 }
 
 function createGameRowHTML(game) {

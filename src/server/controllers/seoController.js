@@ -8,7 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats } from '../services/gamesService.js';
-import { slugify } from '../utils/slugify.js';
+import { slugify } from '../../shared/slugify.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../utils/safeUrl.js';
 
