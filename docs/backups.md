@@ -134,45 +134,59 @@ psql "$SUPABASE_DB_URL" -f restore.sql
 
 From a layer 1 export: create the schema first, then load each `.ndjson`.
 
-### The self-reference that breaks a naive restore
+### The circular-FK warning, and why it does not apply here
 
-`games.duplicate_of` is a foreign key pointing back at `games.app_id`, and it is
-**not deferrable**. pg_dump notices and warns on every run:
+`games.duplicate_of` is a foreign key pointing back at `games.app_id`, so
+pg_dump prints this on every `--data-only` run:
 
 ```
 pg_dump: warning: there are circular foreign-key constraints on this table:
 pg_dump: detail: games
 ```
 
-It is not a nuisance warning. The artifact is a schema dump (which recreates the
-constraint) followed by a `--data-only` dump (a `COPY` in physical row order), so
-a row whose `duplicate_of` points at a row stored later in the table fails on
-insert and aborts the restore. Measured 2026-08-22: `app_id 100` references `80`
-and is stored before it. The other five duplicate rows happen to be stored after
-their targets — but physical order is not a guarantee, and any `UPDATE` or
-`VACUUM FULL` can reorder them.
+**It is a generic structural warning, not a finding about this dump.** It fires
+because the cycle exists, not because pg_dump established that the output would
+fail to load. Verified 2026-08-22 by decrypting an actual artifact and testing
+the semantics against the live database:
 
-**Artifacts produced from 2026-08-22 onward already handle this.** The workflow
-wraps the data section in `SET session_replication_role = replica; … DEFAULT;`,
-which is what pg_dump's own `--disable-triggers` hint does, so `psql -f
-restore.sql` works with no extra flags.
+- The CLI's `--data-only` output **already opens with `SET
+  session_replication_role = replica;`**, so row triggers are disabled for the
+  whole data load before anything else happens.
+- The data is emitted as **one multi-row `INSERT` per table**, not `COPY`.
+  Foreign keys are implemented as AFTER ROW triggers, and Postgres queues those
+  to *statement* end — so a row referencing a row listed later in the same
+  `INSERT` is fine. Confirmed on a temp table with a self-referencing FK:
 
-**For an older artifact**, or any dump made by hand, do it in three steps:
+  | statement shape | result |
+  | --- | --- |
+  | one multi-row INSERT, child before parent | succeeds |
+  | two separate INSERTs, child first | **fails, 23503** |
+  | one multi-row INSERT, parent before child | succeeds |
 
-```bash
-psql "$SUPABASE_DB_URL" -c 'ALTER TABLE games DROP CONSTRAINT games_duplicate_of_fkey;'
-psql "$SUPABASE_DB_URL" -f restore.sql
-psql "$SUPABASE_DB_URL" -c 'ALTER TABLE games ADD CONSTRAINT games_duplicate_of_fkey
-                              FOREIGN KEY (duplicate_of) REFERENCES games(app_id);'
-```
+  Only the middle shape breaks, and the dump never produces it.
 
-Re-adding the constraint last also validates the data you just loaded: if it
-fails, the restore was incomplete and you want to know immediately.
+So `psql -f restore.sql` is the whole procedure. Physical row order does not
+matter here, and no drop/re-add dance is needed — including for artifacts made
+before this was understood.
+
+**What the workflow's wrapper is actually for.** The CLI sets
+`session_replication_role = replica` and never resets it, which would leave
+every statement you run *after* the restore, in the same psql session, executing
+with triggers disabled. The workflow appends `SET session_replication_role =
+DEFAULT;` to close that window. It also keeps the file correct if the CLI's
+output format ever changes to one of the shapes that would break.
 
 **Rehearse this once against a throwaway Supabase project.** An untested backup
 is a hypothesis. The first time you find out whether it works should not be the
 day you need it — and this repo's first artifact was, in fact, unrestorable
 until the warning above was taken seriously.
+
+**Rehearsed 2026-08-22** against the first artifact: it decrypts, and it carries
+2,853 games, 529 launch options and 19,051 links — an exact match for the live
+row counts at dump time — plus both views (`security_invoker='off'`),
+`trg_sync_options_count`, `trg_touch_updated_at`, twelve indexes and the GRANTs.
+What the rehearsal actually caught was not a broken backup but a broken belief
+about one; see the circular-FK section above.
 
 ## The pause risk, which is tighter than it looks
 

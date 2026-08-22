@@ -52,10 +52,9 @@ name: Database backup
 #       -o restore.sql slops-backup-YYYY-MM-DD.sql.gpg
 #   psql "$SUPABASE_DB_URL" -f restore.sql
 #
-# That works with no extra flags because the dump step below wraps the data in
-# SET session_replication_role. An artifact made BEFORE 2026-08-22 predates that
-# and will abort on games.duplicate_of — see docs/backups.md for the drop/re-add
-# procedure that recovers one.
+# That works with no extra flags. pg_dump warns about a circular foreign key on
+# games.duplicate_of; it is a generic structural warning and does not apply to
+# the shape this dump actually emits. See docs/backups.md for the evidence.
 #
 # Rehearse that once against a throwaway Supabase project before you need it.
 
@@ -106,20 +105,26 @@ jobs:
           supabase db dump --db-url "$DB_URL" --data-only -f data.sql
 
           # `games.duplicate_of` is a self-referencing foreign key, so pg_dump
-          # warns that a --data-only dump may not restore. It is right: the
-          # schema half recreates the constraint, the data half is a COPY in
-          # physical row order, and the constraint is NOT deferrable — so a row
-          # that points at a row stored later in the table fails on insert.
-          # Measured 2026-08-22: app_id 100 references 80 and is stored before
-          # it, so a plain restore aborts there. The other five survive on the
-          # luck of physical ordering, which any UPDATE or VACUUM FULL can
-          # change — so this is not "five out of six are fine", it is "the file
-          # is unrestorable and today it happens to fail on one row".
+          # prints a circular-FK warning on every --data-only run. The warning
+          # is generic — it fires on detecting the structure, not on proving
+          # this dump would break — and this dump does not break. Verified by
+          # decrypting the 2026-08-22 artifact:
           #
-          # Disabling row triggers around the data is what pg_dump's own
-          # --disable-triggers hint does. The `postgres` role on Supabase is
-          # permitted to set this (verified), so the dump stays self-restoring
-          # with no flags to remember at 3am.
+          #   1. the CLI's --data-only output ALREADY begins with
+          #      `SET session_replication_role = replica;`, so triggers are off
+          #      during the load regardless of anything done here; and
+          #   2. the data is one multi-row INSERT per table, not COPY. FK
+          #      constraints are AFTER ROW triggers, which Postgres queues to
+          #      statement end, so a row referencing a row listed later in the
+          #      same INSERT is fine. Only data split across separate
+          #      statements fails that way, and this dump is not that shape.
+          #
+          # So this wrapper is not what makes the artifact restorable. What it
+          # actually buys is the closing line: the CLI sets replication_role and
+          # never resets it, which would otherwise leave every later statement
+          # in the same psql session running with triggers disabled. Cheap
+          # insurance, and it keeps the file correct if the CLI's output format
+          # ever changes.
           {
             echo "SET session_replication_role = replica;"
             cat data.sql
