@@ -8,7 +8,6 @@
   },
   "headers": [
     {
-      "//": "Security headers for everything Vercel serves STATICALLY. The routes rewritten to api/index.js get these from helmet in src/server/app.js; the SPA never reaches Express, so without this block the most-visited page on the site was the only one shipping no CSP, no nosniff and no frame protection. The negative lookahead excludes the function-backed paths so a response can never carry two conflicting copies of the same header. Keep the CSP string below identical to the production directives in src/server/app.js — they describe one policy and drift between them is invisible until something breaks.",
       "source": "/((?!api/|game/|how-it-works|health|sitemap\\.xml).*)",
       "headers": [
         {
@@ -18,17 +17,18 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
         { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" },
         {
-          "//": "Two years, with subdomains. The static and function paths previously disagreed: 63072000 without includeSubDomains here, 31536000 with it there. helmet is set to match this exactly.",
-          "key": "Strict-Transport-Security",
-          "value": "max-age=63072000; includeSubDomains"
-        },
-        {
-          "//": "The site asks for none of these, so deny them outright rather than leave the defaults.",
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
         },
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
   ],
@@ -37,7 +37,6 @@
     { "source": "/game/:path*", "destination": "/api/index.js" },
     { "source": "/how-it-works", "destination": "/api/index.js" },
     { "source": "/health", "destination": "/api/index.js" },
-    { "source": "/sitemap.xml", "destination": "/api/index.js" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/sitemap.xml", "destination": "/api/index.js" }
   ]
 }

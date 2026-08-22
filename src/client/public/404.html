@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Page not found — Vanilla Slops</title>
+  <!--
+    Served by Vercel with a real 404 status for any path that is not the SPA,
+    a game page, or one of the server-rendered routes.
+
+    Before this existed, vercel.json ended in a `/(.*)` rewrite to index.html,
+    so every unmatched URL answered 200 with the full homepage — an unbounded
+    space of soft 404s. /privacy, /terms and /about all "worked" and served a
+    game database. The SPA never routes on paths (getCurrentURL only ever
+    appends a query string to the current pathname), so nothing needed that
+    catch-all; it was only ever serving the homepage at `/`.
+
+    Deliberately self-contained: no script, and styles inline. The CSP applied
+    to static routes is `script-src 'self'` with no inline execution, and a 404
+    should not depend on the bundle it may itself have failed to find.
+  -->
+  <style>
+    :root {
+      --ground: #e9edf3;
+      --plate: #fbfcfe;
+      --ink: #1a2230;
+      --ink-soft: #545f6e;
+      --line: #dbe1e9;
+      --accent: #1560b4;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ground: #0d1017;
+        --plate: #1e2530;
+        --ink: #e6e9ef;
+        --ink-soft: #9aa6b4;
+        --line: #2a323d;
+        --accent: #45c4ff;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: var(--ground);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    main {
+      max-width: 32rem;
+      width: 100%;
+      background: var(--plate);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: clamp(1.75rem, 5vw, 2.75rem);
+      text-align: center;
+    }
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      margin: 0 0 0.75rem;
+    }
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      margin: 0 0 0.75rem;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+    p {
+      margin: 0 0 1.5rem;
+      color: var(--ink-soft);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: center;
+    }
+    a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 1.15rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: border-color 0.15s ease, color 0.15s ease;
+    }
+    a.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    a:hover, a:focus-visible {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    a.primary:hover, a.primary:focus-visible {
+      color: #fff;
+      opacity: 0.9;
+    }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="code">404</p>
+    <h1>That page doesn't exist</h1>
+    <p>The link may be out of date, or the address may have a typo in it. The catalogue itself is still where you left it.</p>
+    <div class="actions">
+      <a class="primary" href="/">Search all games</a>
+      <a href="/how-it-works">How it works</a>
+    </div>
+  </main>
+</body>
+</html>

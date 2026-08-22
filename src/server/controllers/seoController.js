@@ -209,7 +209,15 @@ function renderGamePage(game, slug, related = []) {
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${canonical}" />
-  <meta property="og:type" content="article" />
+${options.length === 0 ? `  <!-- A game with no documented options is usually correct rather than a
+       failure, and the page stays useful to a person who searched for the
+       title. But it is ~106 words with nothing specific to say, and 69 of them
+       exist - enough thin pages to affect how the whole domain is assessed.
+       getGamesForSitemap already leaves these out; a sitemap omission is only a
+       hint, so state it directly. The follow half keeps link equity flowing on
+       to the related games below. -->
+  <meta name="robots" content="noindex, follow" />
+` : ''}  <meta property="og:type" content="article" />
   <meta property="og:title" content="${escapeHtml(pageTitle)}" />
   <meta property="og:description" content="${escapeHtml(metaDesc)}" />
   <meta property="og:url" content="${canonical}" />
