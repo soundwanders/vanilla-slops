@@ -25,8 +25,23 @@ name: Database backup
 #
 # SETUP — this workflow stays inert until both secrets exist:
 #   SUPABASE_DB_URL     Supabase → Project Settings → Database → Connection
-#                       string → URI. Use the direct connection, not the pooler:
-#                       pg_dump needs a session, and the pooler will refuse.
+#                       string. Pick "Session pooler" (Supavisor, port 5432),
+#                       NOT "Direct connection" and NOT "Transaction pooler".
+#
+#                       The reasoning, because the obvious choice is the wrong
+#                       one here. pg_dump needs session-level features, which
+#                       rules out the transaction pooler on 6543. That leaves
+#                       the direct connection — except direct connections are
+#                       IPv6-only unless the project buys the IPv4 add-on, and
+#                       GitHub Actions runners are IPv4-only. So a direct URL
+#                       resolves and then simply fails to connect from CI.
+#                       The session pooler is IPv4 on every tier and keeps the
+#                       session semantics pg_dump needs.
+#
+#                       Host looks like aws-0-<region>.pooler.supabase.com and
+#                       the user is postgres.<project-ref>, not bare postgres.
+#                       Use the direct connection for LOCAL dumps if your own
+#                       network has IPv6; it is the better choice there.
 #   BACKUP_PASSPHRASE   Any long random string. Store it somewhere that is NOT
 #                       this repo and NOT the same password manager entry as the
 #                       database itself — a backup you cannot decrypt is not a

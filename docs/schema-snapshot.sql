@@ -284,6 +284,45 @@ ALTER VIEW public.public_launch_options SET (security_invoker = off);
 --
 -- Do NOT add FORCE ROW LEVEL SECURITY. The views run with owner rights
 -- (security_invoker=off) and the owner's RLS exemption is what lets them read.
+--
+-- -----------------------------------------------------------------------------
+-- ON THE SUPABASE ADVISOR WARNING "Security Definer View" (CRITICAL)
+--
+-- Supabase's linter flags both views because security_invoker=off makes them
+-- execute with the view owner's privileges rather than the caller's. The
+-- warning is accurate about the property and correct as a general rule. It is a
+-- false positive for this database, and the reasoning should outlive whoever
+-- remembers setting it.
+--
+-- The linter's actual concern is that a definer view lets user A read user B's
+-- rows by bypassing per-user RLS. This project has no accounts, no auth, no
+-- per-user data and no user-scoped policies. There is no B.
+--
+-- More to the point, this setting is what CLOSES the hole rather than opening
+-- one. The sequence:
+--
+--   - The view's WHERE clause IS the security boundary. public_launch_options
+--     exists to withhold options with no provenance; public_games withholds
+--     duplicate rows.
+--   - anon was therefore revoked from all three base tables.
+--   - With security_invoker=ON the view would execute as anon, which now holds
+--     no SELECT on those tables, so the views would return permission denied.
+--   - Satisfying the linter means granting anon SELECT on the raw tables again
+--     and re-expressing the editorial rule as RLS policies — putting the same
+--     rule in two places and reopening direct access to the base tables.
+--
+-- That trade is worse. One rule, one place, and the raw tables stay shut.
+--
+-- WHEN THIS STOPS BEING TRUE: the day this project grows accounts. If per-user
+-- RLS is ever added to the base tables, these two views will bypass it
+-- silently. At that point switch to security_invoker=on plus policies, and
+-- accept the duplication.
+--
+-- A middle option if the warning is unwelcome but the design is not: reassign
+-- the views to a role that can read only these three tables, instead of
+-- postgres. Definer semantics are only as dangerous as the definer, and a
+-- least-privileged owner shrinks the blast radius without changing behaviour.
+-- -----------------------------------------------------------------------------
 -- =============================================================================
 
 REVOKE SELECT ON public.games               FROM anon, authenticated;

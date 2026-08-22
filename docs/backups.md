@@ -62,7 +62,8 @@ This is the layer that matters most and the one not yet automated.
 ```bash
 # One-time: install the CLI and get the direct connection string from
 # Supabase → Project Settings → Database → Connection string → URI.
-# Use the DIRECT connection, not the pooler: pg_dump needs a session.
+# Locally, the direct connection is the right one (if your network has IPv6).
+# From GitHub Actions it is not — see the table below.
 supabase db dump --db-url "$SUPABASE_DB_URL" --schema-only -f schema.sql
 ```
 
@@ -85,12 +86,34 @@ failing, until two repository secrets exist:
 
 | Secret | Where it comes from |
 | --- | --- |
-| `SUPABASE_DB_URL` | Project Settings → Database → Connection string → URI (direct, not pooler) |
+| `SUPABASE_DB_URL` | Project Settings → Database → Connection string → **Session pooler** (port 5432) |
 | `BACKUP_PASSPHRASE` | Any long random string |
 
 Keep the passphrase somewhere that is **not this repo and not the same password
 manager entry as the database itself**. A backup you cannot decrypt is not a
 backup.
+
+### Which connection string — this one is a trap
+
+Supabase offers three, and the one that reads as obviously correct is wrong for
+CI.
+
+| Option | Port | Works from GitHub Actions? | Works for `pg_dump`? |
+| --- | --- | --- | --- |
+| Direct connection | 5432 | **No** — IPv6 only without the paid IPv4 add-on, and runners are IPv4-only | Yes |
+| **Session pooler** | 5432 | **Yes** — IPv4 on every tier | **Yes** |
+| Transaction pooler | 6543 | Yes | **No** — no session-level features |
+
+So: **session pooler for the workflow, direct connection for local dumps** (if
+your own network has IPv6, which most home ISPs now do).
+
+The session pooler host looks like `aws-0-<region>.pooler.supabase.com` and the
+username is `postgres.<project-ref>` rather than bare `postgres` — if you copied
+a string with plain `postgres@`, you took the direct one.
+
+The failure mode if you pick wrong is unhelpful: a direct URL from CI resolves
+fine and then hangs or refuses, which reads like a credentials problem rather
+than a network-family problem.
 
 The encryption is not optional. This repository is public, artifacts on a public
 repo are downloadable by anyone who can see the Actions tab, and a plain dump
