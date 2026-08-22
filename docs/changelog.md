@@ -18,6 +18,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.3.3] - 2026-08-22 — A backup that restores, and one slug instead of two
+
+### Fixed
+- **The weekly backup produced a file that could not be restored.** The workflow
+  had been shipping an encrypted dump and reporting success, which is precisely
+  the failure a backup is supposed to rule out. `pg_dump` warned on every run —
+  *"there are circular foreign-key constraints on this table: games"* — and it
+  was right. `games.duplicate_of` is a foreign key pointing back at
+  `games.app_id`, and it is not deferrable. The artifact is a schema dump that
+  recreates that constraint followed by a `--data-only` dump, which is a `COPY`
+  in physical row order, so a row whose `duplicate_of` points at a row stored
+  later in the table fails on insert and aborts the entire restore. Measured
+  against the live database: `app_id 100` references `80` and is stored before
+  it, so a restore died on the first of the six duplicate rows. The other five
+  survived on the luck of physical ordering, which any `UPDATE` or `VACUUM FULL`
+  can change — this was never "five of six are fine", it was "the file is
+  unrestorable and today it happens to fail here". The data section is now
+  wrapped in `SET session_replication_role = replica; … DEFAULT;`, which is what
+  pg_dump's own `--disable-triggers` hint does, so `psql -f restore.sql` works
+  with no flags to remember on a bad day. It also stops `trg_sync_options_count`
+  firing once per junction row during the load, so `total_options_count` restores
+  to the values that were dumped rather than being recomputed 19,051 times.
+  `docs/backups.md` gained the drop/re-add procedure that recovers an artifact
+  made before this change.
+
+### Changed
+- **One slug implementation instead of two.** `slugify` existed twice — once in
+  `src/server/utils/` and once hand-transcribed into `src/client/js/ui/table.js`
+  — because the server 301-redirects to the canonical slug and the client must
+  build links that already match it or every click pays a redirect hop. Only the
+  server copy was under test, and nothing anywhere checked that the two agreed:
+  the same one-rule-two-places failure the slop-scraper handoff kept reporting
+  from the write side. They were compared across a 16-case corpus before merging
+  and were still identical, so this changes no behaviour — the built bundle hash
+  is unchanged at `index-BI9fqFvH.js`. The single implementation now lives in
+  `src/shared/`, a new directory for code both sides must agree on byte for byte,
+  imported across Vite's `root` in both dev and build.
+- **The slug is now pinned against invisible padding.** Steam titles arrive with
+  trailing spaces, doubled internal spaces, and characters of no visual width —
+  the zero-width space, and the HANGUL filler guide authors use to fake table
+  alignment. `app_id 2085000` lost a trailing space upstream, which would move a
+  slug derived from the title. It does not here, and there are now tests saying
+  so, along with a test pinning the limit of that guarantee: an invisible
+  character wedged *mid-word* does change the slug, and would need fixing at the
+  write path rather than being absorbed.
+- **Environment files culled to one.** `.env.dev`, `.env.prod` and `.env.staging`
+  each held a live `service_role` key and were read by nothing — every loader
+  resolves the project root's `.env` explicitly and there is no NODE_ENV-based
+  file selection anywhere. `.env.staging` set `NODE_ENV=staging`, which the
+  config schema rejects outright, proving it had never been loaded.
+  `.env.example` is now the single committed reference and documents all three
+  deployment contexts: the local `.env`, the Vercel dashboard, and the GitHub
+  repository secrets that only `backup.yml` reads.
+
+### Removed
+- `.env.dev`, `.env.prod`, `.env.staging` — dead files carrying three surplus
+  copies of the most powerful credential in the project.
+- `SUPABASE_ANON_KEY` and `GAME_FETCH_LIMIT` from `.env`. Neither is read
+  anywhere: no `process.env` reference on the server, and the client has no
+  `import.meta.env` usage at all.
+
 ## [1.3.2] - 2026-08-21 — The page stopped moving, and the search box came out of hiding
 
 ### Changed
