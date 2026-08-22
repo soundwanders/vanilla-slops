@@ -1,0 +1,113 @@
+name: Database backup
+
+# Supabase's Free plan includes NO automated backups — not daily, not
+# point-in-time. Their own guidance is that free-tier projects export regularly
+# and keep the copies off-site. Until this repo is on a paid plan, this workflow
+# IS the backup: without it there is nothing to restore from.
+#
+# What is and is not recoverable without this:
+#   - The catalogue itself is reproducible by re-running slop-scraper, but that
+#     is a rebuild measured in hours, not a restore, and it has never been
+#     rehearsed under pressure.
+#   - Anything hand-corrected in the Supabase dashboard exists in exactly one
+#     place and is gone for good.
+#
+# ---------------------------------------------------------------------------
+# THE ENCRYPTION IS NOT OPTIONAL
+#
+# This repository is public, and artifacts on a public repo are downloadable by
+# anyone who can see the Actions tab. A plain dump would publish the whole raw
+# database — including the ~96 launch options that public_launch_options
+# deliberately hides because the project cannot stand behind them. The dump is
+# therefore encrypted before it is ever written to a place Actions can upload
+# from, and the passphrase never leaves repository secrets.
+# ---------------------------------------------------------------------------
+#
+# SETUP — this workflow stays inert until both secrets exist:
+#   SUPABASE_DB_URL     Supabase → Project Settings → Database → Connection
+#                       string → URI. Use the direct connection, not the pooler:
+#                       pg_dump needs a session, and the pooler will refuse.
+#   BACKUP_PASSPHRASE   Any long random string. Store it somewhere that is NOT
+#                       this repo and NOT the same password manager entry as the
+#                       database itself — a backup you cannot decrypt is not a
+#                       backup.
+#
+# TO RESTORE:
+#   gpg --decrypt --batch --passphrase "$BACKUP_PASSPHRASE" \
+#       -o restore.sql slops-backup-YYYY-MM-DD.sql.gpg
+#   psql "$SUPABASE_DB_URL" -f restore.sql
+#
+# Rehearse that once against a throwaway Supabase project before you need it.
+
+on:
+  schedule:
+    # 04:00 UTC every Sunday. Weekly is the right cadence for a catalogue that
+    # changes when the scraper is run by hand rather than continuously.
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that the secrets are configured
+        id: guard
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$PASSPHRASE" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SUPABASE_DB_URL or BACKUP_PASSPHRASE is not set — no backup was taken. See the comments in this workflow for setup."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install the Supabase CLI
+        if: steps.guard.outputs.configured == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump and encrypt
+        if: steps.guard.outputs.configured == 'true'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y-%m-%d)"
+
+          # The CLI is used rather than a bare pg_dump so the client version
+          # tracks whatever Postgres the project is on; a client older than the
+          # server refuses to dump at all, and that mismatch is the usual reason
+          # a hand-rolled backup job quietly stops working after an upgrade.
+          supabase db dump --db-url "$DB_URL" -f plain.sql
+          supabase db dump --db-url "$DB_URL" --data-only -f data.sql
+
+          # Roles are deliberately not dumped: they would capture the grant
+          # state, and this file is destined for a public artifact store.
+          cat plain.sql data.sql > "slops-backup-$STAMP.sql"
+          rm -f plain.sql data.sql
+
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+              --passphrase "$PASSPHRASE" \
+              -o "slops-backup-$STAMP.sql.gpg" \
+              "slops-backup-$STAMP.sql"
+
+          # The cleartext must not survive into the upload step.
+          shred -u "slops-backup-$STAMP.sql" 2>/dev/null || rm -f "slops-backup-$STAMP.sql"
+
+          echo "Encrypted backup: $(du -h "slops-backup-$STAMP.sql.gpg" | cut -f1)"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+
+      - name: Upload
+        if: steps.guard.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: slops-backup-${{ env.STAMP }}
+          path: slops-backup-${{ env.STAMP }}.sql.gpg
+          # GitHub's ceiling for a public repo. Pull one down to cold storage
+          # periodically — this retention is a rolling window, not an archive.
+          retention-days: 90
+          if-no-files-found: error

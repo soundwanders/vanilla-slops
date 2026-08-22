@@ -58,6 +58,14 @@ app.use(helmet({
       upgradeInsecureRequests: null,
     },
   },
+  // Matched to the Strict-Transport-Security value in vercel.json. These were
+  // set independently and disagreed — 31536000 with includeSubDomains here,
+  // 63072000 without it on the static paths — so the policy a visitor got
+  // depended on which URL they happened to land on first.
+  hsts: {
+    maxAge: 63072000,
+    includeSubDomains: true,
+  },
   crossOriginEmbedderPolicy: false
 }));
 

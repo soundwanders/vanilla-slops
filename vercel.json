@@ -6,6 +6,32 @@
       "includeFiles": "src/client/dist/index.html"
     }
   },
+  "headers": [
+    {
+      "//": "Security headers for everything Vercel serves STATICALLY. The routes rewritten to api/index.js get these from helmet in src/server/app.js; the SPA never reaches Express, so without this block the most-visited page on the site was the only one shipping no CSP, no nosniff and no frame protection. The negative lookahead excludes the function-backed paths so a response can never carry two conflicting copies of the same header. Keep the CSP string below identical to the production directives in src/server/app.js — they describe one policy and drift between them is invisible until something breaks.",
+      "source": "/((?!api/|game/|how-it-works|health|sitemap\\.xml).*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self';img-src 'self' data: https:;connect-src 'self' https://*.supabase.co;font-src 'self' https: data:;base-uri 'self';form-action 'self';frame-ancestors 'self';object-src 'none';script-src-attr 'none';upgrade-insecure-requests"
+        },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        {
+          "//": "Two years, with subdomains. The static and function paths previously disagreed: 63072000 without includeSubDomains here, 31536000 with it there. helmet is set to match this exactly.",
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        },
+        {
+          "//": "The site asks for none of these, so deny them outright rather than leave the defaults.",
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+        },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/game/:path*", "destination": "/api/index.js" },
