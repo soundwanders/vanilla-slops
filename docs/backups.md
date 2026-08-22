@@ -134,9 +134,45 @@ psql "$SUPABASE_DB_URL" -f restore.sql
 
 From a layer 1 export: create the schema first, then load each `.ndjson`.
 
+### The self-reference that breaks a naive restore
+
+`games.duplicate_of` is a foreign key pointing back at `games.app_id`, and it is
+**not deferrable**. pg_dump notices and warns on every run:
+
+```
+pg_dump: warning: there are circular foreign-key constraints on this table:
+pg_dump: detail: games
+```
+
+It is not a nuisance warning. The artifact is a schema dump (which recreates the
+constraint) followed by a `--data-only` dump (a `COPY` in physical row order), so
+a row whose `duplicate_of` points at a row stored later in the table fails on
+insert and aborts the restore. Measured 2026-08-22: `app_id 100` references `80`
+and is stored before it. The other five duplicate rows happen to be stored after
+their targets — but physical order is not a guarantee, and any `UPDATE` or
+`VACUUM FULL` can reorder them.
+
+**Artifacts produced from 2026-08-22 onward already handle this.** The workflow
+wraps the data section in `SET session_replication_role = replica; … DEFAULT;`,
+which is what pg_dump's own `--disable-triggers` hint does, so `psql -f
+restore.sql` works with no extra flags.
+
+**For an older artifact**, or any dump made by hand, do it in three steps:
+
+```bash
+psql "$SUPABASE_DB_URL" -c 'ALTER TABLE games DROP CONSTRAINT games_duplicate_of_fkey;'
+psql "$SUPABASE_DB_URL" -f restore.sql
+psql "$SUPABASE_DB_URL" -c 'ALTER TABLE games ADD CONSTRAINT games_duplicate_of_fkey
+                              FOREIGN KEY (duplicate_of) REFERENCES games(app_id);'
+```
+
+Re-adding the constraint last also validates the data you just loaded: if it
+fails, the restore was incomplete and you want to know immediately.
+
 **Rehearse this once against a throwaway Supabase project.** An untested backup
 is a hypothesis. The first time you find out whether it works should not be the
-day you need it.
+day you need it — and this repo's first artifact was, in fact, unrestorable
+until the warning above was taken seriously.
 
 ## The pause risk, which is tighter than it looks
 
