@@ -526,16 +526,26 @@ export async function fetchGamesInBatch(gameIds) {
 }
 
 /**
- * Advanced search
+ * Advanced search — a thin re-shaping of `fetchGames` for callers that already
+ * hold a `{ field, order }` sort object rather than two loose strings.
+ *
+ * It once also accepted `fuzzy` and `exactMatch`. Both were destructured and
+ * then never referenced: no caller passed either, no request carried either,
+ * and the server has never had a parameter by either name. They read as an
+ * unfinished feature, which is worse than no feature — anyone reasoning about
+ * how search works would have found two switches that do nothing.
+ *
+ * Fuzzy matching now exists, and it is deliberately not a switch. It is a
+ * fallback the server applies only when a literal search returns nothing, so
+ * there is nothing here for a caller to turn on. See `getFuzzyTitleSuggestions`
+ * in src/server/services/gamesService.js.
  */
 export async function advancedSearch({
   query = '',
   filters = {},
   sort = { field: 'title', order: 'asc' },
   page = 1,
-  limit = DEFAULT_PAGE_SIZE,
-  fuzzy = false,
-  exactMatch = false
+  limit = DEFAULT_PAGE_SIZE
 } = {}) {
   
   return fetchGames({
