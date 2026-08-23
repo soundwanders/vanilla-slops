@@ -176,17 +176,69 @@ with triggers disabled. The workflow appends `SET session_replication_role =
 DEFAULT;` to close that window. It also keeps the file correct if the CLI's
 output format ever changes to one of the shapes that would break.
 
-**Rehearse this once against a throwaway Supabase project.** An untested backup
-is a hypothesis. The first time you find out whether it works should not be the
-day you need it — and this repo's first artifact was, in fact, unrestorable
-until the warning above was taken seriously.
+**Rehearse this whenever the dump format or the restore target changes.** An
+untested backup is a hypothesis, and the first time you find out whether it works
+should not be the day you need it. This project's first rehearsal is recorded
+below — it passed, and it corrected a wrong belief about the artifact that had
+already been written down twice.
 
-**Rehearsed 2026-08-22** against the first artifact: it decrypts, and it carries
-2,853 games, 529 launch options and 19,051 links — an exact match for the live
-row counts at dump time — plus both views (`security_invoker='off'`),
-`trg_sync_options_count`, `trg_touch_updated_at`, twelve indexes and the GRANTs.
-What the rehearsal actually caught was not a broken backup but a broken belief
-about one; see the circular-FK section above.
+### Rehearsed end to end, 2026-08-22 — it works
+
+Not "it decrypts and looks about right": the artifact was loaded into a real,
+empty PostgreSQL instance and the result compared against live column by column.
+
+**The data is byte-for-byte faithful.** Content fingerprints, not row counts:
+
+| fingerprint | live | restored |
+| --- | --- | --- |
+| `games` (app_id, title, engine) | `1c15cb150c83` | match |
+| `launch_options` (id, command, risk_level) | `b9fa7d4f9a21` | match |
+| `game_launch_options` (both columns) | `6ecf13dd487c` | match |
+| `public_games` | `7d56abfe19a0` | match |
+| `public_launch_options` | `17149131ea1d` | match |
+
+**The structure came back too**, which is the part this document ranks first:
+2,853 / 529 / 19,051 rows, both views returning their correct filtered counts
+(2,847 and 434), all three foreign keys restored **and validated**, 16 indexes,
+and both triggers. `trg_sync_options_count` was not merely present — inserting a
+junction row moved Team Fortress 2's `total_options_count` from 28 to 29, so the
+trigger is live in the restored database, not just recreated as text.
+
+### The restore target is not a free choice
+
+**120 of the dump's 237 statements failed on a plain PostgreSQL server, and 114
+of them were GRANTs:**
+
+```
+[38x] role "anon" does not exist
+[38x] role "authenticated" does not exist
+[38x] role "service_role" does not exist
+[3x]  schema "extensions" does not exist
+[1x]  extension "supabase_vault" is not available
+[1x]  publication "supabase_realtime" does not exist
+```
+
+Every one is Supabase platform furniture rather than project data — which is why
+the tables and views still landed perfectly. But the GRANT failures are the ones
+that matter, because **the GRANT set is the security model**. The views run with
+`security_invoker=off` and `anon` was revoked from the base tables; without those
+grants the application connects to a database holding perfect data and reads
+nothing from it. That is the "queries return empty rather than erroring" failure
+this project already knows is the hardest kind to diagnose.
+
+**So: restore into a Supabase project**, where the three roles exist. If you ever
+must restore somewhere else, create `anon`, `authenticated` and `service_role`
+first, then load the dump — otherwise you will spend the worst hour of the
+incident debugging permissions rather than recovering.
+
+Two smaller notes from the same run. The dump touches the `auth` (23 references)
+and `storage` (7) schemas as well as `public`; harmless here, since this project
+uses neither, but it explains the stragglers in the list above. And the rehearsal
+was run against PostgreSQL 18 while the dump came from 17.6 — restoring forward a
+major version worked without complaint.
+
+What the rehearsal caught was not a broken backup but a broken belief about one;
+see the circular-FK section above.
 
 ## The pause risk, which is tighter than it looks
 
@@ -199,8 +251,25 @@ repository activity. So: stop committing for two months → the workflow is
 disabled → the keepalive stops → the project pauses **within a week** → and the
 thing that would have emailed you about it is the thing that was disabled.
 
-One external uptime check, hosted anywhere that is not this repo, breaks that
-circle. It is the cheapest reliability buy available here.
+**That circle is now broken.** Two external checks run on `cron-job.org`, outside
+this repository and therefore immune to GitHub disabling anything:
+
+| check | target | interval |
+| --- | --- | --- |
+| database keepalive | Supabase | every 3 days |
+| full-stack check | `https://launchoptions.dev/api/games` | every 3 days |
+
+The second is the more useful of the two: it exercises the serverless function,
+the database and the CDN in one request, so a pass means the whole chain is up,
+not merely that the database is awake. Both notify on the first failure, which is
+what makes them monitors rather than just keepalives.
+
+The three-day interval is deliberate. A seven-day ping against a seven-day pause
+threshold has no margin at all — one missed run and the project sleeps. Three
+days leaves room for a failure and a retry before anything is at stake.
+
+`health.yml` still runs every four hours and is still useful; it is simply no
+longer the only thing standing between this project and a silent pause.
 
 ## When to start paying
 
