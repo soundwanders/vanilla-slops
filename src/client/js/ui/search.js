@@ -456,21 +456,28 @@ export default class SlopSearch {
 
     let html = '';
     Object.entries(groupedSuggestions).forEach(([category, items]) => {
-      html += `<div class="suggestion-category-header">${category}</div>`;
+      html += `<div class="suggestion-category-header">${this.escapeHtml(category)}</div>`;
       items.forEach(item => {
         const isSelected = item.originalIndex === this.selectedSuggestionIndex;
         const isOption = item.type === 'option';
+        // A fuzzy row is a correction, not a match: by definition the query does
+        // not occur in it, so highlighting would either find nothing or — worse —
+        // find an incidental fragment and imply the user typed it.
+        const isFuzzy = item.fuzzy === true;
+        const label = isFuzzy
+          ? this.escapeHtml(item.value)
+          : this.highlightMatch(item.value, this.currentQuery);
         // Launch options render as a monospace command + a muted description so
         // people can recognize what a flag does without knowing it beforehand.
         const body = isOption
-          ? `<code class="suggestion-cmd">${this.highlightMatch(item.value, this.currentQuery)}</code>` +
+          ? `<code class="suggestion-cmd">${label}</code>` +
             (item.description ? `<span class="suggestion-desc">${this.escapeHtml(item.description)}</span>` : '')
-          : `<span class="suggestion-value">${this.highlightMatch(item.value, this.currentQuery)}</span>`;
+          : `<span class="suggestion-value">${label}</span>`;
         html += `
-          <div class="suggestion-item ${isSelected ? 'highlighted' : ''} ${isOption ? 'suggestion-option' : ''}"
+          <div class="suggestion-item ${isSelected ? 'highlighted' : ''} ${isOption ? 'suggestion-option' : ''} ${isFuzzy ? 'suggestion-fuzzy' : ''}"
               data-index="${item.originalIndex}"
               data-type="${this.escapeHtml(item.type || '')}"
-              data-value="${this.escapeHtml(item.value)}">
+              data-value="${this.escapeAttr(item.value)}">
             ${body}
           </div>
         `;
@@ -491,16 +498,42 @@ export default class SlopSearch {
   }
 
   /**
-   * Highlight matching text in suggestions
+   * Highlight the typed text where it occurs in a suggestion.
+   *
+   * The query is escaped TWICE and the two escapes are not interchangeable.
+   * `escapeHtml` makes it safe to put in the document; `escapeRegExp` makes it
+   * safe to compile. Skipping the second one was a real defect, not a
+   * theoretical one: a query of `c++` compiled to /(c++)/ and threw "Nothing to
+   * repeat", and because `renderSuggestions` is called inside
+   * `fetchSuggestions`' try block, the throw was caught and turned into
+   * `hideSuggestions()`. Typing a `+` or a `[` did not mis-highlight — it
+   * silently removed the dropdown entirely, with the reason visible only in the
+   * console.
+   *
+   * The quieter half of the same bug: `.` and `*` compiled fine and matched the
+   * wrong things, so searching `s.t.a.l.k.e.r.` highlighted characters the user
+   * had not typed.
+   *
+   * Escaping HTML before building the pattern is deliberate and has to stay in
+   * this order — the pattern is run against already-escaped text, so an `&` in
+   * the query has to have become `&amp;` on both sides for the two to meet.
    */
   highlightMatch(text, query) {
     if (!query) return this.escapeHtml(text);
-    
+
     const escapedText = this.escapeHtml(text);
-    const escapedQuery = this.escapeHtml(query);
-    const regex = new RegExp(`(${escapedQuery})`, 'gi');
-    
-    return escapedText.replace(regex, '<mark>$1</mark>');
+    const pattern = this.escapeRegExp(this.escapeHtml(query));
+    if (!pattern) return escapedText;
+
+    return escapedText.replace(new RegExp(`(${pattern})`, 'gi'), '<mark>$1</mark>');
+  }
+
+  /**
+   * Neutralise every character that carries meaning in a regular expression, so
+   * a user's search text is matched as the literal string they typed.
+   */
+  escapeRegExp(text) {
+    return String(text ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   /**
@@ -560,7 +593,6 @@ export default class SlopSearch {
     this.hideSuggestions();
 
     // Immediate search when selecting a suggestion
-    console.log('⚡ Immediate search triggered by suggestion selection');
     this.executeSearch();
   }
 
@@ -647,10 +679,10 @@ export default class SlopSearch {
       <li class="ob-chip-item">
         <button type="button"
                 class="ob-chip"
-                data-command="${this.escapeHtml(o.command)}"
-                title="${this.escapeHtml(o.description || o.command)}"
+                data-command="${this.escapeAttr(o.command)}"
+                title="${this.escapeAttr(o.description || o.command)}"
                 aria-pressed="false"
-                aria-label="Filter by ${this.escapeHtml(o.command)}, used by ${o.count} games"
+                aria-label="Filter by ${this.escapeAttr(o.command)}, used by ${o.count} games"
                 style="--ob-i:${i}">
           <code class="ob-chip-cmd">${this.escapeHtml(o.command)}</code>
           <span class="ob-chip-count">${o.count}</span>

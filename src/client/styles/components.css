@@ -277,6 +277,23 @@
   white-space: nowrap;
 }
 
+/* "Did you mean…?" rows are corrections, not matches. The query by definition
+   does not occur in them, so they carry no <mark>, and they are toned down to
+   read as an offer rather than a result. They only ever appear when the literal
+   search found nothing at all, so they compete with an empty dropdown — never
+   with a real match. Restored to full weight on hover/keyboard focus, because
+   at that point the user has chosen one and it stops being a guess. */
+.suggestion-fuzzy .suggestion-value {
+  font-style: italic;
+  color: var(--color-text-tertiary);
+}
+
+.suggestion-fuzzy:hover .suggestion-value,
+.suggestion-fuzzy.highlighted .suggestion-value {
+  font-style: normal;
+  color: var(--color-text-primary);
+}
+
 .suggestion-item:hover,
 .suggestion-item.highlighted {
   background: var(--color-interactive-hover);
