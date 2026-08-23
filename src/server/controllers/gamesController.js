@@ -332,7 +332,23 @@ export async function searchSuggestionsController(req, res) {
     const suggestions = await getSearchSuggestions(query, parseInt(limit));
     
     logger.success('SUGGESTIONS', 'Suggestions retrieved', { count: suggestions.length });
-    
+
+    // The typeahead is the only endpoint a user hits on a per-keystroke basis,
+    // and it was the one endpoint with no edge caching at all — every letter
+    // typed anywhere in the world woke the function.
+    //
+    // Query strings are part of Vercel's cache key, so this caches per search
+    // term rather than globally. That sounds like it would never hit, and it is
+    // the opposite: people converge hard on the same prefixes, and a term is
+    // requested once per letter by the person typing it before anyone else
+    // arrives. `half` is requested by every single person looking for Half-Life.
+    //
+    // The window is longer than the catalogue listing's 60s because a suggestion
+    // list is far more tolerant of staleness than a results page: being one game
+    // short in a dropdown for ten minutes costs nothing, and the underlying data
+    // only changes when the scraper is run by hand.
+    setListCacheHeaders(res, 600, 3600);
+
     res.json(suggestions);
   } catch (err) {
     logger.error('SUGGESTIONS', 'Failed to fetch suggestions', { error: err.message });

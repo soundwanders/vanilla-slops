@@ -65,4 +65,28 @@ describe('slugify', () => {
     expect(slugify('Half\u200BLife')).toBe('half-life');
     expect(slugify('HalfLife')).toBe('halflife');
   });
+
+  it('never returns an empty slug, whatever the title is made of', () => {
+    // slop-scraper's rev 18 raised this directly: a title with no ASCII
+    // alphanumerics folds to the empty string under this rule, and they have
+    // stopped flattening the characters that used to prevent it — ZWNJ and ZWJ
+    // carry meaning in Persian, Arabic and Indic scripts, so removing them was
+    // corrupting those titles. Zero published titles hit this today, measured
+    // on their side, and the population that could is now growing rather than
+    // being normalised away upstream.
+    //
+    // The `|| 'game'` fallback is what makes that a non-event here. It is load
+    // bearing, not defensive clutter.
+    for (const title of ['原神', 'ЗАРЯ', 'ポケモン', '!!!', '《》', '', '   ', null, undefined]) {
+      expect(slugify(title)).toBe('game');
+    }
+  });
+
+  it('keeps such titles addressable despite sharing a slug', () => {
+    // Two CJK titles both slug to 'game', so the slug cannot tell them apart.
+    // That is harmless only because app_id is what resolves the route and the
+    // slug is decoration the server rewrites. If anything ever keys on the slug
+    // alone, this is where it breaks.
+    expect(slugify('原神')).toBe(slugify('ポケモン'));
+  });
 });

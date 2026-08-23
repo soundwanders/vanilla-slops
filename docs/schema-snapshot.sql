@@ -30,6 +30,10 @@
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid(), used by launch_options.id
+-- levenshtein_less_equal(), used by fuzzy_game_titles() in section 5. Installed
+-- into `extensions` rather than `public`, which is Supabase's default and the
+-- reason that function sets an explicit search_path.
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch WITH SCHEMA extensions;
 
 
 -- =============================================================================
@@ -107,6 +111,7 @@ CREATE INDEX idx_glo_game ON public.game_launch_options USING btree (game_app_id
 CREATE INDEX idx_glo_option ON public.game_launch_options USING btree (launch_option_id);
 CREATE UNIQUE INDEX games_pkey ON public.games USING btree (app_id);
 CREATE INDEX idx_games_developer ON public.games USING btree (developer);
+CREATE INDEX idx_games_title_compact ON public.games USING btree (regexp_replace(lower(title), '[^[:alnum:]]+'::text, ''::text, 'g'::text) text_pattern_ops);
 CREATE INDEX idx_games_developer_trgm ON public.games USING gin (developer gin_trgm_ops);
 CREATE INDEX idx_games_duplicate_of ON public.games USING btree (duplicate_of) WHERE (duplicate_of IS NOT NULL);
 CREATE INDEX idx_games_engine ON public.games USING btree (engine);
@@ -124,13 +129,162 @@ CREATE UNIQUE INDEX launch_options_pkey ON public.launch_options USING btree (id
 -- 5. FUNCTIONS — project-owned only
 --
 -- The ~31 pg_trgm functions returned by 10c are provided by the extension and
--- are omitted here; CREATE EXTENSION in section 1 restores them.
+-- are omitted here, as are fuzzystrmatch's; CREATE EXTENSION in section 1
+-- restores both sets.
+--
+-- game_suggestions() is the typeahead's PRIMARY pass, replacing the PostgREST
+-- or-filter it used to issue. The reason it exists is its title arm: it matches
+-- the punctuation-stripped title anchored to the start, so `stalker` reaches
+-- S.T.A.L.K.E.R. and `fear` reaches F.E.A.R., neither of which plain ilike can
+-- see. Anchoring is what keeps that from also matching 'art' inside 'War
+-- Thunder'; the >= 3 length gate is what keeps 'c++' from compacting to 'c' and
+-- matching every title beginning with that letter. Its supporting index is
+-- idx_games_title_compact in section 4.
+--
+-- fuzzy_game_titles() backs the typeahead's "Did you mean…?" tier. It is
+-- consulted only when game_suggestions() above returns nothing, which is why it
+-- can afford a sequential scan. Two arms: a trigram word similarity for a typo
+-- inside a long title, and an edit distance for the transpositions trigrams are
+-- blind to. It carried a third — a punctuation-insensitive substring — until
+-- game_suggestions() took that match into the primary pass, at which point
+-- everything the unanchored version could still add was landing mid-word
+-- ('test' matching '10 Minutes Till Dawn'). Measured at roughly 55-60 ms over
+-- roughly 2,850 published games on 2026-08-22; re-measure past ~25,000 rows, where the fix is
+-- an expression index on the normalised title plus the `<%` operator. Its
+-- EXECUTE grant is in section 8 — without it PostgREST answers 404 for the rpc
+-- path rather than a permission error.
 --
 -- rls_auto_enable() is a Supabase-managed event trigger that enables row level
 -- security on every new table created in the public schema. It is why RLS was
 -- already on when the access-control lockdown was applied. New tables therefore
 -- arrive locked and need an explicit policy or grant to be readable.
 -- =============================================================================
+
+CREATE OR REPLACE FUNCTION public.game_suggestions(q text, lim integer DEFAULT 30)
+ RETURNS TABLE(value text, kind text, rank integer)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public', 'extensions', 'pg_temp'
+AS $function$
+  WITH needle AS (
+    SELECT
+      lower(coalesce(q, '')) AS raw,
+      -- escaped for LIKE: backslash first, or it would double the escapes it
+      -- just introduced
+      replace(replace(replace(lower(coalesce(q, '')), '\', '\\'), '%', '\%'), '_', '\_') AS raw_like,
+      regexp_replace(lower(coalesce(q, '')), '[^[:alnum:]]+', '', 'g') AS compact
+  ),
+  hits AS (
+    SELECT g.title AS value, 'title'::text AS kind,
+           CASE
+             -- 0: the title starts with what was typed, punctuation aside
+             WHEN length(n.compact) >= 3
+              AND regexp_replace(lower(g.title), '[^[:alnum:]]+', '', 'g') LIKE n.compact || '%'
+               THEN 0
+             -- 1: a literal match at the very start
+             WHEN lower(g.title) LIKE n.raw_like || '%' THEN 1
+             -- 2: a literal match somewhere inside
+             ELSE 2
+           END AS rank
+    FROM public.public_games g CROSS JOIN needle n
+    WHERE g.title IS NOT NULL AND n.raw <> ''
+      AND (
+        lower(g.title) LIKE '%' || n.raw_like || '%'
+        OR (length(n.compact) >= 3
+            AND regexp_replace(lower(g.title), '[^[:alnum:]]+', '', 'g') LIKE n.compact || '%')
+      )
+
+    UNION ALL
+
+    SELECT g.developer, 'developer'::text,
+           CASE WHEN lower(g.developer) LIKE n.raw_like || '%' THEN 1 ELSE 2 END
+    FROM public.public_games g CROSS JOIN needle n
+    WHERE g.developer IS NOT NULL AND n.raw <> ''
+      AND lower(g.developer) LIKE '%' || n.raw_like || '%'
+
+    UNION ALL
+
+    SELECT g.publisher, 'publisher'::text,
+           CASE WHEN lower(g.publisher) LIKE n.raw_like || '%' THEN 1 ELSE 2 END
+    FROM public.public_games g CROSS JOIN needle n
+    WHERE g.publisher IS NOT NULL AND n.raw <> ''
+      AND lower(g.publisher) LIKE '%' || n.raw_like || '%'
+  ),
+  -- One row per distinct spelling per kind. The caller folds harder than this
+  -- (case, punctuation and padding all collapse there); this only keeps the
+  -- result set from carrying one row per GAME for a studio with 40 of them.
+  deduped AS (
+    SELECT DISTINCT ON (kind, lower(value)) value, kind, rank
+    FROM hits
+    ORDER BY kind, lower(value), rank
+  )
+  SELECT d.value, d.kind, d.rank
+  FROM deduped d
+  ORDER BY d.rank, length(d.value), d.value
+  LIMIT GREATEST(coalesce(lim, 30), 1)
+$function$
+
+CREATE OR REPLACE FUNCTION public.fuzzy_game_titles(q text, lim integer DEFAULT 5)
+ RETURNS TABLE(title text, score real)
+ LANGUAGE sql
+ STABLE
+ SET search_path TO 'public', 'extensions', 'pg_temp'
+AS $function$
+  WITH needle AS (
+    SELECT
+      btrim(regexp_replace(lower(coalesce(q, '')), '[^[:alnum:]]+', ' ', 'g')) AS spaced,
+      regexp_replace(lower(coalesce(q, '')), '[^[:alnum:]]+', '', 'g')          AS compact
+  ),
+  bounded AS (
+    SELECT spaced, compact,
+           CASE WHEN length(compact) >= 6 THEN 2 ELSE 1 END AS max_dist
+    FROM needle
+  ),
+  matched AS (
+    SELECT DISTINCT ON (t.compact)
+           g.title,
+           GREATEST(
+             -- arm 1: trigram word similarity
+             word_similarity(n.spaced, t.spaced),
+             -- arm 2: edit distance, normalised by the NEEDLE rather than by
+             -- the title. Dividing by the title length rewards longer titles
+             -- for the same number of edits: 'portla' is two edits from both
+             -- 'portal' and 'portal2', and title-normalising scored Portal 2
+             -- (2/7) above Portal (2/6). Needle-normalising makes every row at
+             -- the same distance tie, so the ORDER BY's shorter-title tiebreak
+             -- decides — which is the answer a person would give.
+             CASE WHEN d.dist <= n.max_dist
+                  THEN 1.0 - d.dist::real / GREATEST(length(n.compact), 1)
+                  ELSE 0 END
+           )::real AS score,
+           t.compact
+    FROM public.public_games g
+    CROSS JOIN bounded n
+    CROSS JOIN LATERAL (
+      SELECT btrim(regexp_replace(lower(g.title), '[^[:alnum:]]+', ' ', 'g')) AS spaced,
+             regexp_replace(lower(g.title), '[^[:alnum:]]+', '', 'g')          AS compact
+    ) t
+    CROSS JOIN LATERAL (
+      SELECT levenshtein_less_equal(n.compact, t.compact, n.max_dist) AS dist
+    ) d
+    WHERE g.title IS NOT NULL
+      -- Under three characters there is no such thing as a confident guess:
+      -- 'ha' is within one edit of a great many titles.
+      AND length(n.compact) >= 3
+      AND t.compact <> ''
+      AND (
+        word_similarity(n.spaced, t.spaced) >= 0.6
+        OR d.dist <= n.max_dist
+      )
+    -- DISTINCT ON collapses titles differing only in punctuation, spacing or
+    -- case, keeping the best-scoring spelling of each.
+    ORDER BY t.compact, score DESC
+  )
+  SELECT m.title, m.score
+  FROM matched m
+  ORDER BY m.score DESC, length(m.title), m.title
+  LIMIT GREATEST(coalesce(lim, 5), 1)
+$function$
 
 CREATE OR REPLACE FUNCTION public.rls_auto_enable()
  RETURNS event_trigger
@@ -206,8 +360,8 @@ $function$
 -- UPDATE that moved a junction row from one game_app_id to another would leave
 -- both games' counts wrong, with nothing raised. That is not a bug today —
 -- nothing issues such an UPDATE — but it is the reason the drift check in
--- section 3 of sql-snippets.sql exists, and why CLAUDE.md says never to write
--- total_options_count by hand.
+-- section 3 of sql-snippets.sql exists, and why total_options_count must never
+-- be written by hand: the trigger owns that column.
 -- =============================================================================
 
 CREATE TRIGGER trg_sync_options_count AFTER INSERT OR DELETE ON game_launch_options FOR EACH ROW EXECUTE FUNCTION sync_options_count();
@@ -331,6 +485,13 @@ REVOKE SELECT ON public.game_launch_options FROM anon, authenticated;
 
 GRANT SELECT ON public.public_games          TO anon, authenticated;
 GRANT SELECT ON public.public_launch_options TO anon, authenticated;
+
+-- The typeahead's "Did you mean…?" tier is reached through PostgREST as
+-- /rest/v1/rpc/fuzzy_game_titles. Without EXECUTE, PostgREST answers 404 for
+-- the path rather than a permission error, which reads as "the function does
+-- not exist" and sends you looking in the wrong place.
+GRANT EXECUTE ON FUNCTION public.fuzzy_game_titles(text, int)
+  TO anon, authenticated, service_role;
 
 ALTER TABLE public.games               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.launch_options      ENABLE ROW LEVEL SECURITY;

@@ -4,6 +4,22 @@ import { mergeRelatedTiers } from '../utils/relatedGames.js';
 import { buildPhantomMap, withDisplayCounts } from '../utils/optionCounts.js';
 import { rankBrowsableOptions } from '../utils/optionRanking.js';
 import { sanitizeOrFilterValue, toOrFilterTerms } from '../utils/searchTerms.js';
+import { dedupeKey } from '../utils/searchNormalize.js';
+
+// Deliberately smaller than the exact-match limit. These are guesses, and a
+// long list of guesses reads as the search not working rather than as help —
+// past about five the marginal suggestion is always worse than the last.
+const FUZZY_SUGGESTION_LIMIT = 5;
+
+// Which heading a suggestion keeps when the same string matched as more than
+// one kind of thing. Lower wins.
+const TYPE_RANK = { title: 0, developer: 1, publisher: 2 };
+
+const CATEGORY_FOR_KIND = {
+  title: 'Games',
+  developer: 'Developers',
+  publisher: 'Publishers'
+};
 
 const FACETS_TTL_MS = 5 * 60 * 1000;
 const _facetsCache = { data: null, expiresAt: 0 };
@@ -498,45 +514,54 @@ export async function getSearchSuggestions(query, limit = 10) {
     const safe = sanitizeOrFilterValue(query);
     if (!safe) return [];
 
-    const { data, error } = await supabase
-      .from('public_games')
-      .select('title, developer, publisher')
-      .or(`title.ilike.%${safe}%,developer.ilike.%${safe}%,publisher.ilike.%${safe}%`)
-      .limit(limit * 3); // Get more to filter duplicates
+    const rows = await fetchSuggestionRows(query, safe, limit);
 
-    if (error) {
-      console.error('Error fetching suggestions:', error);
-      return [];
-    }
-
-    const suggestions = new Map(); // Use Map to avoid duplicates
+    // Keyed on the normalised form, not the raw string. Keying on the raw title
+    // made the dropdown show the same game twice whenever two rows differed only
+    // in trailing whitespace, a trademark sign or a doubled space — which is a
+    // real shape in this catalogue, not a hypothetical (slop-scraper rev 17
+    // fixed one such title, 'SaGa Emerald Beyond '). Measured against the
+    // published catalogue: 1 title pair, 17 developer groups, 12 publisher
+    // groups. Which spelling survives is decided below, deterministically —
+    // never by which row the database happened to return first.
+    const suggestions = new Map();
     const queryLower = query.toLowerCase();
 
-    data?.forEach(game => {
-      // Add matching titles
-      if (game.title && game.title.toLowerCase().includes(queryLower)) {
-        suggestions.set(`title_${game.title}`, {
-          type: 'title',
-          value: game.title,
-          category: 'Games'
-        });
-      }
-      // Add matching developers
-      if (game.developer && game.developer.toLowerCase().includes(queryLower)) {
-        suggestions.set(`developer_${game.developer}`, {
-          type: 'developer',
-          value: game.developer,
-          category: 'Developers'
-        });
-      }
-      // Add matching publishers
-      if (game.publisher && game.publisher.toLowerCase().includes(queryLower)) {
-        suggestions.set(`publisher_${game.publisher}`, {
-          type: 'publisher',
-          value: game.publisher,
-          category: 'Publishers'
-        });
-      }
+    // Keyed WITHOUT the type, so 'NetEase Games' cannot appear once under
+    // Developers and again under Publishers. That is only correct because
+    // picking any of the three does the same thing — selectSuggestion sets the
+    // search box to the value and runs a text search; it does not apply a typed
+    // filter. Two rows that run an identical search are one row with two
+    // headings above it. If suggestion selection ever becomes type-aware, this
+    // key has to grow the type back.
+    const addSuggestion = (type, value, category) => {
+      // `type` comes from a database function, so an unrecognised value is a
+      // schema change rather than a typo. Dropping the row beats rendering a
+      // group heading that reads "undefined".
+      if (!category) return;
+      // No raw-substring re-check here. It used to guard against the or-filter
+      // returning a row that matched on a DIFFERENT column than the one being
+      // read, but it now rejects the very rows this exists to surface —
+      // 'F.E.A.R.' does not contain the substring 'fear'. Deciding what matched
+      // is the query's job, in both the RPC and the fallback below.
+      if (!value) return;
+      const key = dedupeKey(value);
+      const existing = suggestions.get(key);
+      // A title is the likeliest intent, then the developer, then the
+      // publisher. Resolved by rank rather than by arrival so the surviving
+      // heading does not depend on which database row came back first.
+      if (existing && TYPE_RANK[existing.type] <= TYPE_RANK[type]) return;
+      // Emitted trimmed, so which of several stored spellings arrived first
+      // stops mattering. Two live publisher rows read 'NetEase Games ' and
+      // ' 505 Games'; whitespace is invisible in the dropdown, so a padded
+      // survivor looks identical to a clean one and behaves differently. It is
+      // never worse to send the trimmed form — every downstream use is a
+      // substring match, and trimming can only widen what it reaches.
+      suggestions.set(key, { type, value: value.trim(), category });
+    };
+
+    rows.forEach((row) => {
+      addSuggestion(row.kind, row.value, CATEGORY_FOR_KIND[row.kind]);
     });
 
     const gameSuggestions = Array.from(suggestions.values()).slice(0, limit);
@@ -577,11 +602,150 @@ export async function getSearchSuggestions(query, limit = 10) {
       return aCmd - bCmd;
     });
 
-    return [...gameSuggestions, ...optionSuggestions.slice(0, 6)];
+    const exactSuggestions = [...gameSuggestions, ...optionSuggestions.slice(0, 6)];
+
+    // Everything above is an ilike match — a substring the user actually typed,
+    // so it is never a guess. Only when that finds nothing at all is it worth
+    // guessing, and only then is a wrong guess cheaper than an empty dropdown:
+    // an empty dropdown cannot tell "you misspelled it" from "we don't have it".
+    //
+    // The ordering is the whole design. Running fuzzy alongside the exact pass
+    // is how these features become annoying — approximate matches crowd out the
+    // literal one the user was typing toward. As a fallback it can only ever
+    // appear in place of nothing.
+    if (exactSuggestions.length === 0) {
+      return await getFuzzyTitleSuggestions(query);
+    }
+
+    return exactSuggestions;
   } catch (error) {
     console.error('Error in getSearchSuggestions:', error);
     return [];
   }
+}
+
+/**
+ * The typeahead's primary pass: names that literally match what was typed.
+ *
+ * Runs through the `game_suggestions` Postgres function rather than a PostgREST
+ * `.or(...ilike...)`, for one reason — a title arm that ignores punctuation.
+ * `ilike '%fear%'` cannot reach `F.E.A.R.`, and because it DOES reach three
+ * other games the fuzzy fallback stays quiet and the title stays unfindable.
+ * Matching the punctuation-stripped title, anchored to its start, reaches it
+ * without dragging in the word-boundary junk that an unanchored match brings
+ * ('art' finding 'War Thunder'). Measured before it was written; the reasoning
+ * and the numbers are in docs/schema-snapshot.sql beside the function.
+ *
+ * A second benefit of moving it into SQL: the RPC takes the raw query as a
+ * bound parameter, so it needs none of the or-filter sanitising the fallback
+ * still does. `.or()` parses its argument as a filter expression; an RPC
+ * argument is just a value.
+ *
+ * FALLS BACK RATHER THAN FAILING
+ *
+ * Same contract as the fuzzy tier: the function is a hand-applied migration, so
+ * until it exists PostgREST answers PGRST202 and this drops to the exact
+ * PostgREST query it replaced. The typeahead then behaves as it did before —
+ * F.E.A.R. is unreachable again, and nothing else changes. That is what makes
+ * the deploy safe to land before the migration.
+ *
+ * @param {string} query - Raw search text, as typed
+ * @param {string} safe - The same text, sanitised for or-filter grammar
+ * @param {number} limit
+ * @returns {Promise<Array<{value: string, kind: string}>>}
+ */
+async function fetchSuggestionRows(query, safe, limit) {
+  const { data, error } = await supabase.rpc('game_suggestions', {
+    q: query,
+    // Over-fetch: the caller folds case, punctuation and padding together, so
+    // some of these rows are about to collapse into each other.
+    lim: limit * 3
+  });
+
+  if (!error) return data || [];
+
+  if (error.code !== 'PGRST202') {
+    console.error('Error fetching suggestions:', error);
+    return [];
+  }
+
+  const { data: games, error: fallbackError } = await supabase
+    .from('public_games')
+    .select('title, developer, publisher')
+    .or(`title.ilike.%${safe}%,developer.ilike.%${safe}%,publisher.ilike.%${safe}%`)
+    .limit(limit * 3);
+
+  if (fallbackError) {
+    console.error('Error fetching suggestions:', fallbackError);
+    return [];
+  }
+
+  // The or-filter returns a row if ANY of the three columns matched, so each
+  // column has to be re-checked to know which one to offer.
+  const needle = query.toLowerCase();
+  const rows = [];
+  for (const game of games || []) {
+    for (const kind of ['title', 'developer', 'publisher']) {
+      const value = game[kind];
+      if (value && value.toLowerCase().includes(needle)) rows.push({ value, kind });
+    }
+  }
+  return rows;
+}
+
+/**
+ * Last-resort typeahead tier: titles that are close to what was typed, for when
+ * nothing matches it literally.
+ *
+ * The matching itself is one Postgres function, `fuzzy_game_titles`, whose
+ * definition lives in docs/schema-snapshot.sql. It ORs two arms together — a
+ * trigram word similarity, which absorbs a typo in one word of a long title,
+ * and an edit distance, which catches the transpositions trigrams are blind to.
+ * Doing it in SQL rather than JS keeps the catalogue out of this process's
+ * memory, which matters on a serverless function that pays a cold start for
+ * every megabyte it wants resident.
+ *
+ * It used to carry a third arm, a punctuation-insensitive substring. That match
+ * moved into `fetchSuggestionRows` above, where it belongs: `stalker` reaching
+ * S.T.A.L.K.E.R. is not a guess about a typo, it is a match, and it should not
+ * have depended on the literal search happening to fail first.
+ *
+ * NEVER THROWS, AND DEGRADES TO NOTHING
+ *
+ * The function is a migration that has to be applied to the database by hand.
+ * Until it is — and on any deploy that reaches a database where it is not —
+ * PostgREST answers PGRST202, and the honest response to that is the same as
+ * the response to "no close matches": an empty list. The site then behaves
+ * exactly as it did before this tier existed, rather than erroring on a
+ * keystroke. That is also what makes the migration safe to apply after the
+ * deploy rather than in lockstep with it.
+ *
+ * @param {string} query
+ * @returns {Promise<SearchSuggestion[]>} Empty when nothing is close enough
+ */
+async function getFuzzyTitleSuggestions(query) {
+  const { data, error } = await supabase.rpc('fuzzy_game_titles', {
+    q: query,
+    lim: FUZZY_SUGGESTION_LIMIT
+  });
+
+  if (error) {
+    // PGRST202 is "no such function" — the expected state before the migration
+    // is applied, and not worth logging as a failure on every keystroke.
+    if (error.code !== 'PGRST202') {
+      console.error('Error fetching fuzzy suggestions:', error);
+    }
+    return [];
+  }
+
+  return (data || []).map((row) => ({
+    type: 'title',
+    value: row.title,
+    // The category doubles as the dropdown's group heading, so this string is
+    // what tells the user these are guesses rather than matches.
+    category: 'Did you mean…?',
+    fuzzy: true
+  }));
 }
 
 /**
