@@ -18,6 +18,126 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.4.0] - 2026-08-22 — A typeahead that answers a typo
+
+### Added
+- **"Did you mean…?" — a fuzzy fallback for searches that match nothing.** The
+  typeahead has always answered with `ilike` matches, which is the right
+  default: an `ilike` hit is a substring the user actually typed, so it is never
+  a guess. What it could not do is answer a typo, and an empty dropdown gives a
+  person no way to tell "you misspelled it" from "we don't have it".
+
+  The tier runs **only when the literal search returns nothing at all**. That
+  ordering is the whole design — running approximate matching alongside the
+  exact pass is how these features become annoying, because guesses crowd out
+  the literal result someone was typing toward. As a fallback it can only ever
+  appear in place of an empty list, and it is labelled as a question rather than
+  presented as a match.
+
+  Matching is one Postgres function, `fuzzy_game_titles`, recorded in
+  `docs/schema-snapshot.sql`, with arms that were each chosen against a measured
+  failure of the others:
+  1. **`word_similarity`** — scores the best-matching word run inside the
+     target, so a typo in one word of a long title still scores: `skyrimm`
+     reaches `The Elder Scrolls V: Skyrim`, where the mistake is in one word of
+     five. Plain `similarity()` drowns it in the words the user never typed.
+  2. **`levenshtein`** — a transposition destroys two trigrams at once, so
+     `portla` vs `portal` scores about 0.33 on trigrams and is invisible to arm
+     1. As an edit distance it is 2, and it is caught.
+
+  It deliberately does not chase acronyms: `csgo` and `gta` return nothing, and
+  should, because an acronym is not a misspelling and resolving one needs an
+  alias table with a curation cost attached.
+
+- **Punctuation no longer hides a game from the search box.** `F.E.A.R.` was
+  unreachable by typing `fear`, and the fuzzy tier could not save it: `ilike
+  '%fear%'` finds four other games, so the fallback stayed quiet by design while
+  the game people actually wanted stayed invisible. Same for `stalker`,
+  `halflife`, `teamfortress`, `garrys`.
+
+  The tempting fix — "treat a high enough fuzzy score as a match" — does not
+  hold up. That score measures how much of the *title* a match covers, not how
+  certain it is: `fear` scores 0.99 in `F.E.A.R.`, 0.85 in `Cold Fear` and 0.77
+  in `Layers of Fear`, and all three are equally certain substring matches. A
+  cutoff would discard long titles, not guesses.
+
+  What is true instead, measured over every published title across 19 queries
+  with zero violations (2,847 titles on 2026-08-22, re-measured against 2,841 on
+  2026-08-23 after six rows left the catalogue — the property is structural, not
+  a fact about a particular row count): matching the punctuation-stripped title returns
+  a strict **superset** of `ilike`. So the title arm was replaced rather than
+  supplemented. It is anchored to the start of the title, because matching
+  anywhere lets a query span a word boundary that punctuation used to protect —
+  unanchored, `art` starts returning `War Thunder`. Anchored, it keeps all 22
+  real gains across the sample and adds **zero** junk on `art`, `the` and `alk`.
+
+  Developer and publisher keep plain `ilike`: the measured value is all in
+  titles, and restricting it means one new index rather than three on a table
+  `slop-scraper` writes to on every run.
+
+### Changed
+- **The typeahead is now edge-cached.** It was the only endpoint hit on a
+  per-keystroke basis and the only one with no `s-maxage` at all, so every
+  letter typed anywhere woke the serverless function. Query strings are part of
+  the cache key, so this caches per search term — which sounds like it would
+  never hit and is the opposite: people converge hard on the same prefixes, and
+  a term is requested once per letter by the person typing it before anyone else
+  arrives.
+
+### Fixed
+- **Typing a `+` or a `[` silently emptied the suggestions dropdown.** Match
+  highlighting built a regular expression out of the raw query, so `c++`
+  compiled to `/(c++)/` and threw "Nothing to repeat". Because the render runs
+  inside the fetch's `try`, the throw was caught and turned into "hide the
+  dropdown" — so the failure looked like "no results" and was visible only in a
+  console. The quieter half of the same bug: `.` and `*` compiled fine and
+  matched the wrong characters, so `s.t.a.l.k.e.r.` highlighted letters nobody
+  had typed.
+- **The same game or studio could appear twice in the dropdown.** Suggestions
+  were keyed on the raw string, so spellings differing only by case, punctuation
+  or invisible padding were two entries that looked like one. Live examples:
+  `NetEase Games ` with a trailing space, ` 505 Games` with a leading one,
+  `FireFly Studios` against `Firefly Studios`. Measured against the published
+  catalogue: 1 title pair, 17 developer groups and 12 publisher groups. Keying
+  is now on a normalised fold, and the value sent is trimmed, so which stored
+  spelling happened to come back first no longer decides what is shown.
+- **A value matching as both a developer and a publisher listed twice**, once
+  under each heading. Picking any non-option suggestion does the same thing —
+  set the search box and run a text search — so two rows that run an identical
+  search were one row with two headings above it. The surviving heading is now
+  resolved by rank (title, then developer, then publisher) rather than by which
+  database row arrived first.
+- **Five published option descriptions broke the tooltip they were rendered
+  into.** Option chips put the description in a `title=` attribute using the
+  element-content escaper, which by its own docstring leaves quotes alone, so a
+  description containing `"` closed the attribute early. Attribute positions now
+  use the attribute escaper that already existed beside it.
+- A stray `console.log` fired on every suggestion selection.
+
+### Removed
+- `advancedSearch` accepted `fuzzy` and `exactMatch` parameters that were
+  destructured and never referenced — no caller passed either, no request
+  carried either, and the server has never had a parameter by either name. Two
+  switches that do nothing are worse than no feature, because anyone reasoning
+  about how search works would have found them and believed them. Fuzzy matching
+  now exists and is deliberately not a switch.
+- The false "all commented out" promise at the top of `docs/sql-snippets.sql`.
+  Section 8 has carried five live `UPDATE`/`DELETE` statements the whole time,
+  which is a trap in a file whose entire premise is pasting into a SQL editor.
+  The header now says which sections are live.
+
+### Notes
+- **`docs/schema-snapshot.sql` must be regenerated after the section 11
+  migration is applied.** The snapshot is captured from the live database rather
+  than maintained by hand, so it cannot drift — but only if it is retaken after
+  a change to an extension, function or grant.
+- **Neither migration is required for this release to be safe to deploy.** Until
+  they are applied PostgREST answers `PGRST202`, and each caller has a defined
+  answer for that: the fuzzy tier reads it as "no close matches", and the
+  primary pass drops to the exact PostgREST query it replaced. Verified against
+  the live database with the functions absent — the fallback's output is
+  identical to the previous release's, name for name and in the same order.
+
 ## [1.3.4] - 2026-08-22 — Correcting the record on 1.3.3
 
 ### Fixed
