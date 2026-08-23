@@ -1,10 +1,20 @@
-# Block any Claude/Anthropic co-authorship or attribution from entering a commit
-# message. This is what GitHub counts toward the contributors list, so keeping it
-# out of every commit prevents Claude from ever reappearing as a contributor.
+# Block third-party attribution from entering a commit message.
+#
+# This is a solo project with one visible author, so the rule is simply that no
+# commit advertises anyone or anything else. GitHub reads Co-Authored-By
+# trailers and counts them toward the contributors list, so a single stray
+# trailer permanently adds a name to this repository's contributor graph.
+#
+# The pattern is deliberately vendor-neutral: it blocks ANY co-author trailer
+# and ANY "generated with" advertising line, rather than naming particular
+# tools. That is both broader — a tool this was never written for is caught on
+# the same rule — and narrower in what it has to say out loud.
+#
 # The commit-message file path is passed as $1.
-if grep -qiE 'co-authored-by:[[:space:]]*.*(claude|anthropic)|noreply@anthropic\.com|generated with \[?claude|🤖 generated with' "$1"; then
+if grep -qiE 'co-authored-by:|generated with \[|generated with an|🤖' "$1"; then
   echo "" >&2
-  echo "✖ Commit blocked: Claude/Anthropic attribution found in the commit message." >&2
-  echo "  Remove any 'Co-Authored-By: Claude', anthropic email, or 'Generated with Claude' line and recommit." >&2
+  echo "✖ Commit blocked: third-party attribution found in the commit message." >&2
+  echo "  This project has one author. Remove any 'Co-Authored-By:' trailer or" >&2
+  echo "  'Generated with ...' line and recommit." >&2
   exit 1
 fi

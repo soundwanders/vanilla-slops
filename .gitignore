@@ -28,9 +28,7 @@ docs/slop-scraper-followthrough.md
 **/slops-setup-guide.md
 
 # local-only dev references and tooling — never commit
-CLAUDE.md
 docs/supabase-setup.md
-.claude/
 
 # dotenv environment variable files
 .env
