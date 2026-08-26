@@ -18,6 +18,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.4.1] - 2026-08-23 — The empty page that blamed the database
+
+### Fixed
+- **An empty filtered result claimed the database was empty, and offered no way
+  out.** Filtering down to nothing rendered "No games in database — the game
+  database appears to be empty" directly beneath the user's own filter chips,
+  above a "Refresh page" button that re-issued the identical filtered request
+  and returned to the identical screen. Changing the sort re-ran it and landed
+  in the same place. The only escape was editing the URL.
+
+  `determineEmptyStateType` led with `if (stats.total === 0) return
+  'database-empty'`, reading `stats.total` as the size of the catalogue. It is
+  not, and it never could be, for two independent reasons:
+
+  1. **It is filter-scoped.** `refreshFilterStatistics` sends the active filters
+     to `/api/games/statistics`, so `total` is the count for *the current query*.
+     `total === 0` therefore means "this query matched nothing" — which is the
+     exact condition that causes the empty state to render in the first place.
+     The check could never distinguish an empty catalogue from an empty filter.
+  2. **It is refreshed after the render, not before.** The stats request is
+     awaited further down the same load, so every render reads the *previous*
+     query's total.
+
+  Together those made the bug look intermittent. The first render that fell into
+  emptiness still held the previous query's non-zero total and showed the
+  correct filter-aware state; every re-render after that — a sort change, a page
+  change — saw `0` and flipped to the catalogue-empty message.
+
+  The decision is now made from the filters alone, which are the only input here
+  that is both known and current. A search shows the search state; filters show
+  the filter state, which lists what is active and offers a working "Clear all
+  filters"; neither shows the catalogue state. Pinned by tests, which is what
+  was missing.
+
+- **The existing test passed `stats` as `{ total: 2402 }`** — a value the real
+  call site cannot produce when the empty state is rendering, because reaching
+  that branch means the query returned nothing. It proved the function worked
+  for input it never receives. A second case was named "reports an empty
+  database regardless of filters", which is the defect written down as intended
+  behaviour. Both are corrected, and the argument that allowed the divergence is
+  gone from the signature.
+
+- `optionSearch` counted as a filter when choosing the empty state but was
+  missing from the list of active filters that state renders, so a result
+  emptied by it alone showed an "Active filters:" panel naming none of them.
+
+### Changed
+- The catalogue-empty state now leads with the likelier explanation — a request
+  that failed rather than an empty database — and offers "Try again" plus a link
+  back to the full list. Its button moved from an inline `onclick` to the
+  delegated action handler the other states already use.
+
+### Removed
+- Two unreachable empty-state renderers. `no-options-found` was returned by
+  nothing, and `default` rendered "Search through 0 games" from stats that are
+  zero whenever that code path is live. Their removal takes the never-read
+  `TableState.currentStats` write and the `stats` argument with them.
+
 ## [1.4.0] - 2026-08-22 — A typeahead that answers a typo
 
 ### Added

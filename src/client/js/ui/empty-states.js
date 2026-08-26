@@ -1,15 +1,14 @@
 import { CONFIG, TableState, getTableContainer } from './table-shared.js';
 import { enhanceMobileEmptyState, ensureTouchTarget } from './mobile-gestures.js';
 
-export function renderEmptyState(filters = {}, stats = {}) {
+export function renderEmptyState(filters = {}) {
   const container = getTableContainer();
   if (!container) return;
 
-  TableState.currentStats = stats;
   TableState.currentFilters = filters;
 
-  const type = determineEmptyStateType(filters, stats);
-  container.innerHTML = createEmptyStateHTML(type, filters, stats);
+  const type = determineEmptyStateType(filters);
+  container.innerHTML = createEmptyStateHTML(type, filters);
   setupEmptyStateEventListeners();
 
   if (TableState.isMobile) enhanceMobileEmptyState(container);
@@ -34,58 +33,60 @@ const FILTER_KEYS = [
   'developer', 'engine', 'options', 'year'
 ];
 
-export function determineEmptyStateType(filters, stats) {
+/**
+ * Pick the empty state that describes why the result set is empty.
+ *
+ * Order matters, and getting it wrong is what made this function a bug. It used
+ * to lead with `if (stats.total === 0) return 'database-empty'`, reading
+ * `stats.total` as the size of the catalogue. It is not, and could not be:
+ *
+ *   - It is FILTER-SCOPED. `refreshFilterStatistics` sends the active filters to
+ *     /api/games/statistics, so `total` counts the current query. `total === 0`
+ *     means "this query matched nothing" — the exact condition that renders an
+ *     empty state at all. It could never separate an empty catalogue from an
+ *     empty filter, because for this code path they are the same number.
+ *   - It is refreshed AFTER the render, so each render read the previous query's
+ *     total.
+ *
+ * Which is why the symptom looked intermittent. The first render to fall into
+ * emptiness still held the previous query's non-zero total and picked the right
+ * state; every re-render after it — a sort change, a page change — saw 0 and
+ * announced that the database was empty, above the user's own filter chips, with
+ * a Refresh button that re-ran the identical query.
+ *
+ * So the decision is made from the filters alone, which are the only input here
+ * that is both known and current.
+ *
+ * So the decision is made from the filters alone, which are the only thing here
+ * that is actually known to be true. An empty result with filters applied is
+ * explained by the filters. An empty result with NO filters is the only case
+ * where "there is nothing to show" is a fair thing to tell someone.
+ *
+ * @param {Object} filters - Cleaned filter state
+ * @returns {'search-no-results'|'all-games-filtered'|'database-empty'}
+ */
+export function determineEmptyStateType(filters = {}) {
   const hasSearch = filters.search && filters.search.trim();
   const hasFilters = FILTER_KEYS.some(key => filters[key] && filters[key].toString().trim());
 
-  if (stats.total === 0) return 'database-empty';
   if (hasSearch) return 'search-no-results';
   if (hasFilters) return 'all-games-filtered';
-  return 'default';
+  return 'database-empty';
 }
 
-function createEmptyStateHTML(type, filters, stats) {
+function createEmptyStateHTML(type, filters) {
   const emptyStates = {
-    'no-options-found': () => createNoOptionsFoundHTML(stats),
     'search-no-results': () => createSearchNoResultsHTML(filters),
     'all-games-filtered': () => createAllFilteredHTML(filters),
-    'database-empty': () => createDatabaseEmptyHTML(),
-    'default': () => createDefaultEmptyHTML(stats)
+    'database-empty': () => createDatabaseEmptyHTML()
   };
 
-  const createHTML = emptyStates[type] || emptyStates.default;
+  // An unrecognised type means the filters said something this function does not
+  // model. Explaining the filters is still the better guess than announcing an
+  // empty database.
+  const createHTML = emptyStates[type] || emptyStates['all-games-filtered'];
   const mobileClass = TableState.isMobile ? 'mobile-empty-state' : '';
   return `<div class="${CONFIG.CLASSES.emptyTableState} ${type} ${mobileClass}">${createHTML()}</div>`;
-}
-
-function createNoOptionsFoundHTML(stats) {
-  const suggestions = ['Counter-Strike', 'Half-Life', 'Portal', 'Cyberpunk', 'Witcher', 'GTA'];
-  const btn = TableState.isMobile ? 'btn mobile-btn' : 'btn';
-
-  return `
-    <div class="empty-icon">🎮</div>
-    <h3 class="empty-title">Looking for games with launch options?</h3>
-    <p class="empty-description">We're showing games that have community-verified launch options for the best experience.</p>
-    <div class="empty-stats ${TableState.isMobile ? 'mobile-stats' : ''}">
-      <div class="stat-card">
-        <span class="stat-number">${stats.withOptions || 0}</span>
-        <span class="stat-label">Games with options</span>
-      </div>
-      <div class="stat-card muted">
-        <span class="stat-number">${stats.withoutOptions || 0}</span>
-        <span class="stat-label">Games without options</span>
-      </div>
-    </div>
-    <div class="empty-suggestions">
-      <h4>Try searching for popular games:</h4>
-      <div class="suggestion-chips ${TableState.isMobile ? 'mobile-chips' : ''}">
-        ${suggestions.map(s => `<button class="suggestion-chip ${TableState.isMobile ? 'mobile-chip' : ''}" data-search="${s}">${s}</button>`).join('')}
-      </div>
-    </div>
-    <div class="empty-actions ${TableState.isMobile ? 'mobile-actions' : ''}">
-      <button class="${btn} btn-secondary" data-action="learn-more">Learn about launch options</button>
-    </div>
-  `;
 }
 
 function createSearchNoResultsHTML(filters) {
@@ -130,32 +131,31 @@ function createAllFilteredHTML(filters) {
   `;
 }
 
+/**
+ * The genuinely-nothing-to-show state.
+ *
+ * Reachable only when NO search and NO filters are active, which is what makes
+ * "we could not load anything" a fair thing to say. Before the ordering fix
+ * this rendered over any empty filtered result too, where it was simply false —
+ * and where its Refresh button re-issued the same filtered request and landed
+ * the user back on this screen, with no way out that did not involve editing
+ * the URL.
+ *
+ * Reloading is the right offer HERE, because with no filters in play the likely
+ * cause is a request that failed rather than a catalogue that is empty. The
+ * copy leads with that reading instead of asserting the database is empty, and
+ * the home link is there for the case where the page was reached with state
+ * that a reload would faithfully restore.
+ */
 function createDatabaseEmptyHTML() {
   const btn = TableState.isMobile ? 'btn mobile-btn' : 'btn';
   return `
     <div class="empty-icon">🗄️</div>
-    <h3 class="empty-title">No games in database</h3>
-    <p class="empty-description">The game database appears to be empty. This might be a temporary issue.</p>
+    <h3 class="empty-title">Couldn't load any games</h3>
+    <p class="empty-description">Nothing came back from the catalogue. That is usually a connection problem rather than an empty database, so it is worth trying again.</p>
     <div class="empty-actions ${TableState.isMobile ? 'mobile-actions' : ''}">
-      <button class="${btn} btn-primary" onclick="location.reload()">Refresh page</button>
-    </div>
-  `;
-}
-
-function createDefaultEmptyHTML(stats) {
-  return `
-    <div class="empty-icon">🎮</div>
-    <h3 class="empty-title">Ready to find games?</h3>
-    <p class="empty-description">Search through ${stats.total || 0} games to find the perfect launch options.</p>
-    <div class="empty-stats ${TableState.isMobile ? 'mobile-stats' : ''}">
-      <div class="stat-card">
-        <span class="stat-number">${stats.withOptions || 0}</span>
-        <span class="stat-label">Games with launch options</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-number">${stats.percentageWithOptions || 0}%</span>
-        <span class="stat-label">Have launch options</span>
-      </div>
+      <button class="${btn} btn-primary" data-action="reload">Try again</button>
+      <a class="${btn} btn-secondary" href="/">Back to all games</a>
     </div>
   `;
 }
@@ -171,6 +171,9 @@ function getActiveFiltersDescription(filters) {
   if (filters.risk) active.push(`Risk: ${RISK_LABELS[filters.risk] || filters.risk}`);
   if (filters.year) active.push(`Year: ${filters.year}`);
   if (filters.options) active.push(`Options: ${filters.options}`);
+  // In FILTER_KEYS, so it can be the sole reason a result set is empty. Missing
+  // from here, that produced an "Active filters:" panel listing none of them.
+  if (filters.optionSearch) active.push(`Launch option: ${filters.optionSearch}`);
 
   return active.length > 0
     ? active.map(f => `<span class="filter-tag ${TableState.isMobile ? 'mobile-filter-tag' : ''}">${f}</span>`).join('')
@@ -195,6 +198,7 @@ export function setupEmptyStateEventListeners() {
       case 'clear-search': triggerClearSearch(); break;
       case 'clear-filters': triggerClearFilters(); break;
       case 'learn-more': showLaunchOptionsInfo(); break;
+      case 'reload': window.location.reload(); break;
     }
   });
 

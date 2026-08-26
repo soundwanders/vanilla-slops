@@ -13,7 +13,6 @@ import {
   getCurrentURL,
   hasActiveFilters,
   getCleanFilters,
-  getGameStats,
   getSearchSyncData
 } from './state/stateSelectors.js';
 import { DEFAULT_SORT, DEFAULT_ORDER } from './constants.js';
@@ -478,7 +477,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     if (games.length === 0) {
       // Filter-aware empty state (explains which filters are active, offers to
       // clear them) instead of the generic "no games found" fallback.
-      renderEmptyState(getCleanFilters(stateManager.getState()), getGameStats(stateManager.getState()));
+      renderEmptyState(getCleanFilters(stateManager.getState()));
     } else {
       renderTable(games, false, {
         sort: filters.sort,

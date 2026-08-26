@@ -71,6 +71,14 @@ describe('SlopSearch.reset', () => {
  * true. An unfiltered empty result rendered "your filters are too restrictive"
  * with an active-filter list reading "No specific filters" — indistinguishable
  * from the page the user had just tried to clear.
+ *
+ * These tests used to pass a `stats` argument of { total: 2402 } and expect
+ * 'default'. That fixture was the reason a SECOND bug survived underneath them:
+ * the function short-circuited on `stats.total === 0` before looking at the
+ * filters at all. { total: 2402 } is not a value the real call site can hold
+ * while rendering an empty state, because reaching that branch means the query
+ * returned nothing and `total` counts that same query. Green tests, broken
+ * page. The argument is gone now — the decision is made from the filters.
  */
 describe('determineEmptyStateType', () => {
   const cleared = {
@@ -78,23 +86,32 @@ describe('determineEmptyStateType', () => {
     developer: '', engine: '', options: '', year: '',
     sort: 'featured', order: 'desc'
   };
-  const stats = { total: 2402 };
 
   it('does not treat sort and order as active filters', () => {
-    expect(determineEmptyStateType(cleared, stats)).toBe('default');
+    expect(determineEmptyStateType(cleared)).not.toBe('all-games-filtered');
+    expect(determineEmptyStateType(cleared)).toBe('database-empty');
   });
 
   it('still reports a real filter as restrictive', () => {
-    expect(determineEmptyStateType({ ...cleared, engine: 'GoldSrc' }, stats))
+    expect(determineEmptyStateType({ ...cleared, engine: 'GoldSrc' }))
       .toBe('all-games-filtered');
   });
 
   it('prefers the search-specific state when a query is present', () => {
-    expect(determineEmptyStateType({ ...cleared, search: 'portal' }, stats))
+    expect(determineEmptyStateType({ ...cleared, search: 'portal' }))
       .toBe('search-no-results');
   });
 
-  it('reports an empty database regardless of filters', () => {
-    expect(determineEmptyStateType(cleared, { total: 0 })).toBe('database-empty');
+  it('reports an empty database only when nothing is filtered', () => {
+    // This assertion used to read "regardless of filters", which is how the bug
+    // got written down as intended behaviour. It is the opposite: an empty
+    // result that has filters on it is explained by the filters, and saying
+    // otherwise left the user on a dead-end page telling them the catalogue was
+    // empty while their own filter chips sat above it.
+    expect(determineEmptyStateType(cleared)).toBe('database-empty');
+    expect(determineEmptyStateType({ ...cleared, engine: 'GoldSrc' }))
+      .not.toBe('database-empty');
+    expect(determineEmptyStateType({ ...cleared, search: 'portal' }))
+      .not.toBe('database-empty');
   });
 });
