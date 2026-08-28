@@ -5,10 +5,11 @@ import { determineEmptyStateType } from '../js/ui/empty-states.js';
  * Regression tests for empty-state selection.
  *
  * Bug: the function led with `if (stats.total === 0) return 'database-empty'`,
- * believing stats.total was the catalogue size. It is the count for the CURRENT
- * QUERY — refreshFilterStatistics sends the active filters — so `total === 0`
- * means "this query matched nothing", which is precisely when an empty state
- * renders. It could never tell an empty catalogue from an empty filter.
+ * believing stats.total was the catalogue size. It was the count for the CURRENT
+ * QUERY — the client sent the active filters to /api/games/statistics — so
+ * `total === 0` meant "this query matched nothing", which is precisely when an
+ * empty state renders. It could never tell an empty catalogue from an empty
+ * filter. That request was removed outright in 1.4.2.
  *
  * Users saw "the game database appears to be empty" under five active filter
  * chips, with a Refresh button that re-ran the same filtered query and returned

@@ -928,25 +928,31 @@ export default class SlopSearch {
   populateFilterOptions(facets) {
     // Populate developer filter
     if (this.filterElements.developer && facets.developers) {
-      this.populateSelectOptions(this.filterElements.developer, facets.developers, 'All Developers');
+      this.populateSelectOptions(this.filterElements.developer, facets.developers);
     }
 
     // Populate engine filter (NEW)
     if (this.filterElements.engine && facets.engines) {
-      this.populateSelectOptions(this.filterElements.engine, facets.engines, 'All Engines');
+      this.populateSelectOptions(this.filterElements.engine, facets.engines);
     }
 
     // Populate year filter
     if (this.filterElements.year && facets.releaseYears) {
       const yearOptions = facets.releaseYears.map(year => ({ value: year, count: 0 }));
-      this.populateSelectOptions(this.filterElements.year, yearOptions, 'All Years');
+      this.populateSelectOptions(this.filterElements.year, yearOptions);
     }
   }
 
   /**
-   * Populate a select element with options
+   * Append facet options to a select that already has its placeholder.
+   *
+   * There is deliberately no defaultText parameter. Callers used to pass one
+   * ('All Developers', 'All Engines', 'All Years') and this never read it,
+   * because index.html already carries the matching `<option value="">` on each
+   * select. Two copies of the same string, one of them inert — the markup owns
+   * it, so the markup keeps it.
    */
-  populateSelectOptions(selectElement, options, defaultText) {
+  populateSelectOptions(selectElement, options) {
     const existingOptions = Array.from(selectElement.options).map(opt => opt.value);
     
     options.forEach(option => {

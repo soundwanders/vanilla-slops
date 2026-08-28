@@ -1,4 +1,4 @@
-import { fetchGames, fetchGameStatistics} from './api.js';
+import { fetchGames } from './api.js';
 import { renderTable, renderSkeletonTable, renderEmptyState } from './ui/table.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
@@ -48,12 +48,7 @@ const stateManager = new StateManager({
   searchInstance: null,
   filtersInitialized: false,
   lastScrollPosition: 0,
-  preventNextScroll: false,
-  gameStats: {
-    withOptions: 0,
-    withoutOptions: 0,
-    total: 0
-  }
+  preventNextScroll: false
 });
 
 addVanillaSlopActions(stateManager);
@@ -164,31 +159,6 @@ function populateEngineFilterWithDefaults() {
   // Restore previous value if it exists
   if (currentValue && [...engineFilter.options].some(opt => opt.value === currentValue)) {
     engineFilter.value = currentValue;
-  }
-}
-
-// Refresh filter statistics periodically
-/**
- * Refreshes the filter statistics based on current StateManager filters
- * This function is called periodically to keep the UI in sync with the latest data
- * @returns {Promise<void>}
- */
-async function refreshFilterStatistics() {
-  try {
-    // Use current StateManager filters for statistics
-    const filters = getCleanFilters(stateManager.getState());
-    const currentFilters = {
-      search: filters.search,
-      developer: filters.developer,
-      category: filters.category,
-      engine: filters.engine,
-      year: filters.year
-    };
-    
-    const stats = await fetchGameStatistics(currentFilters);
-    stateManager.dispatch('MERGE_STATS', stats);
-  } catch (error) {
-    console.error('Failed to refresh statistics:', error);
   }
 }
 
@@ -493,9 +463,6 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     const currentState = stateManager.getState();
     renderPagination(currentState.currentPage, currentState.totalPages, loadPage);
     
-    // Refresh statistics with current filters (don't reset filters)
-    await refreshFilterStatistics();
-
     // Feedback logic
     if (response.games?.length > 0) {
       if (reason !== 'launch-options-interaction') {

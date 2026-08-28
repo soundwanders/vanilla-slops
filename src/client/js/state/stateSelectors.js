@@ -94,20 +94,6 @@ export const getAPIFilters = (state) => {
  */
 
 /**
- * Reads game statistics from state with safe defaults
- * @param {Object} state - Application state
- * @returns {Object} Game statistics
- */
-export const getGameStats = (state) => {
-  return state.gameStats || {
-    withOptions: 0,
-    withoutOptions: 0,
-    total: 0,
-    percentageWithOptions: 0
-  };
-};
-
-/**
  * Whether any user-driven filter, search or non-default sort is active
  * @param {Object} state - Application state
  * @returns {boolean} True when filters deviate from defaults
@@ -126,20 +112,6 @@ export const hasActiveFilters = (state) => {
     filters.sort !== DEFAULT_SORT ||
     filters.order !== DEFAULT_ORDER
   );
-};
-
-/**
- * Formats statistics for UI display
- * @param {Object} state - Application state
- * @returns {Object} Formatted statistics for UI
- */
-export const getFormattedStats = (state) => {
-  const stats = getGameStats(state);
-  return {
-    primary: `${stats.total} games`,
-    secondary: `${stats.withOptions} with launch options`,
-    description: `Showing ${stats.total} games, ${stats.withOptions} with known launch options.`
-  };
 };
 
 /**

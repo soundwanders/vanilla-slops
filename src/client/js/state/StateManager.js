@@ -406,13 +406,7 @@ export function createAppStateManager() {
     // UI state
     lastScrollPosition: 0,
     preventNextScroll: false,
-    
-    // Statistics
-    gameStats: {
-      withOptions: 0,
-      withoutOptions: 0,
-      total: 0
-    },
+
     
     // Error state
     error: null,

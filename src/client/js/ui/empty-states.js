@@ -40,13 +40,17 @@ const FILTER_KEYS = [
  * to lead with `if (stats.total === 0) return 'database-empty'`, reading
  * `stats.total` as the size of the catalogue. It is not, and could not be:
  *
- *   - It is FILTER-SCOPED. `refreshFilterStatistics` sends the active filters to
- *     /api/games/statistics, so `total` counts the current query. `total === 0`
- *     means "this query matched nothing" — the exact condition that renders an
+ *   - It was FILTER-SCOPED. The client sent the active filters to
+ *     /api/games/statistics, so `total` counted the current query. `total === 0`
+ *     meant "this query matched nothing" — the exact condition that renders an
  *     empty state at all. It could never separate an empty catalogue from an
  *     empty filter, because for this code path they are the same number.
- *   - It is refreshed AFTER the render, so each render read the previous query's
- *     total.
+ *   - It was refreshed AFTER the render, so each render read the previous
+ *     query's total.
+ *
+ * That request is gone entirely as of 1.4.2 — nothing consumed its result once
+ * this function stopped depending on it — so the state slice it fed no longer
+ * exists to be misread.
  *
  * Which is why the symptom looked intermittent. The first render to fall into
  * emptiness still held the previous query's non-zero total and picked the right

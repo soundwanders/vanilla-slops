@@ -18,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.4.2] - 2026-08-23 — Clearing the decks
+
+### Fixed
+- **Every page load, filter change and sort change waited on a request nobody
+  read.** `refreshFilterStatistics()` fetched `/api/games/statistics` and
+  dispatched the result into `state.gameStats`. The only reader of that slice
+  was `getGameStats`, whose last consumer went away when the empty state stopped
+  depending on it in 1.4.1 — so the result was discarded on arrival.
+
+  It was also `await`ed, and everything after it in the load waited: the success
+  feedback, the scroll restoration, and the `finally` that re-enables the filter
+  and sort controls. Measured against production, that request takes **350-950
+  ms**, so every interaction paid it and the controls stayed disabled for the
+  whole of it, for nothing. The call, its function, the state slice, both
+  reducers and the two dead selectors are gone.
+
+  `/api/games/statistics` itself is unchanged and still served — it is a
+  documented public endpoint, and it is what a stats page would read.
+
+### Removed
+- `populateSelectOptions`' `defaultText` parameter. Three callers passed 'All
+  Developers', 'All Engines' and 'All Years'; the function never read any of
+  them, because `index.html` already carries the matching `<option value="">` on
+  each select. The markup owns those strings.
+- An unused destructured binding in `verify-database.js`.
+
+### Notes
+- **Lint is now at zero warnings**, down from four, for the first time.
+- The client bundle drops from 75.98 kB to 72.78 kB.
+
 ## [1.4.1] - 2026-08-23 — The empty page that blamed the database
 
 ### Fixed

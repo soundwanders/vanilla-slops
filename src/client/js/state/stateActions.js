@@ -67,17 +67,6 @@ const stateActions = {
     filtersInitialized: payload
   }),
 
-  // Statistics management
-  SET_GAME_STATS: (state, payload) => ({
-    ...state,
-    gameStats: { ...payload }
-  }),
-
-  MERGE_STATS: (state, payload) => ({
-    ...state,
-    gameStats: { ...state.gameStats, ...payload }
-  }),
-
   // UI state tracking
   SET_SCROLL_POSITION: (state, payload) => ({
     ...state,

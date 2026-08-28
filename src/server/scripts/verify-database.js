@@ -20,7 +20,7 @@ async function verifyDatabase() {
   try {
     // Check Supabase connection
     console.log('🔌 Testing Supabase connection...');
-    const { data, error } = await supabase.from('games').select('count').limit(1);
+    const { error } = await supabase.from('games').select('count').limit(1);
     if (error) {
       console.log(`❌ Connection failed: ${error.message}`);
       return;
