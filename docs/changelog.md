@@ -18,6 +18,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [Unreleased]
+
+### Changed
+- **`robots.txt` turns away four backlink crawlers.** SemrushBot, AhrefsBot,
+  MJ12bot and DotBot now get `Disallow: /`. The file previously said `Allow: /`
+  to everyone, which is the right default for search engines and the wrong one
+  for SEO tooling that crawls the catalogue and sends nothing back.
+
+  The cost is not hypothetical. Vercel's firewall logged 146 SemrushBot requests
+  in a single day (2026-09-07). Every `/game/` URL is a serverless invocation
+  plus a game query and a related-games query, the sitemap lists roughly 2,800
+  of them, and the page cache is an hour *per URL*, so a one-pass crawl gets no
+  benefit from it at all.
+
+  The wildcard group is untouched, so Googlebot, Bingbot and everything else see
+  no change. All four of these publish that they honour robots.txt, which makes
+  this the cheap layer; anything that ignores the file is a firewall rule rather
+  than a changelog entry.
+
 ## [1.5.1] - 2026-09-07 — The Bedrock
 
 ### Changed

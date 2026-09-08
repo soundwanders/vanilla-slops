@@ -1,4 +1,20 @@
 User-agent: *
 Allow: /
 
+# SEO/backlink crawlers. They send no visitors and every /game/ hit they make is
+# a serverless invocation plus two database queries, so they are pure cost on a
+# free-tier budget. SemrushBot alone was 146 requests in a day (2026-09-07).
+# These four obey robots.txt; anything that doesn't is a firewall problem.
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
 Sitemap: https://launchoptions.dev/sitemap.xml
