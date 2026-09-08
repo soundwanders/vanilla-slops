@@ -92,7 +92,7 @@ function seoHeader({ current } = {}) {
     : '<a href="/how-it-works" class="seo-nav-link">How it works</a>';
   const catLink = current === 'catalog'
     ? ''
-    : '<a href="/catalog" class="seo-nav-link">The catalog</a>';
+    : '<a href="/catalog" class="seo-nav-link">The Bedrock</a>';
   return `  <header class="seo-header">
     <a href="/" class="seo-home" aria-label="Vanilla Slops home">
       <img src="/slops-logo.png" alt="" width="40" height="40" decoding="async" />
@@ -126,8 +126,8 @@ function seoHeader({ current } = {}) {
  */
 function seoFooter({ current } = {}) {
   const links = [
-    current === 'how-it-works' ? '' : '<a href="/how-it-works" class="footer-link">How Vanilla Slops works</a>',
-    current === 'catalog' ? '' : '<a href="/catalog" class="footer-link">The catalog, in layers</a>',
+    current === 'how-it-works' ? '' : '<a href="/how-it-works" class="footer-link">How Vanilla Slops Works</a>',
+    current === 'catalog' ? '' : '<a href="/catalog" class="footer-link">The Bedrock</a>',
   ].filter(Boolean).map((l) => `    <p class="footer-line">${l}</p>`).join('\n');
 
   return `  <footer class="seo-foot">
@@ -567,7 +567,7 @@ ${seoHeader({ current: 'how-it-works' })}
       <a href="/">Home</a> <span aria-hidden="true">/</span> <span>How it works</span>
     </nav>
 
-    <h1 class="seo-title">How Vanilla Slops works</h1>
+    <h1 class="seo-title">How Vanilla Slops Works</h1>
     <p class="seo-subtitle">
       A searchable catalog of community-sourced Steam launch options. Here's
       where the data comes from, what each field means, and where we draw the
@@ -763,7 +763,7 @@ ${seoFooter({ current: 'how-it-works' })}
  */
 function renderCatalog(grain) {
   const canonical = `${SITE_URL}/catalog`;
-  const pageTitle = 'The Catalog in Layers | Vanilla Slops';
+  const pageTitle = 'The Bedrock: Every Launch Option We Publish — Vanilla Slops';
   const metaDesc = truncate(
     grain.options > 0
       ? `Every one of the ${grain.options} launch options we publish, sorted by how ` +
@@ -778,7 +778,7 @@ function renderCatalog(grain) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Vanilla Slops', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: 'The catalog', item: canonical },
+      { '@type': 'ListItem', position: 2, name: 'The Bedrock', item: canonical },
     ],
   };
 
@@ -845,10 +845,10 @@ ${seoHeader({ current: 'catalog' })}
 
   <main class="seo-main catalog-page">
     <nav class="seo-breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>The catalog</span>
+      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>The Bedrock</span>
     </nav>
 
-    <h1 class="seo-title">The catalog, in layers</h1>
+    <h1 class="seo-title">The Bedrock</h1>
     <p class="seo-subtitle">
       Every launch option we publish, sorted by how many games it reaches.
       A handful cover thousands. Most cover exactly one.
@@ -871,9 +871,9 @@ ${seoHeader({ current: 'catalog' })}
         of them. They are Linux tools that wrap whatever you launch, which is why they
         apply almost everywhere.` : ''}
         Below that the ground drops away fast: ${grain.singletons.toLocaleString()} of
-        ${grain.options.toLocaleString()} options are used by a single game. Those are
-        not failures. A flag that matters enormously to one game and to nothing else is
-        exactly what a catalog like this is for.
+        ${grain.options.toLocaleString()} options are used by a single game. That bottom
+        layer is the bedrock. Those are not failures. A flag that matters enormously
+        to one game and to nothing else is exactly what a catalog like this is for.
       </p>
 
       <h2>What it deliberately does not say</h2>

@@ -18,6 +18,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.5.1] - 2026-09-07 — The Bedrock
+
+### Changed
+- **`/catalog` is now called The Bedrock.** The old name, "The catalog, in
+  layers", was written as a page title and then reused as a link label, where it
+  sat in the footer beside "How Vanilla Slops works" and read like a book title
+  dropped into a list of destinations. The comma was doing literary work in a
+  slot that wants a name.
+
+  The rename is applied to every surface that names the page — the h1, the
+  `<title>`, the header nav, the footer link, the breadcrumb and the JSON-LD
+  breadcrumb — because a page carrying one name in the header and another in the
+  footer reads as two destinations. The URL is unchanged, so no link breaks.
+
+  The name is also now earned by the page rather than asserted over it. Tiers
+  render widest-reach at the top down to single-game options at the floor, so
+  the paragraph below the bed names that floor: "That bottom layer is the
+  bedrock." It ties the heading to the one thing on the page it describes, and
+  it makes no numeric claim that can go stale as the catalogue grows.
+
+  The `<title>` carries the explanation the name deliberately drops —
+  "The Bedrock: Every Launch Option We Publish" — so the page is still legible
+  in a search result.
+
+- **"How Vanilla Slops Works"** is title-cased in the footer link and the
+  `/how-it-works` h1. Both had a lowercase "works" while that page's `<title>`
+  already capitalised it. The header nav's "How it works" is a different string
+  and is deliberately left in sentence case.
+
+- **`/catalog`'s title separator is an em dash**, matching `/how-it-works` and
+  every game page. It was the one page using a pipe. Em dashes remain barred
+  from the page copy itself; this is metadata, and the site has a convention.
+
 ## [1.5.0] - 2026-08-23 — The catalog, in layers
 
 ### Added
