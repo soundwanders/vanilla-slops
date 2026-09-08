@@ -244,7 +244,8 @@ see the circular-FK section above.
 
 Free projects pause after **one week** of inactivity — not the 90 days this
 project's notes assumed. `.github/workflows/health.yml` hits the live API every
-four hours, which is what keeps it awake.
+eight hours, which is what keeps it awake. That is 21 pings per pause window,
+so the margin is still very wide.
 
 But GitHub disables scheduled workflows on a public repo after 60 days with no
 repository activity. So: stop committing for two months → the workflow is
@@ -268,7 +269,7 @@ The three-day interval is deliberate. A seven-day ping against a seven-day pause
 threshold has no margin at all — one missed run and the project sleeps. Three
 days leaves room for a failure and a retry before anything is at stake.
 
-`health.yml` still runs every four hours and is still useful; it is simply no
+`health.yml` still runs every eight hours and is still useful; it is simply no
 longer the only thing standing between this project and a silent pause.
 
 ## When to start paying

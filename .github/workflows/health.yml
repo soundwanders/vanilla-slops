@@ -1,13 +1,13 @@
 name: Health
 
-# Runs every four hours and does two jobs with one request:
+# Runs every eight hours and does two jobs with one request:
 #
 #   1. Uptime. Fails loudly if the live site stops serving data, and GitHub
 #      emails on a failed scheduled run, so this is the alerting channel with no
 #      third-party service and no account to manage.
 #   2. Supabase keepalive. The free tier pauses a project after a stretch of
-#      inactivity, and a request every four hours is far more than enough to
-#      prevent it.
+#      inactivity, and a request every eight hours is still far more than
+#      enough to prevent it: the threshold is measured in days.
 #
 # One request covers both because the check is deliberately end to end. It busts
 # the CDN cache, so it reaches the function, and the listing query is not cached
@@ -27,7 +27,7 @@ name: Health
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */8 * * *'
   workflow_dispatch:
 
 # Scheduled runs can be delayed under load. Don't let a backlog stack up.
