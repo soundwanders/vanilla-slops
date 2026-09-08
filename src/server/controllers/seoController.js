@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats } from '../services/gamesService.js';
+import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats, getCatalogGrain } from '../services/gamesService.js';
 import { slugify } from '../../shared/slugify.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../utils/safeUrl.js';
@@ -90,12 +90,16 @@ function seoHeader({ current } = {}) {
   const hiwLink = current === 'how-it-works'
     ? ''
     : '<a href="/how-it-works" class="seo-nav-link">How it works</a>';
+  const catLink = current === 'catalog'
+    ? ''
+    : '<a href="/catalog" class="seo-nav-link">The catalog</a>';
   return `  <header class="seo-header">
     <a href="/" class="seo-home" aria-label="Vanilla Slops home">
       <img src="/slops-logo.png" alt="" width="40" height="40" decoding="async" />
       <span>Vanilla Slops</span>
     </a>
     <a href="/" class="seo-cta">Search all games →</a>
+    ${catLink}
     ${hiwLink}
     <button id="theme-toggle" aria-label="Toggle between dark and light theme" aria-pressed="false">
       <svg class="theme-icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -103,6 +107,42 @@ function seoHeader({ current } = {}) {
       <span class="sr-only">Toggle Theme</span>
     </button>
   </header>`;
+}
+
+/**
+ * Shared footer for server-rendered pages.
+ *
+ * This lived in two hand-maintained copies that had already drifted: one read
+ * "Community-verified", the other "Community-sourced", and only one carried the
+ * How-it-works link. A third copy for /catalog would have made the drift a
+ * habit. `current` suppresses a page's link to itself, the same way seoHeader
+ * does.
+ *
+ * The tagline settles on "sourced" because that is the claim the project can
+ * defend: the `verified` column is retired, and what every published option
+ * actually carries is provenance rather than a verdict.
+ *
+ * @param {{current?: string}} [opts]
+ */
+function seoFooter({ current } = {}) {
+  const links = [
+    current === 'how-it-works' ? '' : '<a href="/how-it-works" class="footer-link">How Vanilla Slops works</a>',
+    current === 'catalog' ? '' : '<a href="/catalog" class="footer-link">The catalog, in layers</a>',
+  ].filter(Boolean).map((l) => `    <p class="footer-line">${l}</p>`).join('\n');
+
+  return `  <footer class="seo-foot">
+    <p class="footer-name">
+      <a href="/" class="footer-link">Vanilla Slops</a>
+      <span class="footer-sep" aria-hidden="true">&middot;</span>
+      <a href="https://github.com/soundwanders/vanilla-slops"
+         target="_blank" rel="noopener noreferrer" class="footer-link footer-icon-link" aria-label="GitHub">
+        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </p>
+${links}
+    <p class="footer-line">Community-sourced Steam launch options</p>
+    <p class="footer-line">Not affiliated with Valve Corporation</p>
+  </footer>`;
 }
 
 /**
@@ -267,19 +307,7 @@ ${seoHeader()}
     </p>
   </main>
 
-  <footer class="seo-foot">
-    <p class="footer-name">
-      <a href="/" class="footer-link">Vanilla Slops</a>
-      <span class="footer-sep" aria-hidden="true">&middot;</span>
-      <a href="https://github.com/soundwanders/vanilla-slops"
-         target="_blank" rel="noopener noreferrer" class="footer-link footer-icon-link" aria-label="GitHub">
-        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-      </a>
-    </p>
-    <p class="footer-line"><a href="/how-it-works" class="footer-link">How Vanilla Slops works</a></p>
-    <p class="footer-line">Community-verified Steam launch options</p>
-    <p class="footer-line">Not affiliated with Valve Corporation</p>
-  </footer>
+${seoFooter({ current: 'game' })}
 </body>
 </html>`;
 }
@@ -708,20 +736,186 @@ ${movement('III', 'What we claim, and what we don\'t')}
     </p>
   </main>
 
-  <footer class="seo-foot">
-    <p class="footer-name">
-      <a href="/" class="footer-link">Vanilla Slops</a>
-      <span class="footer-sep" aria-hidden="true">&middot;</span>
-      <a href="https://github.com/soundwanders/vanilla-slops"
-         target="_blank" rel="noopener noreferrer" class="footer-link footer-icon-link" aria-label="GitHub">
-        <svg viewBox="0 0 16 16" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-      </a>
-    </p>
-    <p class="footer-line">Community-sourced Steam launch options</p>
-    <p class="footer-line">Not affiliated with Valve Corporation</p>
-  </footer>
+${seoFooter({ current: 'how-it-works' })}
 </body>
 </html>`;
+}
+
+
+/**
+ * GET /catalog — the option vocabulary as a graded bed.
+ *
+ * The page is a single idea: launch options are distributed by a violent power
+ * law, and that is easier to feel than to state. Each layer is a reach tier;
+ * the layer's depth is how many options live there and the type size is the
+ * grain. Coarse rests on fine, which is what the distribution physically is.
+ *
+ * It is measured in OPTIONS, not links, and that is deliberate. Link totals
+ * balloon whenever a documented engine flag is broadcast to newly identified
+ * games, so link growth mostly reports how many engines we have identified —
+ * never how much documentation arrived. The vocabulary is the honest unit, and
+ * it is also the one that keeps this page legible as the catalogue grows: new
+ * documentation thickens a layer, and an option that earns wider coverage moves
+ * up through them.
+ *
+ * The markup below is complete on its own. The disturbance effect is added by
+ * /catalog-grain.js afterwards and is never required to read the page.
+ */
+function renderCatalog(grain) {
+  const canonical = `${SITE_URL}/catalog`;
+  const pageTitle = 'The Catalog in Layers | Vanilla Slops';
+  const metaDesc = truncate(
+    grain.options > 0
+      ? `Every one of the ${grain.options} launch options we publish, sorted by how ` +
+        'many games it reaches. A handful cover thousands; most cover exactly one.'
+      : 'Every launch option we publish, sorted by how many games it reaches. ' +
+        'A handful cover thousands; most cover exactly one.', 160
+  );
+  const css = getCssHref();
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Vanilla Slops', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'The catalog', item: canonical },
+    ],
+  };
+
+  // Everything below the bed quotes live figures, so it is written once and
+  // omitted whole when there is nothing to quote. Rendering it against an empty
+  // result produced sentences like "0 of 0 options are used by a single game",
+  // which is worse than saying nothing.
+  const hasData = grain.tiers.length > 0 && grain.options > 0;
+  const top = grain.tiers[0]?.options?.[0];
+  const second = grain.tiers[0]?.options?.[1];
+
+  const figures = hasData ? `
+    <ul class="cat-figures">
+      <li><b>${grain.options.toLocaleString()}</b><span>options published</span></li>
+      <li><b>${grain.games.toLocaleString()}</b><span>games covered</span></li>
+      <li><b>${grain.singletons.toLocaleString()}</b><span>used by one game</span></li>
+    </ul>` : '';
+
+  const bed = hasData ? `
+    <h2 class="sr-only">The catalog by reach</h2>
+    <div class="cat-bed" id="cat-bed">
+      ${grain.tiers.map((t) => {
+    const label = t.key === '1' ? '1 game' : `${t.key} games`;
+    return `<section class="cat-layer" data-tier="${escapeHtml(t.key)}" aria-label="Options reaching ${escapeHtml(label)}">
+        <h3 class="cat-layer-meta">
+          <b>${t.options.length.toLocaleString()}</b>
+          <span>${escapeHtml(label)}</span>
+        </h3>
+        <p class="cat-grain">${t.options.map((o) =>
+      `<a class="cat-seed" href="/?optionSearch=${encodeURIComponent(o.command)}"
+             title="${escapeHtml(o.command)}, used by ${o.reach.toLocaleString()} ${o.reach === 1 ? 'game' : 'games'}">${escapeHtml(o.command)}</a>`
+    ).join('')}</p>
+      </section>`;
+  }).join('')}
+    </div>` : `
+    <p class="cat-unavailable">The catalog figures are briefly unavailable. Everything else on the site is unaffected. <a href="/">Search is right here</a>.</p>`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(metaDesc)}" />
+  <link rel="canonical" href="${canonical}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${escapeHtml(pageTitle)}" />
+  <meta property="og:description" content="${escapeHtml(metaDesc)}" />
+  <meta property="og:url" content="${canonical}" />
+  <meta property="og:site_name" content="Vanilla Slops" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
+  <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
+  <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
+  ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
+  <script src="/game-theme.js"></script>
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body class="seo-page">
+${seoHeader({ current: 'catalog' })}
+
+  <main class="seo-main catalog-page">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>The catalog</span>
+    </nav>
+
+    <h1 class="seo-title">The catalog, in layers</h1>
+    <p class="seo-subtitle">
+      Every launch option we publish, sorted by how many games it reaches.
+      A handful cover thousands. Most cover exactly one.
+    </p>
+    ${figures}
+
+    ${bed}
+
+    ${hasData ? `<p class="cat-caption">
+      Each layer is a reach tier. Its depth is how many options live there;
+      the type size is the grain. Pick any command to search for it.
+    </p>` : ''}
+
+    ${hasData ? `<section class="cat-note">
+      <h2>What you are looking at</h2>
+      <p>
+        ${top && second ? `<code>${escapeHtml(top.command)}</code> reaches
+        ${top.reach.toLocaleString()} games and <code>${escapeHtml(second.command)}</code>
+        reaches ${second.reach.toLocaleString()}. Neither is a setting belonging to any
+        of them. They are Linux tools that wrap whatever you launch, which is why they
+        apply almost everywhere.` : ''}
+        Below that the ground drops away fast: ${grain.singletons.toLocaleString()} of
+        ${grain.options.toLocaleString()} options are used by a single game. Those are
+        not failures. A flag that matters enormously to one game and to nothing else is
+        exactly what a catalog like this is for.
+      </p>
+
+      <h2>What it deliberately does not say</h2>
+      <p>
+        Reach is not quality. The widest options are wide because they are engine-level
+        or tool-level, not because they are the best thing to paste into a launch box.
+        The flag that fixes your specific game is far more likely to be down in the
+        fine material.
+      </p>
+      <p>
+        This page counts <strong>options</strong>, never links. The number of
+        game-to-option connections grows every time a documented engine flag is applied
+        to newly identified games, so it mostly measures how many engines we have
+        recognized.
+      </p>
+
+    </section>` : ''}
+
+    <p class="seo-footer-cta">
+      <a href="/" class="seo-cta">${hasData
+    ? `Search all ${grain.games.toLocaleString()} games →`
+    : 'Search all games →'}</a>
+    </p>
+  </main>
+${seoFooter({ current: 'catalog' })}
+  <script src="/catalog-grain.js" defer></script>
+</body>
+</html>`;
+}
+
+/**
+ * GET /catalog — never fails on data. getCatalogGrain returns an empty result
+ * rather than throwing, and the renderer degrades to an explanatory line.
+ */
+export async function catalogController(req, res) {
+  const grain = await getCatalogGrain();
+  // Same reasoning as howItWorksController: caching locally leaves the browser
+  // holding HTML that points at a bundle hash a rebuild has already replaced.
+  res.set('Cache-Control', process.env.NODE_ENV === 'production'
+    ? 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400'
+    : 'no-store');
+  res.type('html').send(renderCatalog(grain));
 }
 
 /**
@@ -733,6 +927,7 @@ export async function sitemapController(req, res) {
     const urls = [
       `  <url><loc>${SITE_URL}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
       `  <url><loc>${SITE_URL}/how-it-works</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
+      `  <url><loc>${SITE_URL}/catalog</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
       ...games.map((g) => {
         const loc = `${SITE_URL}/game/${g.app_id}/${slugify(g.title)}`;
         const lastmod = g.updated_at ? `<lastmod>${new Date(g.updated_at).toISOString().slice(0, 10)}</lastmod>` : '';

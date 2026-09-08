@@ -18,6 +18,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.5.0] - 2026-08-23 — The catalog, in layers
+
+### Added
+- **A page for the shape of the data: `/catalog`.** Every published launch
+  option, sorted by how many games it reaches and settled into layers. A few
+  reach thousands; most reach exactly one. The layer's depth is how many options
+  live in it and the type size is the grain, so coarse material rests on fine —
+  which is what this distribution physically is.
+
+  **It counts options, never links.** Link totals balloon whenever a documented
+  engine flag is broadcast to newly identified games, so they mostly report how
+  many engines have been recognised rather than how much documentation arrived.
+  The vocabulary is the honest unit, and it is also the one that keeps the page
+  legible as the catalogue grows: new documentation thickens a layer, and an
+  option that earns wider coverage moves up through them. A design that measured
+  reach instead would lose resolution exactly as coverage improved — the top
+  bands are already converging, because six of the widest eight are "every Unity
+  game" and grow together by definition.
+
+  Every command is a link to that filtered search, so the page is a way in
+  rather than a poster.
+
+- **`/catalog-grain.js`** — the grains drift away from the pointer and settle
+  back, as sediment does. Strictly progressive enhancement: the bed is complete,
+  readable and navigable from the server-rendered markup, and the effect is
+  skipped entirely for reduced-motion readers and for devices with no fine
+  pointer, where pretending there is a hover is worse than stillness.
+
+  The physics are two time constants rather than one — a 55 ms yield and a
+  300 ms settle — because sediment recovers more slowly than it moves, and it is
+  overdamped, so there is no bounce. They are times rather than per-frame
+  fractions: an earlier draft decayed a percentage each frame and settled twice
+  as fast on a 120 Hz display as on a 60 Hz one.
+
+### Changed
+- **The footer is one function instead of two hand-maintained copies.** They had
+  already drifted — one read "Community-verified", the other "Community-sourced",
+  and only one carried the How-it-works link. Adding a third copy for this page
+  would have made the drift a habit. The tagline settles on **"sourced"**, which
+  is the claim the project can defend: the `verified` column is retired, and what
+  every published option carries is provenance rather than a verdict.
+- The header and footer of every server-rendered page, and the home page footer,
+  now link to `/catalog`; each page suppresses its own link.
+
+### Notes
+- Reach discounts links belonging to the six games hidden as duplicates, which
+  the obvious query would credit twice. It is a 0.2% correction and it is still
+  worth making on a page whose entire subject is the shape of the catalogue.
+- Risk level was tried as a second colour on the bed and cut. The page makes one
+  argument, about reach, and an unlabelled hue carrying an unrelated dimension is
+  undecodable without a legend the page should not need.
+- Links in the bed are marked by a tint rather than an underline. At 29px an
+  underline cuts through the descenders of a monospace command and reads as
+  damage; the grain taking the accent colour and a soft accent background works
+  at every size in the bed. Colour alone is a weak affordance in running text,
+  but every item here is a link, and keyboard focus still gets a real outline.
+- New tests cover the tier boundaries and the route wiring — the latter asserts
+  that `vercel.json` and `vite.config.js` agree, which CLAUDE.md flags as a place
+  where "dev silently diverges from prod".
+
 ## [1.4.2] - 2026-08-23 — Clearing the decks
 
 ### Fixed

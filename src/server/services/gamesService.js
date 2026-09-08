@@ -5,6 +5,7 @@ import { buildPhantomMap, withDisplayCounts } from '../utils/optionCounts.js';
 import { rankBrowsableOptions } from '../utils/optionRanking.js';
 import { sanitizeOrFilterValue, toOrFilterTerms } from '../utils/searchTerms.js';
 import { dedupeKey } from '../utils/searchNormalize.js';
+import { groupIntoTiers } from '../utils/grainTiers.js';
 
 // Deliberately smaller than the exact-match limit. These are guesses, and a
 // long list of guesses reads as the search not working rather than as help —
@@ -30,6 +31,14 @@ const _facetsCache = { data: null, expiresAt: 0 };
 // long TTL means ~24 DB reads a day total, whatever the traffic.
 const STATS_TTL_MS = 60 * 60 * 1000;
 const _statsCache = { data: null, expiresAt: 0 };
+
+// The /catalog page reads the whole option vocabulary in one go. It changes
+// only when the scraper is run by hand, so it is cached far longer than the
+// filter facets — the page is also edge-cached, and this exists to stop a cold
+// serverless instance re-deriving it on every miss.
+const GRAIN_TTL_MS = 6 * 60 * 60 * 1000;
+const _grainCache = { data: null, expiresAt: 0 };
+
 
 // app_id → number of links pointing at options `public_launch_options` hides.
 // Small and slow-moving (39 games, 55 links at the time of writing), and only
@@ -772,6 +781,102 @@ async function getFuzzyTitleSuggestions(query) {
  *
  * @returns {Promise<{games: number|null, options: number|null, lastUpdated: string|null}>}
  */
+/**
+ * The option vocabulary, sorted by reach and bucketed into grain sizes, for the
+ * /catalog page.
+ *
+ * WHY REACH IS COUNTED THIS WAY
+ *
+ * The obvious query — count every `game_launch_options` row per option — counts
+ * links to games the site will not show. Six games are hidden as duplicates of
+ * another App ID, and their 33 links belong to the surviving row as well, so a
+ * naive count credits those options twice and the page advertises reach into
+ * games nobody can open. The correction is one extra pair of small queries:
+ * find the hidden App IDs, count their links, subtract.
+ *
+ * It is a 0.2% difference and it is still worth making. This project's whole
+ * position is that it does not publish figures it cannot stand behind, and a
+ * page whose entire subject is the shape of the catalogue is the worst place to
+ * relax that.
+ *
+ * WHY NOT total_options_count
+ *
+ * That column counts links per GAME, not games per OPTION, and it counts rows
+ * the views hide (see optionCounts.js). It answers a different question.
+ *
+ * NEVER THROWS
+ *
+ * The page is a nice-to-have. A database hiccup returns an empty result and the
+ * caller renders the page without the bed rather than failing the request.
+ *
+ * @returns {Promise<{tiers: Array, options: number, games: number, links: number, singletons: number}>}
+ */
+export async function getCatalogGrain() {
+  const now = Date.now();
+  if (_grainCache.data && now < _grainCache.expiresAt) return _grainCache.data;
+
+  const empty = { tiers: [], options: 0, games: 0, links: 0, singletons: 0 };
+
+  try {
+    const [all, dupes, games] = await Promise.all([
+      // One embedded aggregate rather than paging 19k junction rows.
+      supabase
+        .from('public_launch_options')
+        .select('id, command, game_launch_options(count)')
+        .limit(2000),
+      supabase.from('games').select('app_id').not('duplicate_of', 'is', null),
+      supabase.from('public_games').select('*', { count: 'exact', head: true }),
+    ]);
+
+    if (all.error) {
+      console.error('Error fetching catalog grain:', all.error);
+      return empty;
+    }
+
+    // Links belonging to hidden duplicates, to be discounted.
+    const hiddenIds = (dupes.data || []).map((g) => g.app_id);
+    let penalty = new Map();
+    if (hiddenIds.length) {
+      const { data: hiddenLinks, error: linkErr } = await supabase
+        .from('game_launch_options')
+        .select('launch_option_id')
+        .in('game_app_id', hiddenIds);
+      if (!linkErr) {
+        penalty = (hiddenLinks || []).reduce((m, l) => {
+          m.set(l.launch_option_id, (m.get(l.launch_option_id) || 0) + 1);
+          return m;
+        }, new Map());
+      }
+    }
+
+    const rows = (all.data || [])
+      .map((r) => ({
+        command: r.command,
+        reach: (r.game_launch_options?.[0]?.count ?? 0) - (penalty.get(r.id) || 0),
+      }))
+      // An option linked only to hidden games has no reach the site can show.
+      .filter((r) => r.command && r.reach > 0)
+      .sort((a, b) => b.reach - a.reach || a.command.localeCompare(b.command));
+
+    const tiers = groupIntoTiers(rows);
+
+    const result = {
+      tiers,
+      options: rows.length,
+      games: games.error ? 0 : (games.count || 0),
+      links: rows.reduce((sum, r) => sum + r.reach, 0),
+      singletons: rows.filter((r) => r.reach === 1).length,
+    };
+
+    _grainCache.data = result;
+    _grainCache.expiresAt = now + GRAIN_TTL_MS;
+    return result;
+  } catch (error) {
+    console.error('Error in getCatalogGrain:', error);
+    return empty;
+  }
+}
+
 export async function getCatalogStats() {
   const now = Date.now();
   if (_statsCache.data && now < _statsCache.expiresAt) {

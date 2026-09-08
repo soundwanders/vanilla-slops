@@ -15,6 +15,7 @@ export default defineConfig({
       '/api': 'http://localhost:8000',
       '^/game/': 'http://localhost:8000',
       '/how-it-works': 'http://localhost:8000',
+      '/catalog': 'http://localhost:8000',
       '/sitemap.xml': 'http://localhost:8000',
       // The server-rendered pages link the *built* hashed bundle, which they
       // read out of dist/index.html. Vite dev serves source (styles/main.css)
