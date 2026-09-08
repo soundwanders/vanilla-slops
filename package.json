@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix",
+    "version:set": "npm version --no-git-tag-version",
     "db:verify": "node src/server/scripts/verify-database.js",
     "db:backup": "node --env-file=.env src/server/scripts/backup-database.js",
     "test:api": "curl http://localhost:8000/api/games?limit=3",
