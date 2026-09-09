@@ -8,7 +8,7 @@
   },
   "headers": [
     {
-      "source": "/((?!api/|game/|how-it-works|catalog|health|sitemap\\.xml).*)",
+      "source": "/((?!api/|game/|how-it-works|catalog(?:$|/)|health|sitemap\\.xml).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",

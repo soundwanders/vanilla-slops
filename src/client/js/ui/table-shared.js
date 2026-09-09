@@ -53,6 +53,23 @@ export function getOpenLaunchOptionsCount() {
   return document.querySelectorAll(CONFIG.SELECTORS.launchOptionsRow).length;
 }
 
+/**
+ * Whether a keypress should fire the copy control on an option command.
+ *
+ * Exported, and a named function rather than an inline condition, so the rule
+ * can be pinned by a test. It used to carry `&& !TableState.touchDevice`, and
+ * `'ontouchstart' in window` is true of every touchscreen laptop, Surface and
+ * keyboard-attached tablet — so on those machines the copy control took focus
+ * and announced itself as a button while doing nothing at all when pressed.
+ * A keydown is a keyboard event whether or not the screen also accepts touch.
+ *
+ * @param {string} key - KeyboardEvent.key
+ * @returns {boolean}
+ */
+export function isCopyActivationKey(key) {
+  return key === 'Enter' || key === ' ';
+}
+
 export function escapeHtml(text) {
   if (typeof text !== 'string') return '';
   const div = document.createElement('div');

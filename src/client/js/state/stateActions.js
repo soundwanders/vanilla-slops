@@ -114,8 +114,6 @@ function addVanillaSlopActions(stateManager) {
   Object.entries(stateActions).forEach(([actionName, actionHandler]) => {
     stateManager.addAction(actionName, actionHandler);
   });
-  
-  console.log('✅ Added all Vanilla Slops actions to StateManager');
 }
 
 export { stateActions, addVanillaSlopActions };

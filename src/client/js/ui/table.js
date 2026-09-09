@@ -5,7 +5,7 @@ import { fetchLaunchOptions } from '../api.js';
 // two copies still matched, nothing anywhere checked that they did.
 import { slugify } from '../../../shared/slugify.js';
 import { MOBILE_BREAKPOINT } from '../constants.js';
-import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml, pasteableCommand } from './table-shared.js';
+import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml, pasteableCommand, isCopyActivationKey } from './table-shared.js';
 import {
   buffMobileTableView, buffMobileTouch, buffMobileOptions,
   isMobileDevice, getSafeAreaInsets, ensureTouchTarget, setupMobileEventListeners
@@ -100,6 +100,12 @@ function buildSortHeader({ label, field }) {
 function renderGamesTable(container, games) {
   const table = document.createElement('table');
   table.className = `${CONFIG.CLASSES.gamesTable} ${CONFIG.CLASSES.mobileResponsive}`;
+  // The explicit roles here and on the rows/cells are redundant with the native
+  // elements and still load-bearing: the mobile card layout sets every table
+  // element to `display: block`, which drops the implicit table semantics, so
+  // without them a phone reads six unrelated blocks per game. They are `table`
+  // / `row` / `cell` — not `grid` / `gridcell`, which describe an interactive
+  // widget with cell-level focus management this is not.
   table.setAttribute('role', 'table');
   table.setAttribute('aria-label', 'Games with launch options');
 
@@ -136,7 +142,7 @@ function createGameRowHTML(game) {
 
   return `
     <tr role="row" data-game-id="${gameId}" class="game-row">
-      <td data-label="${CONFIG.DATA_LABELS.title}" role="gridcell" class="game-title-cell">
+      <td data-label="${CONFIG.DATA_LABELS.title}" role="cell" class="game-title-cell">
         <div class="game-title">
           <a href="/game/${gameId}/${slug}"
              class="game-page-link"
@@ -151,19 +157,19 @@ function createGameRowHTML(game) {
           >${STEAM_ICON_SVG}</a>
         </div>
       </td>
-      <td data-label="${CONFIG.DATA_LABELS.developer}" role="gridcell" class="game-developer-cell">
+      <td data-label="${CONFIG.DATA_LABELS.developer}" role="cell" class="game-developer-cell">
         <span title="${developer}">${developer}</span>
       </td>
-      <td data-label="${CONFIG.DATA_LABELS.publisher}" role="gridcell" class="game-publisher-cell">
+      <td data-label="${CONFIG.DATA_LABELS.publisher}" role="cell" class="game-publisher-cell">
         <span title="${publisher}">${publisher}</span>
       </td>
-      <td data-label="${CONFIG.DATA_LABELS.releaseDate}" role="gridcell" class="game-date-cell">
+      <td data-label="${CONFIG.DATA_LABELS.releaseDate}" role="cell" class="game-date-cell">
         <span title="${releaseDate}">${releaseDate}</span>
       </td>
-      <td data-label="${CONFIG.DATA_LABELS.engine}" role="gridcell" class="game-engine-cell">
+      <td data-label="${CONFIG.DATA_LABELS.engine}" role="cell" class="game-engine-cell">
         <span title="${engine}">${engine}</span>
       </td>
-      <td data-label="${CONFIG.DATA_LABELS.launchOptions}" role="gridcell" class="launch-options-cell">
+      <td data-label="${CONFIG.DATA_LABELS.launchOptions}" role="cell" class="launch-options-cell">
         ${generateLaunchOptionsButton(gameId, title, optionsCount)}
       </td>
     </tr>
@@ -1036,8 +1042,14 @@ function setupLaunchOptionsRowEvents(container) {
 
   container.querySelectorAll(`.${CONFIG.CLASSES.optionCommand}`).forEach(element => {
     const clickHandler = (e) => handleCommandClick(e);
+    // Deliberately not gated on TableState.touchDevice. It used to be, and
+    // `'ontouchstart' in window` is true of every touchscreen laptop, Surface
+    // and keyboard-attached tablet — so the guard left a control that takes
+    // focus and announces as a button but does nothing when you press Enter.
+    // A keydown is a keyboard event whether or not the screen also takes
+    // touch, and it cannot collide with the click handler.
     const keydownHandler = (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && !TableState.touchDevice) {
+      if (isCopyActivationKey(e.key)) {
         e.preventDefault();
         handleCommandClick(e);
       }

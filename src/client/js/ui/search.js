@@ -65,8 +65,6 @@ export default class SlopSearch {
     // Timing controls
     this.suggestionsTimeout = null;
     this.searchTimeout = null;
-    this.keystrokeCount = 0;
-    this.lastKeystrokeTime = 0;
     this.isLoading = false;
 
     // Callback for filter changes (will be set by main.js)
@@ -75,12 +73,8 @@ export default class SlopSearch {
     // UX Configuration
     this.config = {
       suggestionsDelay: 150,
-      searchDelay: 800,
       minCharsForSuggestions: 2,
-      minCharsForSearch: 3,
-      maxSearchDelay: 2000,
       enableSearchOnEnter: true,
-      enableProgressiveDebounce: true,
       enableClickOutsideSearch: true
     };
 
@@ -105,8 +99,6 @@ export default class SlopSearch {
     // Initialize
     this.initializeEventListeners();
     this.loadInitialData();
-    
-    console.log('🍓 SlopSearch initialized with engine filter support');
   }
 
   /**
@@ -143,15 +135,13 @@ export default class SlopSearch {
   }
 
   /**
-   * Debounces search input using a two-tier strategy: fast suggestions at 150ms,
-   * deliberate API search at 800ms with progressive delay on rapid typing.
+   * Debounces the suggestions request. There is no second tier: the table is
+   * refetched only on an explicit action (see TIER 2 below), so there is no
+   * typing-cadence measurement here for a search delay to be computed from.
    * @param {string} query - The current search query
    */
   handleSearchInput(query) {
-    const now = Date.now();
     this.currentQuery = query.trim();
-    this.keystrokeCount++;
-    this.lastKeystrokeTime = now;
 
     // Typing a text query supersedes an active "search by launch option" filter.
     if (this.currentQuery && this.currentFilters.optionSearch) {
@@ -186,35 +176,6 @@ export default class SlopSearch {
   }
 
   /**
-   * Calculate dynamic search delay based on user typing behavior
-   */
-  calculateSearchDelay() {
-    if (!this.config.enableProgressiveDebounce) {
-      return this.config.searchDelay;
-    }
-
-    const timeSinceLastKeystroke = Date.now() - this.lastKeystrokeTime;
-    const isRapidTyping = this.keystrokeCount > 3 && timeSinceLastKeystroke < 100;
-    
-    if (isRapidTyping) {
-      // User is typing rapidly, use longer delay
-      const progressiveDelay = Math.min(
-        this.config.searchDelay * 1.5,
-        this.config.maxSearchDelay
-      );
-      console.log(`⌨️ Rapid typing detected, using ${progressiveDelay}ms delay`);
-      return progressiveDelay;
-    }
-    
-    // Reset keystroke count after a pause
-    setTimeout(() => {
-      this.keystrokeCount = 0;
-    }, 1000);
-    
-    return this.config.searchDelay;
-  }
-
-  /**
    * Add search triggers to boost UX
    * click-outside detection to respect safe zones
    */
@@ -225,7 +186,6 @@ export default class SlopSearch {
         if (e.key === 'Enter' && this.selectedSuggestionIndex === -1) {
           e.preventDefault();
           clearTimeout(this.searchTimeout);
-          console.log('⚡ Immediate search triggered by Enter key');
           this.executeSearch();
         }
       });
@@ -242,7 +202,6 @@ export default class SlopSearch {
         // Only trigger search if we have a pending search timeout
         if (this.searchTimeout) {
           clearTimeout(this.searchTimeout);
-          console.log('⚡ Search triggered by clicking outside safe zones');
           this.executeSearch();
         }
       });
@@ -1012,7 +971,6 @@ export default class SlopSearch {
    */
   configure(newConfig) {
     this.config = { ...this.config, ...newConfig };
-    console.log('🎛️ Search configuration updated:', this.config);
   }
 
   /**
@@ -1040,7 +998,6 @@ export default class SlopSearch {
     this.currentFilters = {};
     this.currentSort = this.defaultSort;
     this.currentOrder = this.defaultOrder;
-    this.keystrokeCount = 0;
     
     // Clear timeouts
     clearTimeout(this.searchTimeout);

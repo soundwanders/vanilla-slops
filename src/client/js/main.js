@@ -729,16 +729,13 @@ function initializeSearchComponent() {
     };
 
     const searchInstance = new SlopSearch(searchConfig);
-    
-    searchInstance.configure({
-      suggestionsDelay: 150,        // Keep suggestions fast and responsive
-      searchDelay: 800,             // Much slower main search (was 300ms)
-      minCharsForSearch: 3,         // Only search after 3 characters
-      enableSearchOnEnter: true,    // Allow Enter key for immediate search
-      enableProgressiveDebounce: true, // Longer delays for rapid typing
-      enableClickOutsideSearch: true   // Search when clicking outside
-    });
-    
+
+    // No configure() call. It used to restate SlopSearch's own defaults key for
+    // key, three of which named a progressive-debounce path that no longer
+    // exists — and a call that repeats a default silently wins over it the next
+    // time the default is tuned. The timings live in SlopSearch's `this.config`;
+    // configure() is still there for a caller that genuinely wants to differ.
+
     // Set the callback for filter changes
     searchInstance.onFilterChange = handleFilterChange;
     

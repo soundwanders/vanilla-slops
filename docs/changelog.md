@@ -18,7 +18,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
-## [Unreleased]
+## [1.5.2] - 2026-09-08
+
+### Fixed
+- **The copy control was unreachable by keyboard on touch-capable machines.**
+  The keydown handler on `.option-command` was gated on
+  `!TableState.touchDevice`, and `touchDevice` is `'ontouchstart' in window` —
+  true of every touchscreen laptop, Surface and keyboard-attached tablet, not
+  just phones. On any of those the control still took focus (`tabIndex = 0`)
+  and still announced itself as a button (`role="button"`), and then Enter and
+  Space did nothing at all.
+
+  That is a WCAG 2.1.1 failure on the one action the site exists to offer, and
+  the guard had no job to do: a keydown is a keyboard event whether or not the
+  screen also accepts touch, and it cannot collide with the click handler. The
+  rule now lives in `isCopyActivationKey`, which takes only the key, so a
+  device-capability check cannot be folded back into it without failing a test.
+
+- **Table cells claimed to be `gridcell`.** `gridcell` belongs to `role="grid"`,
+  an interactive widget with cell-level focus management; a table's cells are
+  `cell`. The explicit roles themselves stay — they are not redundant here,
+  because the mobile card layout sets every table element to `display: block`,
+  which drops the implicit table semantics and would otherwise leave a phone
+  reading six unrelated blocks per game.
+
+- **`/catalog-grain.js` shipped with no security headers.** The `vercel.json`
+  header rule excludes the server-rendered routes via a negative lookahead, and
+  the `catalog` alternative had no terminator — so it also matched the real
+  static file `catalog-grain.js`, which therefore arrived with no CSP, no
+  `nosniff`, no HSTS. Now `catalog(?:$|/)`, which still excludes `/catalog` and
+  `/catalog/` and no longer swallows anything that merely starts with the word.
+
+- **Console stripping was configured but inert.** `vite.config.js` carried
+  `esbuild: { drop: ['console', 'debugger'] }`, which is an esbuild option,
+  while `build.minify` is `'terser'`. A `NODE_ENV=production` build still
+  shipped twelve `console.log` calls — verified by grepping the bundle, not
+  inferred. The intent is kept as `build.terserOptions.compress.pure_funcs`,
+  which the configured minifier actually reads. `console.error` and
+  `console.warn` are deliberately left in: they are real error paths, and a bug
+  report should be able to quote them.
+
+### Removed
+- **`src/client/js/ui/filters.js` — 644 lines that nothing imported.** A
+  complete second filter implementation sitting beside the live one in
+  `main.js`. It was absent from the bundle, so it cost nothing at runtime; what
+  it cost was a coin flip over which file to edit next time filtering changes.
+
+- **`SlopSearch.calculateSearchDelay()` and the config it read.** The
+  progressive-debounce path lost its caller when the table stopped refetching
+  on every keystroke, but `searchDelay`, `maxSearchDelay`, `minCharsForSearch`
+  and `enableProgressiveDebounce` were still declared in `SlopSearch`, still
+  passed in from `main.js`, and still describing behaviour that no longer
+  existed. The function also scheduled an unbounded `setTimeout` per call as a
+  side effect. Gone with `keystrokeCount` and `lastKeystrokeTime`, which fed
+  nothing else.
+
+- **The `configure()` call in `main.js`.** With the dead keys gone it restated
+  `SlopSearch`'s own defaults key for key — and a call that repeats a default
+  silently outranks it the next time the default is tuned. `configure()` stays
+  on the class for a caller that genuinely wants to differ.
+
+- **Eleven unguarded `console.log` calls** from `api.js`, `search.js` and
+  `stateActions.js`, including emoji debug output on every cache hit and API
+  response. The three left in `StateManager.js` are guarded by `_isProduction`
+  or reachable only through the opt-in `window.__SLOPS_STATE_DEBUG` tool, and
+  are the intended developer affordance.
 
 ### Changed
 - **`robots.txt` turns away four backlink crawlers.** SemrushBot, AhrefsBot,

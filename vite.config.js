@@ -33,6 +33,25 @@ export default defineConfig({
     
     // Enable minification and tree shaking
     minify: 'terser',
+
+    // Terser is the minifier, so the console stripping has to be terser's, and
+    // it has to live under `build` where Vite reads it. This was previously a
+    // top-level `esbuild: { drop: ['console', 'debugger'] }` — an esbuild
+    // option, and therefore inert while terser does the minifying: a
+    // NODE_ENV=production build still shipped twelve console.log calls,
+    // verified by grepping the bundle. The intent is kept and now actually runs.
+    //
+    // pure_funcs rather than drop_console, because console.error and
+    // console.warn are real error paths — a failed fetch, a preload that gave
+    // up — and should survive into production where a bug report can quote them.
+    //
+    // Unconditional: this block is only reached by `vite build`, so there is no
+    // NODE_ENV branch left to get wrong.
+    terserOptions: {
+      compress: {
+        pure_funcs: ['console.log', 'console.debug'],
+      },
+    },
     
     // Optimize chunk size warnings
     chunkSizeWarningLimit: 500,
@@ -62,8 +81,4 @@ export default defineConfig({
     extensions: ['.js', '.mjs', '.json'],
   },
   
-  esbuild: {
-    // Remove console.log in production
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
-  },
 });

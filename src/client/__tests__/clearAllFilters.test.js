@@ -26,7 +26,6 @@ function makeInstance() {
     currentFilters: { engine: 'Source Engine', year: '2004' },
     currentSort: 'title',
     currentOrder: 'asc',
-    keystrokeCount: 7,
     searchTimeout: null,
     suggestionsTimeout: null,
     searchInput: { value: 'half-life' },

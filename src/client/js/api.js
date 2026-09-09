@@ -212,19 +212,15 @@ export async function fetchGames({
   
   // Check cache first
   if (useCache && cache.has(cacheKey)) {
-    console.log('Cache hit:', cacheKey);
     return cache.get(cacheKey);
   }
 
   const url = `${API_URL}/games${queryParams ? `?${queryParams}` : ''}`;
-  console.log('API Request:', url);
 
   try {
     const response = await fetchWrapper(url);
     const data = await response.json();
-    
-    console.log('API Response:', data);
-    
+
     // Validate response structure
     const result = {
       games: Array.isArray(data.games) ? data.games : [],
@@ -361,9 +357,7 @@ export async function fetchGameDetails(gameId, useCache = true) {
   try {
     const response = await fetchWrapper(`${API_URL}/games/${gameId}`);
     const data = await response.json();
-    
-    console.log('Game Details Response:', data);
-    
+
     if (useCache) {
       cache.set(cacheKey, data);
     }
@@ -388,9 +382,7 @@ export async function fetchLaunchOptions(gameId, useCache = true) {
   try {
     const response = await fetchWrapper(`${API_URL}/games/${gameId}/launch-options`);
     const data = await response.json();
-    
-    console.log('Launch Options Response:', data);
-    
+
     // Ensure we return an array
     const launchOptions = Array.isArray(data) ? data : (data.launchOptions || []);
     
@@ -533,8 +525,6 @@ export async function preloadPopularContent() {
     
     // Preload filter facets
     await getFilterFacets();
-    
-    console.log('Popular content preloaded');
   } catch (error) {
     console.warn('Failed to preload content:', error);
   }
