@@ -41,6 +41,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `express`/`qs` and `vitest` advisories are reachable only through two of
   those, which is why `npm audit` still reports 4 moderate and 0 high.
 
+- **Four tooling majors taken, and a fifth dependency deleted rather than
+  upgraded.** `concurrently` 9 → 10, `dotenv` 16 → 17, `lint-staged` 16 → 17,
+  `express-rate-limit` 7 → 8. All four are dev tooling or thin wrappers whose
+  major bumps are Node-floor changes rather than API changes.
+
+  **`body-parser` was removed outright.** Nothing imported it — `app.js` uses
+  `express.json()`, and Express bundles body-parser itself — so the open
+  Dependabot PR offering body-parser 2 was proposing a major upgrade to a
+  package the project does not use. It is the fifth unused direct dependency
+  found in this sweep, after `axios`, `supabase`, `sharp` and `serve` in 1.5.3.
+
+  Verified where it counts rather than by the unit suite: `dotenv` loads every
+  secret, so `npm run db:verify` was run against the live database (2,847 /
+  19,121 / 564); `express-rate-limit` 8 still emits and decrements its headers
+  on Express 4; `concurrently` 10 *is* `npm run dev`, so booting both processes
+  is the test; and `lint-staged` 17 runs on the commit hook that landed this.
+  Smoke 20/20.
+
 ### Fixed
 - **The smoke test crashed instead of reporting when the browser was missing.**
   Bumping Playwright ships a new browser revision, so the first run afterwards
