@@ -18,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [Unreleased]
+
+### Changed
+- **Dependency maintenance — every in-range update taken, every major left.**
+  `@sentry/node` 10.66 → 10.74, `@supabase/supabase-js` 2.108 → 2.116, `helmet`
+  8.2 → 8.3, `playwright` 1.61 → 1.63, plus the declared floors in
+  `package.json` brought up to match what is actually installed. That last part
+  is why this is reviewable: `npm update` alone moves only the lockfile, because
+  the caret ranges already permitted the new versions, and the commit would have
+  been 1,800 lines of lockfile churn with no statement of intent anywhere in it.
+
+  Verified beyond the unit suite, because the unit suite touches neither
+  Supabase nor Sentry nor helmet: the server boots, `/api/games` returns the
+  full 2,841, helmet still emits its headers, Sentry initialises without
+  throwing, and `npm run smoke` passes 20/20 against the live database.
+
+  **Nine majors deliberately left alone**, each a breaking change rather than a
+  bump: `express` 5 (and `body-parser` 2, which follows it), `zod` 4 at the API
+  validation boundary, `eslint` 9/10 (flat-config migration), `vite` 8,
+  `vitest` 5, `dotenv` 17, `concurrently` 10, `express-rate-limit` 8. The
+  `express`/`qs` and `vitest` advisories are reachable only through two of
+  those, which is why `npm audit` still reports 4 moderate and 0 high.
+
+### Fixed
+- **The smoke test crashed instead of reporting when the browser was missing.**
+  Bumping Playwright ships a new browser revision, so the first run afterwards
+  threw an unhandled exception with a stack trace before a single check had run
+  — the least useful moment to be unreadable. It now exits 1 with the one
+  instruction that fixes it: `npx playwright install chromium`.
+
 ## [1.5.3] - 2026-09-10 — Provisions for a quiet stretch
 
 Nothing here changes what a visitor sees. It is the set of checks the project

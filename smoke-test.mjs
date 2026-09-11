@@ -46,7 +46,18 @@ function check(name, condition, detail) {
   return Boolean(condition);
 }
 
-const browser = await chromium.launch({ headless: true });
+// Guarded: a Playwright bump ships a new browser revision, and the launch then
+// throws an unhandled exception with a stack trace before any check has run.
+// That is the least useful moment to be unreadable, so it exits with the one
+// instruction that fixes it.
+let browser;
+try {
+  browser = await chromium.launch({ headless: true });
+} catch (error) {
+  console.error(`\nCould not launch a browser: ${error.message.split('\n')[0]}`);
+  console.error('If Playwright was just installed or updated, run:  npx playwright install chromium\n');
+  process.exit(1);
+}
 const page = await browser.newPage();
 
 // Console errors are a failure signal in their own right. Filtered: favicon
