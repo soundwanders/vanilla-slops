@@ -805,7 +805,7 @@ async function handleCommandClick(e) {
   try {
     await navigator.clipboard.writeText(command);
     showCopySuccess(element);
-  } catch (error) {
+  } catch {
     showCopyError(element);
     attemptTextSelection(element);
   } finally {
@@ -854,7 +854,7 @@ function attemptTextSelection(element) {
       document.body.appendChild(instruction);
       setTimeout(() => instruction.remove(), 3000);
     }
-  } catch (_) { /* clipboard access intentionally swallowed */ }
+  } catch { /* clipboard access intentionally swallowed */ }
 }
 
 function cleanupLaunchOptionsEvents(container) {
@@ -1103,7 +1103,7 @@ function formatDate(dateString) {
       month: 'short',
       day: 'numeric'
     });
-  } catch (_) {
+  } catch {
     return 'Unknown';
   }
 }

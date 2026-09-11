@@ -1149,7 +1149,6 @@ async function fetchAllRows(buildQuery) {
   let from = 0;
   const all = [];
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data, error } = await buildQuery(from, from + PAGE - 1);
     if (error) {
@@ -1357,7 +1356,6 @@ export async function getGamesForSitemap() {
   let from = 0;
   const all = [];
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data, error } = await supabase
       .from('public_games')

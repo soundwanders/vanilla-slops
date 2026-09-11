@@ -59,6 +59,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is the test; and `lint-staged` 17 runs on the commit hook that landed this.
   Smoke 20/20.
 
+- **ESLint 8 → 10, and the flat-config migration that comes with it.**
+  `.eslintrc.json` and `.eslintignore` are replaced by `eslint.config.js`;
+  ESLint 9 made that format the default and 10 dropped the old one. The `--ext`
+  flag went with it, so `npm run lint` is now `eslint .` — which means it covers
+  `smoke-test.mjs` for the first time, a file the old `src/`-scoped invocation
+  never looked at. 78 files are linted, `src/client/dist/` still ignored.
+
+  The port is faithful — `eslint:recommended` plus the same two rule overrides
+  the project has always carried — but ESLint 10's *recommended set* is stricter
+  than 8's, and it found nine real things. All nine are **fixed, not
+  suppressed**, in keeping with how the last set of warnings was handled:
+
+  - Four rethrows in `api.js` discarded the original error (`preserve-caught-error`,
+    new in ESLint 10). They now pass `{ cause: error }`, so the stack survives
+    into the console and into Sentry instead of being replaced by a summary.
+  - Three unused `catch` bindings in `table.js` — `no-unused-vars` now checks
+    caught errors by default. Rewritten as optional catch binding (`catch {}`),
+    which says "the failure path does not care what threw" rather than naming a
+    variable and ignoring it.
+  - Two `eslint-disable-next-line no-constant-condition` directives in
+    `gamesService.js` that no longer suppressed anything, because the rule stopped
+    flagging `while (true)`. Flat config reports unused directives by default,
+    which is how they surfaced.
+
+  Lint is back to **0 errors, 0 warnings** on a stricter ruleset than before.
+
 ### Fixed
 - **The smoke test crashed instead of reporting when the browser was missing.**
   Bumping Playwright ships a new browser revision, so the first run afterwards

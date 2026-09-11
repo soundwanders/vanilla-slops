@@ -241,7 +241,7 @@ export async function fetchGames({
     return result;
   } catch (error) {
     console.error('Failed to fetch games:', error);
-    throw new Error(`Failed to fetch games: ${error.message}`);
+    throw new Error(`Failed to fetch games: ${error.message}`, { cause: error });
   }
 }
 
@@ -365,7 +365,7 @@ export async function fetchGameDetails(gameId, useCache = true) {
     return data;
   } catch (error) {
     console.error(`Failed to fetch game details for ${gameId}:`, error);
-    throw new Error(`Failed to fetch details for game ${gameId}: ${error.message}`);
+    throw new Error(`Failed to fetch details for game ${gameId}: ${error.message}`, { cause: error });
   }
 }
 
@@ -393,7 +393,7 @@ export async function fetchLaunchOptions(gameId, useCache = true) {
     return launchOptions;
   } catch (error) {
     console.error(`Failed to fetch launch options for ${gameId}:`, error);
-    throw new Error(`Failed to fetch launch options for game ${gameId}: ${error.message}`);
+    throw new Error(`Failed to fetch launch options for game ${gameId}: ${error.message}`, { cause: error });
   }
 }
 
@@ -448,7 +448,7 @@ export async function fetchGamesInBatch(gameIds) {
     return validGames;
   } catch (error) {
     console.error('Failed to batch fetch games:', error);
-    throw new Error('Failed to fetch games in batch');
+    throw new Error('Failed to fetch games in batch', { cause: error });
   }
 }
 
