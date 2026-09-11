@@ -1,0 +1,64 @@
+version: 2
+
+# Dependency watch for a project that spends most of its time in maintenance
+# mode. Nobody is going to run `npm audit` by hand during a quiet stretch, and
+# the quiet stretches are exactly when an advisory sits unnoticed — so the check
+# has to come to the inbox rather than wait to be run.
+#
+# Every PR opened here lands on `main`, which means ci.yml (lint + tests) gates
+# it the same as any other change. A dependency bump that breaks the suite
+# arrives as a red PR, not as a broken deploy.
+#
+# On grouping: ungrouped, this config would open a PR per package and the noise
+# would train you to ignore it, which is worse than not having it. Minor and
+# patch updates are therefore batched into one PR per ecosystem per week.
+# Majors are deliberately left ungrouped — Express 5, Vitest 5 and ESLint 9 each
+# need reading and a decision, and burying them in a batch is how a breaking
+# change gets merged unread.
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: sunday
+      # Sunday 06:00 UTC, two hours after backup.yml's 04:00 dump. Nothing
+      # depends on the ordering; it just keeps the weekly noise in one place.
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      # One PR a week for the safe stuff.
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      # Matches the repo's existing conventional prefixes so the log stays
+      # readable. `chore(deps)` rather than `deps` because these are not
+      # features and not fixes to this project's own code.
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
+
+  # Actions go stale silently and there is no audit that catches it: a pinned
+  # actions/checkout@v4 keeps working long past the point where it is the
+  # version anyone should be running. Four actions are in use across ci.yml,
+  # health.yml and backup.yml.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: ci
+      include: scope
+    labels:
+      - dependencies

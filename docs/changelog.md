@@ -18,6 +18,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.5.3] - 2026-09-10 — Provisions for a quiet stretch
+
+Nothing here changes what a visitor sees. It is the set of checks the project
+needs in order to be left alone for a while, and the removal of some things that
+would have rotted while nobody was looking.
+
+### Added
+- **Dependabot** (`.github/dependabot.yml`) — npm weekly, GitHub Actions
+  monthly. Nobody runs `npm audit` by hand during a quiet stretch, and a quiet
+  stretch is exactly when an advisory sits unread. Minor and patch updates are
+  grouped into one PR per ecosystem so the noise does not train you to ignore
+  it; majors stay separate, because burying a breaking change in a batch is how
+  it gets merged unread. Every PR lands on `main`, so `ci.yml` gates it.
+
+- **`npm run smoke`** — wires up `smoke-test.mjs`, which was tracked in the repo
+  with no script, no CI entry and no mention in any doc.
+
+### Fixed
+- **The smoke test could not fail.** It printed observations, swallowed every
+  error and ended with `process.exit(0)`. Five of its selectors had also gone
+  stale — `#showAllGamesFilter`, `.slop-details`, `.launch-options-panel`,
+  `.options-expanded` and `.pagination-next` exist nowhere in the source — so it
+  was reporting "WARN: not found" about its own rot while still passing. Wiring
+  a command to that would have been worse than leaving it unwired: a green check
+  that verifies nothing is the one kind that gets believed.
+
+  It now asserts and exits non-zero, covering table paint, search narrowing and
+  restoring, expansion rendering real options, **keyboard activation of the copy
+  control** (the 1.5.2 bug, which no unit test could have seen), filter
+  population, pagination advancing, and console errors. 20 checks, all passing
+  against the live database.
+
+  Two of those assertions were themselves vacuous on the first pass and were
+  caught by running it rather than reading it: the copy check OR'd in a
+  condition that was always true, and the pagination check passed while
+  reporting `"Page 1 of 143" -> "Page 1 of 143"`. Both now assert the thing
+  their name claims.
+
+### Removed
+- **Four dependencies that existed only as vulnerability surface** — none of
+  them imported anywhere in the repo. `axios` and `supabase` (the CLI) were in
+  **`dependencies`**, so they shipped to the serverless function; `sharp` and
+  `serve` were dev-only. `sharp` carried one of the two high-severity
+  advisories. `backup.yml` is unaffected: it installs the Supabase CLI through
+  `supabase/setup-cli@v1`, not from npm.
+
+- **`terser` moved to `devDependencies`**, where a build-time minifier belongs.
+  It is still required — `vite.config.js` sets `minify: 'terser'`.
+
+### Security
+- **`npm audit`: 8 advisories (3 high) → 4 (0 high).** Removing `sharp` took two
+  high-severity entries with it; `npm audit fix` cleared `js-yaml` and bumped
+  `body-parser` to 1.20.8. The four left are `express`/`qs` and
+  `vitest`/`@vitest/mocker`, and neither is reachable in-range: express 4.22.2 is
+  the last of its line and pins a vulnerable `qs`, so the fix is Express 5, and
+  the other is Vitest 5. Both are majors, both are left deliberately, and
+  Dependabot will keep offering them as separate PRs until there is appetite for
+  a migration.
+
+### Changed
+- **Two things worth writing down, found while re-measuring the catalogue.**
+
+  PostgREST caps a plain `select` at 1000 rows. Counting distinct `engine`
+  values off an unpaged select returned 160 instead of the true 275 — a wrong
+  number that looks entirely plausible and would have been believed. Page with
+  `.range()` for anything that scans the catalogue, or use
+  `{ count: 'exact', head: true }` when a count is all that is wanted.
+
+  And uptime now has two independent watchers — `health.yml` every eight hours,
+  plus an external cron-job.org monitor that alerts by email — but **backups
+  have only one.** GitHub disables scheduled workflows on a public repo after 60
+  days with no repository activity, so a long quiet stretch would stop
+  `backup.yml` silently while the site stays up and looks perfectly healthy.
+  Any commit resets the clock; if the repo has been quiet for six weeks, open
+  the Actions tab.
+
+  Current counts: 2,847 games (2,841 published), 564 launch options (475
+  published), 19,121 game-option links, 275 distinct engine values.
+
 ## [1.5.2] - 2026-09-08
 
 ### Fixed
