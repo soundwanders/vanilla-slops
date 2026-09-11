@@ -85,6 +85,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Lint is back to **0 errors, 0 warnings** on a stricter ruleset than before.
 
+- **Vite 6 → 8 and Vitest 3 → 5**, two majors each. Neither is called directly
+  by project code, so the risk was entirely in the toolchain, and the toolchain
+  is what was checked:
+
+  - The **console stripping still works.** This was the thing most likely to
+    regress silently — `build.terserOptions.compress.pure_funcs` is the one
+    build setting the project depends on for a guarantee it states publicly, and
+    it was already inert once before (1.5.2). Verified by grepping the bundle:
+    zero `console.log`, with `console.error` and `console.warn` intact.
+  - The **dev proxy still reaches Express** — `/api`, `/how-it-works` and
+    `/catalog` all answer through port 3000.
+  - Smoke passes 20/20 against **both** Vite's dev server and the built bundle
+    served by Express, the latter via `SMOKE_URL`. The built path is the one
+    that ships, and it had not previously been exercised.
+
+  Vitest 5 also runs the suite in roughly half the time (4.8s, down from ~8s).
+  Vite 8's CSS minifier shaves the stylesheet to 120.87 kB from 122.16 kB.
+
+  **`npm audit` is now 2 moderate, down from 4** — Vitest 5 resolves both
+  `vitest` and `@vitest/mocker` advisories. The two left are `express`/`qs`,
+  reachable only through Express 5.
+
 ### Fixed
 - **The smoke test crashed instead of reporting when the browser was missing.**
   Bumping Playwright ships a new browser revision, so the first run afterwards
