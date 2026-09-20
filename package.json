@@ -38,9 +38,9 @@
   "license": "SEE LICENSE IN LICENSE",
   "description": "Vanilla Slops",
   "dependencies": {
-    "@sentry/node": "^10.74.0",
+    "@sentry/node": "^10.75.0",
     "@supabase/supabase-js": "^2.116.0",
-    "compression": "^1.8.1",
+    "compression": "^1.8.2",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.22.2",
@@ -61,7 +61,7 @@
     "playwright": "^1.63.0",
     "terser": "^5.51.2",
     "vite": "^8.3.0",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "lint-staged": {
     "src/**/*.js": "eslint"
