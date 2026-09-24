@@ -535,7 +535,7 @@ function setupOfflineDetection() {
 function showSuccessFeedback() {
   const resultsCount = document.getElementById('resultsCount');
   if (resultsCount) {
-    resultsCount.style.color = 'var(--color-success)';
+    resultsCount.style.color = 'var(--color-success-text)';
     resultsCount.style.fontWeight = 'var(--font-weight-semibold)';
     
     setTimeout(() => {

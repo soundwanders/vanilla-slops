@@ -726,7 +726,7 @@
 }
 
 .risk-safe {
-  color: var(--color-success);
+  color: var(--color-success-text);
   background: var(--color-success-subtle);
 }
 
@@ -773,7 +773,7 @@
 /* "Last checked {date}" — a positive freshness signal, shown only when the
    scraper has re-verified the option (null is simply omitted, never "stale"). */
 .option-verified {
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .option-source {
@@ -803,7 +803,7 @@ a.option-source:hover {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  color: var(--color-success);
+  color: var(--color-success-text);
   font-weight: var(--font-weight-semibold);
 }
 

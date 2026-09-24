@@ -355,6 +355,12 @@
   --color-success: var(--emerald-500);
   --color-success-hover: var(--success-700);
   --color-success-subtle: #e3f6ec;
+  /* Success as TEXT. --color-success (#0a9d54) is tuned for fills and icons
+     and measures 3.26:1 as small text on cream; this holds 4.5:1 on every
+     light step down to the ground (4.56:1). Not for the copy checkmark:
+     that sits on the dark code block, where #0a9d54 is the better choice
+     (5.12:1 vs 3.45:1). */
+  --color-success-text: #067d41;
 
   /* Interactive states */
   --color-interactive-hover: #f3eee4;
@@ -440,6 +446,7 @@
 
   /* Semantic colors */
   --color-success: #4ade80;
+  --color-success-text: var(--color-success);   /* 9.91:1 already */
   --color-success-hover: var(--success-400);
   --color-success-subtle: rgba(74, 222, 128, 0.12);
   
