@@ -49,9 +49,10 @@
 
   * { transition-duration: var(--transition-fast) !important; }
 
+  /* .filters-container is deliberately frameless (layout.css); a shadow here
+     draws a stray box edge on the open light-theme ground. */
   .card,
-  .games-table,
-  .filters-container { box-shadow: var(--shadow-sm) !important; }
+  .games-table { box-shadow: var(--shadow-sm) !important; }
 
   .filters-container,
   .table-container { contain: layout; }

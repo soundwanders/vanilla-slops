@@ -755,7 +755,9 @@ fieldset,
   padding: var(--space-xs) var(--space-md);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  border-color: var(--color-border);
+  background-color: var(--control-ghost-bg);
+  border-color: var(--control-ghost-border);
+  box-shadow: var(--control-ghost-shadow);
 }
 
 .pagination-btn-prev:hover,
@@ -807,17 +809,22 @@ fieldset,
   padding: var(--space-xs);
   font-size: var(--font-size-xs);
   color: var(--color-text-primary);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-input);
+  border: 1px solid var(--control-ghost-border);
   border-radius: var(--radius-md);
   text-align: center;
   transition: all var(--transition-fast);
+  /* Firefox ignores the ::-webkit- rule below and draws its own spinner, so
+     the field needs this too. Arrow keys still step the value. */
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .pagination-jump-input::-webkit-inner-spin-button,
 .pagination-jump-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   appearance: none;
+  margin: 0;
 }
 
 .pagination-jump-input:focus {
@@ -909,8 +916,9 @@ fieldset,
   gap: var(--space-2);
   min-height: 2.75rem;
   padding: var(--space-2) var(--space-4);
-  background: none;
-  border: 1px solid var(--color-border);
+  background: var(--control-ghost-bg);
+  border: 1px solid var(--control-ghost-border);
+  box-shadow: var(--control-ghost-shadow);
   border-radius: var(--radius-lg);
   color: var(--color-text-secondary);
   font-family: inherit;

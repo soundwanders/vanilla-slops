@@ -8,8 +8,8 @@
    ============================================================================= */
 
 .app-header {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-header);
+  border-bottom: 1px solid var(--color-header-border);
   margin-bottom: var(--space-4);
 }
 
@@ -93,38 +93,59 @@
   left: var(--space-3);
   top: 50%;
   transform: translateY(-50%);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
+  display: flex;
+  /* Accent at rest, not tertiary grey: the icon is the field's colour cue.
+     It was an emoji until now, which ignores `color` entirely — so this rule
+     and the focus rule below had never done anything. */
+  color: var(--color-accent);
   pointer-events: none;
   z-index: 2;
   transition: color var(--transition-fast);
 }
 
+.app-search .search-icon svg { width: 16px; height: 16px; }
+
 .app-search .search-input {
   width: 100%;
-  padding: var(--space-2_5) var(--space-3) var(--space-2_5) var(--space-9);
+  /* A step taller than the filter selects (space-2_5), so it stops reading as
+     a seventh filter. */
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-9);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   /* Was --color-surface-subtle: the LOWEST step on the elevation ladder, which
      is why the field disappeared into the header. The search box is the primary
-     input on the page, so it takes the top step in both themes. */
-  background: var(--color-surface-input);
-  border: 1px solid var(--color-border);
+     input on the page, so it takes the top step in both themes.
+
+     The gradient edge is a border-box background showing through a transparent
+     border; the padding-box layer keeps the interior a flat --color-surface-input
+     so text contrast is untouched. Any rule that sets border-color (pending,
+     forced-colors) simply paints a solid border over it. */
+  background:
+    linear-gradient(var(--color-surface-input), var(--color-surface-input)) padding-box,
+    var(--search-edge-rest) border-box;
+  border: 1.5px solid transparent;
   border-radius: var(--radius-lg);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  box-shadow: 0 4px 14px -6px var(--search-glow);
+  transition: box-shadow var(--transition-fast);
 }
 
 .app-search .search-input::placeholder { color: var(--color-text-placeholder); font-weight: var(--font-weight-normal); }
 
-.app-search .search-input:focus {
+/* The :focus.search-pending arm matches while typing: components.css sets a
+   solid accent border there, which would flash the gradient off on every
+   keystroke during the debounce. */
+.app-search .search-input:focus,
+.app-search .search-input:focus.search-pending {
   outline: none;
-  border-color: var(--color-accent);
+  border-color: transparent;
   /* Holds the top step on focus rather than dropping to --color-surface. The
-     field is already the brightest surface; focus is carried by the border and
-     the ring, so the background has no reason to move. */
-  background: var(--color-surface-input);
-  box-shadow: 0 0 0 3px var(--color-accent-subtle);
+     field is already the brightest surface; focus is carried by the edge and
+     the ring, so the interior has no reason to move. */
+  background:
+    linear-gradient(var(--color-surface-input), var(--color-surface-input)) padding-box,
+    var(--search-edge-focus) border-box;
+  box-shadow: 0 0 0 3px var(--color-accent-subtle), 0 4px 14px -6px var(--search-glow);
 }
 
 .app-search .search-field:focus-within .search-icon { color: var(--color-accent); }

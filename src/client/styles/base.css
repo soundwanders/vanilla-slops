@@ -79,6 +79,47 @@ body {
   overflow-x: clip;
 }
 
+/* Ambient layer — light theme only for now. Fixed to the viewport and painted
+   under all content (z-index -1 in the root stacking context), so it shows only
+   on the open ground: around the header and in the gutters, never under text.
+   ::before carries the colour washes and drifts; ::after carries the grain and
+   stays still. The drift is transform-only, so it runs on the compositor and
+   costs no repaints. */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  /* Oversized so the drift never exposes an edge. */
+  inset: -12%;
+  background: var(--ambient-wash);
+  animation: ambient-drift 70s ease-in-out infinite alternate;
+}
+
+body::after {
+  inset: 0;
+  background-image: var(--ambient-grain);
+  opacity: var(--ambient-grain-opacity);
+}
+
+[data-theme="dark"] body::before,
+[data-theme="dark"] body::after {
+  display: none;
+}
+
+@keyframes ambient-drift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to   { transform: translate3d(3%, 2.5%, 0) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+}
+
 #app {
   max-width: 1280px;
   margin: 0 auto;

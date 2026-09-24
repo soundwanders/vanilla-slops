@@ -244,8 +244,8 @@ function renderGamePage(game, slug, related = []) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0ebe1" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1017" />
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${canonical}" />
@@ -541,8 +541,8 @@ function renderHowItWorks(stats) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0ebe1" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1017" />
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${canonical}" />
@@ -822,8 +822,8 @@ function renderCatalog(grain) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161b24" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0ebe1" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1017" />
   <title>${escapeHtml(pageTitle)}</title>
   <meta name="description" content="${escapeHtml(metaDesc)}" />
   <link rel="canonical" href="${canonical}" />
@@ -851,7 +851,7 @@ ${seoHeader({ current: 'catalog' })}
     <h1 class="seo-title">The Bedrock</h1>
     <p class="seo-subtitle">
       Every launch option we publish, sorted by how many games it reaches.
-      A handful cover thousands. Most cover exactly one.
+      A handful cover thousands. Many cover only one.
     </p>
     ${figures}
 
@@ -859,7 +859,7 @@ ${seoHeader({ current: 'catalog' })}
 
     ${hasData ? `<p class="cat-caption">
       Each layer is a reach tier. Its depth is how many options live there;
-      the type size is the grain. Pick any command to search for it.
+      the type size is the grain. Pick any command to execute a search for it.
     </p>` : ''}
 
     ${hasData ? `<section class="cat-note">
@@ -871,25 +871,27 @@ ${seoHeader({ current: 'catalog' })}
         of them. They are Linux tools that wrap whatever you launch, which is why they
         apply almost everywhere.` : ''}
         Below that the ground drops away fast: ${grain.singletons.toLocaleString()} of
-        ${grain.options.toLocaleString()} options are used by a single game. That bottom
-        layer is the bedrock. Those are not failures. A flag that matters enormously
+        ${grain.options.toLocaleString()} options are used by a single game.
+      </p>
+      <p>
+        That bottom
+        layer is the bedrock. Those are not failures. A flag that matters exclusively
         to one game and to nothing else is exactly what a catalog like this is for.
       </p>
 
       <h2>What it deliberately does not say</h2>
       <p>
         Reach is not quality. The widest options are wide because they are engine-level
-        or tool-level, not because they are the best thing to paste into a launch box.
-        The flag that fixes your specific game is far more likely to be down in the
-        fine material.
+        or tool-level, not because they are the best launch options. 
+        The flag that you are looking for is far more likely to be down in the fine material. 
+        We're big sedimentary guys around here.
       </p>
       <p>
-        This page counts <strong>options</strong>, never links. The number of
+        This page counts <strong>launch options</strong>, never links. The number of
         game-to-option connections grows every time a documented engine flag is applied
         to newly identified games, so it mostly measures how many engines we have
-        recognized.
+        recognized <i>so far</i>. New documentation thickens a layer, and an option that earns wider coverage moves up through them.
       </p>
-
     </section>` : ''}
 
     <p class="seo-footer-cta">

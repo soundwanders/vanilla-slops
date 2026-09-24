@@ -4,6 +4,12 @@
    ============================================================================= */
 
 :root {
+  /* Tells the browser which palette native widgets (number spinners, scroll
+     bars, date pickers) should use. Without it, the meta tag's "light dark"
+     let them follow the OS, so a dark-OS visitor on the light theme got a
+     black spinner in the page-jump field. */
+  color-scheme: light;
+
   /* =============================================================================
      1. TYPOGRAPHY SYSTEM
      ============================================================================= */
@@ -99,12 +105,15 @@
      4. SHADOW SYSTEM
      ============================================================================= */
   
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  /* Warm-tinted, not neutral black: on the vanilla ground a black shadow
+     reads as grey smudge, which is what made panels look pasted onto the page
+     rather than sitting on it. Dark theme redefines all of these. */
+  --shadow-xs: 0 1px 2px 0 rgb(74 56 28 / 0.06);
+  --shadow-sm: 0 1px 3px 0 rgb(74 56 28 / 0.09), 0 1px 2px -1px rgb(74 56 28 / 0.08);
+  --shadow-md: 0 4px 6px -1px rgb(74 56 28 / 0.09), 0 2px 4px -2px rgb(74 56 28 / 0.08);
+  --shadow-lg: 0 10px 15px -3px rgb(74 56 28 / 0.09), 0 4px 6px -4px rgb(74 56 28 / 0.08);
+  --shadow-xl: 0 20px 25px -5px rgb(74 56 28 / 0.08), 0 8px 10px -6px rgb(74 56 28 / 0.07);
+  --shadow-2xl: 0 25px 50px -12px rgb(74 56 28 / 0.2);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.06);
   --shadow-glow: 0 0 0 1px rgb(59 130 246 / 0.1), 0 0 16px rgb(59 130 246 / 0.1);
 
@@ -207,7 +216,9 @@
      ============================================================================= */
   
   --gradient-brand: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%);
-  --gradient-surface: linear-gradient(135deg, var(--gray-25) 0%, var(--gray-50) 100%);
+  /* Built on the surface ladder rather than the cool gray ramp, so it follows
+     the vanilla palette below instead of cutting a blue-grey band through it. */
+  --gradient-surface: linear-gradient(135deg, var(--color-surface-raised) 0%, var(--color-surface) 100%);
   --gradient-dark: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
   --gradient-accent: linear-gradient(135deg, var(--brand-400) 0%, var(--brand-600) 50%, var(--brand-700) 100%);
 
@@ -225,20 +236,34 @@
      the input sits at pure white. That is deliberate: the brightest thing on a
      light page is the most raised thing, and the search field is what we most
      want people to reach for. Pulling the big panels a few points off white
-     costs nothing in contrast (primary text still measures >14:1 on every step)
-     and takes the overall glare down across the whole viewport. */
-  --color-background: #e9edf3;
-  --color-surface: #f7f9fc;
-  --color-surface-raised: #fbfcfe;
-  --color-surface-subtle: #f1f4f9;
-  --color-surface-overlay: rgba(255, 255, 255, 0.95);
-  /* Top of the ladder — inputs only. */
-  --color-surface-input: var(--color-white);
+     costs nothing in contrast (primary text still measures >13:1 on every step)
+     and takes the overall glare down across the whole viewport.
+
+     The ladder is vanilla, not blue-grey. Every step used to sit within a few
+     points of the same cool off-white, which is what users meant by "one
+     large slate": nothing for the eye to land on. A low-saturation cream
+     (hue ~40deg) gives the page a temperature, matches the name, and sets the
+     cobalt accent off by contrast rather than by volume. The ambient layer in
+     base.css sits on the ground step.
+
+     The steps are deliberately close (ground-to-table 1.08:1). A first pass
+     at 1.15:1 put a near-white table on a clearly cream ground and the edge
+     between them was the loudest thing on the page. Every step, the input
+     included, now carries the same cream tint, so the table reads as a
+     lighter sheet of the same paper rather than a different material. */
+  --color-background: #f3efe7;
+  --color-surface: #f9f6ef;
+  --color-surface-raised: #fbf8f2;
+  --color-surface-subtle: #f7f3ec;
+  --color-surface-overlay: rgba(251, 248, 242, 0.95);
+  /* Top of the ladder — inputs only. Warm white, not #fff: pure white was
+     the one untinted surface left and stood out as a cutout. */
+  --color-surface-input: #fffdf9;
 
   /* Border colors */
-  --color-border: #dbe1e9;
-  --color-border-strong: #c5cfdb;
-  --color-border-subtle: #e6ebf1;
+  --color-border: #e0d7c7;
+  --color-border-strong: #c9bda8;
+  --color-border-subtle: #ebe4d7;
 
   /* Text colors — softened off pure black */
   --color-text-primary: #1a2230;
@@ -246,8 +271,9 @@
   /* Darkened from #7c8797, which measured 3.18:1 on the page background —
      under the 4.5:1 WCAG AA asks for text this size. Same hue and
      saturation, ~10% less lightness, so it still reads as the quiet grey. */
-  --color-text-tertiary: #646e7d;
-  --color-text-placeholder: var(--gray-400);
+  --color-text-tertiary: #5f6978;   /* 4.68:1 on the cream ground */
+  /* Was gray-400, 2.56:1 on the white field. */
+  --color-text-placeholder: #7d8898;
   --color-text-disabled: var(--gray-300);
   --color-text-inverse: var(--color-white);
 
@@ -264,6 +290,45 @@
   --color-accent-active: var(--cobalt-700);
   --color-accent-subtle: #e9eefe;
   --color-accent-muted: #d5e0fb;
+
+  /* Search edge — the one place a gradient frames an input. Cobalt into brand
+     sky, the same family as the Options button, so the page's two primary
+     actions read as related. Rest is mixed toward the border colour so it
+     tints rather than shouts; focus runs at full strength. */
+  --search-edge-rest: linear-gradient(100deg,
+    color-mix(in srgb, var(--cobalt-500) 70%, var(--color-border)),
+    color-mix(in srgb, var(--brand-500) 70%, var(--color-border)));
+  --search-edge-focus: linear-gradient(100deg, var(--cobalt-500), var(--brand-500));
+  --search-glow: rgb(21 80 216 / 0.12);
+
+  /* Ghost controls — buttons with no fill of their own (Next/Prev, Browse by
+     launch option, the page-jump field). They sit on the open ground, where a
+     transparent fill and --color-border (1.17:1 against cream) left them
+     reading as text, not buttons. Light gives them a raised fill and the
+     strong border; dark keeps its original look, which already worked. */
+  --control-ghost-bg: var(--color-surface-raised);
+  --control-ghost-border: var(--color-border-strong);
+  --control-ghost-shadow: var(--shadow-xs);
+
+  /* Header — open onto the ground in both themes. As a panel it ended 260px
+     short of each edge on a 1920px screen (body is capped at 1400px) and read
+     as a floating slab. In light this is also what lets the ambient layer show
+     behind search and filters. */
+  --color-header: transparent;
+  --color-header-border: transparent;
+
+  /* Ambient layer (base.css, body::before/::after). Three washes at the
+     edges of the viewport, never behind the middle of the table: cobalt from
+     the accent, vanilla from the warm accent, sky from the Options button.
+     Alphas are low enough that each reads as temperature, not as a shape. */
+  --ambient-wash:
+    radial-gradient(55vw 42vh at 6% -4%, rgb(21 80 216 / 0.11), transparent 70%),
+    radial-gradient(50vw 40vh at 98% 2%, rgb(214 158 64 / 0.14), transparent 70%),
+    radial-gradient(60vw 45vh at 20% 108%, rgb(14 165 233 / 0.07), transparent 70%);
+  /* Paper tooth: static fractal noise, tinted warm. Never animated — moving
+     grain reads as a dead TV channel. */
+  --ambient-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .29 0 0 0 0 .18 0 0 0 1.4 -.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --ambient-grain-opacity: 0.18;
 
   /* Warm secondary accent — reserved for earned emphasis (verified, wordmark) */
   --color-accent-warm: var(--amber-700);
@@ -292,8 +357,8 @@
   --color-success-subtle: #e3f6ec;
 
   /* Interactive states */
-  --color-interactive-hover: #eef1f5;
-  --color-interactive-active: #e4e9ef;
+  --color-interactive-hover: #f3eee4;
+  --color-interactive-active: #ebe4d7;
   --color-interactive-disabled: var(--gray-100);
   --color-interactive-focus: var(--cobalt-500);
 
@@ -311,6 +376,8 @@
    ============================================================================= */
 
 [data-theme="dark"] {
+  color-scheme: dark;
+
   /* Surface colors — de-saturated ground with clearly-stepped surfaces so cards
      separate. Same ladder as light, inverted: raised means lighter here.
 
@@ -339,7 +406,9 @@
   /* Lightened from #69737f (3.20:1 on the elevated surface). Same hue and
      saturation, ~10% more lightness. */
   --color-text-tertiary: #828c98;
-  --color-text-placeholder: var(--gray-500);
+  /* Was gray-500 (#64748b), 2.83:1 on the search field — hard to read.
+     Now 3.89:1, kept just under tertiary so a hint never reads as a value. */
+  --color-text-placeholder: #808b99;
   --color-text-disabled: var(--gray-600);
   --color-text-inverse: var(--gray-900);
 
@@ -349,6 +418,17 @@
   --color-accent-active: var(--ice-200);
   --color-accent-subtle: rgba(69, 196, 255, 0.12);
   --color-accent-muted: rgba(69, 196, 255, 0.2);
+
+  /* Search edge — ice into brand sky; see the light-theme note. */
+  --search-edge-rest: linear-gradient(100deg,
+    color-mix(in srgb, var(--ice-400) 65%, var(--color-border)),
+    color-mix(in srgb, var(--brand-600) 65%, var(--color-border)));
+  --search-edge-focus: linear-gradient(100deg, var(--ice-400), var(--brand-600));
+  --search-glow: rgb(69 196 255 / 0.10);
+
+  --control-ghost-bg: transparent;
+  --control-ghost-border: var(--color-border);
+  --control-ghost-shadow: none;
 
   /* Warm secondary — luminous cream-gold, the cool/warm counterpoint */
   --color-accent-warm: var(--cream-300);
