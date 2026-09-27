@@ -120,7 +120,7 @@ class SecureConfig {
       // Determine .env file path
       const dotenvPath = envPath || path.resolve(__dirname, '../../../.env');
       
-      // Skip file load if env vars are already injected (Vercel, Railway, CI)
+      // Skip file load if env vars are already injected (Vercel, CI)
       if (!process.env.SUPABASE_URL) {
         const loadResult = dotenv.config({ path: dotenvPath });
         if (loadResult.error) {

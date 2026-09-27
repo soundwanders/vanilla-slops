@@ -23,7 +23,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Trust proxy for Railway/reverse proxy setup
+// One proxy hop (Vercel's edge) sits in front of the app. Trusting it makes
+// req.ip the client's address, which is what the rate limiter keys on.
 app.set('trust proxy', 1);
 
 // Compression middleware
