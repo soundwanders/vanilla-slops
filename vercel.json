@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "src/client/dist",
+  "trailingSlash": false,
   "functions": {
     "api/index.js": {
       "includeFiles": "src/client/dist/index.html"

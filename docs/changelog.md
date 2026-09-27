@@ -18,6 +18,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [Unreleased]
+
+### Fixed
+- **A trailing slash sent visitors to the 404 page.** `/how-it-works/`,
+  `/catalog/` and `/game/440/` all 404'd in production. Vercel's rewrite rules
+  match only the exact path, so the slash form fell through to the static 404
+  page and never reached the app. `vercel.json` now sets
+  `"trailingSlash": false`, which answers any slash URL with a 308 to its
+  canonical form, for every route including future ones.
+
+  No link the site publishes was affected. A crawl of production found all
+  2,939 sitemap URLs return 200 with no redirects, and so do all 820 unique
+  internal links on the static pages and 60 sampled game pages. These 404s
+  came only from hand-typed URLs and outside links.
+
 ## [1.6.1] - 2026-09-26 — The last two majors
 
 Nothing a visitor sees changes. Every open Dependabot PR is taken, the last
