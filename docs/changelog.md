@@ -18,6 +18,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.0] - 2026-09-27 — Easier to find, easier to read
+
+New pages built for search: a guide that answers "Steam launch options"
+itself, and a page for each engine with its own documented flags. And the
+site finally has a typeface of its own, chosen so that the characters launch
+options are made of can't be mistaken for each other.
+
+### Added
+- **A guide to Steam launch options**, at `/steam-launch-options`: what a
+  launch option is, how to set one, how `%command%` works on Linux and Steam
+  Deck, and why a flag documented for one engine does nothing in another. Its
+  examples are live option cards from the catalogue, sources included, and it
+  links the featured games.
+- **Engine pages** for the four engines with documented flags: Unity (14
+  options, 696 games), Unreal (10, 310), Source (26, 44) and id Tech (5, 29).
+  Each lists the options documented for that engine, then every game in the
+  catalogue built on it. A page is built from the flags labelled for its
+  engine, not from which games a flag is linked to, because those links
+  currently put engine flags on 345 games built on other engines.
+- **Game pages link to their engine's page**, from the Engine row and the
+  breadcrumb: Home / Unity Engine / Rust.
+- The sitemap lists the guide and the engine pages: 2,944 URLs, up from 2,939.
+
+### Changed
+- **A typeface of its own.** The site asked for Inter and JetBrains Mono but
+  never loaded either, so every visitor saw their system's default font. It
+  now self-hosts Atkinson Hyperlegible Next and Mono, from the Braille
+  Institute, in which I, l and 1, and 0 and O, are drawn to differ. The
+  homepage preloads 34 KB of it.
+- **Firmer text.** Running text is a little heavier (weight 450, from 400),
+  and the grey that most descriptions use is darker: its contrast rises from
+  5.65:1 to 8.20:1 in light mode and from 7.69:1 to 10.33:1 in dark mode.
+  Font smoothing that thinned light-mode text on Macs now applies in dark mode
+  only.
+
+### Fixed
+- **The homepage said "hundreds of games".** Its search and social
+  descriptions now say thousands; the catalogue holds 2,999.
+- **A command quoted in prose could break across lines** at its hyphen,
+  leaving `-` on one line and `windowed` on the next. Inline commands now stay
+  whole, and use the same mono as the option cards.
+
 ## [1.6.2] - 2026-09-27 — Every address lands
 
 Two ways a URL could let a visitor down, both fixed. A trailing slash led to
