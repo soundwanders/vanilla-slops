@@ -18,6 +18,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.6.1] - 2026-09-26 — The last two majors
+
+Nothing a visitor sees changes. Every open Dependabot PR is taken, the last
+two deferred majors with them, and **`npm audit` reports 0 vulnerabilities**
+for the first time since Dependabot was switched on.
+
+### Changed
+- **Express 4 → 5.** It needed three changes, each reproduced on Express 5
+  before being fixed:
+  - Two routes, `'/game/:appid/:slug?'` and the SPA catch-all `'*'`, are
+    invalid syntax under Express 5's router and stopped the server from
+    loading. They are now `'/game/:appid{/:slug}'` and `'/{*splat}'`.
+  - `req.query` is now a read-only getter, so the validation middleware's
+    assignment would have thrown on every validated API request. The unit
+    tests could not see this, because they mocked the request as a plain
+    object. A new test models the getter; it failed before the fix and
+    passes after.
+
+  43 requests were run against both versions side by side. Every game
+  page, redirect, trailing slash, 404, HEAD and OPTIONS request got the
+  same status and body. Three things differ, all deliberately accepted:
+  - `charset=UTF-8` is now lower-case.
+  - The error text for malformed URLs is worded slightly differently.
+  - `?search[]=x` is now ignored rather than rejected with a 400, because of
+    the new default query parser. That matches how the API already treats
+    unknown parameters.
+
+  Sentry still reports 5xx errors and skips 4xx. This was checked with a
+  local fake transport, so no real events were sent.
+
+- **Zod 3 → 4**, with no schema changes. A differential run of 39 inputs
+  across all five schemas gave identical parsed values and an identical error
+  structure. Only Zod's own default messages are reworded; every custom
+  message is unchanged.
+
+- **GitHub Actions:** `checkout`, `setup-node` and `upload-artifact` v4 → v7,
+  and `supabase/setup-cli` v1 → v3. Nothing in either workflow depends on
+  what changed. `setup-cli` now installs the CLI from npm, and
+  `version: latest` still works.
+
+- **Minor and patch:** `@sentry/node` 10.75.3, `compression` 1.8.2, `vitest`
+  5.0.2.
+
+### Security
+- **`npm audit`: 2 moderate → 0.** The last two advisories were `express`/`qs`,
+  and only Express 5 could clear them.
+
 ## [1.6.0] - 2026-09-26 — Vanilla, at last
 
 Users said the light theme was one large slate, and they were right. It is now
