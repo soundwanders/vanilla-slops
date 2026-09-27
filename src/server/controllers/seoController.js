@@ -41,6 +41,16 @@ function getCssHref() {
   return _cssHref;
 }
 
+// Every server-rendered page sets commands or inline code in the mono, so both
+// faces are preloaded; the homepage preloads only the text face (see
+// index.html), because it shows no command until a row is opened. The
+// filenames must match fonts.css exactly, or the preload fetches a second
+// copy the stylesheet never uses — fonts.test.js checks both.
+const FONT_PRELOADS = [
+  '/fonts/atkinson-hyperlegible-next-v7-latin.woff2',
+  '/fonts/atkinson-hyperlegible-mono-v8-latin.woff2',
+].map((href) => `  <link rel="preload" href="${href}" as="font" type="font/woff2" crossorigin />`).join('\n');
+
 function escapeHtml(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -290,6 +300,7 @@ ${options.length === 0 ? `  <!-- A game with no documented options is usually co
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
   <script src="/game-copy.js" defer></script>
+${FONT_PRELOADS}
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
@@ -582,6 +593,7 @@ function renderHowItWorks(stats) {
   <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
+${FONT_PRELOADS}
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
@@ -863,6 +875,7 @@ function renderCatalog(grain) {
   <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
+${FONT_PRELOADS}
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
@@ -1036,6 +1049,7 @@ ${hub.indexable ? '' : `  <!-- Below the hub thresholds in utils/engineHubs.js: 
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
   <script src="/game-copy.js" defer></script>
+${FONT_PRELOADS}
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">
@@ -1186,6 +1200,7 @@ function renderGuide({ options, featured }, hubs) {
   ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
   <script src="/game-theme.js"></script>
   <script src="/game-copy.js" defer></script>
+${FONT_PRELOADS}
   <link rel="icon" href="/favicon.ico" />
 </head>
 <body class="seo-page">

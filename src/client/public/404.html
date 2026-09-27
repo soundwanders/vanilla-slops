@@ -22,11 +22,20 @@
     should not depend on the bundle it may itself have failed to find.
   -->
   <style>
+    /* Standalone: this page never loads the main stylesheet, so it carries
+       its own copy of the text face (fonts.css) and the 1.7.0 greys. */
+    @font-face {
+      font-family: 'Atkinson Hyperlegible Next';
+      font-style: normal;
+      font-weight: 200 800;
+      font-display: swap;
+      src: url('/fonts/atkinson-hyperlegible-next-v7-latin.woff2') format('woff2');
+    }
     :root {
       --ground: #e9edf3;
       --plate: #fbfcfe;
       --ink: #1a2230;
-      --ink-soft: #545f6e;
+      --ink-soft: #3d4756;
       --line: #dbe1e9;
       --accent: #1560b4;
     }
@@ -34,11 +43,13 @@
       :root {
         --ground: #0d1017;
         --plate: #1e2530;
-        --ink: #e6e9ef;
-        --ink-soft: #9aa6b4;
+        --ink: #eef1f5;
+        --ink-soft: #b6c0cc;
         --line: #2a323d;
         --accent: #45c4ff;
       }
+      /* Dark only, as in base.css: on macOS it thins text on a light ground. */
+      body { -webkit-font-smoothing: antialiased; }
     }
     * { box-sizing: border-box; }
     body {
@@ -50,9 +61,9 @@
       padding: 1.5rem;
       background: var(--ground);
       color: var(--ink);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Atkinson Hyperlegible Next', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-weight: 450;
       line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
     }
     main {
       max-width: 32rem;

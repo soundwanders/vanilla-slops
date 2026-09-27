@@ -22,13 +22,20 @@ html {
   font-size: 100%;
   scroll-behavior: smooth;
   text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   /* The viewport takes its scroll behaviour from <html>, not <body>, so the
      body's overflow-x guard alone doesn't stop sideways page scroll. `clip`
      (vs `hidden`) prevents horizontal overflow without making <html> a scroll
      container, which would break the sticky table header. */
   overflow-x: clip;
+}
+
+/* Grayscale smoothing in dark mode only. On macOS it switches off the
+   system's stem darkening, which thins every glyph: right for light text on a
+   dark ground, which otherwise blooms, and a loss on the cream one, where it
+   made text look faded. No effect on Windows or Linux. */
+html[data-theme='dark'] {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ul[role='list'],
@@ -57,6 +64,16 @@ button,
 textarea,
 select {
   font: inherit;
+}
+
+/* Browsers give these their own monospace, which ignores the token, so an
+   inline command in prose rendered in a different face from the same command
+   on its card. */
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-family-mono);
 }
 
 /* =============================================================================

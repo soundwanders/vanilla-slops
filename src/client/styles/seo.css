@@ -795,6 +795,15 @@
   margin-top: var(--space-8);
 }
 
+/* A command quoted in prose never breaks across lines: "-" at the end of one
+   line and "windowed" on the next reads as two things. These are all short
+   (-novid, %command%), so this cannot push a line wider than a phone. */
+.hiw-section code,
+.how-to-steps code,
+.cat-note code {
+  white-space: nowrap;
+}
+
 .guide-page .hiw-section .launch-options-list,
 .guide-page .hiw-section .related-games-list {
   margin-top: var(--space-4);
