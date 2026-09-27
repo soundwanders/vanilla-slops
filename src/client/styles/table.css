@@ -618,8 +618,13 @@
 /* A single unbroken token (-thisishalloween…) breaks evenly between any two
    characters. Left to the normal rules, the browser takes the break after the
    leading hyphen and strands "-" on a line of its own. A command with spaces
-   keeps breaking at them, so -windowed -ResX=1920 never splits a value. */
-.option-command code.command-unbroken {
+   keeps breaking at them, so -windowed -ResX=1920 never splits a value.
+   The second selector outranks responsive.css's phone rule for the homepage
+   table (.table-container .option-command > code { word-break: break-word }),
+   which loads later at equal specificity and silently won at 768px and below
+   in 1.7.1. */
+.option-command code.command-unbroken,
+.table-container .option-command > code.command-unbroken {
   word-break: break-all;
 }
 
