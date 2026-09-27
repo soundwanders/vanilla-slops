@@ -51,6 +51,16 @@ describe('server-rendered route wiring', () => {
     expect(block.source).toContain(route.replace(/^\//, ''));
   });
 
+  it('the game rewrite parameter matches the one seoController strips', () => {
+    // Vercel puts the rewrite's named parameter into the query. seoController
+    // drops it by name from redirect URLs; rename one without the other and it
+    // leaks into public URLs again, as `?path=440` did on 2026-09-27.
+    const hit = vercel.rewrites.find((r) => r.source.startsWith('/game/'));
+    const param = hit.source.match(/^\/game\/:(\w+)\*$/)?.[1];
+    expect(param, `unexpected /game rewrite source: ${hit.source}`).toBeTruthy();
+    expect(seo).toContain(`const GAME_REWRITE_PARAM = '${param}';`);
+  });
+
   it('is only safe to exclude them because helmet is mounted app-wide', () => {
     // If helmet ever stops covering these routes, the exclusion above silently
     // turns into "no security headers at all" rather than "no duplicates".

@@ -13,6 +13,11 @@ import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../utils/safeUrl.js';
 import { preserveQuery } from '../utils/preserveQuery.js';
 
+// vercel.json rewrites `/game/:path*` to the function, and Vercel puts the
+// captured `path` into the query. Never forward it into a public URL.
+// routeWiring.test.js fails if the rewrite's parameter is renamed.
+const GAME_REWRITE_PARAM = 'path';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_URL = (process.env.DOMAIN_URL || 'https://launchoptions.dev').replace(/\/$/, '');
 const DIST_INDEX = path.resolve(__dirname, '../../client/dist/index.html');
@@ -170,13 +175,13 @@ export async function gamePageController(req, res) {
   // which is the same "one URL per game" rule the slug redirect below applies;
   // the slug-less target picks up its own 301 from that rule.
   if (game.duplicate_of) {
-    return res.redirect(301, preserveQuery(`/game/${game.duplicate_of}`, req.originalUrl));
+    return res.redirect(301, preserveQuery(`/game/${game.duplicate_of}`, req.originalUrl, { drop: [GAME_REWRITE_PARAM] }));
   }
 
   // Redirect to the canonical slug if it's missing or wrong (one URL per game)
   const canonicalSlug = slugify(game.title);
   if (req.params.slug !== canonicalSlug) {
-    return res.redirect(301, preserveQuery(`/game/${appId}/${canonicalSlug}`, req.originalUrl));
+    return res.redirect(301, preserveQuery(`/game/${appId}/${canonicalSlug}`, req.originalUrl, { drop: [GAME_REWRITE_PARAM] }));
   }
 
   // Never let the related list take the page down with it — it returns [] on

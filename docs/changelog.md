@@ -41,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   link's sender put after it. Both redirects now carry the query through
   unchanged, and the page's canonical link still names the clean URL.
 
+  The one exception is `path`. Vercel's `/game/:path*` rewrite writes the
+  captured segment into the query as `path=`, overwriting any `path` the
+  visitor sent, so that parameter always belongs to the platform. The first
+  version of this fix forwarded it, and for a few minutes production
+  redirected `/game/440` to `/game/440/team-fortress-2?path=440`. It is now
+  dropped by name. A test fails if the rewrite parameter in `vercel.json` is
+  ever renamed without the code that strips it.
+
   Visitor-controlled text now reaches a `Location` header, so it was tested
   against hostile input. `?//evil.example` stays on this site, encoded line
   breaks cannot inject a header, and markup is percent-encoded in the header
