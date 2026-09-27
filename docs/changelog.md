@@ -18,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.1] - 2026-09-27 — Every game speaks for itself
+
+A launch option is stored once and shared by every game that uses it, so the
+first page the scraper read used to speak for all of them. Game pages now show
+each game's own documentation wherever it has some.
+
+### Fixed
+- **Game pages could show another game's text and citation.** Max Payne 3's
+  `-stereo` read "Enables stereo audio support" and cited another game's wiki
+  page, while its own page says "Force 3D stereo support [0–1] (1 is on)".
+  Where a game's own page documents an option, that game now shows its own
+  text, cites its own page, and dates it by when that page was last read: 487
+  options on 137 games today. The homepage's expanded rows and the JSON API
+  show the same.
+- **Long commands were cut off.** A 58-character flag showed less than half of
+  itself on a phone. Commands now shrink to no smaller than 13px (they went down
+  to 11px), then wrap, up to four lines. That flag fits in three lines on a
+  320px screen.
+
+### Added
+- **A game's own page as extra evidence.** When an option's text comes from
+  another page but the game's own page also lists it, the card says so: "Also
+  documented for this game on PCGamingWiki · checked Sep 27, 2026". 719
+  options on 284 games show it today. The API returns it as `game_source`,
+  `game_source_url` and `game_verified_at`.
+
+### Security
+- Source links in the homepage's expanded rows now accept only http(s) URLs,
+  as game pages already did.
+
 ## [1.7.0] - 2026-09-27 — Easier to find, easier to read
 
 New pages built for search: a guide that answers "Steam launch options"
