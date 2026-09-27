@@ -4,6 +4,7 @@ import { fetchLaunchOptions } from '../api.js';
 // transcribed: this was a hand-copied duplicate until 2026-08-22, and while the
 // two copies still matched, nothing anywhere checked that they did.
 import { slugify } from '../../../shared/slugify.js';
+import { safeHttpUrl } from '../../../shared/safeUrl.js';
 import { MOBILE_BREAKPOINT } from '../constants.js';
 import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml, pasteableCommand, isCopyActivationKey } from './table-shared.js';
 import {
@@ -383,20 +384,31 @@ function bindCommandFitResize() {
   });
 }
 
-// One row = always. Reset to the CSS base size, then shrink the font just enough
-// that the command fits its box on a single line. The full command lives in
-// data-command (used for copy), so the ellipsis safety net never loses data.
+// One row where it can be. Reset to the CSS base size, then shrink the font
+// until the command fits its box on a single line, but no smaller than MIN_PX:
+// below that it gets hard to read. A command still too long at that size wraps
+// instead (.command-wraps, capped at four lines in table.css) rather than being
+// cut off. The full command lives in data-command, so copy never loses any of it.
+// game-copy.js runs the same fit on server-rendered pages; keep the two in step.
 function fitCommandText(scope) {
-  const MIN_PX = 11;
+  const MIN_PX = 13;
   const codes = scope.querySelectorAll('.option-command code');
   codes.forEach((code) => {
     code.style.fontSize = '';
+    code.classList.remove('command-wraps', 'command-unbroken');
     if (!code.clientWidth) return;
     let size = parseFloat(getComputedStyle(code).fontSize) || 16;
     let guard = 16;
     while (code.scrollWidth > code.clientWidth + 1 && size > MIN_PX && guard-- > 0) {
-      size -= 1;
+      // Clamped, because the base size is fluid (17.175px at one width) and
+      // stepping by whole pixels would otherwise land at 12.175px.
+      size = Math.max(MIN_PX, size - 1);
       code.style.fontSize = `${size}px`;
+    }
+    if (code.scrollWidth > code.clientWidth + 1) {
+      code.classList.add('command-wraps');
+      // One unbroken token: break evenly, or the leading "-" wraps alone.
+      if (!/\s/.test(code.textContent.trim())) code.classList.add('command-unbroken');
     }
   });
 }
@@ -609,6 +621,7 @@ function createLaunchOptionHTML(option) {
             ${renderSource(option)}
             ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
             ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
+            ${renderGameEvidence(option)}
           </div>
           <div class="option-badges">${matchFlag}${riskBadge}${votesBadge}</div>
         </div>
@@ -650,13 +663,28 @@ function humanizeSource(src) {
 
 // Link-ready: renders a real link when the scraper provides source_url (see the
 // slop-scraper handoff), otherwise a plain, honest provenance label — no fake
-// "clickable" affordance.
+// "clickable" affordance. safeHttpUrl rejects any scheme but http(s): escaping
+// keeps a URL inside its attribute but cannot stop `javascript:`.
 function renderSource(option) {
   const label = escapeHtml(humanizeSource(option.source));
-  if (option.source_url) {
-    return `<a class="option-source" href="${escapeHtml(option.source_url)}" target="_blank" rel="noopener noreferrer" title="Source: ${label} (opens in a new tab)">${label}</a>`;
+  const href = safeHttpUrl(option.source_url);
+  if (href) {
+    return `<a class="option-source" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" title="Source: ${label} (opens in a new tab)">${label}</a>`;
   }
   return `<span class="option-source" title="Where this launch option was sourced from">${label}</span>`;
+}
+
+// This game's own page for the flag, when it is extra evidence rather than the
+// citation above (slop-scraper rev 21 §1g). Mirrors seoController's
+// renderGameEvidence(); keep the two in step.
+function renderGameEvidence(option) {
+  const href = safeHttpUrl(option.game_source_url);
+  if (!href) return '';
+  const label = escapeHtml(humanizeSource(option.game_source));
+  const checked = formatAddedDate(option.game_verified_at);
+  return `<span class="option-date option-game-source">Also documented for this game on ` +
+    `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>` +
+    `${checked ? ` · checked ${checked}` : ''}</span>`;
 }
 
 // created_at is the date the scraper added the option to the database — a real

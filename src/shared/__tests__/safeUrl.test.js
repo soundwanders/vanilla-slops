@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeHttpUrl } from '../utils/safeUrl.js';
+import { safeHttpUrl } from '../safeUrl.js';
 
 // Exotic whitespace is built from char codes: written literally it is invisible
 // in a diff and can break the file that carries it.

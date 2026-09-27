@@ -584,9 +584,11 @@
 .option-command code {
   flex: 1;
   min-width: 0;
-  /* Always one row — JS fit-to-width (fitCommandText) scales the font down to
-     fit; ellipsis is only the last-resort safety net. Full command lives in
-     data-command, so copy is never truncated. */
+  /* One row by default. JS fit-to-width (fitCommandText, and game-copy.js on
+     server-rendered pages) shrinks the font to fit, down to 13px, and wraps
+     anything still too long via .command-wraps below. The ellipsis only shows
+     before that script runs. Full command lives in data-command, so copy is
+     never truncated. */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -595,6 +597,30 @@
   padding: 0;
   color: inherit;
   font-size: var(--font-size-base);
+}
+
+/* Too long for one row at 13px: the command wraps at that size instead of being
+   cut off, up to four lines (78px of text, about an eighth of a phone screen).
+   Measured on a 320px phone: the longest published command (58 characters)
+   takes three lines, and so does an unbroken 63-character one, the most
+   slop-scraper accepts (rev 20). Four lines hold about 88. The clamp's
+   ellipsis is a cap on how tall a card can get, not something today's
+   commands reach. */
+.option-command code.command-wraps {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+/* A single unbroken token (-thisishalloween…) breaks evenly between any two
+   characters. Left to the normal rules, the browser takes the break after the
+   leading hyphen and strands "-" on a line of its own. A command with spaces
+   keeps breaking at them, so -windowed -ResX=1920 never splits a value. */
+.option-command code.command-unbroken {
+  word-break: break-all;
 }
 
 /* Copy affordance — clipboard icon + word, swaps to a check on copy */
@@ -791,6 +817,24 @@ a.option-source { cursor: pointer; }
 a.option-source:hover {
   color: var(--color-accent);
   text-decoration: underline;
+}
+
+/* This game's own page for the flag, when it is extra evidence rather than the
+   citation (slop-scraper rev 21 §1g). Its own line, below source and dates, and
+   quieter than the citation: it supports the text, it is not what the text
+   says. */
+.option-game-source {
+  flex-basis: 100%;
+}
+
+.option-game-source a {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.option-game-source a:hover {
+  color: var(--color-accent);
 }
 
 /* Icon comes from CSS only — table.js renders the source name as plain text */

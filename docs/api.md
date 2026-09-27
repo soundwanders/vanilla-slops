@@ -220,6 +220,16 @@ Retrieve only the launch options for a specific game (lighter response).
 ]
 ```
 
+**Provenance fields.** Examples above are abbreviated. Each option also
+carries where its text came from, resolved per game:
+
+| Field | Meaning |
+|-------|---------|
+| `description` | This game's own text for the option when its own page documents one, otherwise the text shared by every game |
+| `source`, `source_url` | Where that `description` is cited from. The two always refer to the same page as the text |
+| `last_verified_at` | When that page was last re-read and still listed the option; `null` means not yet re-checked |
+| `game_source`, `game_source_url`, `game_verified_at` | This game's own page for the option, when it is extra evidence rather than the citation above; otherwise all `null` |
+
 ### Search & Discovery
 
 #### Search Suggestions

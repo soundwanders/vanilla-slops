@@ -7,6 +7,7 @@ import { sanitizeOrFilterValue, toOrFilterTerms } from '../utils/searchTerms.js'
 import { dedupeKey } from '../utils/searchNormalize.js';
 import { groupIntoTiers } from '../utils/grainTiers.js';
 import { countEngineFlags, selectHubs } from '../utils/engineHubs.js';
+import { resolveProvenance } from '../utils/optionProvenance.js';
 
 // Deliberately smaller than the exact-match limit. These are guesses, and a
 // long list of guesses reads as the search not working rather than as help —
@@ -1600,8 +1601,13 @@ export async function fetchGameWithLaunchOptions(gameId) {
  * @property {string} id - Launch option UUID
  * @property {string} option - Launch command (frontend compatibility)
  * @property {string} command - Launch command
- * @property {string} description - Option description
- * @property {string} source - Option source
+ * @property {string} description - Option description (this game's own when it has one)
+ * @property {string} source - Where that description is cited from
+ * @property {string|null} source_url - The citation's page
+ * @property {string|null} last_verified_at - When that page was last re-read
+ * @property {string|null} game_source - This game's own page, when it is extra
+ *   evidence rather than the citation (rev 21 §1g); game_source_url and
+ *   game_verified_at go with it, and all three are null otherwise
  * @property {number} upvotes - Community upvotes
  * @property {number} downvotes - Community downvotes
  * @property {boolean} verified - Whether option is verified
@@ -1616,9 +1622,17 @@ export async function fetchLaunchOptionsForGame(gameId) {
     // showing an option the catalogue can't say where it found.
     // risk_level / categories / engine_compatibility come from the slop-scraper
     // metadata migration and drive the badge rendering on the frontend.
+    //
+    // The four top-level columns are this game's OWN evidence for the flag
+    // (slop-scraper rev 21 §1g): what the game's own page says, where, and when
+    // it was read. resolveProvenance() decides which text and citation show.
     const { data, error } = await supabase
       .from('game_launch_options')
       .select(`
+        description,
+        source,
+        source_url,
+        last_verified_at,
         public_launch_options (
           id,
           command,
@@ -1647,37 +1661,47 @@ export async function fetchLaunchOptionsForGame(gameId) {
     if (!data || data.length === 0) return [];
 
     return data
-      .map(row => row.public_launch_options)
-      .filter(Boolean)
-      .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))
-      .map(option => ({
-        id: option.id,
-        option: option.command,
-        command: option.command,
-        description: option.description || 'No description available',
-        source: option.source || 'Community',
-        // 411 of 421 published rows carry a URL, and every published row with no
-        // description carries one — so the "no description" fallback can always
-        // render a link. null still means "no link", not "broken".
-        source_url: option.source_url || null,
-        upvotes: option.upvotes || 0,
-        downvotes: option.downvotes || 0,
-        verified: option.verified || false,
-        risk_level: option.risk_level || null,
-        categories: option.categories || [],
-        engine_compatibility: option.engine_compatibility || [],
-        created_at: option.created_at,
-        // Freshness signals — populated on 390 of 421 published rows. null must
-        // read as "not yet re-checked", not stale.
-        last_verified_at: option.last_verified_at || null,
-        verification_method: option.verification_method || null,
-        // Per-option usage docs, from the curated flag dictionary only. Set on
-        // 46 rows — but those cover 90% of game-option pairs, because the
-        // documented flags are the ones attached to the most games. Rendered
-        // only when set.
-        usage_example: option.usage_example || null,
-        effect: option.effect || null
-      }));
+      // A link to an option the view hides arrives with a null embed.
+      .filter(row => row.public_launch_options)
+      .sort((a, b) => (b.public_launch_options.upvotes || 0) - (a.public_launch_options.upvotes || 0))
+      .map(row => {
+        const option = row.public_launch_options;
+        const shown = resolveProvenance(row, option);
+        return {
+          id: option.id,
+          option: option.command,
+          command: option.command,
+          // The invented fallback is a known defect (CLAUDE.md): seoController
+          // filters this exact string back out. Kept until the API shape change.
+          description: shown.description || 'No description available',
+          source: shown.source || 'Community',
+          // The citation for the text above: the game's own page when the text
+          // is its own, otherwise the shared row's. null means "no link", never
+          // "broken"; the view guarantees provenance, not a URL.
+          source_url: shown.source_url,
+          upvotes: option.upvotes || 0,
+          downvotes: option.downvotes || 0,
+          verified: option.verified || false,
+          risk_level: option.risk_level || null,
+          categories: option.categories || [],
+          engine_compatibility: option.engine_compatibility || [],
+          created_at: option.created_at,
+          // When the cited page was last re-read and still listed the flag
+          // (rev 20 §7n). null reads as "not yet re-checked", never as stale.
+          last_verified_at: shown.last_verified_at,
+          verification_method: option.verification_method || null,
+          // This game's own page, when it is extra evidence rather than the
+          // citation above (rev 21 §1g). All three are null otherwise.
+          game_source: shown.game_source,
+          game_source_url: shown.game_source_url,
+          game_verified_at: shown.game_verified_at,
+          // Per-option usage docs from slop-scraper's curated flag dictionary,
+          // which documents the flags that reach the most games. Rendered only
+          // when set.
+          usage_example: option.usage_example || null,
+          effect: option.effect || null
+        };
+      });
   } catch (error) {
     console.error(`Error in fetchLaunchOptionsForGame(${gameId}):`, error.message);
     throw error;

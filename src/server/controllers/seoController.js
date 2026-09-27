@@ -13,7 +13,7 @@ import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getC
 import { slugify } from '../../shared/slugify.js';
 import { engineSlug, resolveHub, gameHasEngineHub } from '../utils/engineHubs.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
-import { safeHttpUrl } from '../utils/safeUrl.js';
+import { safeHttpUrl } from '../../shared/safeUrl.js';
 import { preserveQuery } from '../utils/preserveQuery.js';
 
 // vercel.json rewrites `/game/:path*` to the function, and Vercel puts the
@@ -415,6 +415,20 @@ function renderSource(opt) {
   return `<span class="option-source" title="Where this launch option was sourced from">${label}</span>`;
 }
 
+// This game's own page for the flag, when it is extra evidence rather than the
+// citation above (slop-scraper rev 21 §1g). Nothing renders without a safe URL:
+// the line exists to point at the page, so there is no plain-text fallback.
+// Mirrors table.js's renderGameEvidence(); keep the two in step.
+function renderGameEvidence(opt) {
+  const href = safeHttpUrl(opt.game_source_url);
+  if (!href) return '';
+  const label = escapeHtml(humanizeSource(opt.game_source));
+  const checked = formatAddedDate(opt.game_verified_at);
+  return `<span class="option-date option-game-source">Also documented for this game on ` +
+    `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${label}</a>` +
+    `${checked ? ` · checked ${checked}` : ''}</span>`;
+}
+
 function formatAddedDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -474,6 +488,7 @@ function renderOption(opt) {
         ${renderSource(opt)}
         ${addedDate ? `<span class="option-date">Added ${addedDate}</span>` : ''}
         ${verifiedDate ? `<span class="option-date option-verified" title="Last re-checked against its source">Last checked ${verifiedDate}</span>` : ''}
+        ${renderGameEvidence(opt)}
       </div>
       <div class="option-badges">${risk}${votes}</div>
     </div>

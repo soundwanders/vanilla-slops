@@ -11,6 +11,9 @@
  * production is https and absolute, which is why an allowlist costs nothing:
  * it rejects only what the column has never legitimately held.
  *
+ * Shared since the homepage's option cards link sources too (rev 21 §1g added
+ * a second, per-game link). Isomorphic: `URL` is a global in both runtimes.
+ *
  * The input string is returned unchanged rather than the parsed URL's `href`,
  * so a link renders exactly as the catalogue recorded it — `new URL` normalises
  * (adding a trailing slash, re-encoding), and provenance should be shown as
