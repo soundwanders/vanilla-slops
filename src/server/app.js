@@ -166,10 +166,11 @@ app.get('/api/status', (req, res) => {
 app.get('/sitemap.xml', sitemapController);
 app.get('/how-it-works', howItWorksController);
 app.get('/catalog', catalogController);
-app.get('/game/:appid/:slug?', gamePageController);
+app.get('/game/:appid{/:slug}', gamePageController);
 
-// Handle SPA routing (must be after static file serving and API routes)
-app.get('*', (req, res) => {
+// Handle SPA routing (must be after static file serving and API routes).
+// Express 5 needs a named wildcard; the braces let it match "/" as well.
+app.get('/{*splat}', (req, res) => {
   // Don't serve index.html for API routes that don't exist
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ 

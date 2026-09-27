@@ -10,7 +10,15 @@ export function validateRequest(schema) {
         }
       });
     }
-    req.query = parsed.data;
+    // Express 5 makes req.query a getter with no setter, so plain assignment
+    // throws. An own property shadows the getter, and the controllers keep
+    // reading req.query as the validated, transformed values.
+    Object.defineProperty(req, 'query', {
+      value: parsed.data,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
     next();
   };
 }

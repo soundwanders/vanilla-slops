@@ -47,6 +47,24 @@ describe('validateRequest middleware', () => {
     expect(body.error.fields).toBeDefined();
   });
 
+  // Express 5 defines req.query as a getter on the request prototype, with no
+  // setter. The plain-object mock above cannot see that, which is why this is
+  // modelled separately: plain assignment throws on a real Express 5 request.
+  it('attaches parsed data when req.query is a getter-only accessor (Express 5)', () => {
+    const proto = {};
+    Object.defineProperty(proto, 'query', {
+      get: () => ({ page: '3' }),
+      configurable: true,
+      enumerable: true,
+    });
+    const req = Object.create(proto);
+    const { res, next } = mockReqRes();
+    validateRequest(schema)(req, res, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(req.query.page).toBe(3);
+    expect(req.query.limit).toBe(20);
+  });
+
   it('returns 400 when a coerced field has the wrong type', () => {
     const { req, res, next } = mockReqRes({ page: 'notanumber' });
     validateRequest(schema)(req, res, next);
