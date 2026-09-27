@@ -18,9 +18,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
-## [Unreleased]
+## [1.6.0] - 2026-09-26 — Vanilla, at last
+
+Users said the light theme was one large slate, and they were right. It is now
+cream rather than white, and the text colours that failed AA contrast now pass.
+Underneath, seven of the nine deferred dependency majors are closed (six taken,
+one made moot by deleting the package), leaving Express 5 and Zod 4.
 
 ### Changed
+- **The light theme is vanilla, not blank.** A warm cream ground with faint
+  colour washes that drift over 70 seconds, a static paper grain, and
+  warm-tinted shadows. Tables and panels sit one small step above the ground
+  rather than as stark white slabs, so the page reads as one surface. The
+  drift animates transform only, so it runs on the compositor, and it stops
+  entirely under `prefers-reduced-motion`. Dark mode draws none of it.
+
+- **The search box looks like the primary control it is.** It has a brand
+  gradient edge, it is a step taller than the filters, and it gains a focus
+  ring. The icon is now an SVG. It had been an emoji, which ignores `color`, so the
+  icon's colour rules had never taken effect.
+
+- **Ghost buttons look like buttons in light mode.** Next, Previous and "Browse
+  by launch option" were outlined in a border that measured 1.17:1 on the new
+  cream, which is invisible. They now have a fill and a 1.62:1 border.
+
+- **The header is no longer a floating panel**, in either theme. The mobile
+  browser bar colour (`theme-color`) follows the new backgrounds on the app and
+  on the server-rendered pages.
+
 - **Dependency maintenance — every in-range update taken, every major left.**
   `@sentry/node` 10.66 → 10.74, `@supabase/supabase-js` 2.108 → 2.116, `helmet`
   8.2 → 8.3, `playwright` 1.61 → 1.63, plus the declared floors in
@@ -34,12 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   full 2,841, helmet still emits its headers, Sentry initialises without
   throwing, and `npm run smoke` passes 20/20 against the live database.
 
-  **Nine majors deliberately left alone**, each a breaking change rather than a
-  bump: `express` 5 (and `body-parser` 2, which follows it), `zod` 4 at the API
-  validation boundary, `eslint` 9/10 (flat-config migration), `vite` 8,
-  `vitest` 5, `dotenv` 17, `concurrently` 10, `express-rate-limit` 8. The
-  `express`/`qs` and `vitest` advisories are reachable only through two of
-  those, which is why `npm audit` still reports 4 moderate and 0 high.
+  **Nine majors were kept out of this commit on purpose**, each a breaking
+  change rather than a bump. They were taken one at a time, each with its own
+  verification, in the entries below. Two are still open: `express` 5, which
+  carries the last `npm audit` advisory, and `zod` 4 at the API validation
+  boundary.
 
 - **Four tooling majors taken, and a fifth dependency deleted rather than
   upgraded.** `concurrently` 9 → 10, `dotenv` 16 → 17, `lint-staged` 16 → 17,
@@ -108,6 +132,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reachable only through Express 5.
 
 ### Fixed
+- **Green text failed AA contrast in light mode.** The success green is tuned
+  for fills and measured 3.1–3.3:1 as small text. A new `--color-success-text`
+  holds 4.6–4.9:1 on every light surface. It is used by the results-count flash,
+  the Safe badge, "Last checked" and the votes badge. The copy checkmark keeps
+  the brighter green on purpose: it sits on the dark code block, where the
+  darker one would drop to 3.45:1.
+
+- **Secondary light-mode text was just under AA** at 4.39:1 on the old ground.
+  It is now 4.85:1. Placeholders were hard to read in both themes, at 2.56:1
+  in light and 2.83:1 in dark. They are now 3.54:1 and 3.89:1, still kept
+  below real text so a hint never reads as a value.
+
+- **Native controls drew in the OS theme rather than the site's.** The most
+  visible symptom was a black number spinner in the light-mode pagination. Each
+  theme now declares `color-scheme`, and the spinner is also hidden with
+  `appearance: textfield`, which is the only rule Firefox honours. The fix is
+  verified in Chromium; Firefox is yet to be checked by hand.
+
 - **The smoke test crashed instead of reporting when the browser was missing.**
   Bumping Playwright ships a new browser revision, so the first run afterwards
   threw an unhandled exception with a stack trace before a single check had run
