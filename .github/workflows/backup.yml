@@ -84,7 +84,7 @@ jobs:
 
       - name: Install the Supabase CLI
         if: steps.guard.outputs.configured == 'true'
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v3
         with:
           version: latest
 
@@ -149,7 +149,7 @@ jobs:
 
       - name: Upload
         if: steps.guard.outputs.configured == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: slops-backup-${{ env.STAMP }}
           path: slops-backup-${{ env.STAMP }}.sql.gpg
