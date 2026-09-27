@@ -11,6 +11,7 @@ import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getC
 import { slugify } from '../../shared/slugify.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../utils/safeUrl.js';
+import { preserveQuery } from '../utils/preserveQuery.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_URL = (process.env.DOMAIN_URL || 'https://launchoptions.dev').replace(/\/$/, '');
@@ -169,13 +170,13 @@ export async function gamePageController(req, res) {
   // which is the same "one URL per game" rule the slug redirect below applies;
   // the slug-less target picks up its own 301 from that rule.
   if (game.duplicate_of) {
-    return res.redirect(301, `/game/${game.duplicate_of}`);
+    return res.redirect(301, preserveQuery(`/game/${game.duplicate_of}`, req.originalUrl));
   }
 
   // Redirect to the canonical slug if it's missing or wrong (one URL per game)
   const canonicalSlug = slugify(game.title);
   if (req.params.slug !== canonicalSlug) {
-    return res.redirect(301, `/game/${appId}/${canonicalSlug}`);
+    return res.redirect(301, preserveQuery(`/game/${appId}/${canonicalSlug}`, req.originalUrl));
   }
 
   // Never let the related list take the page down with it — it returns [] on

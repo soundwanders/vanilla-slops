@@ -33,6 +33,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   internal links on the static pages and 60 sampled game pages. These 404s
   came only from hand-typed URLs and outside links.
 
+- **Game-page redirects threw away the query string.**
+  `/game/440?utm_source=reddit` redirected to `/game/440/team-fortress-2`,
+  losing the parameter. The same happened on the redirect from a merged
+  duplicate App ID to the surviving game. Nothing read those parameters yet, so
+  nothing broke. But a redirect should change the path, not discard what a
+  link's sender put after it. Both redirects now carry the query through
+  unchanged, and the page's canonical link still names the clean URL.
+
+  Visitor-controlled text now reaches a `Location` header, so it was tested
+  against hostile input. `?//evil.example` stays on this site, encoded line
+  breaks cannot inject a header, and markup is percent-encoded in the header
+  and escaped in the redirect page.
+
 ## [1.6.1] - 2026-09-26 — The last two majors
 
 Nothing a visitor sees changes. Every open Dependabot PR is taken, the last
