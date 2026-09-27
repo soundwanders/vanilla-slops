@@ -14,6 +14,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8000',
       '^/game/': 'http://localhost:8000',
+      '^/engine/': 'http://localhost:8000',
+      '/steam-launch-options': 'http://localhost:8000',
       '/how-it-works': 'http://localhost:8000',
       '/catalog': 'http://localhost:8000',
       '/sitemap.xml': 'http://localhost:8000',

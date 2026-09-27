@@ -6,6 +6,7 @@ import { rankBrowsableOptions } from '../utils/optionRanking.js';
 import { sanitizeOrFilterValue, toOrFilterTerms } from '../utils/searchTerms.js';
 import { dedupeKey } from '../utils/searchNormalize.js';
 import { groupIntoTiers } from '../utils/grainTiers.js';
+import { countEngineFlags, selectHubs } from '../utils/engineHubs.js';
 
 // Deliberately smaller than the exact-match limit. These are guesses, and a
 // long list of guesses reads as the search not working rather than as help —
@@ -38,6 +39,17 @@ const _statsCache = { data: null, expiresAt: 0 };
 // serverless instance re-deriving it on every miss.
 const GRAIN_TTL_MS = 6 * 60 * 60 * 1000;
 const _grainCache = { data: null, expiresAt: 0 };
+
+// The engine hubs and the /steam-launch-options guide change on the same
+// schedule as /catalog — only when the scraper is run — so they share its TTL.
+const _hubsCache = { data: null, expiresAt: 0 };
+const _guideCache = { key: '', data: null, expiresAt: 0 };
+
+// Everything seoController's renderOption() reads, so an option card on a hub
+// or the guide looks exactly like one on a game page.
+const OPTION_CARD_COLUMNS = 'id, command, description, source, source_url, created_at, ' +
+  'last_verified_at, verification_method, usage_example, effect, risk_level, ' +
+  'categories, engine_compatibility, upvotes';
 
 
 // app_id → number of links pointing at options `public_launch_options` hides.
@@ -907,6 +919,150 @@ export async function getCatalogStats() {
     return result;
   } catch (error) {
     console.error('Error in getCatalogStats:', error);
+    return empty;
+  }
+}
+
+/**
+ * The published games on one engine that have an option to show, by title.
+ * Paged, because Unity alone is 696 games and growing toward the 1000-row cap.
+ *
+ * @param {string} engine
+ * @param {Map<number, number>} phantoms - from getPhantomOptionCounts
+ * @returns {Promise<Array<{app_id:number, title:string, display_options_count:number}>>}
+ */
+async function fetchEngineGames(engine, phantoms) {
+  const rows = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from('public_games')
+      .select('app_id, title, total_options_count')
+      .eq('engine', engine)
+      .gt('total_options_count', 0)
+      .order('app_id', { ascending: true })
+      .range(from, from + 999);
+    if (error) throw new Error(`fetchEngineGames(${engine}): ${error.message}`);
+    rows.push(...data);
+    if (data.length < 1000) break;
+  }
+  return withDisplayCounts(rows, phantoms)
+    .filter((g) => g.display_options_count > 0)
+    .sort((a, b) => a.title.localeCompare(b.title) || a.app_id - b.app_id);
+}
+
+/**
+ * Everything the /engine/:slug pages, the guide and the sitemap need to know
+ * about engine hubs. utils/engineHubs.js explains which engines qualify.
+ *
+ * Each hub's options are the published rows whose `engine_compatibility` names
+ * it, ordered by how many games carry them, so the engine-wide flags lead and
+ * the ones documented for a single game follow. That count only orders the
+ * list; it is never printed, because it includes links the engine rule made to
+ * games on other engines.
+ *
+ * THROWS rather than returning an empty index. An empty index means "no hubs",
+ * which a hub page would answer with a 404 and the sitemap with an omission —
+ * the wrong answer to a database hiccup. Callers choose how to degrade, and a
+ * failed read is never cached.
+ *
+ * @returns {Promise<{
+ *   hubs: Array<{engine:string, slug:string, flags:number, games:number, indexable:boolean}>,
+ *   optionsByEngine: Map<string, Array<Object>>,
+ *   gamesByEngine: Map<string, Array<Object>>
+ * }>}
+ */
+export async function getEngineHubIndex() {
+  const now = Date.now();
+  if (_hubsCache.data && now < _hubsCache.expiresAt) return _hubsCache.data;
+
+  // `{}` is how the column stores "names no engine", and 459 of 586 published
+  // rows say exactly that, so filtering here keeps this to one short page.
+  const options = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from('public_launch_options')
+      .select(`${OPTION_CARD_COLUMNS}, game_launch_options(count)`)
+      .neq('engine_compatibility', '{}')
+      .order('id', { ascending: true })
+      .range(from, from + 999);
+    if (error) throw new Error(`getEngineHubIndex: ${error.message}`);
+    options.push(...data);
+    if (data.length < 1000) break;
+  }
+
+  const flagCounts = countEngineFlags(options);
+  const engines = [...flagCounts.keys()];
+  const phantoms = await getPhantomOptionCounts();
+  const lists = await Promise.all(engines.map((engine) => fetchEngineGames(engine, phantoms)));
+
+  const gamesByEngine = new Map(engines.map((engine, i) => [engine, lists[i]]));
+  const hubs = selectHubs(flagCounts, new Map(engines.map((engine, i) => [engine, lists[i].length])));
+
+  const reach = (o) => o.game_launch_options?.[0]?.count ?? 0;
+  const optionsByEngine = new Map(hubs.map((hub) => [
+    hub.engine,
+    options
+      .filter((o) => (o.engine_compatibility || []).includes(hub.engine))
+      .sort((a, b) => reach(b) - reach(a) || a.command.localeCompare(b.command)),
+  ]));
+
+  const result = { hubs, optionsByEngine, gamesByEngine };
+  _hubsCache.data = result;
+  _hubsCache.expiresAt = now + GRAIN_TTL_MS;
+  return result;
+}
+
+/**
+ * The data behind /steam-launch-options: the example options its prose points
+ * at, and the featured games it links to.
+ *
+ * Examples are looked up by command so their text, source and dates are always
+ * the catalogue's own, never a copy that drifts from it. A command that leaves
+ * the catalogue simply drops out of the page.
+ *
+ * Never throws; a failure returns empty lists and the page renders without them.
+ *
+ * @param {string[]} commands
+ * @returns {Promise<{options: Map<string, Object>, featured: Array<Object>}>}
+ */
+export async function getGuideData(commands) {
+  const now = Date.now();
+  const key = commands.join('\n');
+  if (_guideCache.data && _guideCache.key === key && now < _guideCache.expiresAt) {
+    return _guideCache.data;
+  }
+
+  const empty = { options: new Map(), featured: [] };
+
+  try {
+    const [opts, games, phantoms] = await Promise.all([
+      supabase.from('public_launch_options').select(OPTION_CARD_COLUMNS).in('command', commands),
+      supabase
+        .from('public_games')
+        .select('app_id, title, total_options_count')
+        .in('app_id', FEATURED_APP_IDS)
+        .gt('total_options_count', 0),
+      getPhantomOptionCounts(),
+    ]);
+
+    if (opts.error || games.error) {
+      console.error('Error fetching guide data:', opts.error || games.error);
+      return empty;
+    }
+
+    const result = {
+      options: new Map(opts.data.map((o) => [o.command, o])),
+      featured: withDisplayCounts(games.data, phantoms)
+        .filter((g) => g.display_options_count > 0)
+        .sort((a, b) => FEATURED_RANK.get(a.app_id) - FEATURED_RANK.get(b.app_id)),
+    };
+
+    _guideCache.key = key;
+    _guideCache.data = result;
+    _guideCache.expiresAt = now + GRAIN_TTL_MS;
+    return result;
+  } catch (error) {
+    console.error('Error in getGuideData:', error);
     return empty;
   }
 }

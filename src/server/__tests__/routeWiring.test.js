@@ -24,7 +24,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
  * and dev silently diverges from prod when they drift". This is that warning
  * made executable.
  */
-const SERVER_ROUTES = ['/how-it-works', '/catalog'];
+const SERVER_ROUTES = ['/how-it-works', '/catalog', '/steam-launch-options'];
 
 describe('server-rendered route wiring', () => {
   const app = read('src/server/app.js');
@@ -74,6 +74,30 @@ describe('server-rendered route wiring', () => {
 
   it.each(SERVER_ROUTES)('%s appears in the sitemap', (route) => {
     expect(seo).toContain(`\${SITE_URL}${route}</loc>`);
+  });
+
+  // /engine/:slug is a prefix route, wired the way /game is: a `:path*`
+  // rewrite, a `^/engine/` proxy, and an exclusion ending in a slash.
+  it('/engine/:slug is registered, rewritten, excluded and proxied', () => {
+    expect(app).toContain(`app.get('/engine/:slug'`);
+    const hit = vercel.rewrites.find((r) => r.source === '/engine/:path*');
+    expect(hit, 'no vercel rewrite for /engine/:path*').toBeTruthy();
+    expect(hit.destination).toBe('/api/index.js');
+    const block = vercel.headers.find((h) => h.source.includes('(?!'));
+    expect(block.source).toContain('|engine/|');
+    expect(vite).toContain(`'^/engine/':`);
+  });
+
+  it('/engine/:slug pages appear in the sitemap', () => {
+    expect(seo).toContain('`${SITE_URL}/engine/${h.slug}`');
+  });
+
+  it('the engine redirect never carries the rewrite parameter', () => {
+    // The engine rewrite injects `path` exactly as the game one does. The hub
+    // redirect sidesteps it by sending a bare path; if it ever starts
+    // forwarding the query, it must drop GAME_REWRITE_PARAM the way the game
+    // redirects do.
+    expect(seo).toContain('res.redirect(301, `/engine/${hub.slug}`)');
   });
 
   it('proxies in dev exactly what it rewrites in prod', () => {

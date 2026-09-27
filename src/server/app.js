@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Sentry, sentryEnabled } from './instrument.js';
 import gamesRoutes from './routes/gamesRoutes.js';
-import { gamePageController, sitemapController, howItWorksController, catalogController } from './controllers/seoController.js';
+import { gamePageController, sitemapController, howItWorksController, catalogController, guideController, engineHubController } from './controllers/seoController.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
 import { APP_VERSION } from './config/version.js';
@@ -165,9 +165,11 @@ app.get('/api/status', (req, res) => {
 // SEO routes — server-rendered game pages + sitemap.
 // MUST be registered before the SPA catch-all below, or index.html shadows them.
 app.get('/sitemap.xml', sitemapController);
+app.get('/steam-launch-options', guideController);
 app.get('/how-it-works', howItWorksController);
 app.get('/catalog', catalogController);
 app.get('/game/:appid{/:slug}', gamePageController);
+app.get('/engine/:slug', engineHubController);
 
 // Handle SPA routing (must be after static file serving and API routes).
 // Express 5 needs a named wildcard; the braces let it match "/" as well.

@@ -1,14 +1,17 @@
 /**
- * @fileoverview SEO controllers — server-rendered game landing pages, sitemap,
- * and robots. These make the catalog crawlable: each game gets a real HTML page
- * at /game/:appid/:slug with unique meta tags and JSON-LD, and the sitemap lists
- * them all. No client JS on these pages (CSP-safe, fully static content).
+ * @fileoverview SEO controllers — server-rendered game landing pages, engine
+ * hubs, the launch-options guide, sitemap, and robots. These make the catalog
+ * crawlable: each game gets a real HTML page at /game/:appid/:slug with unique
+ * meta tags and JSON-LD, each engine with documented flags gets one at
+ * /engine/:slug, and the sitemap lists them all. No client JS on these pages
+ * (CSP-safe, fully static content).
  */
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats, getCatalogGrain } from '../services/gamesService.js';
+import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats, getCatalogGrain, getEngineHubIndex, getGuideData } from '../services/gamesService.js';
 import { slugify } from '../../shared/slugify.js';
+import { engineSlug, resolveHub, gameHasEngineHub } from '../utils/engineHubs.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../utils/safeUrl.js';
 import { preserveQuery } from '../utils/preserveQuery.js';
@@ -132,6 +135,7 @@ function seoHeader({ current } = {}) {
  */
 function seoFooter({ current } = {}) {
   const links = [
+    current === 'guide' ? '' : '<a href="/steam-launch-options" class="footer-link">Steam Launch Options, Explained</a>',
     current === 'how-it-works' ? '' : '<a href="/how-it-works" class="footer-link">How Vanilla Slops Works</a>',
     current === 'catalog' ? '' : '<a href="/catalog" class="footer-link">The Bedrock</a>',
   ].filter(Boolean).map((l) => `    <p class="footer-line">${l}</p>`).join('\n');
@@ -206,6 +210,9 @@ function renderGamePage(game, slug, related = []) {
   const options = Array.isArray(game.launchOptions) ? game.launchOptions : [];
   const canonical = `${SITE_URL}/game/${game.app_id}/${slug}`;
   const steamImage = `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.app_id}/header.jpg`;
+  // The engine family's hub, when it has one. The link text stays the precise
+  // version shown in the meta row ("Unreal Engine 4"); the hub is the family.
+  const hubPath = gameHasEngineHub(game, options) ? `/engine/${engineSlug(game.engine)}` : '';
 
   const pageTitle = `${title} Launch Options — Vanilla Slops`;
   const metaDesc = truncate(
@@ -229,15 +236,19 @@ function renderGamePage(game, slug, related = []) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Vanilla Slops', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: title, item: canonical },
+      ...(hubPath ? [{ '@type': 'ListItem', position: 2, name: game.engine, item: `${SITE_URL}${hubPath}` }] : []),
+      { '@type': 'ListItem', position: hubPath ? 3 : 2, name: title, item: canonical },
     ],
   };
 
+  const engineHtml = hubPath
+    ? `<a href="${hubPath}">${escapeHtml(engine)}</a>`
+    : escapeHtml(engine);
   const metaRows = [
     developer && `<div class="game-meta-row"><span>Developer</span><strong>${escapeHtml(developer)}</strong></div>`,
     publisher && `<div class="game-meta-row"><span>Publisher</span><strong>${escapeHtml(publisher)}</strong></div>`,
     releaseDate && `<div class="game-meta-row"><span>Released</span><strong>${escapeHtml(releaseDate)}</strong></div>`,
-    engine && `<div class="game-meta-row"><span>Engine</span><strong>${escapeHtml(engine)}</strong></div>`,
+    engine && `<div class="game-meta-row"><span>Engine</span><strong>${engineHtml}</strong></div>`,
   ].filter(Boolean).join('\n');
 
   const optionsHtml = options.length
@@ -286,7 +297,7 @@ ${seoHeader()}
 
   <main class="seo-main">
     <nav class="seo-breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>${escapeHtml(title)}</span>
+      <a href="/">Home</a> <span aria-hidden="true">/</span> ${hubPath ? `<a href="${hubPath}">${escapeHtml(game.engine)}</a> <span aria-hidden="true">/</span> ` : ''}<span>${escapeHtml(title)}</span>
     </nav>
 
     <div class="seo-art" style="background-image:url('${steamImage}')" role="img" aria-label="${escapeHtml(title)} header art"></div>
@@ -459,20 +470,28 @@ function renderOption(opt) {
 }
 
 function render404() {
+  return renderNotice('Game not found', 'We couldn\'t find that game.');
+}
+
+/**
+ * A bare, noindexed page for a request with nothing to show: a 404, or a 503
+ * while the database is unreachable.
+ */
+function renderNotice(heading, message) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex" />
-  <title>Game not found — Vanilla Slops</title>
+  <title>${escapeHtml(heading)} — Vanilla Slops</title>
   ${getCssHref() ? `<link rel="stylesheet" href="${getCssHref()}" />` : ''}
   <script src="/game-theme.js"></script>
 </head>
 <body class="seo-page">
   <main class="seo-main">
-    <h1 class="seo-title">Game not found</h1>
-    <p class="seo-subtitle">We couldn't find that game. <a href="/">Search the full database →</a></p>
+    <h1 class="seo-title">${escapeHtml(heading)}</h1>
+    <p class="seo-subtitle">${escapeHtml(message)} <a href="/">Search the full database →</a></p>
   </main>
 </body>
 </html>`;
@@ -926,16 +945,356 @@ export async function catalogController(req, res) {
   res.type('html').send(renderCatalog(grain));
 }
 
+// Edge-cached like /catalog: the content moves only when the scraper runs.
+const LONG_CACHE = 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400';
+
 /**
- * GET /sitemap.xml — lists the homepage plus every game-with-options page.
+ * GET /engine/:slug — one engine's documented flags, and every game built on
+ * it that has an option to show. utils/engineHubs.js decides which engines
+ * have a page, and why the flags come from their label rather than their links.
+ */
+export async function engineHubController(req, res) {
+  let index;
+  try {
+    index = await getEngineHubIndex();
+  } catch (err) {
+    console.error('engine hub error:', err);
+    // A database hiccup is not a missing page. A 503 asks a crawler to come
+    // back; a 404 would tell it the page is gone.
+    return res.status(503).set('Retry-After', '300').type('html')
+      .send(renderNotice('Briefly unavailable', 'This page could not be loaded just now.'));
+  }
+
+  const { hub, canonical } = resolveHub(index.hubs, req.params.slug);
+  if (!hub) {
+    return res.status(404).type('html')
+      .send(renderNotice('Engine not found', 'We don\'t have a page for that engine.'));
+  }
+  // A bare path, never the query: Vercel's `/engine/:path*` rewrite writes the
+  // slug into it as `path=`, the same parameter that leaked out of the
+  // game-page redirect on 2026-09-27 (see GAME_REWRITE_PARAM).
+  if (!canonical) return res.redirect(301, `/engine/${hub.slug}`);
+
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
+  res.type('html').send(renderEngineHub(
+    hub,
+    index.optionsByEngine.get(hub.engine) || [],
+    index.gamesByEngine.get(hub.engine) || [],
+  ));
+}
+
+function renderEngineHub(hub, options, games) {
+  const { engine, slug } = hub;
+  const canonical = `${SITE_URL}/engine/${slug}`;
+  const gameCount = games.length.toLocaleString('en-US');
+  const optionWord = options.length === 1 ? 'launch option' : 'launch options';
+  const pageTitle = `${engine} Launch Options — Vanilla Slops`;
+  const metaDesc = truncate(
+    `${options.length} ${optionWord} documented for ${engine}, each with its source, ` +
+    `and the ${gameCount} Steam games in our catalogue built on it.`, 160
+  );
+  const css = getCssHref();
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Vanilla Slops', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: engine, item: canonical },
+    ],
+  };
+
+  const gameItems = games.map((g) => {
+    const n = g.display_options_count;
+    return `        <li><a href="/game/${g.app_id}/${slugify(g.title)}">${escapeHtml(g.title)}</a>` +
+      `<span class="hub-game-count">${n}<span class="sr-only"> launch option${n === 1 ? '' : 's'}</span></span></li>`;
+  }).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0ebe1" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1017" />
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(metaDesc)}" />
+  <link rel="canonical" href="${canonical}" />
+${hub.indexable ? '' : `  <!-- Below the hub thresholds in utils/engineHubs.js: reachable from its
+       games' pages, but too thin to offer a search engine. -->
+  <meta name="robots" content="noindex, follow" />
+`}  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${escapeHtml(pageTitle)}" />
+  <meta property="og:description" content="${escapeHtml(metaDesc)}" />
+  <meta property="og:url" content="${canonical}" />
+  <meta property="og:site_name" content="Vanilla Slops" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
+  <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
+  <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
+  ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
+  <script src="/game-theme.js"></script>
+  <script src="/game-copy.js" defer></script>
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body class="seo-page">
+${seoHeader()}
+
+  <main class="seo-main hub-page">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>${escapeHtml(engine)}</span>
+    </nav>
+
+    <span class="seo-eyebrow">Engine</span>
+    <h1 class="seo-title">${escapeHtml(engine)} launch options</h1>
+    <p class="seo-subtitle">
+      ${options.length} ${optionWord} documented for ${escapeHtml(engine)}, and the
+      ${gameCount} games in the catalogue built on it.
+    </p>
+
+    <section class="hub-section" aria-labelledby="hub-options-heading">
+      <h2 id="hub-options-heading">Documented for ${escapeHtml(engine)}</h2>
+      <ul class="launch-options-list">
+${options.map(renderOption).join('\n')}
+      </ul>
+      <p class="hub-note">An engine flag is read by the engine, so it usually
+      carries across the games built on it. Not always: engine versions differ,
+      and a developer can change what their build accepts. Each game's own page
+      lists anything documented for that game specifically.</p>
+    </section>
+
+    ${HOW_TO_APPLY_HTML}
+
+    <section class="hub-section" aria-labelledby="hub-games-heading">
+      <h2 id="hub-games-heading">${escapeHtml(engine)} games in the catalogue</h2>
+      <p class="hub-note">Each with the number of launch options its page lists.</p>
+      <ul class="hub-games-list">
+${gameItems}
+      </ul>
+    </section>
+
+    <p class="seo-footer-cta">
+      <a href="/?engine=${escapeHtml(encodeURIComponent(engine))}" class="seo-cta">Search and filter ${escapeHtml(engine)} games →</a>
+    </p>
+  </main>
+
+${seoFooter({ current: 'engine' })}
+</body>
+</html>`;
+}
+
+// The examples the guide's prose points at. They are read from the catalogue
+// at request time (getGuideData), so the text, source and dates on each card
+// are the catalogue's own and cannot drift from it.
+const GUIDE_WRAPPERS = ['gamemoderun %command%', 'mangohud %command%', 'PROTON_USE_WINED3D=1'];
+const GUIDE_READ_FIRST = ['-high', '+fps_max'];
+
+// Where Valve documents the `%command%` form, in the README section that
+// states it: "Set the variable, followed by `%command%`."
+const PROTON_RUNTIME_DOCS = 'https://github.com/ValveSoftware/Proton#runtime-config-options';
+
+/**
+ * GET /steam-launch-options — the page for the head term. /how-it-works
+ * explains how this catalogue is built; this explains launch options
+ * themselves, and every factual line in it is either a card from the catalogue
+ * or linked to the documentation it came from.
+ */
+export async function guideController(req, res) {
+  let hubsFailed = false;
+  const [data, hubs] = await Promise.all([
+    getGuideData([...GUIDE_WRAPPERS, ...GUIDE_READ_FIRST]),
+    getEngineHubIndex()
+      .then((index) => index.hubs.filter((h) => h.indexable))
+      .catch((err) => {
+        console.error('guide: engine hubs unavailable:', err);
+        hubsFailed = true;
+        return [];
+      }),
+  ]);
+
+  // A page rendered without its data is still worth serving, but not worth
+  // holding at the edge for six hours.
+  const degraded = hubsFailed || data.options.size === 0;
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' && !degraded ? LONG_CACHE : 'no-store');
+  res.type('html').send(renderGuide(data, hubs));
+}
+
+function renderGuide({ options, featured }, hubs) {
+  const canonical = `${SITE_URL}/steam-launch-options`;
+  const pageTitle = 'Steam Launch Options, Explained — Vanilla Slops';
+  const metaDesc = truncate(
+    'What Steam launch options are, how to set one, how %command% works on Linux ' +
+    'and Steam Deck, and why a flag that works in one game may do nothing in the next.', 160
+  );
+  const css = getCssHref();
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Vanilla Slops', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Steam launch options, explained', item: canonical },
+    ],
+  };
+
+  const cards = (commands) => {
+    const html = commands.map((c) => options.get(c)).filter(Boolean).map(renderOption).join('\n');
+    return html ? `<ul class="launch-options-list">\n${html}\n</ul>` : '';
+  };
+  const readFirstCards = cards(GUIDE_READ_FIRST);
+
+  const linkCard = (href, title, meta) => `        <li class="related-game">
+          <a class="related-game-link" href="${href}">
+            <span class="related-game-title">${escapeHtml(title)}</span>
+            <span class="related-game-meta">${meta}</span>
+          </a>
+        </li>`;
+
+  const engineCards = hubs.map((h) => linkCard(
+    `/engine/${h.slug}`,
+    h.engine,
+    `${h.flags} launch option${h.flags === 1 ? '' : 's'}<span class="related-game-sep" aria-hidden="true">·</span>${h.games.toLocaleString('en-US')} games`,
+  )).join('\n');
+
+  const gameCards = featured.map((g) => linkCard(
+    `/game/${g.app_id}/${slugify(g.title)}`,
+    g.title,
+    `${g.display_options_count} option${g.display_options_count === 1 ? '' : 's'}`,
+  )).join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f0ebe1" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1017" />
+  <title>${escapeHtml(pageTitle)}</title>
+  <meta name="description" content="${escapeHtml(metaDesc)}" />
+  <link rel="canonical" href="${canonical}" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="${escapeHtml(pageTitle)}" />
+  <meta property="og:description" content="${escapeHtml(metaDesc)}" />
+  <meta property="og:url" content="${canonical}" />
+  <meta property="og:site_name" content="Vanilla Slops" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
+  <meta name="twitter:description" content="${escapeHtml(metaDesc)}" />
+  <script type="application/ld+json">${jsonLdScript(breadcrumb)}</script>
+  ${css ? `<link rel="stylesheet" href="${css}" />` : ''}
+  <script src="/game-theme.js"></script>
+  <script src="/game-copy.js" defer></script>
+  <link rel="icon" href="/favicon.ico" />
+</head>
+<body class="seo-page">
+${seoHeader()}
+
+  <main class="seo-main guide-page">
+    <nav class="seo-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a> <span aria-hidden="true">/</span> <span>Steam launch options, explained</span>
+    </nav>
+
+    <span class="seo-eyebrow">Guide</span>
+    <h1 class="seo-title">Steam launch options, explained</h1>
+    <p class="seo-subtitle">
+      What a launch option is, how to set one, and why the same flag can work in
+      one game and do nothing in the next.
+    </p>
+
+    <section class="hiw-section" aria-labelledby="guide-what">
+      <h2 id="guide-what">What a launch option is</h2>
+      <p>A launch option is text that Steam adds to a game's command line when it
+      starts the game. Apart from one placeholder, covered below, Steam passes that
+      text along untouched, and the game decides what it means. <code>-novid</code>
+      skips the intro video in a Source engine game because the Source engine looks
+      for it, not because Steam does anything with it.</p>
+      <p>So there is no single list of Steam launch options that works everywhere.
+      Each engine reads its own, and many games add more of their own on top. That
+      is why every option in this catalogue is listed against the games it applies
+      to, and names where it was documented.</p>
+    </section>
+
+    ${HOW_TO_APPLY_HTML}
+
+    <section class="hiw-section" aria-labelledby="guide-engines">
+      <h2 id="guide-engines">Flags belong to engines</h2>
+      <p>Most launch options are read by the engine a game is built on, so the same
+      job goes by different names. Unity documents <code>-force-d3d11</code> to
+      choose its Direct3D 11 renderer; Unreal documents <code>-dx11</code>. A flag
+      from one engine's documentation is not one the other engine promises to
+      read.</p>
+${engineCards ? `      <p>Where an engine has enough documented flags to fill a page, it has one,
+      along with the games in the catalogue built on it:</p>
+      <ul class="related-games-list">
+${engineCards}
+      </ul>` : ''}
+    </section>
+
+    <section class="hiw-section" aria-labelledby="guide-command">
+      <h2 id="guide-command"><code>%command%</code>, Linux and Steam Deck</h2>
+      <p>The placeholder is <code>%command%</code>. Steam replaces it with the
+      command that starts the game, so whatever you write before it runs first.
+      That is how a tool that wraps the game, or an environment variable for Proton
+      (the compatibility layer Steam uses to run Windows games on Linux and Steam
+      Deck), gets in ahead of the game. <a href="${PROTON_RUNTIME_DOCS}" target="_blank"
+      rel="noopener noreferrer">Valve's Proton documentation</a> gives the form: set
+      the variable, followed by <code>%command%</code>.</p>
+      <p>Leave <code>%command%</code> out and Steam hands the same text to the game
+      as an ordinary flag instead, so the wrapper never runs and the variable is
+      never set.</p>
+      ${cards(GUIDE_WRAPPERS)}
+    </section>
+
+    <section class="hiw-section" aria-labelledby="guide-read">
+      <h2 id="guide-read">Read what a flag does before you paste it</h2>
+      <p>Advice about launch options tends to outrun its documentation. Every option
+      here carries its source, and its effect line says what that source actually
+      claims.${readFirstCards ? ' For example:' : ''}</p>
+      ${readFirstCards}
+    </section>
+${gameCards ? `
+    <section class="hiw-section" aria-labelledby="guide-games">
+      <h2 id="guide-games">Launch options for popular games</h2>
+      <ul class="related-games-list">
+${gameCards}
+      </ul>
+    </section>
+` : ''}
+    <p class="seo-footer-cta">
+      <a href="/" class="seo-cta">Search every game's launch options →</a>
+    </p>
+  </main>
+
+${seoFooter({ current: 'guide' })}
+</body>
+</html>`;
+}
+
+/**
+ * GET /sitemap.xml — lists the homepage, the guide, the indexable engine hubs
+ * and every game-with-options page.
  */
 export async function sitemapController(req, res) {
   try {
-    const games = await getGamesForSitemap();
+    const [games, hubs] = await Promise.all([
+      getGamesForSitemap(),
+      // Hubs are a handful of URLs among thousands; losing them for one fetch
+      // is better than failing the whole sitemap.
+      getEngineHubIndex()
+        .then((index) => index.hubs.filter((h) => h.indexable))
+        .catch((err) => {
+          console.error('sitemap: engine hubs unavailable:', err);
+          return [];
+        }),
+    ]);
     const urls = [
       `  <url><loc>${SITE_URL}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>`,
+      `  <url><loc>${SITE_URL}/steam-launch-options</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>`,
       `  <url><loc>${SITE_URL}/how-it-works</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>`,
       `  <url><loc>${SITE_URL}/catalog</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>`,
+      ...hubs.map((h) => `  <url><loc>${xmlEscape(`${SITE_URL}/engine/${h.slug}`)}</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>`),
       ...games.map((g) => {
         const loc = `${SITE_URL}/game/${g.app_id}/${slugify(g.title)}`;
         const lastmod = g.updated_at ? `<lastmod>${new Date(g.updated_at).toISOString().slice(0, 10)}</lastmod>` : '';

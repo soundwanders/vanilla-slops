@@ -776,6 +776,92 @@
   margin: 0 var(--space-2);
 }
 
+/* A game's engine, linked to its hub when it has one. Same accent as the Steam
+   link in the subtitle, so both read as links without adding a new colour. */
+.game-meta-row strong a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.game-meta-row strong a:hover { text-decoration: underline; }
+
+/* ============================================================================
+   /steam-launch-options and /engine/:slug
+   The guide borrows the How-it-works prose sections; the hubs borrow the game
+   page's option cards. Only the long game list below is new.
+   ========================================================================== */
+
+.guide-page .hiw-section {
+  margin-top: var(--space-8);
+}
+
+.guide-page .hiw-section .launch-options-list,
+.guide-page .hiw-section .related-games-list {
+  margin-top: var(--space-4);
+}
+
+.hub-section {
+  margin-top: var(--space-8);
+}
+
+.hub-section h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.hub-note {
+  margin-top: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 66ch;
+}
+
+.hub-section h2 + .hub-note {
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+}
+
+/* Hundreds of titles, so a dense column list rather than cards. Long titles
+   wrap instead of truncating, which keeps every name readable in full. */
+.hub-games-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 3 220px;
+  column-gap: var(--space-6);
+}
+
+.hub-games-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  break-inside: avoid;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.hub-games-list a {
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.hub-games-list a:hover,
+.hub-games-list a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.hub-game-count {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ============================================================================
    /catalog — the option vocabulary as a graded bed
    ----------------------------------------------------------------------------
