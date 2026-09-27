@@ -18,6 +18,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.2] - 2026-09-27 — The whole command, everywhere
+
+### Fixed
+- **Long commands were still cut off in the homepage's rows on phones.** 1.7.1
+  made long commands wrap instead of being cut off, but on the homepage's
+  expanded rows at tablet and phone widths an older layout rule overrode how
+  they break. The leading `-` wrapped onto a line of its own, and at 320px
+  Helheim Hassle's 58-character flag needed five lines and was cut off at the
+  four-line cap. It now shows whole, in four lines.
+
+  This also corrects 1.7.1, which said that flag "fits in three lines on a
+  320px screen". That was true on game pages; the homepage's rows are narrower,
+  and there it takes four.
+
 ## [1.7.1] - 2026-09-27 — Every game speaks for itself
 
 A launch option is stored once and shared by every game that uses it, so the
