@@ -220,16 +220,25 @@ of them were GRANTs:**
 
 Every one is Supabase platform furniture rather than project data — which is why
 the tables and views still landed perfectly. But the GRANT failures are the ones
-that matter, because **the GRANT set is the security model**. The views run with
-`security_invoker=off` and `anon` was revoked from the base tables; without those
-grants the application connects to a database holding perfect data and reads
-nothing from it. That is the "queries return empty rather than erroring" failure
-this project already knows is the hardest kind to diagnose.
+that matter, because **the GRANT set is the security model**. Only
+`service_role` may read, and since 2026-09-28 the views run with the caller's
+privileges (`security_invoker=on`); without those grants the application
+connects to a database holding perfect data and reads nothing from it. That is
+the "queries return empty rather than erroring" failure this project already
+knows is the hardest kind to diagnose.
 
-**So: restore into a Supabase project**, where the three roles exist. If you ever
-must restore somewhere else, create `anon`, `authenticated` and `service_role`
+**So: restore into a Supabase project**, where the three roles and the
+`extensions` schema exist. If you ever must restore somewhere else, create
+`anon`, `authenticated` and `service_role`, and `CREATE SCHEMA extensions`,
 first, then load the dump — otherwise you will spend the worst hour of the
-incident debugging permissions rather than recovering.
+incident debugging permissions rather than recovering. The schema matters more
+than it did when this was rehearsed: since 2026-09-28 `pg_trgm` lives there
+too, so without it the three trigram indexes fail along with the extension.
+
+**Restore an artifact into a fresh project, never over this one.** Artifacts
+taken before 2026-09-28 create `pg_trgm` in `public` and name
+`public.gin_trgm_ops` in their index definitions; loaded over the live
+database, where the extension now lives in `extensions`, those indexes fail.
 
 Two smaller notes from the same run. The dump touches the `auth` (23 references)
 and `storage` (7) schemas as well as `public`; harmless here, since this project
