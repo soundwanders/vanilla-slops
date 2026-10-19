@@ -18,6 +18,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.3] - 2026-10-19 — Only our words on the page
+
+A security sweep. Nothing was exposed, but one bug let a link put someone
+else's markup on this site.
+
+### Security
+- **A crafted link could add its own content to the page.** Search and filter
+  values are read from the URL and repeated in the "No results found for…"
+  and "Active filters" messages, which did not escape them. So a link to
+  `/?search=<a href=…>Download the fix</a>` showed a working link to another
+  site. The site's Content Security Policy kept scripts from running, but it
+  cannot stop a fake link. These values now show as plain text.
+- **Error responses no longer include internal error messages,** and `/health`
+  reports only its status and version. It used to show the environment,
+  uptime and memory.
+- **Dependency advisories patched:** `proxy-addr` (critical) and `ip-address`
+  (moderate). Production dependencies now audit clean.
+
+### Fixed
+- **A quotation mark in a description broke its option card.** Eight published
+  descriptions contain one, such as Red Dead Redemption 2's
+  `-ignorepipelinecache`, which mentions `"ERR_GFX_STATE"`. The card's
+  search-within-options text stopped at the quote, so typing `err_gfx` there
+  found nothing.
+- **Pages past the end returned an error.** The catalogue has 150 pages; every
+  page from 151 on was a server error. They now return an empty page with the
+  real total.
+
+### Changed
+- **API:** free-text filters are capped at 200 characters, and a longer value
+  returns `400`. The longest real value is a 137-character developer credit.
+  `/api/games/facets` no longer accepts `search`, which nothing sent and which
+  skipped its cache. `/api/games/test` is removed.
+
 ## [1.7.2] - 2026-09-27 — The whole command, everywhere
 
 ### Fixed
