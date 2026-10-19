@@ -25,6 +25,12 @@ const CATEGORY_FOR_KIND = {
 };
 
 const FACETS_TTL_MS = 5 * 60 * 1000;
+
+// PostgREST answers an offset past the last row with 416 and this code, not
+// an empty page. Past the end is an ordinary request (a stale bookmark, a
+// shrunken result set), so both listing paths re-ask for the count alone and
+// return no rows. It used to surface as a 500 from page 151 onward.
+const RANGE_NOT_SATISFIABLE = 'PGRST103';
 const _facetsCache = { data: null, expiresAt: 0 };
 
 // Catalog totals for the /how-it-works figures line. Deliberately NOT folded
@@ -218,7 +224,10 @@ export async function fetchGames({
       query = applySorting(query, sort, order);
       query = query.range(offset, offset + limit - 1);
 
-      const result = await query;
+      let result = await query;
+      if (result.error?.code === RANGE_NOT_SATISFIABLE) {
+        result = { ...(await buildFilteredQuery(true).range(0, 0)), data: [] };
+      }
       if (result.error) {
         console.error('Supabase query error:', result.error);
         throw new Error('Failed to fetch games from database');
@@ -440,7 +449,7 @@ async function fetchFeaturedPage(buildFilteredQuery, { offset, limit }) {
   // lineup already consumed. `app_id` breaks ties for stable pagination —
   // without it, equal option counts can reshuffle between page requests and
   // drop or repeat a row.
-  let tailQuery = buildFilteredQuery(true)
+  const buildTail = () => buildFilteredQuery(true)
     .not('app_id', 'in', FEATURED_ID_LIST)
     .order('total_options_count', { ascending: false, nullsFirst: false })
     .order('app_id', { ascending: true });
@@ -449,11 +458,13 @@ async function fetchFeaturedPage(buildFilteredQuery, { offset, limit }) {
   // When the page is already full we still need the tail's total for the
   // pagination footer, so ask for the narrowest possible window rather than
   // skipping the query.
-  tailQuery = remaining > 0
-    ? tailQuery.range(tailOffset, tailOffset + remaining - 1)
-    : tailQuery.range(0, 0);
+  let tailResult = remaining > 0
+    ? await buildTail().range(tailOffset, tailOffset + remaining - 1)
+    : await buildTail().range(0, 0);
 
-  const tailResult = await tailQuery;
+  if (tailResult.error?.code === RANGE_NOT_SATISFIABLE) {
+    tailResult = { ...(await buildTail().range(0, 0)), data: [] };
+  }
 
   if (tailResult.error) {
     console.error('Supabase query error:', tailResult.error);

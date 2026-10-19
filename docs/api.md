@@ -105,10 +105,12 @@ Retrieve a paginated list of Steam games with optional filtering and search. Res
 | `year` | string | - | Filter by release year |
 | `sort` | enum | `total_options_count` | Common values: `title`, `developer`, `options`, `year`, `release_date` |
 | `order` | enum | `desc` | `asc`, `desc` |
-| `page` | integer | 1 | Page number (1-based) |
+| `page` | integer | 1 | Page number (1-based). A page past the end returns no games and the real `total` |
 | `limit` | integer | 20 | Items per page (1–100) |
 
 > Unknown or retired query values (e.g. an old `options=performance` bookmark) are ignored rather than rejected, so stale URLs still return results.
+>
+> Free-text filters (`search`, `developer`, `engine` and the rest) are capped at 200 characters; a longer value returns `400 VALIDATION_ERROR`.
 
 **Example Request:**
 ```bash
@@ -272,7 +274,6 @@ Get available filter values for building the filter UI.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `search` | string | Scope facets to a search context |
 | `includeStats` | boolean | Include options statistics (default: `true`) |
 
 **Example Response:**
