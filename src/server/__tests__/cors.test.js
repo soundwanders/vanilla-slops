@@ -30,11 +30,13 @@ function request(origin, { method = 'GET' } = {}) {
 }
 
 describe('CORS in production — allowed traffic', () => {
-  it('reflects the configured origin and keeps credentials on', () => {
+  it('reflects the configured origin without allowing credentials', () => {
+    // The site sets no cookies and sends no auth, so there is nothing for a
+    // cross-origin caller to carry. Allowing it was a default nobody chose.
     const { err, headers } = request('https://launchoptions.dev');
     expect(err).toBeUndefined();
     expect(headers['access-control-allow-origin']).toBe('https://launchoptions.dev');
-    expect(headers['access-control-allow-credentials']).toBe('true');
+    expect(headers['access-control-allow-credentials']).toBeUndefined();
   });
 
   it('allows a request with no Origin header at all (same-origin, curl)', () => {

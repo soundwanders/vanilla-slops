@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+# Runs on Dependabot's PRs too, which install fresh code from the registry.
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
     name: Lint & Test

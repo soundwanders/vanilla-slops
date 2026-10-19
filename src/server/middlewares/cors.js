@@ -76,7 +76,6 @@ const setupCORS = () => {
       'Accept',
       'Cache-Control'
     ],
-    credentials: true,
     optionsSuccessStatus: 200
   });
 };

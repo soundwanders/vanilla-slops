@@ -11,7 +11,12 @@ function errorHandler(err, req, res, next) {
 
   logger.error({ requestId: req.id, status, code, err }, message);
 
-  const body = { error: { code, message } };
+  // A 4xx message was written for the client (CORS_FORBIDDEN, a malformed
+  // URI). A 5xx message was written by whatever threw, and can name a table,
+  // a column or a query — it belongs in the log and in Sentry, not the body.
+  const body = status >= 500
+    ? { error: { code: 'INTERNAL_ERROR', message: 'Internal Server Error' } }
+    : { error: { code, message } };
   if (req.id) body.requestId = req.id;
 
   res.status(status).json(body);

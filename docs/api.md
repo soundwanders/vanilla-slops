@@ -82,7 +82,7 @@ The API is read-only — every endpoint is a `GET`.
 | `GET /api/games/{app_id}` | Full game details including launch options |
 | `GET /api/games/{app_id}/launch-options` | Launch options only (lighter response) |
 | `GET /api/status` | API status and endpoint index |
-| `GET /health` | Health check and system info |
+| `GET /health` | Health check: process up, and which release |
 | `GET /game/{app_id}/{slug}` | Server-rendered game page (HTML, for SEO/sharing) |
 | `GET /sitemap.xml` | XML sitemap of all game pages |
 
@@ -336,15 +336,7 @@ GET /health
 {
   "status": "ok",
   "timestamp": "2026-07-30T10:30:00.000Z",
-  "service": "Vanilla Slops - Steam Launch Options API",
-  "version": "1.2.0",
-  "environment": "production",
-  "uptime": 86400,
-  "staticFiles": "available",
-  "memory": {
-    "used": 145.2,
-    "total": 512.0
-  }
+  "version": "1.2.0"
 }
 ```
 

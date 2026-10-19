@@ -22,15 +22,6 @@ import {
  */
 const router = Router();
 
-// Test endpoint with options-first info
-router.get('/test', (req, res) => {
-  res.json({
-    message: 'Vanilla Slops API',
-    timestamp: new Date().toISOString(),
-    query: req.query
-  });
-});
-
 /**
  * @route GET /api/games
  * @description Get games with search, filtering, sorting and pagination

@@ -87,10 +87,6 @@ app.use('/api', apiLimiter);
 // CORS setup initialization
 app.use(setupCORS());
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
 // Request logging middleware
 app.use(logRequests);
 
@@ -129,21 +125,14 @@ app.use('/api/games', gamesRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  const healthInfo = {
+  // Public, so it says only that the process is up and which release it is.
+  // Environment, uptime and heap size were here too; none of them is anyone
+  // else's business, and uptime told a stranger when an instance was cold.
+  res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    service: 'Vanilla Slops - Steam Launch Options API',
     version: APP_VERSION,
-    environment: process.env.NODE_ENV || 'development',
-    uptime: process.uptime(),
-    staticFiles: fs.existsSync(clientBuildPath) ? 'available' : 'missing',
-    memory: {
-      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100,
-      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024 * 100) / 100
-    }
-  };
-  
-  res.json(healthInfo);
+  });
 });
 
 // API status endpoint
