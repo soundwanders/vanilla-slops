@@ -38,7 +38,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "description": "Vanilla Slops",
   "dependencies": {
-    "@sentry/node": "^10.75.3",
+    "@sentry/node": "^11.8.0",
     "@supabase/supabase-js": "^2.117.2",
     "compression": "^1.8.2",
     "cors": "^2.8.6",
