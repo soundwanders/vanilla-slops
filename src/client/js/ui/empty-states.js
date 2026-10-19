@@ -1,4 +1,4 @@
-import { CONFIG, TableState, getTableContainer } from './table-shared.js';
+import { CONFIG, TableState, getTableContainer, escapeHtml } from './table-shared.js';
 import { enhanceMobileEmptyState, ensureTouchTarget } from './mobile-gestures.js';
 
 export function renderEmptyState(filters = {}) {
@@ -78,7 +78,7 @@ export function determineEmptyStateType(filters = {}) {
   return 'database-empty';
 }
 
-function createEmptyStateHTML(type, filters) {
+export function createEmptyStateHTML(type, filters) {
   const emptyStates = {
     'search-no-results': () => createSearchNoResultsHTML(filters),
     'all-games-filtered': () => createAllFilteredHTML(filters),
@@ -94,7 +94,8 @@ function createEmptyStateHTML(type, filters) {
 }
 
 function createSearchNoResultsHTML(filters) {
-  const searchTerm = filters.search || '';
+  // Filters are read from the URL, so this is text anyone can put in a link.
+  const searchTerm = escapeHtml(filters.search || '');
   const btn = TableState.isMobile ? 'btn mobile-btn' : 'btn';
 
   return `
@@ -180,7 +181,7 @@ function getActiveFiltersDescription(filters) {
   if (filters.optionSearch) active.push(`Launch option: ${filters.optionSearch}`);
 
   return active.length > 0
-    ? active.map(f => `<span class="filter-tag ${TableState.isMobile ? 'mobile-filter-tag' : ''}">${f}</span>`).join('')
+    ? active.map(f => `<span class="filter-tag ${TableState.isMobile ? 'mobile-filter-tag' : ''}">${escapeHtml(f)}</span>`).join('')
     : '<span class="no-filters">No specific filters</span>';
 }
 

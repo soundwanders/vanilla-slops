@@ -70,11 +70,18 @@ export function isCopyActivationKey(key) {
   return key === 'Enter' || key === ' ';
 }
 
+// Safe in text and in a quoted attribute alike, so callers need not know which
+// they are writing. The old textContent/innerHTML round trip left `"` alone,
+// and eight published descriptions contain one: each broke out of the
+// `data-search="…"` attribute on its option card. Matches seoController's.
 export function escapeHtml(text) {
   if (typeof text !== 'string') return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**

@@ -1,5 +1,6 @@
 import { fetchGames } from './api.js';
 import { renderTable, renderSkeletonTable, renderEmptyState } from './ui/table.js';
+import { escapeHtml } from './ui/table-shared.js';
 import { setupThemeToggle } from './ui/theme.js';
 import { renderPagination } from './ui/pagination.js';
 import { StateManager } from './state/StateManager.js';
@@ -586,7 +587,7 @@ function showErrorState(message) {
     <div class="table-error">
       <div class="table-error-icon" aria-hidden="true">⚠</div>
       <h3 class="table-error-title">Failed to Load Games</h3>
-      <p class="table-error-message">${message}</p>
+      <p class="table-error-message">${escapeHtml(message)}</p>
       <button class="table-error-retry" type="button">Try Again</button>
     </div>
   `;
