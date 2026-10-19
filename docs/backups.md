@@ -266,13 +266,24 @@ this repository and therefore immune to GitHub disabling anything:
 
 | check | target | interval |
 | --- | --- | --- |
-| database keepalive | Supabase | every 3 days |
+| database keepalive | `https://launchoptions.dev/api/games` | every 3 days |
 | full-stack check | `https://launchoptions.dev/api/games` | every 3 days |
 
-The second is the more useful of the two: it exercises the serverless function,
-the database and the CDN in one request, so a pass means the whole chain is up,
-not merely that the database is awake. Both notify on the first failure, which is
-what makes them monitors rather than just keepalives.
+Both go through the site, and the duplication is deliberate redundancy. One
+request exercises the serverless function, the database and the CDN, so a pass
+means the whole chain is up, not merely that the database is awake. Both notify
+on the first failure, which is what makes them monitors rather than just
+keepalives.
+
+**Never point either job at Supabase directly.** The database keepalive used to
+query Supabase's REST API with the `anon` key. That stopped working on
+2026-08-22, when `anon` lost all access. The fix is not to put the
+`service_role` key into a third-party service: that key bypasses every access
+control in the database. **Never point a job at `/health` either.** It answers
+from the function's own process and makes no database query, so it stays green
+while the database pauses. `/api/games` does reach the database: its edge cache
+lasts 60 seconds, plus 10 minutes of stale-while-revalidate, and a ping every
+three days always falls outside that window.
 
 The three-day interval is deliberate. A seven-day ping against a seven-day pause
 threshold has no margin at all — one missed run and the project sleeps. Three
