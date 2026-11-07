@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveProvenance } from '../utils/optionProvenance.js';
+import { resolveProvenance, compareGameOptions } from '../utils/optionProvenance.js';
 
 // Max Payne 3 (app 204100), as the live database held it on 2026-09-27: the
 // shared rows carry other games' text and citations, the links carry its own.
@@ -74,5 +74,34 @@ describe('resolveProvenance', () => {
       description: 'x', source: null, source_url: null, last_verified_at: null,
       game_source: null, game_source_url: null, game_verified_at: null,
     });
+  });
+});
+
+describe('compareGameOptions', () => {
+  const row = (command, source_url = null, upvotes = 0) =>
+    ({ source_url, public_launch_options: { command, upvotes } });
+  const order = (rows) => [...rows].sort(compareGameOptions).map((r) => r.public_launch_options.command);
+
+  // Cyberpunk 2077 (1091500) on 2026-11-07: its own page documents
+  // --launcher-skip, which came last of 21 behind engine-wide flags.
+  it('puts the options the game\'s own page lists first', () => {
+    expect(order([
+      row('-fullscreen'),
+      row('-dx11'),
+      row('--launcher-skip', 'https://www.pcgamingwiki.com/wiki/Cyberpunk_2077'),
+    ])).toEqual(['--launcher-skip', '-dx11', '-fullscreen']);
+  });
+
+  it('ranks votes after the game\'s own evidence, not before', () => {
+    expect(order([
+      row('-a', null, 5),
+      row('-b', 'https://example.org/b', 0),
+    ])).toEqual(['-b', '-a']);
+    expect(order([row('-a', null, 0), row('-b', null, 3)])).toEqual(['-b', '-a']);
+  });
+
+  it('is a total order, so the list does not reshuffle between requests', () => {
+    const rows = [row('-novid'), row('+fps_max'), row('-console'), row('gamemoderun %command%')];
+    expect(order(rows)).toEqual(order([...rows].reverse()));
   });
 });

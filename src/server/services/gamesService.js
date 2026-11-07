@@ -7,7 +7,7 @@ import { sanitizeOrFilterValue, toOrFilterTerms } from '../utils/searchTerms.js'
 import { dedupeKey } from '../utils/searchNormalize.js';
 import { groupIntoTiers } from '../utils/grainTiers.js';
 import { countEngineFlags, selectHubs } from '../utils/engineHubs.js';
-import { resolveProvenance } from '../utils/optionProvenance.js';
+import { resolveProvenance, compareGameOptions } from '../utils/optionProvenance.js';
 
 // Deliberately smaller than the exact-match limit. These are guesses, and a
 // long list of guesses reads as the search not working rather than as help —
@@ -1574,11 +1574,14 @@ export async function fetchGameWithLaunchOptions(gameId) {
     // second App ID) should redirect to the canonical game, and it can't do that
     // if the lookup pretends the row doesn't exist. `duplicate_of` comes back
     // with the row and tells the caller where to send it.
+    //
+    // maybeSingle, not single: single() reports a missing row as an error
+    // (PGRST116), which reached the API as a 500 instead of the 404 below.
     const { data: game, error: gameError } = await supabase
       .from('games')
       .select('*')
       .eq('app_id', gameId)
-      .single();
+      .maybeSingle();
     
     if (gameError) {
       console.error('Game fetch error:', gameError);
@@ -1602,13 +1605,13 @@ export async function fetchGameWithLaunchOptions(gameId) {
 }
 
 /**
- * Fetches launch options for a specific game with popularity ordering
+ * Fetches launch options for a specific game, the game's own first
  * Performs join operations to get complete launch option details
  * 
  * @async
  * @function fetchLaunchOptionsForGame
  * @param {string|number} gameId - Steam app ID of the game
- * @returns {Promise<Array>} Array of launch option objects sorted by upvotes
+ * @returns {Promise<Array>} Array of launch option objects, in compareGameOptions order
  * @property {string} id - Launch option UUID
  * @property {string} option - Launch command (frontend compatibility)
  * @property {string} command - Launch command
@@ -1674,7 +1677,7 @@ export async function fetchLaunchOptionsForGame(gameId) {
     return data
       // A link to an option the view hides arrives with a null embed.
       .filter(row => row.public_launch_options)
-      .sort((a, b) => (b.public_launch_options.upvotes || 0) - (a.public_launch_options.upvotes || 0))
+      .sort(compareGameOptions)
       .map(row => {
         const option = row.public_launch_options;
         const shown = resolveProvenance(row, option);

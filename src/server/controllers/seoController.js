@@ -226,7 +226,7 @@ function renderGamePage(game, slug, related = []) {
 
   const pageTitle = `${title} Launch Options — Vanilla Slops`;
   const metaDesc = truncate(
-    `${options.length} community-verified Steam launch option${options.length === 1 ? '' : 's'} for ${title}` +
+    `${options.length} sourced Steam launch option${options.length === 1 ? '' : 's'} for ${title}` +
     `${developer ? ` by ${developer}` : ''} — performance tweaks, graphics fixes, and more.`,
     160
   );
@@ -263,7 +263,7 @@ function renderGamePage(game, slug, related = []) {
 
   const optionsHtml = options.length
     ? `<ul class="launch-options-list">\n${options.map(renderOption).join('\n')}\n</ul>`
-    : `<p class="seo-empty">No community-verified launch options for ${escapeHtml(title)} yet.</p>`;
+    : `<p class="seo-empty">No launch options for ${escapeHtml(title)} yet.</p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -316,7 +316,7 @@ ${seoHeader()}
     <span class="seo-eyebrow">Launch Options</span>
     <h1 class="seo-title">${escapeHtml(title)}</h1>
     <p class="seo-subtitle">
-      ${options.length} community-verified launch option${options.length === 1 ? '' : 's'}
+      ${options.length} sourced launch option${options.length === 1 ? '' : 's'}
       for <a href="https://store.steampowered.com/app/${game.app_id}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)} on Steam ↗</a>.
     </p>
 
@@ -768,10 +768,9 @@ ${movement('III', 'What we claim, and what we don\'t')}
       <p>What that means in practice is a short list of commitments. The catalog
       is free and needs no account. There are no ads and no analytics, the site
       sets no cookies, and the only thing it remembers is whether you picked the
-      light or dark theme, which stays in your own browser. The crawler that
-      gathers the data is published for anyone to read, every option names where
-      it came from, and when we don't know something we leave it blank rather
-      than fill it in with something that sounds right.</p>
+      light or dark theme, which stays in your own browser. Every option names
+      where it came from, and when we don't know something we leave it blank
+      rather than fill it in with something that sounds right.</p>
       <p>This is a small project, maintained by hand. The goal isn't to be the
       biggest catalog; it's to be the fastest way to an option you can trust.</p>
     </section>

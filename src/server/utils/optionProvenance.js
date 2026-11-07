@@ -45,3 +45,24 @@ export function resolveProvenance(link, option) {
     game_verified_at: gameUrl ? link.last_verified_at || null : null,
   };
 }
+
+/**
+ * Order for one game's options: those the game's own page lists first, then
+ * votes, then command, so the order is stable.
+ *
+ * Votes are all zero, so ordering by them alone left the list in whatever order
+ * PostgREST returned it, and a game's own flags sat among the ones that reach
+ * it only as engine-wide or Linux wrappers: Cyberpunk 2077's `--launcher-skip`
+ * came last of 21. A link-level `source_url` (rev 21 §1g) is the one signal
+ * that this game's page documents the flag. It ranks; it never hides.
+ *
+ * @param {{source_url?: string|null, public_launch_options: {command: string, upvotes?: number}}} a
+ *   A game_launch_options row with its nested public_launch_options row.
+ * @param {typeof a} b
+ * @returns {number}
+ */
+export function compareGameOptions(a, b) {
+  return (Boolean(b.source_url) - Boolean(a.source_url))
+    || ((b.public_launch_options.upvotes || 0) - (a.public_launch_options.upvotes || 0))
+    || a.public_launch_options.command.localeCompare(b.public_launch_options.command);
+}

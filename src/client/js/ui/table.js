@@ -523,7 +523,7 @@ function createNoOptionsHTML(colspan, gameId, gameTitle = '') {
       <div class="no-options ${mobileClass}">
         <div class="no-options-icon">🔍</div>
         <h4>No Launch Options Available</h4>
-        <p>This game doesn't have any community-verified launch options yet.</p>
+        <p>This game doesn't have any launch options yet.</p>
         <p>Know one that works? Help the next player out.</p>
         <a class="${btnClass} btn-secondary suggest-option-btn"
            href="${suggestOptionUrl(gameTitle, gameId)}"
