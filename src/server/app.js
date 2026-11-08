@@ -5,7 +5,7 @@ import setupCORS from './middlewares/cors.js';
 import compression from 'compression';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { Sentry, sentryEnabled } from './instrument.js';
+import { reportServerErrors } from './instrument.js';
 import gamesRoutes from './routes/gamesRoutes.js';
 import { gamePageController, sitemapController, howItWorksController, catalogController, guideController, engineHubController } from './controllers/seoController.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
@@ -206,14 +206,7 @@ app.use(notFoundHandler);
 // skip non-error middleware, so they reach Sentry first, get reported, then fall
 // through to errorHandler which still returns the standard { error: {...} } shape.
 // Only 5xx is reported — validation 400s and 404s are normal traffic, not incidents.
-if (sentryEnabled) {
-  Sentry.setupExpressErrorHandler(app, {
-    shouldHandleError(error) {
-      const status = error.status || error.statusCode || 500;
-      return status >= 500;
-    },
-  });
-}
+app.use(reportServerErrors);
 
 app.use(errorHandler);
 

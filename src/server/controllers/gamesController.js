@@ -451,6 +451,9 @@ export async function gameLaunchOptionsController(req, res) {
       optionsCount: launchOptions.length 
     });
     
+    // Every expanded table row asks for this. Same lifetime as the game page,
+    // which shows the same options, so the two go stale together.
+    setListCacheHeaders(res, 21600, 86400);
     res.json(launchOptions);
   } catch (err) {
     logger.error('OPTIONS', 'Failed to fetch launch options', { gameId: req.params.id, error: err.message });

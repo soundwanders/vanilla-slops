@@ -63,7 +63,7 @@ vi.mock('../services/gamesService.js', () => service);
 const { gamePageController } = await import('../controllers/seoController.js');
 
 function run(appid, slug, originalUrl) {
-  const res = { redirect: vi.fn(), status: vi.fn().mockReturnThis(), type: vi.fn().mockReturnThis(), send: vi.fn() };
+  const res = { redirect: vi.fn(), set: vi.fn(), status: vi.fn().mockReturnThis(), type: vi.fn().mockReturnThis(), send: vi.fn() };
   return gamePageController({ params: { appid, slug }, originalUrl }, res).then(() => res);
 }
 

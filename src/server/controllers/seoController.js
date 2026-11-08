@@ -21,6 +21,9 @@ import { preserveQuery } from '../utils/preserveQuery.js';
 // routeWiring.test.js fails if the rewrite's parameter is renamed.
 const GAME_REWRITE_PARAM = 'path';
 
+// Edge-cached like /catalog: the content moves only when the scraper runs.
+const LONG_CACHE = 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_URL = (process.env.DOMAIN_URL || 'https://launchoptions.dev').replace(/\/$/, '');
 const DIST_INDEX = path.resolve(__dirname, '../../client/dist/index.html');
@@ -182,6 +185,11 @@ export async function gamePageController(req, res) {
   }
   if (!game) return res.status(404).type('html').send(render404());
 
+  // Everything from here is edge-cached, the two redirects included, so a
+  // repeat visit or a slug-less link costs no function call or database read.
+  // Never in dev, for the reason howItWorksController gives.
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
+
   // Steam publishes some products under two App IDs (Condition Zero is 80 and
   // 100). `duplicate_of` names the surviving row, and public_games hides the
   // other — but this page still reads the table, precisely so a link to the
@@ -202,7 +210,6 @@ export async function gamePageController(req, res) {
   // failure and the section simply doesn't render.
   const related = await fetchRelatedGames(game);
 
-  res.set('Cache-Control', 'public, max-age=3600');
   res.type('html').send(renderGamePage(game, canonicalSlug, related));
 }
 
@@ -971,9 +978,6 @@ export async function catalogController(req, res) {
     : 'no-store');
   res.type('html').send(renderCatalog(grain));
 }
-
-// Edge-cached like /catalog: the content moves only when the scraper runs.
-const LONG_CACHE = 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400';
 
 /**
  * GET /engine/:slug — one engine's documented flags, and every game built on
