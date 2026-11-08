@@ -18,6 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.4] - 2026-11-08 — Sourced, not verified
+
+### Changed
+- **"Community-verified" is now "sourced".** Every option links to where it
+  came from, but nobody tests them and voting is not live, so the homepage,
+  game pages and link previews no longer claim a check that never happens.
+  How It Works no longer calls the crawler public; it has been private since
+  1.7.3.
+- **A game's own options come first.** Game pages sorted options by votes,
+  which are all zero, so the order was arbitrary. Options the game's own
+  documentation names now lead: Cyberpunk 2077's `--launcher-skip` moves from
+  21st to 1st. Nothing is hidden. Links to the Linux wrappers `gamemoderun`
+  and `mangohud` do not count: an old scraper rule cited the game's ProtonDB
+  page on them whether or not a report named the wrapper, so game pages no
+  longer show that page as confirming it.
+- **How It Works states the whole risk rule,** including the **Caution**
+  grade it never mentioned: 11 flags, such as `-noeac`, `+exec`, `-threads`
+  and `-high`.
+- **Less server work per visit.** The site runs on a free hosting plan billed
+  by CPU time, and had used 75% of it. Game pages, their redirects and the
+  options shown when you expand a row are now served from Vercel's cache for
+  six hours; before, game pages were cached for one hour and the other two not
+  at all. Error reporting now loads only when an error happens. Measured
+  locally, a cold start fell from ~790 ms of CPU to ~350 ms, and a game page
+  from ~45 ms to ~19 ms.
+
+### Fixed
+- **`/api/games/:id` answered 500 for a game the catalogue does not have,**
+  such as Marvel Rivals or Deadlock. It now answers 404.
+
 ## [1.7.3] - 2026-10-19 — Only our words on the page
 
 A security sweep. Nothing was exposed, but one bug let a link put someone
