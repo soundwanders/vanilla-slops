@@ -680,11 +680,16 @@ ${movement('I', 'Where the data comes from')}
       <h2 id="hiw-tagging">How options are categorized and risk-rated</h2>
       <p>Categories and risk levels come from a fixed rule set that reads the
       command itself and where it came from, so the same input always produces
-      the same grade. Display, performance, audio and skip-intro flags we
-      recognize earn a <strong>Safe</strong> grade. Network and debug flags,
-      which can reach multiplayer integrity and anti-cheat, sit at
-      <strong>Experimental</strong> by default, since their effects are harder
-      to pin down.</p>
+      the same grade. <strong>Caution</strong> comes first: it marks flags
+      that can cost you data or touch anti-cheat or security, such as
+      <code>-noeac</code> and <code>+exec</code>, and <code>-threads</code> and
+      <code>-high</code>, which can make a game stutter or starve other
+      programs. Network and debug flags are otherwise
+      <strong>Experimental</strong>, even when documented: documentation says
+      what a flag does, not that changing netcode or developer tooling is free
+      of side effects. Display, performance, audio and skip-intro flags we
+      recognize earn a <strong>Safe</strong> grade, and anything the rules
+      cannot place stays Experimental.</p>
     </section>
 
 ${movement('II', 'What you\'re looking at')}
