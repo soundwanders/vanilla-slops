@@ -20,23 +20,16 @@
  */
 
 /**
- * Commands whose link citations are not this game's evidence, for now.
+ * Linux wrappers: tools that run any game, not flags any one game documents.
  *
- * slop-scraper rev 22 §10: a rule since removed attached the two Linux
- * wrappers to every game whose ProtonDB reports named no option, and stamped
- * each link with that game's ProtonDB page. 2,764 links carry such a stamp,
- * and stored data cannot tell it from a report that really names the wrapper.
- * Treated as evidence, the stamp put a wrapper first on 154 game pages that
- * have options of their own, and showed the ProtonDB page as confirming it.
- * Upstream asked that these citations not count until it settles them;
- * remove this when the handoff says they are settled.
+ * Since slop-scraper rev 24 every remaining link to these two is named by a
+ * ProtonDB report for that game and cites that game's page, so the citation
+ * is real evidence and resolveProvenance shows it. They still rank below the
+ * game's other cited options: ties within the cited tier fall to the
+ * alphabet, where `gamemoderun` beats every `PROTON_*` variable, and measured
+ * on 2026-11-09 that alone would have opened 266 game pages with a wrapper.
  */
-const UNSETTLED_LINK_CITATIONS = new Set(['gamemoderun %command%', 'mangohud %command%']);
-
-/** The link as this game's evidence, or null when its citation cannot count. */
-function ownEvidence(link, command) {
-  return link && !UNSETTLED_LINK_CITATIONS.has(command) ? link : null;
-}
+const LINUX_WRAPPERS = new Set(['gamemoderun %command%', 'mangohud %command%']);
 
 /**
  * @param {{description?: string|null, source?: string|null, source_url?: string|null, last_verified_at?: string|null}|null} link
@@ -48,8 +41,7 @@ function ownEvidence(link, command) {
  *   last_verified_at: string|null, game_source: string|null, game_source_url: string|null,
  *   game_verified_at: string|null}}
  */
-export function resolveProvenance(rawLink, option) {
-  const link = ownEvidence(rawLink, option?.command);
+export function resolveProvenance(link, option) {
   const own = Boolean(link?.description);
   const cited = own ? link : option;
   const citedUrl = cited?.source_url || null;
@@ -68,14 +60,15 @@ export function resolveProvenance(rawLink, option) {
 
 /**
  * Order for one game's options: those the game's own page lists first, then
- * votes, then command, so the order is stable.
+ * cited Linux wrappers, then the rest; within a tier by votes, then command,
+ * so the order is stable.
  *
  * Votes are all zero, so ordering by them alone left the list in whatever order
  * PostgREST returned it, and a game's own flags sat among the ones that reach
  * it only as engine-wide or Linux wrappers: Cyberpunk 2077's `--launcher-skip`
  * came last of 21. A link-level `source_url` (rev 21 §1g) is the one signal
- * that this game's page documents the flag, except on the commands in
- * UNSETTLED_LINK_CITATIONS. It ranks; it never hides.
+ * that this game's page documents the flag. LINUX_WRAPPERS says why a cited
+ * wrapper gets a tier of its own. It ranks; it never hides.
  *
  * @param {{source_url?: string|null, public_launch_options: {command: string, upvotes?: number}}} a
  *   A game_launch_options row with its nested public_launch_options row.
@@ -83,8 +76,11 @@ export function resolveProvenance(rawLink, option) {
  * @returns {number}
  */
 export function compareGameOptions(a, b) {
-  const cites = (row) => Boolean(ownEvidence(row, row.public_launch_options.command)?.source_url);
-  return (cites(b) - cites(a))
+  const tier = (row) => {
+    if (!row.source_url) return 0;
+    return LINUX_WRAPPERS.has(row.public_launch_options.command) ? 1 : 2;
+  };
+  return (tier(b) - tier(a))
     || ((b.public_launch_options.upvotes || 0) - (a.public_launch_options.upvotes || 0))
     || a.public_launch_options.command.localeCompare(b.public_launch_options.command);
 }

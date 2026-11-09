@@ -9,6 +9,8 @@ The Vanilla Slops API is a read-only web service built with **Node.js** and **Ex
 
 Launch options are command-line parameters you can add to a Steam game to optimize performance, unlock features, or fix compatibility issues.
 
+**Data licence:** responses contain information from [ProtonDB](https://www.protondb.com), which is made available here under the [Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/). The ProtonDB-derived data is available under the ODbL on request, [via a GitHub issue](https://github.com/soundwanders/vanilla-slops/issues/new?title=Request%3A+ProtonDB-derived+data+%28ODbL%29).
+
 **Tech Stack:**
 - **Runtime**: Node.js (22.x)
 - **Framework**: Express.js

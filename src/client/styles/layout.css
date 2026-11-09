@@ -278,6 +278,19 @@ footer p {
   margin-top: var(--space-3);
 }
 
+/* The licence notice is a sentence, not a label: keep it to a readable measure,
+   and underline its links, which would otherwise be indistinguishable from the
+   words around them. */
+.footer-notice {
+  max-width: 46ch;
+  margin-inline: auto;
+}
+
+.footer-notice .footer-link {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .footer-sep {
   margin: 0 var(--space-2);
   opacity: 0.45;

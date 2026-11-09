@@ -101,6 +101,17 @@ function suggestIssueUrl() {
   return `${REPO_URL}/issues/new?${params.toString()}`;
 }
 
+// The ODbL asks that the ProtonDB-derived data be offered on request (rev 23
+// §9g). slop-scraper produces the file; a request only has to reach us, and
+// this is the one public channel the site already has.
+function dataRequestIssueUrl() {
+  const params = new URLSearchParams({
+    title: 'Request: ProtonDB-derived data (ODbL)',
+    body: 'I would like a copy of the launch-option data derived from ProtonDB, under the Open Database License.\n',
+  });
+  return `${REPO_URL}/issues/new?${params.toString()}`;
+}
+
 /**
  * Shared header for server-rendered pages: logo, "Search all games" CTA, a
  * "How it works" nav link, and the theme toggle. Pass current:'how-it-works'
@@ -130,6 +141,18 @@ function seoHeader({ current } = {}) {
     </button>
   </header>`;
 }
+
+/**
+ * The attribution ProtonDB's licence requires wherever data derived from its
+ * reports is shown (ODbL 1.0 §4.3), in the licence's own suggested wording.
+ * The licence ends automatically if the notice is missing (§9.1), so it sits
+ * in the footer of every page, and index.html carries the same line.
+ * footerNotice.test.js fails if either copy goes. slop-scraper rev 23 §9g.
+ */
+export const PROTONDB_NOTICE_HTML = 'Contains information from '
+  + '<a href="https://www.protondb.com" target="_blank" rel="noopener noreferrer" class="footer-link">ProtonDB</a>, '
+  + 'which is made available here under the '
+  + '<a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer" class="footer-link">Open Database License (ODbL)</a>.';
 
 /**
  * Shared footer for server-rendered pages.
@@ -165,6 +188,7 @@ function seoFooter({ current } = {}) {
 ${links}
     <p class="footer-line">Community-sourced Steam launch options</p>
     <p class="footer-line">Not affiliated with Valve Corporation</p>
+    <p class="footer-line footer-notice">${PROTONDB_NOTICE_HTML}</p>
   </footer>`;
 }
 
@@ -285,8 +309,8 @@ function renderGamePage(game, slug, related = []) {
   <link rel="canonical" href="${canonical}" />
 ${options.length === 0 ? `  <!-- A game with no documented options is usually correct rather than a
        failure, and the page stays useful to a person who searched for the
-       title. But it is ~106 words with nothing specific to say, and 69 of them
-       exist - enough thin pages to affect how the whole domain is assessed.
+       title. But it is ~106 words with nothing specific to say, and there are
+       enough of them to affect how the whole domain is assessed.
        getGamesForSitemap already leaves these out; a sitemap omission is only a
        hint, so state it directly. The follow half keeps link equity flowing on
        to the related games below. -->
@@ -664,6 +688,12 @@ ${movement('I', 'Where the data comes from')}
           already been there.</li>
         <li><strong>ProtonDB.</strong> Linux and Steam Deck reports and tweaks.</li>
       </ol>
+      <p>ProtonDB publishes its reports under the
+      <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer">Open
+      Database License (ODbL)</a>, and the part of this catalog derived from
+      them is available under the same licence on request:
+      <a href="${dataRequestIssueUrl()}" target="_blank" rel="noopener noreferrer">ask on GitHub</a>
+      and we'll send it to you.</p>
       <p>A few options carry the source <strong>Universal</strong> rather than a
       site name &mdash; flags that work across many games whatever the engine
       (<code>-high</code>, <code>-fullscreen</code>, <code>-console</code>),

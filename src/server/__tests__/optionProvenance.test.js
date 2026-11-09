@@ -105,20 +105,26 @@ describe('compareGameOptions', () => {
     expect(order(rows)).toEqual(order([...rows].reverse()));
   });
 
-  // slop-scraper rev 22 §10: a removed rule stamped the wrappers' links with
-  // the game's ProtonDB page whether or not a report named them.
-  it('does not let a wrapper\'s link citation rank it as the game\'s own', () => {
-    const protondb = 'https://www.protondb.com/app/1091500';
+  // slop-scraper rev 24: every wrapper link is report-backed and cites its
+  // game's ProtonDB page. Real evidence, but generic: it ranks after the game's
+  // other cited options, which it would otherwise beat on the alphabet alone.
+  it('ranks a cited wrapper after the game\'s other cited options, before the rest', () => {
+    const protondb = 'https://www.protondb.com/app/457140';
     expect(order([
+      row('-windowed'),
       row('gamemoderun %command%', protondb),
       row('mangohud %command%', protondb),
-      row('-windowed'),
-      row('--launcher-skip', 'https://www.pcgamingwiki.com/wiki/Cyberpunk_2077'),
-    ])).toEqual(['--launcher-skip', '-windowed', 'gamemoderun %command%', 'mangohud %command%']);
+      row('PROTON_USE_WINED3D=1', protondb),
+    ])).toEqual(['PROTON_USE_WINED3D=1', 'gamemoderun %command%', 'mangohud %command%', '-windowed']);
+  });
+
+  it('ranks an uncited wrapper with the rest, not in the wrapper tier', () => {
+    expect(order([row('gamemoderun %command%'), row('-a', null)]))
+      .toEqual(['-a', 'gamemoderun %command%']);
   });
 });
 
-describe('resolveProvenance — unsettled wrapper citations', () => {
+describe('resolveProvenance — Linux wrappers', () => {
   const shared = {
     command: 'gamemoderun %command%',
     description: 'Runs the game under Feral GameMode.',
@@ -126,29 +132,23 @@ describe('resolveProvenance — unsettled wrapper citations', () => {
     source_url: 'https://github.com/FeralInteractive/gamemode',
     last_verified_at: null,
   };
-  const stamped = {
+  const report = {
     description: null,
     source: 'ProtonDB',
     source_url: 'https://www.protondb.com/app/1091500',
-    last_verified_at: '2026-09-20T00:00:00+00:00',
+    last_verified_at: '2026-11-09T00:00:00+00:00',
   };
 
-  it('shows the shared row only, never the stamp as the game\'s evidence', () => {
-    expect(resolveProvenance(stamped, shared)).toEqual({
+  // Rev 22 asked for these citations to be ignored; rev 24 lifted that.
+  it('shows the game\'s ProtonDB page as its own evidence beside the shared text', () => {
+    expect(resolveProvenance(report, shared)).toEqual({
       description: shared.description,
       source: shared.source,
       source_url: shared.source_url,
       last_verified_at: null,
-      game_source: null,
-      game_source_url: null,
-      game_verified_at: null,
+      game_source: 'ProtonDB',
+      game_source_url: report.source_url,
+      game_verified_at: report.last_verified_at,
     });
-  });
-
-  it('applies to mangohud too, and to no other command', () => {
-    const mangohud = { ...shared, command: 'mangohud %command%' };
-    expect(resolveProvenance(stamped, mangohud).game_source_url).toBeNull();
-    const other = { ...shared, command: '-windowed' };
-    expect(resolveProvenance(stamped, other).game_source_url).toBe(stamped.source_url);
   });
 });
