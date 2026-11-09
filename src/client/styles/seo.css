@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--space-4);
+  gap: var(--space-4) var(--space-7);
   max-width: 900px;
   margin: 0 auto;
   padding: var(--space-4) var(--space-6);
@@ -33,16 +33,26 @@
 }
 
 /* Theme toggle sits inline at the right edge of the header (base #theme-toggle
-   is already inline; just space it from the CTA). */
+   is already inline). A little more room than the gap between the text links,
+   because it is a different kind of control. */
 .seo-page #theme-toggle {
-  margin-left: var(--space-4);
+  margin-left: var(--space-2);
 }
 
-/* Narrow screens: the logo and the theme toggle share the top row (toggle
-   pinned right); the "Search all games" CTA and "How it works" link wrap onto
-   the row below together. This keeps the toggle from ever being pushed onto a
-   line by itself once the header has more than a couple of items. */
-@media (max-width: 640px) {
+/* Narrower screens: the logo and the theme toggle share the top row (toggle
+   pinned right); the "Search all games" CTA and the nav links wrap onto the
+   row below together. This keeps the toggle from ever being pushed onto a
+   line by itself. The breakpoint is where the full row (logo, CTA, The
+   Bedrock, How it works, toggle) stops fitting: at 640px, the old value, the
+   toggle wrapped alone between 641px and ~760px. */
+@media (max-width: 800px) {
+  /* Row spacing moves onto the second row's items, so the zero-height break
+     below adds no gap of its own. */
+  .seo-header {
+    column-gap: var(--space-4);
+    row-gap: 0;
+  }
+
   .seo-page .seo-home { order: 1; }
 
   .seo-page #theme-toggle {
@@ -50,14 +60,24 @@
     margin-left: auto;
   }
 
-  .seo-page .seo-cta {
+  /* A full-width break, so the CTA always starts the second row instead of
+     staying on the first whenever it happens to fit there. */
+  .seo-header::after {
+    content: '';
     order: 3;
+    flex-basis: 100%;
+  }
+
+  .seo-page .seo-cta {
+    order: 4;
     margin-left: 0;
+    margin-top: var(--space-4);
   }
 
   .seo-page .seo-nav-link {
-    order: 4;
+    order: 5;
     margin-left: 0;
+    margin-top: var(--space-4);
   }
 }
 
