@@ -51,6 +51,19 @@ a:not([class]) {
   text-decoration-skip-ink: auto;
 }
 
+/* Prose links with no class of their own fell through to the browser's
+   default blue and purple, which match neither theme. :where() keeps this at
+   zero specificity, so it only replaces the browser default and never beats a
+   component's own link rule (breadcrumbs, contents list, citations). */
+:where(a:not([class])) {
+  color: var(--color-accent);
+  text-underline-offset: 0.15em;
+}
+
+:where(a:not([class]):hover) {
+  color: var(--color-accent-hover);
+}
+
 img,
 picture,
 svg {
