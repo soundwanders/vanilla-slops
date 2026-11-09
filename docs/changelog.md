@@ -18,6 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.5] - 2026-11-09 — Credit where it's due
+
+### Added
+- **ProtonDB is credited on every page.** ProtonDB publishes its reports
+  under the Open Database License, and about 4,100 of the site's game-option
+  links come from them. Every footer now says so, in the licence's own
+  words, and How It Works explains how to ask for that part of the data
+  under the same licence. The API docs carry the same notice.
+
+### Changed
+- **Linux wrapper citations count again.** The catalogue now keeps
+  `gamemoderun` and `mangohud` only on games whose ProtonDB reports name
+  them: 1,466 links, each citing that game's ProtonDB page. Game pages show
+  that page as evidence again, which 1.7.4 had set aside. A wrapper still
+  ranks below a game's other cited options, so it leads only where it is the
+  only one, on 92 game pages.
+
 ## [1.7.4] - 2026-11-08 — Sourced, not verified
 
 ### Changed
