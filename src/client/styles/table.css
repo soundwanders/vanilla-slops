@@ -362,15 +362,56 @@
   flex-shrink: 0;
 }
 
+/* Hover changes colour only. It used to lift 2px (never seen: the
+   translateZ(0) in responsive.css outranks it) and bloom from shadow-sm to
+   shadow-lg, which read as the button swelling under the pointer. */
 .launch-options-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
   background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-700) 100%);
 }
 
-.launch-options-btn:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
+/* The label toggles between "Options" and "Hide". Reserving the longer word's
+   width keeps the button one size in both states; it used to snap 18px
+   narrower on open and grow back on close. The reserved word is hidden, so it
+   is not read out, and the button's aria-label names it anyway. */
+.launch-options-btn .btn-text {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.launch-options-btn .btn-text::after {
+  content: 'Options';
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* A press is acknowledged by one soft sheen across the face, not by a change
+   of size: a click or a tap alike, opening or closing. Never on hover, so
+   moving the pointer down the table sets nothing off. table.js adds
+   .is-sheening on click and clears it when the sweep ends. The button already
+   clips its overflow, so the band stays inside the rounded corners, and
+   z-index -1 inside its own stacking context lays the band over the gradient
+   but under the label and count, which stay crisp as it passes. */
+@media (prefers-reduced-motion: no-preference) {
+  .launch-options-btn.is-sheening {
+    isolation: isolate;
+  }
+
+  .launch-options-btn.is-sheening::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 0.28) 50%, transparent 70%);
+    pointer-events: none;
+    animation: options-btn-sheen 650ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@keyframes options-btn-sheen {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
 }
 
 .launch-options-btn:disabled {
@@ -905,10 +946,10 @@ a.option-source:hover {
    5. INTERACTIVE STATES & FEEDBACK
    ============================================================================= */
 
-/* Table row hover */
+/* Table row hover. No scale: a 1.005 zoom grew a 1280px row by 6px and
+   carried the Options button with it. */
 .games-table tbody tr:hover {
   background: var(--color-interactive-hover);
-  transform: scale(1.005);
   box-shadow: var(--shadow-md);
   z-index: var(--z-raised);
 }
@@ -929,16 +970,6 @@ a.option-source:hover {
 }
 
 /* Loading states */
-.launch-options-cell .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-8);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
 .launch-options-cell .spinner {
   width: var(--space-5);
   height: var(--space-5);
@@ -946,10 +977,6 @@ a.option-source:hover {
   border-top: 2px solid var(--color-accent);
   border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
-}
-
-.launch-options-btn.loading::before {
-  display: none;
 }
 
 .launch-options-btn .loading-spinner {

@@ -255,13 +255,14 @@ async function handleLaunchOptionsClick(e) {
   e.preventDefault();
   e.stopPropagation();
 
-  if (TableState.touchDevice) {
-    button.classList.add('touch-active');
-    setTimeout(() => button.classList.remove('touch-active'), 150);
-  }
-
   const gameId = button.dataset.gameId;
   if (!gameId) return;
+
+  // One sheen across the button acknowledges the press, opening or closing,
+  // on every device (table.css). clearSheen takes the class off when the
+  // sweep ends. It replaced a 150ms .touch-active dim to 70% on touch-capable
+  // devices, which ran underneath it.
+  button.classList.add('is-sheening');
 
   const originalContent = button.innerHTML;
 
@@ -1035,10 +1036,19 @@ function handleOptionDetailToggle(e) {
   if (label) label.textContent = open ? 'Less' : 'Details';
 }
 
+// Removing the class once the sweep ends (or is cut short) is what lets the
+// next press run it again. Matched by name, because these events bubble up
+// from anything else animating on the page.
+function clearSheen(e) {
+  if (e.animationName === 'options-btn-sheen') e.target.classList.remove('is-sheening');
+}
+
 function setupTableEventListeners() {
   if (TableState.isInitialized) return;
 
   document.addEventListener('click', handleLaunchOptionsClick);
+  document.addEventListener('animationend', clearSheen);
+  document.addEventListener('animationcancel', clearSheen);
   document.addEventListener('click', _handleCloseAllDelegated);
   document.addEventListener('click', handleSortHeaderInteraction);
   document.addEventListener('click', handleOptionDetailToggle);

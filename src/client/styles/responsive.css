@@ -790,32 +790,11 @@
     transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
-  .table-container .launch-options-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.3s ease-out, height 0.3s ease-out;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .table-container .launch-options-btn:active::before {
-    width: 200px;
-    height: 200px;
-    transition: width 0.15s ease-out, height 0.15s ease-out;
-  }
-
-  .table-container .launch-options-btn:active {
-    transform: scale(0.97) translateZ(0);
-    background: var(--color-interactive-active, var(--color-accent-hover));
-    box-shadow: var(--shadow-sm);
-  }
+  /* A tap is acknowledged by the same sheen as a click (table.css), so the
+     button reads alike on every device. It replaced a ripple, a 0.97
+     press-in, and a held-down fill of --color-interactive-active: a neutral
+     row tint, which turned the blue button cream (slate in dark) and left
+     its white light-theme label on cream while a finger was down. */
 
   .filters-container .filter-select,
   .filters-container .sort-select {
@@ -838,8 +817,18 @@
     transform: translateZ(0);
   }
 
+  /* No tap highlight on a game row: Chrome painted its grey-blue one over the
+     whole card on every tap of the Options button, under the sheen, and a row
+     has no tap action of its own. The property is inherited, so the row's two
+     links (game page, Steam) go without it too; both navigate at once. Scoped
+     to .game-row so the expanded options row keeps it for its own controls. */
+  .table-container .games-table tbody tr.game-row {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* No scale: :active reaches the row through the Options button inside it,
+     so a 0.995 press-in shrank the button with every tap. */
   .table-container .games-table tbody tr:active {
-    transform: scale(0.995) translateZ(0);
     box-shadow: var(--shadow-md);
     background: var(--color-surface-hover, var(--color-surface-raised));
   }
