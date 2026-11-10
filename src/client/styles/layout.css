@@ -242,8 +242,15 @@
    ============================================================================= */
 
 /* Deliberately understated: no surface panel or radius, just a hairline rule and
-   quiet text so it recedes behind the content. */
+   quiet text so it recedes behind the content.
+
+   One grid, two arrangements. Phones get a single centred column; from 769px
+   the same elements pair up left and right (see the media query below). The
+   source order is the visual order in both, so nothing is reordered for
+   keyboard or screen-reader users. */
 footer {
+  display: grid;
+  row-gap: var(--space-3);
   text-align: center;
   padding: var(--space-xl) var(--space-md);
   margin: var(--space-2xl) auto 0;
@@ -260,22 +267,28 @@ footer p {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-1); /* + the row gap: a little more room under the name */
   letter-spacing: -0.01em;
 }
 
 /* Each line is its own statement, not a paragraph. A tighter line-height keeps
-   any one line compact while the margin below does the separating, so the three
-   lines read as a list instead of a block of running text. */
-.footer-line {
+   any one line compact while the gap does the separating, so the lines read
+   as a list instead of a block of running text. */
+.footer-line,
+.footer-nav {
   font-size: 0.75rem;
   line-height: var(--line-height-snug);
   letter-spacing: 0.01em;
   opacity: 0.8;
 }
 
-.footer-line + .footer-line {
-  margin-top: var(--space-3);
+/* Stacked on phones, one link per line. Centred rather than stretched, so each
+   link's hover and focus area is its own text, not the full width. */
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 /* The licence notice is a sentence, not a label: keep it to a readable measure,
@@ -284,6 +297,58 @@ footer p {
 .footer-notice {
   max-width: 46ch;
   margin-inline: auto;
+}
+
+/* Desktop: identity on the left, links on the right, and the licence notice
+   centred below a hairline, as a closing line across both. Centred because
+   left-aligned it had nothing on the right to balance it.
+
+     Vanilla Slops · GitHub         Steam Launch Options …  How …  The Bedrock
+     Community-sourced …                  Not affiliated with Valve Corporation
+     ─────────────────────────────────────────────────────────────────────────
+           Contains information from ProtonDB, which is made available …
+
+   769px is where the table becomes a table (responsive.css works at
+   max-width: 768px), and the top row needs about 600px, so it fits on the
+   narrowest server-rendered page there. Row-level baseline alignment keeps
+   the 14px name and the 12px links on one typographic line. */
+@media (min-width: 769px) {
+  footer {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name    nav"
+      "tagline legal"
+      "notice  notice";
+    column-gap: var(--space-8);
+    row-gap: var(--space-2);
+    align-items: baseline;
+    text-align: left;
+    padding-inline: var(--space-5); /* the app bar's gutter, so the two edges line up */
+  }
+
+  .footer-name { grid-area: name; margin-bottom: 0; }
+  .footer-tagline { grid-area: tagline; }
+
+  .footer-nav {
+    grid-area: nav;
+    flex-direction: row;
+    gap: var(--space-6);
+  }
+
+  .footer-legal {
+    grid-area: legal;
+    text-align: right;
+  }
+
+  .footer-notice {
+    grid-area: notice;
+    max-width: none;
+    /* With the grid's 8px row gap, the same room above the rule as below. */
+    margin: var(--space-3) 0 0;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border-subtle);
+    text-align: center;
+  }
 }
 
 .footer-notice .footer-link {
