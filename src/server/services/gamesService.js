@@ -833,16 +833,21 @@ async function getFuzzyTitleSuggestions(query) {
  * The page is a nice-to-have. A database hiccup returns an empty result and the
  * caller renders the page without the bed rather than failing the request.
  *
- * @returns {Promise<{tiers: Array, options: number, games: number, links: number, singletons: number}>}
+ * `games` is every published game, the number a search runs over.
+ * `gamesWithOptions` is the ones that have an option to show, and is null when
+ * it could not be counted: 38% of published games have none (rev 24), so the
+ * first must never stand in for the second.
+ *
+ * @returns {Promise<{tiers: Array, options: number, games: number, gamesWithOptions: number|null, links: number, singletons: number}>}
  */
 export async function getCatalogGrain() {
   const now = Date.now();
   if (_grainCache.data && now < _grainCache.expiresAt) return _grainCache.data;
 
-  const empty = { tiers: [], options: 0, games: 0, links: 0, singletons: 0 };
+  const empty = { tiers: [], options: 0, games: 0, gamesWithOptions: null, links: 0, singletons: 0 };
 
   try {
-    const [all, dupes, games] = await Promise.all([
+    const [all, dupes, games, gamesWithOptions] = await Promise.all([
       // One embedded aggregate rather than paging 19k junction rows.
       supabase
         .from('public_launch_options')
@@ -850,6 +855,7 @@ export async function getCatalogGrain() {
         .limit(2000),
       supabase.from('games').select('app_id').not('duplicate_of', 'is', null),
       supabase.from('public_games').select('*', { count: 'exact', head: true }),
+      countGamesWithOptions(),
     ]);
 
     if (all.error) {
@@ -888,6 +894,7 @@ export async function getCatalogGrain() {
       tiers,
       options: rows.length,
       games: games.error ? 0 : (games.count || 0),
+      gamesWithOptions,
       links: rows.reduce((sum, r) => sum + r.reach, 0),
       singletons: rows.filter((r) => r.reach === 1).length,
     };
@@ -1201,6 +1208,45 @@ async function getPhantomOptionCounts() {
   } catch (error) {
     console.error('Error in getPhantomOptionCounts:', error);
     return new Map();
+  }
+}
+
+/**
+ * How many published games have at least one option the site can show.
+ *
+ * A head count of `total_options_count > 0`, less the games whose every link
+ * points at a hidden option. Those are few (the phantom map is a few dozen
+ * rows), so their counts are fetched by id rather than paging the catalogue.
+ *
+ * @returns {Promise<number|null>} null if it could not be counted
+ */
+async function countGamesWithOptions() {
+  try {
+    const [linked, phantoms] = await Promise.all([
+      supabase
+        .from('public_games')
+        .select('*', { count: 'exact', head: true })
+        .gt('total_options_count', 0),
+      getPhantomOptionCounts(),
+    ]);
+    if (linked.error || linked.count == null) return null;
+
+    const ids = [...phantoms.keys()];
+    if (!ids.length) return linked.count;
+
+    const { data, error } = await supabase
+      .from('public_games')
+      .select('app_id, total_options_count')
+      .in('app_id', ids)
+      .gt('total_options_count', 0);
+    if (error) return null;
+
+    const emptied = withDisplayCounts(data, phantoms)
+      .filter((g) => g.display_options_count === 0).length;
+    return linked.count - emptied;
+  } catch (error) {
+    console.error('Error in countGamesWithOptions:', error);
+    return null;
   }
 }
 

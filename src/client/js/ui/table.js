@@ -108,7 +108,7 @@ function renderGamesTable(container, games) {
   // / `row` / `cell` — not `grid` / `gridcell`, which describe an interactive
   // widget with cell-level focus management this is not.
   table.setAttribute('role', 'table');
-  table.setAttribute('aria-label', 'Games with launch options');
+  table.setAttribute('aria-label', 'Steam games and their launch options');
 
   table.innerHTML = `
     <thead>

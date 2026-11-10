@@ -2,7 +2,7 @@
  * @fileoverview Grain sizes for the /catalog page.
  *
  * The page draws the option vocabulary as a graded bed: a few options reach
- * thousands of games, most reach exactly one. Sorting them into reach tiers is
+ * hundreds of games, most reach exactly one. Sorting them into reach tiers is
  * the whole of the transformation, and it is pure, so it lives here rather than
  * inside the query that fetches the rows.
  *

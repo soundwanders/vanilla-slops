@@ -854,15 +854,38 @@ ${seoFooter({ current: 'how-it-works' })}
  * The markup below is complete on its own. The disturbance effect is added by
  * /catalog-grain.js afterwards and is never required to read the page.
  */
+/**
+ * The Bedrock's one-line claim about its own shape, worded from the figures.
+ * It used to be a fixed "a handful cover thousands", which went false when
+ * rev 24 took the widest option from thousands of games to hundreds.
+ *
+ * @param {{tiers?: Array, options?: number, singletons?: number}} grain
+ * @returns {string} empty when there is nothing to describe
+ */
+export function reachSummary(grain) {
+  const widest = grain?.tiers?.[0]?.options?.[0]?.reach || 0;
+  if (!widest || !grain.options) return '';
+  const span = widest >= 2000 ? 'thousands of games'
+    : widest >= 1000 ? 'over a thousand games'
+      : widest >= 100 ? 'hundreds of games'
+        : `up to ${widest.toLocaleString('en-US')} games`;
+  const singles = grain.singletons || 0;
+  const tail = singles * 2 > grain.options ? '; most cover exactly one'
+    : singles > 0 ? `; ${singles.toLocaleString('en-US')} cover exactly one`
+      : '';
+  return `The widest cover ${span}${tail}.`;
+}
+
 function renderCatalog(grain) {
   const canonical = `${SITE_URL}/catalog`;
   const pageTitle = 'The Bedrock: Every Launch Option We Publish — Vanilla Slops';
+  const summary = reachSummary(grain);
   const metaDesc = truncate(
-    grain.options > 0
+    (grain.options > 0
       ? `Every one of the ${grain.options} launch options we publish, sorted by how ` +
-        'many games it reaches. A handful cover thousands; most cover exactly one.'
-      : 'Every launch option we publish, sorted by how many games it reaches. ' +
-        'A handful cover thousands; most cover exactly one.', 160
+        'many games it reaches.'
+      : 'Every launch option we publish, sorted by how many games it reaches.')
+    + (summary ? ` ${summary}` : ''), 160
   );
   const css = getCssHref();
 
@@ -886,7 +909,7 @@ function renderCatalog(grain) {
   const figures = hasData ? `
     <ul class="cat-figures">
       <li><b>${grain.options.toLocaleString()}</b><span>options published</span></li>
-      <li><b>${grain.games.toLocaleString()}</b><span>games covered</span></li>
+      ${grain.gamesWithOptions != null ? `<li><b>${grain.gamesWithOptions.toLocaleString()}</b><span>games with an option</span></li>` : ''}
       <li><b>${grain.singletons.toLocaleString()}</b><span>used by one game</span></li>
     </ul>` : '';
 
@@ -945,7 +968,7 @@ ${seoHeader({ current: 'catalog' })}
     <h1 class="seo-title">The Bedrock</h1>
     <p class="seo-subtitle">
       Every launch option we publish, sorted by how many games it reaches.
-      A handful cover thousands. Many cover only one.
+      ${summary}
     </p>
     ${figures}
 
@@ -961,9 +984,9 @@ ${seoHeader({ current: 'catalog' })}
       <p>
         ${top && second ? `<code>${escapeHtml(top.command)}</code> reaches
         ${top.reach.toLocaleString()} games and <code>${escapeHtml(second.command)}</code>
-        reaches ${second.reach.toLocaleString()}. Neither is a setting belonging to any
-        of them. They are Linux tools that wrap whatever you launch, which is why they
-        apply almost everywhere.` : ''}
+        reaches ${second.reach.toLocaleString()}. Options this wide belong to a tool
+        or an engine rather than to any one game: a Linux wrapper that runs around
+        whatever you launch, or a flag read by the engine itself.` : ''}
         Below that the ground drops away fast: ${grain.singletons.toLocaleString()} of
         ${grain.options.toLocaleString()} options are used by a single game.
       </p>
@@ -1057,7 +1080,7 @@ function renderEngineHub(hub, options, games) {
   const pageTitle = `${engine} Launch Options — Vanilla Slops`;
   const metaDesc = truncate(
     `${options.length} ${optionWord} documented for ${engine}, each with its source, ` +
-    `and the ${gameCount} Steam games in our catalogue built on it.`, 160
+    `and the ${gameCount} Steam games built on it that have launch options here.`, 160
   );
   const css = getCssHref();
 
@@ -1117,7 +1140,7 @@ ${seoHeader()}
     <h1 class="seo-title">${escapeHtml(engine)} launch options</h1>
     <p class="seo-subtitle">
       ${options.length} ${optionWord} documented for ${escapeHtml(engine)}, and the
-      ${gameCount} games in the catalogue built on it.
+      ${gameCount} games built on it that have launch options here.
     </p>
 
     <section class="hub-section" aria-labelledby="hub-options-heading">
@@ -1134,7 +1157,7 @@ ${options.map(renderOption).join('\n')}
     ${HOW_TO_APPLY_HTML}
 
     <section class="hub-section" aria-labelledby="hub-games-heading">
-      <h2 id="hub-games-heading">${escapeHtml(engine)} games in the catalogue</h2>
+      <h2 id="hub-games-heading">${escapeHtml(engine)} games with launch options</h2>
       <p class="hub-note">Each with the number of launch options its page lists.</p>
       <ul class="hub-games-list">
 ${gameItems}
@@ -1221,7 +1244,7 @@ function renderGuide({ options, featured }, hubs) {
   const engineCards = hubs.map((h) => linkCard(
     `/engine/${h.slug}`,
     h.engine,
-    `${h.flags} launch option${h.flags === 1 ? '' : 's'}<span class="related-game-sep" aria-hidden="true">·</span>${h.games.toLocaleString('en-US')} games`,
+    `${h.flags} launch option${h.flags === 1 ? '' : 's'}<span class="related-game-sep" aria-hidden="true">·</span>${h.games.toLocaleString('en-US')} game${h.games === 1 ? '' : 's'} with options`,
   )).join('\n');
 
   const gameCards = featured.map((g) => linkCard(
@@ -1294,7 +1317,7 @@ ${seoHeader()}
       from one engine's documentation is not one the other engine promises to
       read.</p>
 ${engineCards ? `      <p>Where an engine has enough documented flags to fill a page, it has one,
-      along with the games in the catalogue built on it:</p>
+      along with the games built on it that have launch options here:</p>
       <ul class="related-games-list">
 ${engineCards}
       </ul>` : ''}

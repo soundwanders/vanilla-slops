@@ -19,7 +19,7 @@
 
 ## Vanilla Slops?
 
-**Vanilla Slops** is a searchable database of launch options for thousands of games on [Steam](https://store.steampowered.com/), live at [launchoptions.dev](https://launchoptions.dev). Every option names the source it was documented in. New to launch options? Start with [Steam launch options, explained](https://launchoptions.dev/steam-launch-options).
+**Vanilla Slops** is a searchable database of launch options for games on [Steam](https://store.steampowered.com/), live at [launchoptions.dev](https://launchoptions.dev). Every option names the source it was documented in. New to launch options? Start with [Steam launch options, explained](https://launchoptions.dev/steam-launch-options).
 
 The name Vanilla Slops is a nod to the use of vanilla JavaScript, with our back-end powered by an Express.js API and Supabase (PostgreSQL).
 
