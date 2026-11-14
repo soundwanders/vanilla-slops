@@ -1,4 +1,5 @@
 import { fetchGames } from './api.js';
+import { visitorMessage } from './apiError.js';
 import { renderTable, renderSkeletonTable, renderEmptyState } from './ui/table.js';
 import { escapeHtml } from './ui/table-shared.js';
 import { setupThemeToggle } from './ui/theme.js';
@@ -478,7 +479,7 @@ async function loadPage(page = 1, replace = true, reason = 'search') {
     }
   } catch (error) {
     console.error('Error loading page:', error);
-    showErrorState(error.message);
+    showErrorState(visitorMessage(error));
     stateManager.dispatch('SET_PREVENT_SCROLL', false);
   } finally {
     stateManager.dispatch('SET_LOADING', false);

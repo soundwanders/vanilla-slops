@@ -5,6 +5,7 @@
  */
 
 import { CACHE_MAX_SIZE, CACHE_TTL_MS, FETCH_MAX_RETRIES, DEFAULT_PAGE_SIZE, SUGGESTION_LIMIT } from './constants.js';
+import { ApiError, messageForStatus, isRetryable, NETWORK_MESSAGE } from './apiError.js';
 
 const API_URL = process.env.NODE_ENV === 'production'
   ? '/api'
@@ -92,13 +93,16 @@ const cache = new SlopCache();
  * @param {string} [options.method='GET'] - HTTP method
  * @param {string} [options.body] - Request body
  * @returns {Promise<Response>} Fetch response object
- * @throws {Error} When all retry attempts fail
+ * @throws {ApiError} When the request is refused, or still failing after the
+ *   retries. A 4xx is thrown at once; a 5xx or a dropped connection is tried
+ *   FETCH_MAX_RETRIES times.
  */
 async function fetchWrapper(url, options = {}) {
-  const maxRetries = FETCH_MAX_RETRIES;
   let attempt = 0;
 
-  while (attempt < maxRetries) {
+  while (true) {
+    let failure;
+
     try {
       const response = await fetch(url, {
         ...options,
@@ -108,33 +112,26 @@ async function fetchWrapper(url, options = {}) {
         }
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorMessage;
-        } catch {
-          // If response isn't JSON, use the text
-          errorMessage = errorText || errorMessage;
-        }
-        
-        throw new Error(errorMessage);
-      }
+      if (response.ok) return response;
 
-      return response;
-    } catch (error) {
-      attempt++;
-      
-      if (attempt >= maxRetries) {
-        console.error(`Request failed after ${maxRetries} attempts:`, error);
-        throw error;
-      }
-      
-      // Exponential backoff
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+      // The sentence comes from the status. The body is read only for the
+      // API's own words on a 4xx, and is never shown as it stands.
+      const body = await response.text().catch(() => '');
+      failure = new ApiError(response.status, messageForStatus(response.status, body));
+    } catch {
+      // fetch itself rejected: offline, DNS, a dropped connection.
+      failure = new ApiError(0, NETWORK_MESSAGE);
     }
+
+    attempt++;
+
+    if (!isRetryable(failure) || attempt >= FETCH_MAX_RETRIES) {
+      console.error(`Request failed (status ${failure.status}, attempt ${attempt}):`, url);
+      throw failure;
+    }
+
+    // Exponential backoff
+    await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
   }
 }
 
@@ -240,8 +237,10 @@ export async function fetchGames({
     
     return result;
   } catch (error) {
+    // Rethrown as it is: an ApiError already carries the sentence for the
+    // page, and a prefix here only repeated the panel's own title.
     console.error('Failed to fetch games:', error);
-    throw new Error(`Failed to fetch games: ${error.message}`, { cause: error });
+    throw error;
   }
 }
 
@@ -365,7 +364,7 @@ export async function fetchGameDetails(gameId, useCache = true) {
     return data;
   } catch (error) {
     console.error(`Failed to fetch game details for ${gameId}:`, error);
-    throw new Error(`Failed to fetch details for game ${gameId}: ${error.message}`, { cause: error });
+    throw error;
   }
 }
 
@@ -393,7 +392,7 @@ export async function fetchLaunchOptions(gameId, useCache = true) {
     return launchOptions;
   } catch (error) {
     console.error(`Failed to fetch launch options for ${gameId}:`, error);
-    throw new Error(`Failed to fetch launch options for game ${gameId}: ${error.message}`, { cause: error });
+    throw error;
   }
 }
 

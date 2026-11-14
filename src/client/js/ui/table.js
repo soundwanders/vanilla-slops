@@ -1,4 +1,5 @@
 import { fetchLaunchOptions } from '../api.js';
+import { visitorMessage } from '../apiError.js';
 // The same slug the server computes and 301-redirects to, so an internal link
 // is already canonical and a click costs no redirect hop. Imported rather than
 // transcribed: this was a hand-copied duplicate until 2026-08-22, and while the
@@ -290,7 +291,7 @@ async function handleLaunchOptionsClick(e) {
     TableState.openLaunchOptionsRows.add(gameId);
     updateCloseAllButton();
   } catch (error) {
-    showLaunchOptionsError(gameId, error.message);
+    showLaunchOptionsError(gameId, visitorMessage(error));
     setButtonShowState(button, originalContent);
   } finally {
     button.classList.remove('loading');
@@ -956,7 +957,7 @@ function showLaunchOptionsError(gameId, errorMessage) {
       <div class="error ${mobileClass}">
         <div class="error-icon">❌</div>
         <h3>Error Loading Launch Options</h3>
-        <p>Failed to load launch options: ${escapeHtml(errorMessage)}</p>
+        <p>${escapeHtml(errorMessage)}</p>
         <div class="launch-options-close-container ${TableState.isMobile ? 'mobile-close-container' : ''}">
           <button class="launch-options-close ${TableState.isMobile ? 'mobile-close-btn' : ''}" data-game-id="${gameId}">
             <span class="close-icon" aria-hidden="true"></span>
