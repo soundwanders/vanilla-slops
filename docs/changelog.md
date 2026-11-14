@@ -18,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.7] - 2026-11-14 — In plain words
+
+### Fixed
+- **A failed request is explained in one sentence.** When the games list or
+  a game's options could not load, the error panel printed whatever came
+  back with the failure. For a request refused by the host's firewall that
+  was its challenge page, 20,791 characters of HTML source; for one of the
+  site's own errors it was "[object Object]". The panel now says what
+  happened: too many requests, a problem on our side, or no connection.
+- **A refused request is answered at once.** It was sent three times over
+  six seconds before the error appeared, though a refusal does not change on
+  a second asking. Server errors and dropped connections are still retried.
+
 ## [1.7.6] - 2026-11-13 — Failing honestly
 
 Crawlers arriving in bursts stalled the database six times in two weeks.
