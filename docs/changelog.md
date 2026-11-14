@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.8] - 2026-11-14 — Asked once
+
+### Fixed
+- **Opening a game's options sends one request, not two.** Hovering,
+  touching or focusing the Options button fetches the options ahead of the
+  click, and the click then asked again before the first answer had arrived.
+  The two now share one request. Measured in a browser by mouse, touch and
+  keyboard: 1 request per game opened, where mouse and touch sent 2.
+- **The error message in the games table no longer strands its last word.**
+  Each sentence ran a little over one line, leaving "again." alone on the
+  second. The two lines now come out even.
+
 ## [1.7.7] - 2026-11-14 — In plain words
 
 ### Fixed
