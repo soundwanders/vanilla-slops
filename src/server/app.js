@@ -27,8 +27,15 @@ const app = express();
 // req.ip the client's address, which is what the rate limiter keys on.
 app.set('trust proxy', 1);
 
-// Compression middleware
-app.use(compression());
+// Compression, except on Vercel, whose edge compresses function responses
+// itself. Compressing here as well spent function CPU on it and added
+// `Vary: Accept-Encoding`, and the edge cache keys on Vary: every distinct
+// Accept-Encoding string a client sent got its own copy of every page, each
+// one a function call (measured on the live site 2026-11-13: `gzip`, `br`,
+// `gzip, deflate, br` and Chrome's header were four separate misses).
+if (!process.env.VERCEL) {
+  app.use(compression());
+}
 
 // Security headers with Helmet
 app.use(helmet({

@@ -1,4 +1,5 @@
 import supabase from '../config/supabaseClient.js';
+import HttpError from '../models/httpError.js';
 import { FEATURED_APP_IDS, FEATURED_RANK, FEATURED_ID_LIST } from '../config/featuredGames.js';
 import { mergeRelatedTiers } from '../utils/relatedGames.js';
 import { buildPhantomMap, withDisplayCounts } from '../utils/optionCounts.js';
@@ -1101,7 +1102,11 @@ export async function getGuideData(commands) {
  * @property {Array} platforms - Available platforms (empty in current schema)
  * @property {Array} optionsRanges - Launch options count ranges
  * @property {Array} releaseYears - Available release years
- * @throws {Error} When database queries fail
+ * @throws {Error} When any of the database queries behind it fails. A facet
+ *   list with a hole in it is indistinguishable from a real one, and this
+ *   response is cached in process and at the edge: on 2026-11-13 a stalled
+ *   database produced 200s with empty dropdowns that the CDN then kept serving.
+ *   Failing whole means nothing wrong is cached and the client falls back.
  */
 export async function getFacets(searchQuery = '') {
   const now = Date.now();
@@ -1144,19 +1149,8 @@ export async function getFacets(searchQuery = '') {
 
     return result;
   } catch (error) {
-    console.error('Error in getFacets:', error);
-    return {
-      developers: [],
-      engines: [],
-      publishers: [],
-      genres: [],
-      platforms: [],
-      optionsRanges: [],
-      releaseYears: [],
-      categories: [],
-      riskLevels: [],
-      popularOptions: []
-    };
+    // The helper that failed has already logged the detail.
+    throw new Error('Failed to fetch facets from database', { cause: error });
   }
 }
 
@@ -1269,16 +1263,15 @@ async function getPopularOptions(topN = 24) {
       .from('public_launch_options')
       .select('command, description, game_launch_options(count)');
 
-    if (error) {
-      console.error('Error fetching popular options:', error);
-      return [];
-    }
+    if (error) throw queryFailed('popular options', error);
 
     // How many games there are, so "too broad" can be a proportion rather than
     // a magic number that rots as the catalogue grows.
-    const { count: totalGames } = await supabase
+    const { count: totalGames, error: countError } = await supabase
       .from('public_games')
       .select('app_id', { count: 'exact', head: true });
+
+    if (countError) throw queryFailed('popular options game count', countError);
 
     // Selection and ordering live in utils/optionRanking.js, which explains why
     // popularity is the wrong sort here and is unit-tested against the real
@@ -1294,7 +1287,7 @@ async function getPopularOptions(topN = 24) {
     );
   } catch (error) {
     console.error('Error in getPopularOptions:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -1315,10 +1308,7 @@ async function getOptionAttributeFacets() {
       .from('public_launch_options')
       .select('risk_level, categories');
 
-    if (error) {
-      console.error('Error fetching option attribute facets:', error);
-      return { categories: [], riskLevels: [] };
-    }
+    if (error) throw queryFailed('option attribute facets', error);
 
     const catCounts = {};
     const riskCounts = {};
@@ -1344,19 +1334,33 @@ async function getOptionAttributeFacets() {
     return { categories, riskLevels };
   } catch (error) {
     console.error('Error in getOptionAttributeFacets:', error);
-    return { categories: [], riskLevels: [] };
+    throw error;
   }
 }
 
 /**
- * Get unique values for a specific field with occurrence counts
+ * Turn a Supabase `{ error }` into something to throw. The message keeps only
+ * the first line, capped: when the database is unreachable the "message" is an
+ * entire Cloudflare error page.
+ *
+ * @param {string} what - which read failed
+ * @param {{message?: string, code?: string}} error - as returned by supabase-js
+ * @returns {Error}
  */
+function queryFailed(what, error) {
+  const detail = String(error?.message || 'unknown error').split('\n')[0].slice(0, 160);
+  return new Error(`${what} failed: ${error?.code ? `${error.code} ` : ''}${detail}`);
+}
+
 /**
  * Fetch every row matching a query, paging past Supabase's 1000-row cap.
  * Counting rows without this silently undercounts once a table exceeds 1000.
  *
  * @param {Function} buildQuery - (from, to) => Supabase query for that range
  * @returns {Promise<Array>} all matching rows
+ * @throws {Error} When any page fails. It used to stop and return the pages it
+ *   had, which made a count taken during a database stall look like a smaller
+ *   catalogue instead of an error.
  */
 async function fetchAllRows(buildQuery) {
   const PAGE = 1000;
@@ -1365,10 +1369,7 @@ async function fetchAllRows(buildQuery) {
 
   while (true) {
     const { data, error } = await buildQuery(from, from + PAGE - 1);
-    if (error) {
-      console.error('Paged fetch error:', error);
-      break;
-    }
+    if (error) throw queryFailed(`paged fetch (rows from ${from})`, error);
     if (!data || data.length === 0) break;
     all.push(...data);
     if (data.length < PAGE) break;
@@ -1378,6 +1379,9 @@ async function fetchAllRows(buildQuery) {
   return all;
 }
 
+/**
+ * Get unique values for a specific field with occurrence counts
+ */
 async function getFacetValues(field, searchQuery = '') {
   try {
     // Counts cover every published game, matching the default view
@@ -1415,7 +1419,7 @@ async function getFacetValues(field, searchQuery = '') {
       .slice(0, 20); // Limit to top 20
   } catch (error) {
     console.error(`Error in getFacetValues for ${field}:`, error);
-    return [];
+    throw error;
   }
 }
 
@@ -1429,7 +1433,7 @@ async function getOptionsCountRanges() {
       .select('total_options_count')
       .not('total_options_count', 'is', null);
 
-    if (error) return [];
+    if (error) throw queryFailed('options count ranges', error);
 
     const counts = data.map(item => item.total_options_count || 0);
     const max = Math.max(...counts);
@@ -1443,7 +1447,7 @@ async function getOptionsCountRanges() {
     return ranges;
   } catch (error) {
     console.error('Error in getOptionsCountRanges:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -1485,7 +1489,7 @@ async function getReleaseYears(searchQuery = '') {
       .sort((a, b) => b.localeCompare(a)); // Newest first, all years included
   } catch (error) {
     console.error('Error in getReleaseYears:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -1564,6 +1568,7 @@ export async function getGameStatistics(filters = {}) {
  *
  * @async
  * @returns {Promise<Array<{app_id:number, title:string, updated_at:string}>>}
+ * @throws {Error} When any page of the read fails
  */
 export async function getGamesForSitemap() {
   const PAGE = 1000;
@@ -1578,9 +1583,12 @@ export async function getGamesForSitemap() {
       .order('app_id', { ascending: true })
       .range(from, from + PAGE - 1);
 
+    // Throw, never return the pages so far: the controller answers a throw
+    // with an uncached 500, but would publish a short list as the sitemap and
+    // let it be cached for a day.
     if (error) {
       console.error('Error in getGamesForSitemap:', error);
-      break;
+      throw queryFailed(`sitemap games (rows from ${from})`, error);
     }
     if (!data || data.length === 0) break;
     all.push(...data);
@@ -1634,8 +1642,12 @@ export async function fetchGameWithLaunchOptions(gameId) {
       throw new Error(`Failed to fetch game with ID ${gameId}`);
     }
     
+    // Coded, so callers can tell "not in the catalogue" from "the read
+    // failed" without parsing the message. The two need different answers:
+    // a 404 tells a search engine the page is gone, and a failed read is not
+    // that.
     if (!game) {
-      throw new Error(`Game with ID ${gameId} not found`);
+      throw new HttpError(404, `Game with ID ${gameId} not found`, 'GAME_NOT_FOUND');
     }
     
     const launchOptions = await fetchLaunchOptionsForGame(gameId);

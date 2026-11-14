@@ -96,9 +96,10 @@ export default class SlopSearch {
       '.theme-toggle'
     ];
 
-    // Initialize
+    // Initialize. The filter dropdowns are filled by main.js's
+    // initializeFilters(), from the one /api/games/facets request a page load
+    // makes. This class used to make a second, identical request here.
     this.initializeEventListeners();
-    this.loadInitialData();
   }
 
   /**
@@ -854,77 +855,6 @@ export default class SlopSearch {
     if (this.onFilterChange && typeof this.onFilterChange === 'function') {
       this.onFilterChange(allFilters);
     }
-  }
-
-  /**
-   * Load initial data from backend to populate filter dropdowns
-   */
-  async loadInitialData() {
-    try {
-      const response = await fetch('/api/games/facets');
-      if (response.ok) {
-        const facets = await response.json();
-        this.populateFilterOptions(facets);
-      }
-    } catch (error) {
-      console.warn('Failed to load initial filter data:', error);
-    }
-  }
-
-  /**
-   * Populate filter dropdowns with available options
-   * This method is called after loading initial data
-   * It populates the developer, engine, and year filters
-   * @param {Object} facets - The facets data from the backend
-   * @returns {void}
-   * @throws {Error} If facets is not an object
-   * @throws {TypeError} If facets is not defined, not arrays, or not objects
-   * @throws {RangeError} If facets properties are not arrays
-   * @throws {SyntaxError} If facets properties contain invalid data
-   * @throws {ReferenceError} If filterElements are not defined
-   * @throws {URIError} If facets values cannot be encoded as URI components
-   */
-  populateFilterOptions(facets) {
-    // Populate developer filter
-    if (this.filterElements.developer && facets.developers) {
-      this.populateSelectOptions(this.filterElements.developer, facets.developers);
-    }
-
-    // Populate engine filter (NEW)
-    if (this.filterElements.engine && facets.engines) {
-      this.populateSelectOptions(this.filterElements.engine, facets.engines);
-    }
-
-    // Populate year filter
-    if (this.filterElements.year && facets.releaseYears) {
-      const yearOptions = facets.releaseYears.map(year => ({ value: year, count: 0 }));
-      this.populateSelectOptions(this.filterElements.year, yearOptions);
-    }
-  }
-
-  /**
-   * Append facet options to a select that already has its placeholder.
-   *
-   * There is deliberately no defaultText parameter. Callers used to pass one
-   * ('All Developers', 'All Engines', 'All Years') and this never read it,
-   * because index.html already carries the matching `<option value="">` on each
-   * select. Two copies of the same string, one of them inert — the markup owns
-   * it, so the markup keeps it.
-   */
-  populateSelectOptions(selectElement, options) {
-    const existingOptions = Array.from(selectElement.options).map(opt => opt.value);
-    
-    options.forEach(option => {
-      const value = typeof option === 'string' ? option : option.value;
-      const text = typeof option === 'string' ? option : `${option.value} (${option.count})`;
-      
-      if (!existingOptions.includes(value)) {
-        const optionElement = document.createElement('option');
-        optionElement.value = value;
-        optionElement.textContent = text;
-        selectElement.appendChild(optionElement);
-      }
-    });
   }
 
   /**

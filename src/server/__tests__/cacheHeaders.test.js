@@ -13,12 +13,12 @@ vi.mock('../services/gamesService.js', () => service);
 const { gamePageController } = await import('../controllers/seoController.js');
 const { gameLaunchOptionsController } = await import('../controllers/gamesController.js');
 
-const EDGE_6H = 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400';
+const EDGE_1D = 'public, max-age=1800, s-maxage=86400, stale-while-revalidate=604800';
 const TF2 = { app_id: 440, title: 'Team Fortress 2', duplicate_of: null, launch_options: [] };
 
 function mockRes() {
   const res = {
-    set: vi.fn(), redirect: vi.fn(), send: vi.fn(), json: vi.fn(),
+    set: vi.fn(() => res), redirect: vi.fn(), send: vi.fn(), json: vi.fn(),
     status: vi.fn(() => res), type: vi.fn(() => res),
   };
   return res;
@@ -40,37 +40,60 @@ beforeEach(() => {
   service.fetchLaunchOptionsForGame.mockReset();
 });
 
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
 
 describe('game pages in production', () => {
   beforeEach(() => vi.stubEnv('NODE_ENV', 'production'));
 
-  it('are edge-cached for six hours', async () => {
+  it('are edge-cached for a day', async () => {
     service.fetchGameWithLaunchOptions.mockResolvedValue(TF2);
     const res = await page('440', 'team-fortress-2');
     expect(res.send).toHaveBeenCalled();
-    expect(cacheHeader(res)).toBe(EDGE_6H);
+    expect(cacheHeader(res)).toBe(EDGE_1D);
   });
 
   it('cache the slug redirect too', async () => {
     service.fetchGameWithLaunchOptions.mockResolvedValue(TF2);
     const res = await page('440');
     expect(res.redirect).toHaveBeenCalledWith(301, '/game/440/team-fortress-2');
-    expect(cacheHeader(res)).toBe(EDGE_6H);
+    expect(cacheHeader(res)).toBe(EDGE_1D);
   });
 
   it('cache the duplicate-game redirect too', async () => {
     service.fetchGameWithLaunchOptions.mockResolvedValue({ app_id: 100, title: 'Condition Zero', duplicate_of: 80 });
     const res = await page('100', 'condition-zero');
     expect(res.redirect).toHaveBeenCalledWith(301, '/game/80');
-    expect(cacheHeader(res)).toBe(EDGE_6H);
+    expect(cacheHeader(res)).toBe(EDGE_1D);
   });
 
-  it('never cache a 404, which a failed database read also produces', async () => {
-    service.fetchGameWithLaunchOptions.mockRejectedValue(new Error('db down'));
-    const res = await page('440', 'team-fortress-2');
+  it('never cache the 404 for a game the catalogue does not hold', async () => {
+    const missing = Object.assign(new Error('Game with ID 2767030 not found'), { code: 'GAME_NOT_FOUND' });
+    service.fetchGameWithLaunchOptions.mockRejectedValue(missing);
+    const res = await page('2767030');
     expect(res.status).toHaveBeenCalledWith(404);
     expect(cacheHeader(res)).toBeUndefined();
+  });
+
+  // A 404 tells a search engine the page is gone. A failed read used to be
+  // answered with one, so a database stall reported every real game as missing.
+  it('answer a failed database read with an uncached 503 that asks to retry, not a 404', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    service.fetchGameWithLaunchOptions.mockRejectedValue(new Error('Failed to fetch game with ID 440'));
+    const res = await page('440', 'team-fortress-2');
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.status).not.toHaveBeenCalledWith(404);
+    expect(res.set).toHaveBeenCalledWith('Retry-After', '300');
+    expect(cacheHeader(res)).toBeUndefined();
+  });
+
+  it('do not mistake a failure whose message says "not found" for a missing game', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    service.fetchGameWithLaunchOptions.mockRejectedValue(new Error('relation "games" not found'));
+    const res = await page('440', 'team-fortress-2');
+    expect(res.status).toHaveBeenCalledWith(503);
   });
 });
 
@@ -84,13 +107,13 @@ describe('game pages in development', () => {
 });
 
 describe('GET /api/games/:id/launch-options', () => {
-  it('is edge-cached for six hours in production, never in the browser', async () => {
+  it('is edge-cached for a day in production, never in the browser', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     service.fetchLaunchOptionsForGame.mockResolvedValue([{ command: '-novid' }]);
     const res = mockRes();
     await gameLaunchOptionsController({ params: { id: '440' } }, res);
     expect(res.json).toHaveBeenCalledWith([{ command: '-novid' }]);
-    expect(cacheHeader(res)).toBe('public, max-age=0, s-maxage=21600, stale-while-revalidate=86400');
+    expect(cacheHeader(res)).toBe('public, max-age=0, s-maxage=86400, stale-while-revalidate=604800');
   });
 
   it('never caches a failure', async () => {

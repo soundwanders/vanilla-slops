@@ -17,4 +17,15 @@ Disallow: /
 User-agent: DotBot
 Disallow: /
 
+# Crawlers that send no visitors and were a fifth of all requests in the two
+# weeks to 2026-11-13: 4.3k, 3.6k and 2.5k respectively, arriving in bursts.
+User-agent: ExaSearchBot
+Disallow: /
+
+User-agent: ElevenlabsCrawler
+Disallow: /
+
+User-agent: SERankingBacklinksBot
+Disallow: /
+
 Sitemap: https://launchoptions.dev/sitemap.xml

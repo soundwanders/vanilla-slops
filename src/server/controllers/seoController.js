@@ -15,14 +15,19 @@ import { engineSlug, resolveHub, gameHasEngineHub } from '../utils/engineHubs.js
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../../shared/safeUrl.js';
 import { preserveQuery } from '../utils/preserveQuery.js';
+import { reportError } from '../instrument.js';
 
 // vercel.json rewrites `/game/:path*` to the function, and Vercel puts the
 // captured `path` into the query. Never forward it into a public URL.
 // routeWiring.test.js fails if the rewrite's parameter is renamed.
 const GAME_REWRITE_PARAM = 'path';
 
-// Edge-cached like /catalog: the content moves only when the scraper runs.
-const LONG_CACHE = 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400';
+// Edge-cached for a day, then served stale for up to a week while one request
+// refreshes it: the content moves only when the scraper runs. It was six hours
+// until 2026-11-13, when crawlers walking the catalogue days apart turned out
+// to be most of the function's traffic and almost never met a cached copy. A
+// deployment starts a new cache, so a release is never held back by this.
+const LONG_CACHE = 'public, max-age=1800, s-maxage=86400, stale-while-revalidate=604800';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_URL = (process.env.DOMAIN_URL || 'https://launchoptions.dev').replace(/\/$/, '');
@@ -206,8 +211,14 @@ export async function gamePageController(req, res) {
   let game;
   try {
     game = await fetchGameWithLaunchOptions(appId);
-  } catch {
-    return res.status(404).type('html').send(render404());
+  } catch (err) {
+    if (err?.code === 'GAME_NOT_FOUND') {
+      return res.status(404).type('html').send(render404());
+    }
+    // Every failure used to be answered 404, so while the database stalled,
+    // crawlers were told that real game pages were gone (2026-11-13).
+    reportError(err, { tags: { route: 'GET /game/:appid' } });
+    return sendUnavailable(res);
   }
   if (!game) return res.status(404).type('html').send(render404());
 
@@ -530,6 +541,16 @@ function renderOption(opt) {
 
 function render404() {
   return renderNotice('Game not found', 'We couldn\'t find that game.');
+}
+
+/**
+ * Answer for a page whose data could not be read. A database hiccup is not a
+ * missing page: a 503 asks a crawler to come back, where a 404 would tell it
+ * the page is gone. Sets no Cache-Control, so the edge never holds it.
+ */
+function sendUnavailable(res) {
+  return res.status(503).set('Retry-After', '300').type('html')
+    .send(renderNotice('Briefly unavailable', 'This page could not be loaded just now.'));
 }
 
 /**
@@ -1033,9 +1054,7 @@ export async function catalogController(req, res) {
   const grain = await getCatalogGrain();
   // Same reasoning as howItWorksController: caching locally leaves the browser
   // holding HTML that points at a bundle hash a rebuild has already replaced.
-  res.set('Cache-Control', process.env.NODE_ENV === 'production'
-    ? 'public, max-age=1800, s-maxage=21600, stale-while-revalidate=86400'
-    : 'no-store');
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
   res.type('html').send(renderCatalog(grain));
 }
 
@@ -1050,10 +1069,8 @@ export async function engineHubController(req, res) {
     index = await getEngineHubIndex();
   } catch (err) {
     console.error('engine hub error:', err);
-    // A database hiccup is not a missing page. A 503 asks a crawler to come
-    // back; a 404 would tell it the page is gone.
-    return res.status(503).set('Retry-After', '300').type('html')
-      .send(renderNotice('Briefly unavailable', 'This page could not be loaded just now.'));
+    reportError(err, { tags: { route: 'GET /engine/:slug' } });
+    return sendUnavailable(res);
   }
 
   const { hub, canonical } = resolveHub(index.hubs, req.params.slug);
@@ -1206,7 +1223,7 @@ export async function guideController(req, res) {
   ]);
 
   // A page rendered without its data is still worth serving, but not worth
-  // holding at the edge for six hours.
+  // holding at the edge.
   const degraded = hubsFailed || data.options.size === 0;
   res.set('Cache-Control', process.env.NODE_ENV === 'production' && !degraded ? LONG_CACHE : 'no-store');
   res.type('html').send(renderGuide(data, hubs));
@@ -1401,6 +1418,7 @@ export async function sitemapController(req, res) {
     );
   } catch (err) {
     console.error('sitemap error:', err);
+    reportError(err, { tags: { route: 'GET /sitemap.xml' } });
     res.status(500).type('text/plain').send('sitemap generation failed');
   }
 }

@@ -24,11 +24,16 @@ async function load(dsn) {
   return import('../instrument.js');
 }
 
-function serverError(status) {
-  const err = new Error('boom');
+function serverError(status, message = 'boom') {
+  const err = new Error(message);
   if (status) err.status = status;
   return err;
 }
+
+// Math.random decides, once per instance per hour, whether an instance reports
+// operational failures at all. 0 is an instance that does; 0.99 one that doesn't.
+const asReportingInstance = () => vi.spyOn(Math, 'random').mockReturnValue(0);
+const asSilentInstance = () => vi.spyOn(Math, 'random').mockReturnValue(0.99);
 
 const req = { method: 'GET', path: '/api/games/440' };
 
@@ -39,7 +44,11 @@ beforeEach(() => {
   sdk.flush.mockClear();
 });
 
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 describe('error reporting is lazy', () => {
   it('does not load the SDK at startup', async () => {
@@ -55,11 +64,12 @@ describe('error reporting is lazy', () => {
   });
 
   it('loads, initialises once and delivers on the first 5xx', async () => {
+    asReportingInstance();
     const { reportServerErrors, settleErrorReports } = await load('https://key@sentry.example/1');
     const first = serverError();
     const next = vi.fn();
     reportServerErrors(first, req, {}, next);
-    reportServerErrors(serverError(503), req, {}, vi.fn());
+    reportServerErrors(serverError(503, 'bang'), req, {}, vi.fn());
     await settleErrorReports();
 
     expect(next).toHaveBeenCalledWith(first);
@@ -81,6 +91,7 @@ describe('error reporting is lazy', () => {
   });
 
   it('never throws when delivery fails', async () => {
+    asReportingInstance();
     const { reportError, settleErrorReports } = await load('https://key@sentry.example/1');
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     sdk.captureException.mockImplementation(() => { throw new Error('ingest down'); });
@@ -88,6 +99,83 @@ describe('error reporting is lazy', () => {
     await expect(settleErrorReports()).resolves.toBeUndefined();
     expect(logged).toHaveBeenCalled();
     logged.mockRestore();
+  });
+});
+
+// A database stall fails hundreds of requests across hundreds of instances at
+// once. Uncapped, each instance would load the SDK (~450 ms of billed CPU) and
+// send the same event, in the hour the function is already at its most costly.
+describe('error reporting is capped', () => {
+  const DSN = 'https://key@sentry.example/1';
+  const at = (route) => ({ tags: { route } });
+
+  it('sends the same error on the same route once', async () => {
+    asReportingInstance();
+    const { reportError, settleErrorReports } = await load(DSN);
+    for (let i = 0; i < 50; i += 1) reportError(serverError(), at('GET /api/games'));
+    await settleErrorReports();
+    expect(sdk.captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops at the per-instance limit however many different errors there are', async () => {
+    asReportingInstance();
+    const { reportError, settleErrorReports, MAX_REPORTS_PER_WINDOW } = await load(DSN);
+    for (let i = 0; i < 50; i += 1) reportError(serverError(), at(`GET /route-${'x'.repeat(i)}`));
+    await settleErrorReports();
+    expect(sdk.captureException).toHaveBeenCalledTimes(MAX_REPORTS_PER_WINDOW);
+  });
+
+  it('treats the same failure for different games as one error', async () => {
+    asReportingInstance();
+    const { reportError, settleErrorReports } = await load(DSN);
+    for (let id = 400; id < 450; id += 1) reportError(serverError(null, `Failed to fetch game with ID ${id}`), at('GET /game/:appid'));
+    await settleErrorReports();
+    expect(sdk.captureException).toHaveBeenCalledTimes(1);
+  });
+
+  it('most instances never report a failed database read, and never load the SDK for one', async () => {
+    asSilentInstance();
+    const { reportError, settleErrorReports } = await load(DSN);
+    for (let i = 0; i < 50; i += 1) reportError(serverError(null, `failure ${i}`), at('GET /game/:appid'));
+    await settleErrorReports();
+    expect(sdk.loads).toBe(0);
+    expect(sdk.captureException).not.toHaveBeenCalled();
+  });
+
+  it('draws once per instance, not once per error', async () => {
+    const random = asSilentInstance();
+    const { reportError } = await load(DSN);
+    for (let i = 0; i < 50; i += 1) reportError(serverError(null, `failure ${i}`), at('GET /api/games'));
+    expect(random).toHaveBeenCalledTimes(1);
+  });
+
+  it('a defect in the code is reported by every instance', async () => {
+    asSilentInstance();
+    const { reportError, settleErrorReports } = await load(DSN);
+    const bug = new TypeError("Cannot read properties of undefined (reading 'title')");
+    reportError(bug, at('GET /game/:appid'));
+    await settleErrorReports();
+    expect(sdk.captureException).toHaveBeenCalledWith(bug, at('GET /game/:appid'));
+  });
+
+  it('starts again after the window, so a long-lived instance is not silent for good', async () => {
+    vi.useFakeTimers();
+    asReportingInstance();
+    const { reportError, REPORT_WINDOW_MS } = await load(DSN);
+    reportError(serverError(), at('GET /api/games'));
+    await vi.runAllTimersAsync();
+    expect(sdk.captureException).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(REPORT_WINDOW_MS);
+    reportError(serverError(), at('GET /api/games'));
+    await vi.runAllTimersAsync();
+    expect(sdk.captureException).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the sampled share small', async () => {
+    const { OPERATIONAL_SAMPLE_RATE, MAX_REPORTS_PER_WINDOW } = await load(DSN);
+    expect(OPERATIONAL_SAMPLE_RATE).toBeLessThanOrEqual(0.1);
+    expect(MAX_REPORTS_PER_WINDOW).toBeLessThanOrEqual(10);
   });
 });
 

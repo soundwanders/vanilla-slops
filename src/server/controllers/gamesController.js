@@ -6,6 +6,7 @@ import {
   fetchLaunchOptionsForGame,
   getGameStatistics
 } from '../services/gamesService.js';
+import { reportError } from '../instrument.js';
 
 /**
  * @fileoverview Games controller with clean, structured logging and error handling
@@ -221,11 +222,24 @@ function analyzeResult(result, filters, logger) {
 // ERROR HELPERS
 // ============================================================================
 
-function sendError(res, status, code, message, requestId = null, detail = null) {
+function sendError(res, status, code, message, requestId = null, err = null) {
   const body = { error: { code, message } };
   if (requestId) body.requestId = requestId;
-  if (detail && process.env.NODE_ENV === 'development') body.error.detail = detail;
+  if (err && process.env.NODE_ENV === 'development') body.error.detail = err.message;
   res.status(status).json(body);
+
+  // These handlers answer their own failures, so nothing they catch reaches
+  // Express's error middleware, which is the only place Sentry was listening.
+  // Sentry showed zero issues through a month that included six bursts of
+  // 5xx (found 2026-11-13). The route is the pattern, not the URL, so one
+  // failure across three thousand game ids is one report.
+  if (err && status >= 500) {
+    const req = res.req;
+    const route = req?.route
+      ? `${req.method} ${`${req.baseUrl || ''}${req.route.path}`.replace(/(.)\/$/, '$1')}`
+      : 'unknown';
+    reportError(err, { tags: { route } });
+  }
 }
 
 // ============================================================================
@@ -308,7 +322,7 @@ export async function gamesController(req, res) {
       error: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
-    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch games', logger.requestId, err.message);
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch games', logger.requestId, err);
   }
 }
 
@@ -352,7 +366,7 @@ export async function searchSuggestionsController(req, res) {
     res.json(suggestions);
   } catch (err) {
     logger.error('SUGGESTIONS', 'Failed to fetch suggestions', { error: err.message });
-    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch search suggestions', logger.requestId, err.message);
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch search suggestions', logger.requestId, err);
   }
 }
 
@@ -386,7 +400,7 @@ export async function filterFacetsController(req, res) {
     res.json(facets);
   } catch (err) {
     logger.error('FACETS', 'Failed to fetch facets', { error: err.message });
-    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch filter facets', logger.requestId, err.message);
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch filter facets', logger.requestId, err);
   }
 }
 
@@ -419,10 +433,10 @@ export async function gameDetailsController(req, res) {
   } catch (err) {
     logger.error('DETAILS', 'Failed to fetch game details', { gameId: req.params.id, error: err.message });
     
-    if (err.message.includes('not found')) {
+    if (err.code === 'GAME_NOT_FOUND') {
       sendError(res, 404, 'GAME_NOT_FOUND', err.message, logger.requestId);
     } else {
-      sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game details', logger.requestId, err.message);
+      sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game details', logger.requestId, err);
     }
   }
 }
@@ -453,11 +467,11 @@ export async function gameLaunchOptionsController(req, res) {
     
     // Every expanded table row asks for this. Same lifetime as the game page,
     // which shows the same options, so the two go stale together.
-    setListCacheHeaders(res, 21600, 86400);
+    setListCacheHeaders(res, 86400, 604800);
     res.json(launchOptions);
   } catch (err) {
     logger.error('OPTIONS', 'Failed to fetch launch options', { gameId: req.params.id, error: err.message });
-    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch launch options', logger.requestId, err.message);
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch launch options', logger.requestId, err);
   }
 }
 
@@ -490,6 +504,6 @@ export async function gameStatisticsController(req, res) {
     res.json(statistics);
   } catch (err) {
     logger.error('STATS', 'Failed to fetch statistics', { error: err.message });
-    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game statistics', logger.requestId, err.message);
+    sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game statistics', logger.requestId, err);
   }
 }
