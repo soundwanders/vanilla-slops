@@ -18,6 +18,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.6] - 2026-11-13 — Failing honestly
+
+Crawlers arriving in bursts stalled the database six times in two weeks.
+Each time, the site held requests open for minutes and then gave wrong
+answers: real games reported missing, empty filter lists, a four-line
+sitemap. This release makes a stall short and makes every answer during one
+true.
+
+### Fixed
+- **A database stall no longer reports games as missing.** Any failed read
+  on a game page was answered 404, which tells a search engine the page is
+  gone. It now answers 503 and asks crawlers to come back in five minutes.
+  Only a game the catalogue does not hold is a 404.
+- **Filter lists and the sitemap are never published half-read.** Both
+  quietly kept whatever had loaded before a read failed. During a stall that
+  meant empty dropdowns cached for up to an hour, and a sitemap of four
+  static pages cached for a day. A failed read now fails the request, and a
+  failure is never cached.
+- **A request gives up on the database after 8 seconds.** There was no
+  limit, and one request in a stall was held open for four minutes. Rehearsed
+  against a database that never answers, 51 simultaneous requests all
+  finished in 8.3 seconds.
+- **Server errors reach error reporting.** The API answered its own failures
+  and never passed them on, so a month that included all six stalls showed
+  zero issues. They are reported now, capped so a stall cannot flood it: 3
+  reports per server instance per hour, and only 1 instance in 20 reports
+  database failures at all.
+- **The Options button keeps its size.** It grew from 141px to 181px while
+  its options loaded, and shrank and dimmed on touch. It now holds one size
+  through hover, press, loading, open and close.
+- **Figures say what they count.** The Bedrock called every game "covered",
+  including those with no option; it now counts only games that have one.
+  Engine pages say they list only games with options.
+- **Links in running text use the site's accent** instead of the browser's
+  default blue, and the header links on game pages have room between them.
+
+### Changed
+- **One cached copy of each page, kept for a day.** The server compressed
+  its own responses, and the header that adds made the cache keep a separate
+  copy of every page for each kind of browser: four requests for one page
+  with four different headers were four misses. Vercel compresses at the
+  edge, so the server no longer does. Game pages, engine pages, the guide,
+  The Bedrock and a game's options are held for a day, up from six hours,
+  and served for up to a week while they refresh in the background. A new
+  release still appears at once.
+- **The homepage asks for its filter lists once,** not twice, per visit.
+- **Three more crawlers are asked to stay away** in robots.txt: ExaSearchBot,
+  ElevenlabsCrawler and SERankingBacklinksBot, a fifth of all requests in
+  the two weeks measured.
+- **A two-column footer on desktop.** From 769px the footer pairs up instead
+  of stacking seven centred lines: 177px tall on the homepage instead of
+  286px. Phones keep the centred stack.
+
 ## [1.7.5] - 2026-11-09 — Credit where it's due
 
 ### Added
