@@ -368,28 +368,52 @@ export async function fetchGameDetails(gameId, useCache = true) {
   }
 }
 
+// Launch-options requests that have been sent and not yet answered, by cache
+// key. The table asks for a game's options twice in quick succession: once to
+// prefetch when the button is hovered, touched or focused, and again on the
+// click. The cache only helps once the first answer has landed, and the click
+// arrives before it, so every expansion sent two identical requests (measured
+// 2026-11-14, with mouse and with touch). The second caller now waits on the
+// first request instead of sending its own.
+const launchOptionsInFlight = new Map();
+
 /**
  * Fetch launch options for a specific game
+ *
+ * Callers that ask while a request for the same game is in the air share that
+ * request, and so share its outcome: the same array on success, the same
+ * error on failure. Nothing is remembered once it settles. A success is in the
+ * cache by then, and a failure is forgotten, so the next call asks again.
  */
-export async function fetchLaunchOptions(gameId, useCache = true) {
+export function fetchLaunchOptions(gameId, useCache = true) {
   const cacheKey = `launch_options:${gameId}`;
-  
-  if (useCache && cache.has(cacheKey)) {
-    return cache.get(cacheKey);
-  }
-  
+
+  if (!useCache) return requestLaunchOptions(gameId);
+
+  if (cache.has(cacheKey)) return Promise.resolve(cache.get(cacheKey));
+
+  const pending = launchOptionsInFlight.get(cacheKey);
+  if (pending) return pending;
+
+  const request = requestLaunchOptions(gameId)
+    .then((launchOptions) => {
+      cache.set(cacheKey, launchOptions);
+      return launchOptions;
+    })
+    .finally(() => launchOptionsInFlight.delete(cacheKey));
+
+  launchOptionsInFlight.set(cacheKey, request);
+  return request;
+}
+
+/** One request for a game's launch options, uncached and unshared. */
+async function requestLaunchOptions(gameId) {
   try {
     const response = await fetchWrapper(`${API_URL}/games/${gameId}/launch-options`);
     const data = await response.json();
 
     // Ensure we return an array
-    const launchOptions = Array.isArray(data) ? data : (data.launchOptions || []);
-    
-    if (useCache) {
-      cache.set(cacheKey, launchOptions);
-    }
-    
-    return launchOptions;
+    return Array.isArray(data) ? data : (data.launchOptions || []);
   } catch (error) {
     console.error(`Failed to fetch launch options for ${gameId}:`, error);
     throw error;

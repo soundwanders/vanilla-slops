@@ -1034,6 +1034,10 @@ a.option-source:hover {
   color: var(--color-text-tertiary);
   margin: 0;
   max-width: 36ch;
+  /* Each sentence is a little over one line at this width, which left its
+     last word alone on a second ("...and try / again."). Balanced, the two
+     lines come out even. A browser without it wraps as before. */
+  text-wrap: balance;
 }
 
 .table-error-retry {

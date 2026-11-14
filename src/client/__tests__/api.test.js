@@ -158,3 +158,70 @@ describe('isRetryable', () => {
     expect([400, 403, 404, 429].some((s) => isRetryable(new ApiError(s, '')))).toBe(false);
   });
 });
+
+// The table asks for a game's options to prefetch on hover, touch or focus,
+// and again on the click that follows a moment later. Before the first answer
+// lands the cache is empty, so each expansion used to send two requests.
+describe('requests for one game\'s options', () => {
+  const OPTIONS = [{ command: '-novid' }];
+  let gameId = 9000;
+  const nextGame = () => { gameId += 1; return gameId; };
+
+  it('share one request while it is in the air', async () => {
+    respondWith(() => json(200, OPTIONS));
+    const id = nextGame();
+    const prefetch = fetchLaunchOptions(id);
+    const click = fetchLaunchOptions(id);
+    const [a, b] = await Promise.all([settle(prefetch), settle(click)]);
+    expect(calls).toBe(1);
+    expect(a.value).toEqual(OPTIONS);
+    expect(b.value).toBe(a.value);
+  });
+
+  it('are answered from the cache afterwards, with no request at all', async () => {
+    respondWith(() => json(200, OPTIONS));
+    const id = nextGame();
+    await settle(fetchLaunchOptions(id));
+    const again = await settle(fetchLaunchOptions(id));
+    expect(calls).toBe(1);
+    expect(again.value).toEqual(OPTIONS);
+  });
+
+  it('do not share across games', async () => {
+    respondWith(() => json(200, OPTIONS));
+    await Promise.all([settle(fetchLaunchOptions(nextGame())), settle(fetchLaunchOptions(nextGame()))]);
+    expect(calls).toBe(2);
+  });
+
+  it('share a failure too, and then forget it so the next click asks again', async () => {
+    respondWith(() => html(429), () => json(200, OPTIONS));
+    const id = nextGame();
+    const [a, b] = await Promise.all([settle(fetchLaunchOptions(id)), settle(fetchLaunchOptions(id))]);
+    expect(calls).toBe(1);
+    expect(a.error).toBeInstanceOf(ApiError);
+    expect(b.error).toBe(a.error);
+
+    const retry = await settle(fetchLaunchOptions(id));
+    expect(calls).toBe(2);
+    expect(retry.value).toEqual(OPTIONS);
+  });
+
+  it('a failure is never cached', async () => {
+    respondWith(() => json(500, {}));
+    const id = nextGame();
+    await settle(fetchLaunchOptions(id));
+    const first = calls;
+    await settle(fetchLaunchOptions(id));
+    expect(first).toBe(3);
+    expect(calls).toBe(6);
+  });
+
+  it('asked for uncached, neither share nor store', async () => {
+    respondWith(() => json(200, OPTIONS));
+    const id = nextGame();
+    await Promise.all([settle(fetchLaunchOptions(id, false)), settle(fetchLaunchOptions(id, false))]);
+    expect(calls).toBe(2);
+    await settle(fetchLaunchOptions(id));
+    expect(calls).toBe(3);
+  });
+});
