@@ -36,16 +36,22 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Base tables only. The public_* views are derived from these, so exporting
 // them would duplicate data while capturing none of the definition that makes
-// them useful.
-const TABLES = ['games', 'launch_options', 'game_launch_options'];
+// them useful. `key` is each table's primary key, which the export pages by.
+export const TABLES = [
+  { name: 'games', key: ['app_id'] },
+  { name: 'launch_options', key: ['id'] },
+  { name: 'game_launch_options', key: ['game_app_id', 'launch_option_id'] },
+];
 
-// PostgREST caps a single response; page well under it and keep memory flat.
+// PostgREST caps a single response at 1000 rows. A page cut below this by a
+// lower cap ends the loop early, and the count check below then fails loudly.
 const PAGE_SIZE = 1000;
 
 function fail(message) {
@@ -53,26 +59,67 @@ function fail(message) {
   process.exit(1);
 }
 
-async function exportTable(supabase, table, outDir) {
-  const { count: expected, error: countError } = await supabase
+/**
+ * Narrow a query to the rows after `last` in primary-key order.
+ *
+ * @param {object} query - a supabase-js filter builder
+ * @param {string[]} key - the primary key's columns, in order (one or two)
+ * @param {object|null} last - the last row of the previous page
+ */
+export function afterKey(query, key, last) {
+  if (!last) return query;
+  const [a, b] = key;
+  if (key.length === 1) return query.gt(a, last[a]);
+  if (key.length === 2) return query.or(`${a}.gt.${last[a]},and(${a}.eq.${last[a]},${b}.gt.${last[b]})`);
+  throw new Error(`afterKey: a ${key.length}-column key is not supported`);
+}
+
+/**
+ * Every row of a table, a page at a time, in primary-key order.
+ *
+ * Keyset paging rather than offsets: each page asks for the rows after the last
+ * key it saw, so a row inserted or deleted mid-export cannot shift the rest by
+ * one. Under offsets, a delete behind the cursor skipped a row and an insert
+ * wrote one twice, and the two together left the count right and the backup
+ * wrong. Here, every row that exists for the whole export is written exactly
+ * once, and each page is an index range scan however deep it goes.
+ *
+ * @param {object} supabase
+ * @param {{name: string, key: string[]}} table
+ * @param {number} [pageSize]
+ * @returns {AsyncGenerator<object[]>}
+ */
+export async function* readByKey(supabase, { name, key }, pageSize = PAGE_SIZE) {
+  let last = null;
+  for (;;) {
+    let query = supabase.from(name).select('*');
+    for (const column of key) query = query.order(column, { ascending: true });
+    const { data, error } = await afterKey(query, key, last).limit(pageSize);
+
+    if (error) throw new Error(`Reading ${name} after ${JSON.stringify(last && key.map((c) => last[c]))}: ${error.message}`);
+    if (!data || data.length === 0) return;
+    yield data;
+    if (data.length < pageSize) return;
+    last = data[data.length - 1];
+  }
+}
+
+async function countRows(supabase, table) {
+  const { count, error } = await supabase
     .from(table)
     .select('*', { count: 'exact', head: true });
+  if (error) fail(`Could not count ${table}: ${error.message}`);
+  return count;
+}
 
-  if (countError) fail(`Could not count ${table}: ${countError.message}`);
+async function exportTable(supabase, { name: table, key }, outDir) {
+  const expected = await countRows(supabase, table);
 
   const file = path.join(outDir, `${table}.ndjson`);
   const stream = fs.createWriteStream(file, { encoding: 'utf8' });
   let written = 0;
 
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    if (error) fail(`Reading ${table} at offset ${offset}: ${error.message}`);
-    if (!data || data.length === 0) break;
-
+  for await (const data of readByKey(supabase, { name: table, key })) {
     for (const row of data) {
       // Backpressure is ignored deliberately: these are small tables and the
       // process exits on completion, so the simpler synchronous-looking write
@@ -82,7 +129,6 @@ async function exportTable(supabase, table, outDir) {
     }
 
     process.stdout.write(`\r  ${table}: ${written}/${expected}`);
-    if (data.length < PAGE_SIZE) break;
   }
 
   await new Promise((resolve, reject) => {
@@ -93,6 +139,14 @@ async function exportTable(supabase, table, outDir) {
 
   const bytes = fs.statSync(file).size;
   process.stdout.write(`\r  ${table}: ${written}/${expected} rows · ${(bytes / 1024 / 1024).toFixed(2)} MB\n`);
+
+  // A table that changed during the export is a mix of two moments. Keyset
+  // paging keeps it free of repeats and holes, but it is not a snapshot.
+  const after = await countRows(supabase, table);
+  if (after !== expected) {
+    fail(`${table} changed during the export (${expected} rows before, ${after} after). ` +
+         `Do not keep this backup. Re-run once nothing is writing to the database.`);
+  }
 
   // A short read is the failure this whole script exists to catch.
   if (written !== expected) {
@@ -149,4 +203,7 @@ async function main() {
   console.log(`\n  Copy this directory somewhere that is not this machine.\n`);
 }
 
-main().catch((err) => fail(err.message));
+// Run only as `npm run db:backup`, not when a test imports the paging above.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => fail(err.message));
+}

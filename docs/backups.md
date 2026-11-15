@@ -48,6 +48,13 @@ database reported before the export started, it fails loudly and tells you not
 to keep the file. A backup that silently stopped early is worse than none — it
 looks like insurance and is not.
 
+It reads each table in primary-key order, a page at a time, each page asking
+for the rows after the last key it saw. A row inserted or deleted mid-export
+cannot shift the others, so every row that exists for the whole export is
+written exactly once. It is still not a snapshot: if a table's count differs
+before and after, the export fails and asks for a re-run once nothing is
+writing to the database.
+
 **It captures data only.** No schema, no views, no triggers, no indexes, no
 grants. Restoring from it means recreating the schema first and loading data
 into it. Which is why layer 2 exists.
