@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { reportError } from '../instrument.js';
+import { guardRowCap } from '../utils/rowCap.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,8 +17,22 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // callers need no change. The library's own retries (three, for a 503, a 520
 // or a dropped connection) are left on, because they are what heals a
 // momentary blip before a visitor or a search engine sees it.
+//
+// Every response also passes the row-cap guard (utils/rowCap.js): a read the
+// database cut short at its row cap becomes an `{ error }` instead of a short
+// list that looks complete. It is reported as a defect, which skips Sentry's
+// operational sampling, because it is always a read that should have been
+// paged and it stays broken until the code changes.
 export const CLIENT_OPTIONS = {
   db: { timeout: 8000 },
+  global: {
+    fetch: guardRowCap(undefined, {
+      onTruncated(error) {
+        console.error(error.message);
+        reportError(error, { tags: { route: 'supabase-row-cap' } });
+      },
+    }),
+  },
 };
 
 /**

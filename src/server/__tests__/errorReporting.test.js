@@ -158,6 +158,19 @@ describe('error reporting is capped', () => {
     expect(sdk.captureException).toHaveBeenCalledWith(bug, at('GET /game/:appid'));
   });
 
+  // It looks like a database failure but is a read that should have been
+  // paged, and it stays broken until the code changes: sampling it away would
+  // leave it unreported on most instances for good.
+  it('a read cut short at the row cap is reported by every instance', async () => {
+    asSilentInstance();
+    const { reportError, settleErrorReports } = await load(DSN);
+    const { RowCapError } = await import('../utils/rowCap.js');
+    const cut = new RowCapError('GET /public_games was cut short at rows 0-999');
+    reportError(cut, at('supabase-row-cap'));
+    await settleErrorReports();
+    expect(sdk.captureException).toHaveBeenCalledWith(cut, at('supabase-row-cap'));
+  });
+
   it('starts again after the window, so a long-lived instance is not silent for good', async () => {
     vi.useFakeTimers();
     asReportingInstance();

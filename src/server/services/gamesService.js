@@ -9,6 +9,7 @@ import { dedupeKey } from '../utils/searchNormalize.js';
 import { groupIntoTiers } from '../utils/grainTiers.js';
 import { countEngineFlags, selectHubs } from '../utils/engineHubs.js';
 import { resolveProvenance, compareGameOptions } from '../utils/optionProvenance.js';
+import { MAX_ROWS } from '../utils/rowCap.js';
 
 // Deliberately smaller than the exact-match limit. These are guesses, and a
 // long list of guesses reads as the search not working rather than as help —
@@ -848,39 +849,46 @@ export async function getCatalogGrain() {
   const empty = { tiers: [], options: 0, games: 0, gamesWithOptions: null, links: 0, singletons: 0 };
 
   try {
-    const [all, dupes, games, gamesWithOptions] = await Promise.all([
+    // Every read here is paged. The options were one `.limit(2000)` read, but
+    // the server lowers any limit to its 1,000-row cap, so the 1,001st option
+    // would have vanished from the page in silence (620 on 2026-11-14).
+    const [options, hiddenIds, games, gamesWithOptions] = await Promise.all([
       // One embedded aggregate rather than paging 19k junction rows.
-      supabase
+      fetchAllRows((from, to) => supabase
         .from('public_launch_options')
         .select('id, command, game_launch_options(count)')
-        .limit(2000),
-      supabase.from('games').select('app_id').not('duplicate_of', 'is', null),
+        .order('id', { ascending: true })
+        .range(from, to)),
+      // Hidden duplicates, whose links are discounted below. As before, if
+      // they cannot be listed, nothing is discounted.
+      fetchAllRows((from, to) => supabase
+        .from('games')
+        .select('app_id')
+        .not('duplicate_of', 'is', null)
+        .order('app_id', { ascending: true })
+        .range(from, to))
+        .then((dupes) => dupes.map((g) => g.app_id), () => []),
       supabase.from('public_games').select('*', { count: 'exact', head: true }),
       countGamesWithOptions(),
     ]);
 
-    if (all.error) {
-      console.error('Error fetching catalog grain:', all.error);
-      return empty;
-    }
-
-    // Links belonging to hidden duplicates, to be discounted.
-    const hiddenIds = (dupes.data || []).map((g) => g.app_id);
     let penalty = new Map();
     if (hiddenIds.length) {
-      const { data: hiddenLinks, error: linkErr } = await supabase
+      const hiddenLinks = await fetchAllRows((from, to) => supabase
         .from('game_launch_options')
         .select('launch_option_id')
-        .in('game_app_id', hiddenIds);
-      if (!linkErr) {
-        penalty = (hiddenLinks || []).reduce((m, l) => {
-          m.set(l.launch_option_id, (m.get(l.launch_option_id) || 0) + 1);
-          return m;
-        }, new Map());
-      }
+        .in('game_app_id', hiddenIds)
+        .order('game_app_id', { ascending: true })
+        .order('launch_option_id', { ascending: true })
+        .range(from, to))
+        .catch(() => []);
+      penalty = hiddenLinks.reduce((m, l) => {
+        m.set(l.launch_option_id, (m.get(l.launch_option_id) || 0) + 1);
+        return m;
+      }, new Map());
     }
 
-    const rows = (all.data || [])
+    const rows = options
       .map((r) => ({
         command: r.command,
         reach: (r.game_launch_options?.[0]?.count ?? 0) - (penalty.get(r.id) || 0),
@@ -1185,15 +1193,16 @@ async function getPhantomOptionCounts() {
   if (_phantomCache.data && now < _phantomCache.expiresAt) return _phantomCache.data;
 
   try {
-    const { data, error } = await supabase
+    // Paged: 28 rows on 2026-11-14, but one upstream decision to withhold a
+    // few widely linked options would put this past the row cap at once. A
+    // failure lands in the catch below and fails soft, as described above.
+    const data = await fetchAllRows((from, to) => supabase
       .from('game_launch_options')
       .select('game_app_id, public_launch_options!left(id)')
-      .is('public_launch_options', null);
-
-    if (error) {
-      console.error('getPhantomOptionCounts:', error);
-      return new Map();
-    }
+      .is('public_launch_options', null)
+      .order('game_app_id', { ascending: true })
+      .order('launch_option_id', { ascending: true })
+      .range(from, to));
 
     const map = buildPhantomMap(data);
     _phantomCache.data = map;
@@ -1228,12 +1237,14 @@ async function countGamesWithOptions() {
     const ids = [...phantoms.keys()];
     if (!ids.length) return linked.count;
 
-    const { data, error } = await supabase
+    // A throw lands in the catch below, which answers null as an error did.
+    const data = await fetchAllRows((from, to) => supabase
       .from('public_games')
       .select('app_id, total_options_count')
       .in('app_id', ids)
-      .gt('total_options_count', 0);
-    if (error) return null;
+      .gt('total_options_count', 0)
+      .order('app_id', { ascending: true })
+      .range(from, to));
 
     const emptied = withDisplayCounts(data, phantoms)
       .filter((g) => g.display_options_count === 0).length;
@@ -1259,11 +1270,15 @@ async function getPopularOptions(topN = 24) {
     // Ordering happens here rather than in the query: `order` on a referenced
     // table's count is accepted and then quietly ignored, so relying on it
     // would return eight arbitrary options. 421 rows is nothing to sort.
-    const { data, error } = await supabase
+    //
+    // Paged so the ranking always sees every option (620 on 2026-11-14: one
+    // page). The order on `id` is what keeps the pages from overlapping; the
+    // ranking itself still happens in JS.
+    const data = await fetchAllRows((from, to) => supabase
       .from('public_launch_options')
-      .select('command, description, game_launch_options(count)');
-
-    if (error) throw queryFailed('popular options', error);
+      .select('command, description, game_launch_options(count)')
+      .order('id', { ascending: true })
+      .range(from, to));
 
     // How many games there are, so "too broad" can be a proportion rather than
     // a magic number that rots as the catalogue grows.
@@ -1293,8 +1308,9 @@ async function getPopularOptions(topN = 24) {
 
 /**
  * Get the launch-option attribute facets that drive the category and risk
- * filters (feedback #1). Reads public_launch_options (well under the 1000-row
- * cap) and aggregates in JS — reading the table instead would let a chip offer
+ * filters (feedback #1). Reads public_launch_options, paged (620 rows on
+ * 2026-11-14, so one page, but the table only grows), and aggregates in JS —
+ * reading the table instead would let a chip offer
  * a value only unpublished rows carry, which returns nothing when picked.
  * Counts are per-option (how many options
  * carry the value), used only to order the dropdowns — the filtered results are
@@ -1304,11 +1320,11 @@ async function getPopularOptions(topN = 24) {
  */
 async function getOptionAttributeFacets() {
   try {
-    const { data, error } = await supabase
+    const data = await fetchAllRows((from, to) => supabase
       .from('public_launch_options')
-      .select('risk_level, categories');
-
-    if (error) throw queryFailed('option attribute facets', error);
+      .select('risk_level, categories')
+      .order('id', { ascending: true })
+      .range(from, to));
 
     const catCounts = {};
     const riskCounts = {};
@@ -1353,8 +1369,14 @@ function queryFailed(what, error) {
 }
 
 /**
- * Fetch every row matching a query, paging past Supabase's 1000-row cap.
- * Counting rows without this silently undercounts once a table exceeds 1000.
+ * Fetch every row matching a query, paging past Supabase's row cap.
+ * Counting rows without this silently undercounts once a table exceeds it.
+ *
+ * Use it for any read whose size grows with the catalogue, even one far under
+ * the cap today. If all you need is a count, a `{ count: 'exact', head: true }`
+ * query moves no rows at all. The query must `.order()` on a unique key, or
+ * pages can overlap and skip. A read that forgets all this fails loudly
+ * through the row-cap guard (utils/rowCap.js) rather than coming back short.
  *
  * @param {Function} buildQuery - (from, to) => Supabase query for that range
  * @returns {Promise<Array>} all matching rows
@@ -1363,7 +1385,7 @@ function queryFailed(what, error) {
  *   catalogue instead of an error.
  */
 async function fetchAllRows(buildQuery) {
-  const PAGE = 1000;
+  const PAGE = MAX_ROWS;
   let from = 0;
   const all = [];
 
@@ -1423,28 +1445,60 @@ async function getFacetValues(field, searchQuery = '') {
   }
 }
 
+/** The option-count buckets; the open-ended last one takes the catalogue's max. */
+const OPTION_COUNT_RANGES = [
+  { label: 'No options', min: 0, max: 0 },
+  { label: '1-5 options', min: 1, max: 5 },
+  { label: '6-10 options', min: 6, max: 10 },
+  { label: '11+ options', min: 11, max: null },
+];
+
 /**
- * Get launch options count ranges for filtering
+ * Get launch options count ranges for filtering.
+ *
+ * Counted by the database, one head count per range, so no rows are moved and
+ * the result cannot depend on the row cap however large the catalogue grows.
+ * It used to read the column and count in JS from a single unpaged read, which
+ * the cap cut at 1,000 games: 396 + 214 + 253 + 137 in a catalogue of 3,064
+ * (2026-11-14).
+ *
+ * @returns {Promise<Array<{label:string, min:number, max:number, count:number}>>}
+ * @throws {Error} When any count fails, or comes back without a number. A range
+ *   reported as 0 because it could not be counted looks exactly like a real 0.
  */
 async function getOptionsCountRanges() {
   try {
-    const { data, error } = await supabase
-      .from('public_games')
-      .select('total_options_count')
-      .not('total_options_count', 'is', null);
+    const countRange = ({ min, max }) => {
+      let query = supabase
+        .from('public_games')
+        .select('app_id', { count: 'exact', head: true })
+        .gte('total_options_count', min);
+      if (max !== null) query = query.lte('total_options_count', max);
+      return query;
+    };
 
-    if (error) throw queryFailed('options count ranges', error);
+    const [highest, ...counted] = await Promise.all([
+      supabase
+        .from('public_games')
+        .select('total_options_count')
+        .not('total_options_count', 'is', null)
+        .order('total_options_count', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      ...OPTION_COUNT_RANGES.map(countRange),
+    ]);
 
-    const counts = data.map(item => item.total_options_count || 0);
-    const max = Math.max(...counts);
-    const ranges = [
-      { label: 'No options', min: 0, max: 0, count: counts.filter(c => c === 0).length },
-      { label: '1-5 options', min: 1, max: 5, count: counts.filter(c => c >= 1 && c <= 5).length },
-      { label: '6-10 options', min: 6, max: 10, count: counts.filter(c => c >= 6 && c <= 10).length },
-      { label: '11+ options', min: 11, max: max, count: counts.filter(c => c >= 11).length }
-    ].filter(range => range.count > 0);
+    for (const result of [highest, ...counted]) {
+      if (result.error) throw queryFailed('options count ranges', result.error);
+    }
+    if (counted.some((result) => typeof result.count !== 'number')) {
+      throw new Error('options count ranges failed: a count came back without a number');
+    }
 
-    return ranges;
+    const max = highest.data?.total_options_count ?? 0;
+    return OPTION_COUNT_RANGES
+      .map((range, i) => ({ ...range, max: range.max ?? max, count: counted[i].count }))
+      .filter((range) => range.count > 0);
   } catch (error) {
     console.error('Error in getOptionsCountRanges:', error);
     throw error;

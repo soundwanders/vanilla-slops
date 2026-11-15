@@ -22,6 +22,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { APP_VERSION } from './config/version.js';
+import { RowCapError } from './utils/rowCap.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -75,7 +76,9 @@ const caps = { windowStart: 0, sent: 0, reportsOperational: false, seen: new Set
  */
 function isDefect(error) {
   return error instanceof TypeError || error instanceof ReferenceError
-    || error instanceof RangeError || error instanceof SyntaxError;
+    || error instanceof RangeError || error instanceof SyntaxError
+    // A read that should have been paged (utils/rowCap.js).
+    || error instanceof RowCapError;
 }
 
 /**
