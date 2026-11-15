@@ -9,7 +9,7 @@
   },
   "headers": [
     {
-      "source": "/((?!api/|game/|engine/|steam-launch-options(?:$|/)|how-it-works|catalog(?:$|/)|health|sitemap\\.xml).*)",
+      "source": "/((?!api|game(?:$|/)|engine(?:$|/)|steam-launch-options$|how-it-works$|catalog$|health$|sitemap\\.xml$).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -41,6 +41,7 @@
   ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.js" },
+    { "source": "/(api[^/].*)", "destination": "/api/index.js" },
     { "source": "/game/:path*", "destination": "/api/index.js" },
     { "source": "/engine/:path*", "destination": "/api/index.js" },
     { "source": "/steam-launch-options", "destination": "/api/index.js" },

@@ -84,7 +84,7 @@ describe('server-rendered route wiring', () => {
     expect(hit, 'no vercel rewrite for /engine/:path*').toBeTruthy();
     expect(hit.destination).toBe('/api/index.js');
     const block = vercel.headers.find((h) => h.source.includes('(?!'));
-    expect(block.source).toContain('|engine/|');
+    expect(block.source).toContain('|engine(?:$|/)|');
     expect(vite).toContain(`'^/engine/':`);
   });
 
@@ -107,5 +107,40 @@ describe('server-rendered route wiring', () => {
       .map((r) => r.source)
       .filter((s) => SERVER_ROUTES.includes(s));
     expect(rewritten.sort()).toEqual([...SERVER_ROUTES].sort());
+  });
+});
+
+/**
+ * Every response needs its security headers from exactly one place. A path the
+ * edge serves itself (a static file, or the static 404 page) gets them from
+ * vercel.json's header block; a path rewritten to the function gets them from
+ * helmet. A path in both gets two CSPs, which browsers intersect; a path in
+ * neither gets none. The exclusions were unanchored until 1.7.11: `health` also
+ * excluded /healthz, which the edge served with no CSP or HSTS, and `game/`
+ * did not exclude /game, which the function served with two.
+ *
+ * Vercel's matcher is not available here, so the sources are translated for
+ * the forms this file uses: a `/:name*` tail, a `(regex)` group, or a literal.
+ */
+describe('security headers come from exactly one place', () => {
+  const vercel = JSON.parse(read('vercel.json'));
+  const toRegex = (source) => new RegExp(`^${source.includes('(')
+    ? source // already a regex group
+    : source.replace(/[.]/g, '\\.').replace(/\/:\w+\*$/, '(?:/.*)?')}$`);
+  const rewrites = vercel.rewrites.map((r) => toRegex(r.source));
+  const headerBlock = new RegExp(`^${vercel.headers.find((h) => h.source.includes('(?!')).source}$`);
+
+  it.each([
+    '/', '/nope', '/favicon.ico', '/catalog-grain.js', '/assets/index-abc.js', '/fonts/a.woff2',
+    '/api', '/api/games', '/api/games/440/launch-options', '/apiary', '/api-docs', '/api.txt', '/apix/y',
+    '/game', '/game/440', '/game/440/team-fortress-2/extra', '/gameplay',
+    '/engine', '/engine/source-engine', '/enginex',
+    '/catalog', '/catalog/x', '/catalogue', '/health', '/health/x', '/healthz',
+    '/how-it-works', '/how-it-worksx', '/steam-launch-options', '/steam-launch-optionsx',
+    '/sitemap.xml', '/sitemap.xml.gz',
+  ])('%s', (p) => {
+    const toFunction = rewrites.some((re) => re.test(p));
+    const edgeHeaders = headerBlock.test(p);
+    expect({ toFunction, edgeHeaders }).toEqual({ toFunction, edgeHeaders: !toFunction });
   });
 });

@@ -544,6 +544,22 @@ function render404() {
 }
 
 /**
+ * Any page path nothing else answered: a real 404 with the site's own page.
+ * It used to be the homepage with a 200, so /game, /engine and any extra path
+ * segment were indexable copies of the front page. The site has one
+ * client-rendered page, `/`, and it never needed a fallback.
+ */
+export function pageNotFoundController(req, res) {
+  // Which paths exist is fixed per deployment, and a deployment starts a fresh
+  // edge cache, so this is safe to cache like any page. It matters for cost:
+  // these paths are mostly crawlers probing (/api-docs, /game) and each uncached
+  // one is a function invocation. Unlike a missing game, which can appear after
+  // a scrape and so is never cached.
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
+  res.status(404).type('html').send(renderNotice('Page not found', 'There\'s no page at this address.'));
+}
+
+/**
  * Answer for a page whose data could not be read. A database hiccup is not a
  * missing page: a 503 asks a crawler to come back, where a 404 would tell it
  * the page is gone. Sets no Cache-Control, so the edge never holds it.

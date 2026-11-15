@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { reportServerErrors } from './instrument.js';
 import gamesRoutes from './routes/gamesRoutes.js';
-import { gamePageController, sitemapController, howItWorksController, catalogController, guideController, engineHubController } from './controllers/seoController.js';
+import { gamePageController, sitemapController, howItWorksController, catalogController, guideController, engineHubController, pageNotFoundController } from './controllers/seoController.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
 import { APP_VERSION } from './config/version.js';
@@ -172,19 +172,24 @@ app.get('/catalog', catalogController);
 app.get('/game/:appid{/:slug}', gamePageController);
 app.get('/engine/:slug', engineHubController);
 
-// Handle SPA routing (must be after static file serving and API routes).
-// Express 5 needs a named wildcard; the braces let it match "/" as well.
+// Everything no route above answered. Express 5 needs a named wildcard; the
+// braces let it match "/" as well.
 app.get('/{*splat}', (req, res) => {
-  // A path with a file extension is a missing asset, not an SPA route. Falling
-  // through to index.html hands the browser HTML with a text/html content-type
-  // where it asked for CSS or JS, and it fails silently — no console error, just
-  // an unstyled page. That is exactly what a client holding cached HTML sees
-  // after a rebuild changes the bundle hash. 404 so the failure is visible.
+  // A path with a file extension is a missing asset, not a page. Answering
+  // with HTML hands the browser a text/html content-type where it asked for
+  // CSS or JS, and it fails silently — no console error, just an unstyled
+  // page. That is exactly what a client holding cached HTML sees after a
+  // rebuild changes the bundle hash. 404 so the failure is visible.
   if (path.extname(req.path)) {
     return res.status(404).type('txt').send('Not found');
   }
 
-  // Serve index.html for all other routes (SPA routing)
+  // `/` is the only page the client renders (it changes only the query
+  // string). Every other path is a page that does not exist, and gets a real
+  // 404 rather than a copy of the homepage with a 200.
+  if (req.path !== '/') return pageNotFoundController(req, res);
+
+  // Normally express.static or the edge has answered `/` already.
   const indexPath = path.join(clientBuildPath, 'index.html');
   
   if (fs.existsSync(indexPath)) {

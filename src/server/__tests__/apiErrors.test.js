@@ -67,3 +67,38 @@ describe('the rate limiter', () => {
     isEnvelope(await res.json(), 'RATE_LIMITED');
   }, 30000);
 });
+
+// A page path nothing answered got the homepage with a 200: /game, /engine and
+// any extra segment were indexable copies of the front page. Paths starting
+// with "api" without a slash got Vercel's own 404 page; vercel.json now sends
+// them here (routeWiring.test.js), and they get the same answer as the rest.
+describe('a page path that does not exist', () => {
+  it.each([
+    '/game', '/engine', '/game/440/team-fortress-2/extra', '/engine/source-engine/x',
+    '/apiary', '/api-docs', '/nope',
+  ])('%s answers 404 with the site\'s own page', async (path) => {
+    const res = await fetch(base + path);
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-type')).toMatch(/text\/html/);
+    const html = await res.text();
+    expect(html).toContain('<title>Page not found — Vanilla Slops</title>');
+    expect(html).toContain('name="robots" content="noindex"');
+    expect(html).toContain('href="/"');
+  });
+
+  it('is held at the edge in production, since only a deployment changes it', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    try {
+      const res = await fetch(`${base}/api-docs`);
+      expect(res.headers.get('cache-control')).toMatch(/s-maxage=\d+/);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('a missing file is a plain 404, so a stale bundle fails visibly', async () => {
+    const res = await fetch(`${base}/assets/gone-abc123.js`);
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-type')).toMatch(/text\/plain/);
+  });
+});

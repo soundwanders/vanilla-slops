@@ -407,7 +407,7 @@ Returns a fully server-rendered HTML page for a single game, with meta tags, can
 
 #### Other Pages (HTML)
 
-`/engine/{slug}`, `/steam-launch-options`, `/how-it-works` and `/catalog` are server-rendered the same way.
+`/engine/{slug}`, `/steam-launch-options`, `/how-it-works` and `/catalog` are server-rendered the same way. Any other page path answers `404` with a short, noindexed "Page not found" page.
 
 #### Sitemap
 ```http
