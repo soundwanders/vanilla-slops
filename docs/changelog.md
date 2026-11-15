@@ -18,6 +18,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.11] - 2026-11-15 — Nowhere is a 404
+
+### Fixed
+- **An address that doesn't exist says so.** `/game`, `/engine`, and a game
+  or engine address with extra parts answered with a full copy of the
+  homepage, which search engines could index as a page of its own. They now
+  show a short "Page not found" page with a link to the database, and answer
+  404.
+- **Addresses starting with "api" get the site's own not-found page.**
+  `/api-docs` and the like showed the hosting platform's page instead,
+  which the site's security rules then partly blocked.
+- **Every response gets its security headers exactly once.** A few addresses
+  received two overlapping sets, and a few others, such as `/healthz`,
+  received none.
+
 ## [1.7.10] - 2026-11-15 — One shape, one pass
 
 ### Fixed
