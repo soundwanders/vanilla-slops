@@ -18,6 +18,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.9] - 2026-11-15 — Every row counted
+
+### Fixed
+- **The option-count ranges in `/api/games/facets` count every game.** They
+  were counted from a single read, which the database cuts at 1,000 rows
+  without saying so: 1,000 games in a catalogue of 3,064. The database now
+  counts each range itself, so the totals hold at any size. Measured against
+  the live database: 3,083 games, the same total the statistics endpoint
+  gives.
+- **Five more figures can no longer lose rows as the catalogue grows.** The
+  risk and category filters, the popular options, the catalogue page and the
+  per-game option counts each relied on one read that would have dropped
+  everything past row 1,000. They read in pages now. Nothing a visitor sees
+  changed today; the largest of them held 627 rows.
+- **A read cut short now fails loudly instead of returning a short list.**
+  Every database response is checked for the cut, and one that was cut fails
+  its request and is reported, rather than being shown and cached as if
+  complete.
+
+### Changed
+- **The README and API reference match the live API.** Every example is a
+  real response. The reference now says plainly that the API serves the site
+  itself, drops parameters that had no effect, and the README notes that the
+  licence covers the code, not the community data.
+
 ## [1.7.8] - 2026-11-14 — Asked once
 
 ### Fixed
