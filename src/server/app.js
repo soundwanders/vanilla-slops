@@ -81,8 +81,9 @@ app.use(helmet({
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000, // Limit each IP to 1000 requests per windowMs
+  // The standard error envelope. It runs before logRequests, so no requestId.
   message: {
-    error: 'Too many requests from this IP, please try again later.'
+    error: { code: 'RATE_LIMITED', message: 'Too many requests from this IP, please try again later.' }
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -158,6 +159,10 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Nothing under /api above matched. Answered here, for every method, before the
+// page routes and the SPA fallback can see it: an API path never gets HTML.
+app.use('/api', notFoundHandler);
+
 // SEO routes — server-rendered game pages + sitemap.
 // MUST be registered before the SPA catch-all below, or index.html shadows them.
 app.get('/sitemap.xml', sitemapController);
@@ -170,15 +175,6 @@ app.get('/engine/:slug', engineHubController);
 // Handle SPA routing (must be after static file serving and API routes).
 // Express 5 needs a named wildcard; the braces let it match "/" as well.
 app.get('/{*splat}', (req, res) => {
-  // Don't serve index.html for API routes that don't exist
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ 
-      error: 'API endpoint not found',
-      path: req.path,
-      availableEndpoints: ['/api/games', '/api/games/suggestions', '/api/games/facets']
-    });
-  }
-  
   // A path with a file extension is a missing asset, not an SPA route. Falling
   // through to index.html hands the browser HTML with a text/html content-type
   // where it asked for CSS or JS, and it fails silently — no console error, just
@@ -195,13 +191,14 @@ app.get('/{*splat}', (req, res) => {
     res.sendFile(indexPath, (err) => {
       if (err) {
         console.error('Error serving index.html:', err);
-        res.status(500).json({ error: 'Failed to serve application' });
+        if (!res.headersSent) {
+          res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal Server Error' } });
+        }
       }
     });
   } else {
-    res.status(500).json({ 
-      error: 'Application not built',
-      message: 'Run "npm run build" in the client directory first'
+    res.status(500).json({
+      error: { code: 'APP_NOT_BUILT', message: 'Run "npm run build" first' }
     });
   }
 });

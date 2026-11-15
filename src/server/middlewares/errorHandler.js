@@ -22,8 +22,12 @@ function errorHandler(err, req, res, next) {
   res.status(status).json(body);
 }
 
+// Every unmatched route, including any path under /api: the same envelope as
+// every other error, so a client parses one shape whatever went wrong.
 function notFoundHandler(req, res) {
-  res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
+  const body = { error: { code: 'NOT_FOUND', message: 'Route not found' } };
+  if (req.id) body.requestId = req.id;
+  res.status(404).json(body);
 }
 
 export { errorHandler, notFoundHandler };

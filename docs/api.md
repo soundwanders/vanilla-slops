@@ -434,7 +434,7 @@ The API uses conventional HTTP status codes and returns errors in a standardized
 
 ### Error Response Format
 
-Most errors share this shape:
+Every error the API sends has this shape. The one exception is the hosting firewall's `429`, which is an HTML page:
 
 ```json
 {
@@ -464,19 +464,18 @@ Most errors share this shape:
 }
 ```
 
-**Unknown API Route (404)** — a `GET` to a path under `/api` that does not exist:
+**Route Not Found (404)** — any path under `/api` that does not exist, with any method:
 ```json
 {
-  "error": "API endpoint not found",
-  "path": "/api/nope",
-  "availableEndpoints": ["/api/games", "/api/games/suggestions", "/api/games/facets"]
+  "error": { "code": "NOT_FOUND", "message": "Route not found" },
+  "requestId": "3f1c9e0a-7b2d-4c55-9a1e-2d8b6f4e9c10"
 }
 ```
 
 **Rate Limit Exceeded (429)** — from the app; a 429 from the hosting firewall is an HTML page instead:
 ```json
 {
-  "error": "Too many requests from this IP, please try again later."
+  "error": { "code": "RATE_LIMITED", "message": "Too many requests from this IP, please try again later." }
 }
 ```
 
