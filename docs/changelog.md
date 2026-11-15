@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.10] - 2026-11-15 — One shape, one pass
+
+### Fixed
+- **Every API error has the same shape.** An unknown `/api` address answered
+  in a format of its own, listing three of the API's eight endpoints, and the
+  rate limit answered in another. Both now use the `{ error: { code, message } }`
+  shape every other error uses, and the not-found answer carries a request id
+  to quote in a bug report. Nothing a visitor sees changed.
+- **A local backup can no longer pass its own check with a row missing.** The
+  export read each table in pages with no fixed order, so a row deleted during
+  the export could push an unchanged row out of the file while an insert put
+  the count back. It now reads in key order, so every row that exists for the
+  whole export is written exactly once, and it fails if a table changed while
+  it ran. Measured against the live database: 18,951 rows in 6.5 seconds,
+  every key once.
+
 ## [1.7.9] - 2026-11-15 — Every row counted
 
 ### Fixed
