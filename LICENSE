@@ -29,9 +29,10 @@ holder via https://github.com/soundwanders/vanilla-slops/issues.
 
 THIRD-PARTY COMPONENTS
 
-This project depends on third-party packages that are distributed under their
-own licenses. Those licenses govern those components and are unaffected by
-this notice.
+This project depends on third-party packages and bundles third-party fonts (in
+src/client/public/fonts/, under the SIL Open Font License; see OFL.txt in that
+directory). Each is distributed under its own license, which governs that
+component and is unaffected by this notice.
 
 NO WARRANTY
 

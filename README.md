@@ -34,17 +34,17 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 ## Features
 
 #### **Smart Search & Discovery**
-- **Real-time search suggestions** across titles, developers, and publishers
-- **Filtering** by developer, engine, release year, and launch-option count
-- **Column sorting** by title, developer, or number of launch options
+- **Real-time search suggestions** across titles, developers, publishers, and launch options
+- **Filtering** by developer, engine, option category, risk level, release year, and launch-option count
+- **Column sorting** by title, developer, release date, or number of launch options
 
 #### **Steam Launch Options Database**
 - **Normalized data model** — each command is stored once and shared across every game that uses it
-- **Source attribution** showing where each option came from (PCGamingWiki, ProtonDB, community curation)
+- **Source attribution** showing where each option came from (PCGamingWiki, ProtonDB, Steam Community, engine documentation)
 
 #### **Code Quality & Safety**
 - **Accessibility-first** with semantic HTML, ARIA, and full keyboard navigation
-- **Security hardened** with Zod input validation, CORS policies, and rate limiting
+- **Security hardened** with Zod input validation, escaped output, and a Content Security Policy that allows no inline script
 - **Tested** with a Vitest suite plus lint + test CI on every pull request
 
 ---
@@ -55,7 +55,7 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 - **Frontend**: Vanilla JavaScript (ES6+, no framework) with a custom Redux-style state manager, bundled by Vite
 - **Backend**: Node.js + Express with a routes → controllers → services structure
 - **Database**: Supabase (PostgreSQL) — normalized many-to-many schema with trigram search indexes
-- **Data collection**: Python scraper pulling from the Steam API, PCGamingWiki, and community sources
+- **Data collection**: a separate Python scraper pulling from the Steam API, PCGamingWiki, ProtonDB, and community sources
 - **Hosting**: Deployed on Vercel, live at [launchoptions.dev](https://launchoptions.dev)
 
 
@@ -69,108 +69,54 @@ Steam Launch Options (SLOPS) are custom command-line parameters that can improve
 ### Setup
 
 ```bash
+# Use the pinned Node version (22.17.1, from .nvmrc)
+nvm use
+
 # Install dependencies
 npm install
 
 # Set up environment variables
 cp .env.example .env
-# Then, add your Supabase credentials to the new .env file
+# Then add your Supabase URL and service_role key to the new .env file
 ```
 
-### Environment Configuration
-
-```bash
-# Example .env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NODE_ENV=development
-PORT=8000
-CORS_ORIGIN=placeholder.com
-DOMAIN_URL=placeholder.com
-```
+`.env.example` documents every variable: which are required, their defaults,
+and where each one is set in production.
 
 ### Development & npm Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | **Start full dev environment** (client + server) |
+| `npm run dev` | **Start full dev environment** (client on :3000, server on :8000) |
 | `npm run dev:client` | Start Vite dev server only |
 | `npm run dev:server` | Start backend with nodemon only |
-| `npm run build` | **Build for production** |
-| `npm start` | **Run production server** |
+| `npm run build` | **Build the client for production** |
+| `npm start` | Serve the built client and the API locally, without nodemon |
 | `npm test` | Run the test suite (Vitest) |
+| `npm run smoke` | Drive the real UI in a headless browser (needs `npm run dev` running) |
 | `npm run lint` | Check code with ESLint |
 | `npm run lint:fix` | Fix ESLint issues automatically |
 | `npm run db:verify` | Test the Supabase connection |
+| `npm run db:backup` | Export every table to `backups/` |
+| `npm run version:set <x.y.z>` | Bump the version (keeps `package.json` and the lockfile in step) |
 
 ---
 
 ## API Documentation
 
-**[Full API Documentation](./docs/api.md)**
-
-#### Quick Reference
+The read-only API behind the site. Parameters, response shapes and errors are
+in the **[full API documentation](./docs/api.md)**.
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/games` | List games with filtering & search |
+| `GET /api/games` | List games with search, filters, sorting and pagination |
 | `GET /api/games/suggestions` | Search autocomplete suggestions |
-| `GET /api/games/{id}` | Get game details with launch options |
-| `GET /api/games/{id}/launch-options` | Get launch options only |
-| `GET /api/games/facets` | Get available filter options |
-| `GET /health` | API health check |
-
-#### **`GET /api/games`**
-Retrieve games with advanced filtering and pagination.
-
-**Query Parameters:**
-- `search` - Search term for games, developers, publishers
-- `developer` - Filter by developer name
-- `options` - Filter by launch-option count (`has-options`, `no-options`, `many-options`, `few-options`)
-- `year` - Filter by release year
-- `sort` - Sort field (`title`, `developer`, `options`)
-- `order` - Sort direction (`asc`, `desc`)
-- `page` - Page number (default: 1)
-- `limit` - Items per page (default: 20, max: 100)
-
-**Response:**
-```json
-{
-  "games": [
-    {
-      "app_id": 440,
-      "title": "Team Fortress 2",
-      "developer": "Valve",
-      "total_options_count": 15
-    }
-  ],
-  "total": 1250,
-  "totalPages": 63,
-  "currentPage": 1,
-  "hasNextPage": true,
-  "facets": {
-    "developers": [{"value": "Valve", "count": 12}],
-    "engines": [{"value": "Source", "count": 5}]
-  }
-}
-```
-
-#### **`GET /api/games/{id}/launch-options`**
-Retrieve launch options for a specific game.
-
-**Response:**
-```json
-[
-  {
-    "id": "uuid-here",
-    "command": "-windowed",
-    "description": "Runs the game in windowed mode",
-    "source": "PCGamingWiki",
-    "risk_level": "safe",
-    "categories": ["display"]
-  }
-]
-```
+| `GET /api/games/facets` | Filter values with counts |
+| `GET /api/games/statistics` | Games with and without options, for the current filters |
+| `GET /api/games/{id}` | One game with its launch options |
+| `GET /api/games/{id}/launch-options` | A game's launch options only |
+| `GET /api/status` | API status and endpoint index |
+| `GET /health` | Health check |
 
 ---
 
@@ -194,6 +140,11 @@ Pull requests are not accepted.
 This source is published for transparency and review. It is **not** open source
 and carries no license to use, copy, modify, deploy, or redistribute it. Please
 see the [LICENSE](LICENSE) file for the full terms.
+
+The license covers the code, not the launch-option data, which comes from
+community sources under their own terms. Data from
+[ProtonDB](https://www.protondb.com) is used under the
+[Open Database License (ODbL)](https://opendatacommons.org/licenses/odbl/1-0/).
 
 ---
 
