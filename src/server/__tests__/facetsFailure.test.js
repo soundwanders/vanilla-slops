@@ -109,14 +109,14 @@ describe('GET /api/games/facets when the database stalls', () => {
     expect(res.set).not.toHaveBeenCalledWith('Cache-Control', expect.anything());
   });
 
-  it('is edge-cached when it succeeds', async () => {
+  it('is edge-cached for a day when it succeeds', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     db.respond = healthy;
     const { filterFacetsController } = await load();
     const res = mockRes();
     await filterFacetsController({ query: {} }, res);
     expect(res.status).not.toHaveBeenCalled();
-    expect(res.set).toHaveBeenCalledWith('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=3600');
+    expect(res.set).toHaveBeenCalledWith('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800');
   });
 });
 

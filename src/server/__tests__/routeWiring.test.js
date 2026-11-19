@@ -61,6 +61,17 @@ describe('server-rendered route wiring', () => {
     expect(seo).toContain(`const GAME_REWRITE_PARAM = '${param}';`);
   });
 
+  it('the api rewrite parameter matches the one gamesController ignores', () => {
+    // A bare /api/games arrives as ?path=games. gamesController ignores that
+    // parameter when deciding whether a listing request is the keepalive (short
+    // cache) or a visitor's (long cache); rename one without the other and the
+    // keepalive gets a day-long cache and stops reaching Supabase.
+    const hit = vercel.rewrites.find((r) => r.source.startsWith('/api/:'));
+    const param = hit?.source.match(/^\/api\/:(\w+)\*$/)?.[1];
+    expect(param, `unexpected /api rewrite source: ${hit?.source}`).toBeTruthy();
+    expect(read('src/server/controllers/gamesController.js')).toContain(`const API_REWRITE_PARAM = '${param}';`);
+  });
+
   it('is only safe to exclude them because helmet is mounted app-wide', () => {
     // If helmet ever stops covering these routes, the exclusion above silently
     // turns into "no security headers at all" rather than "no duplicates".

@@ -40,6 +40,41 @@ function setListCacheHeaders(res, sMaxAge, swr) {
   res.set('Cache-Control', `public, max-age=0, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`);
 }
 
+// A day fresh, then a week served stale while one request refreshes it: the
+// same lifetime as the game pages. Short windows looked cheap and were not.
+// Vercel's edge caches per region, and on a site this quiet a 10-minute or
+// 1-hour window has lapsed in most regions most of the time. On 2026-11-14 a
+// bot spread over 15 regions found the homepage's two reads uncached nearly
+// everywhere at once, every one of them went to Supabase, and the pool
+// stalled for a minute. Errors are never cached, so it stayed that way until
+// the bot stopped.
+const EDGE_DAY = 86400;
+const EDGE_WEEK = 604800;
+
+// vercel.json rewrites `/api/:path*` to the function, and Vercel adds the
+// captured `path` to the query: a bare `/api/games` arrives as
+// `/api/games?path=games`. routeWiring.test.js fails if the rewrite's
+// parameter is renamed.
+const API_REWRITE_PARAM = 'path';
+
+/**
+ * Whether the visitor sent a query string of their own.
+ *
+ * Reads the raw URL because `req.query` cannot answer it: validateRequest
+ * replaces it with the parsed values, defaults filled in, so a bare request
+ * looks exactly like `?page=1&limit=20&sort=featured&order=desc`.
+ *
+ * @param {string} [originalUrl] - `req.originalUrl`
+ * @returns {boolean} True when any parameter other than the rewrite's is present
+ */
+function hasClientQuery(originalUrl = '') {
+  const query = originalUrl.split('?')[1];
+  if (!query) return false;
+  const params = new URLSearchParams(query);
+  params.delete(API_REWRITE_PARAM);
+  return params.size > 0;
+}
+
 // ============================================================================
 // LOGGING UTILITIES
 // ============================================================================
@@ -310,10 +345,20 @@ export async function gamesController(req, res) {
       total: response.total
     });
 
-    // Shorter window than the facets: a listing URL is far more specific (every
-    // filter combination is its own cache entry), so the edge hit rate is lower
-    // and the value is mostly in absorbing repeat traffic to the front page.
-    setListCacheHeaders(res, 60, 600);
+    // Every URL the SPA sends carries a query string (it always sends page,
+    // limit, sort and order), and the query string is part of the edge's cache
+    // key. Those get the long window, the homepage's
+    // `?page=1&limit=20&sort=featured&order=desc` above all.
+    //
+    // A bare `/api/games` keeps the short one, because the cron-job.org
+    // keepalive asks for exactly that URL every three days and must reach
+    // Supabase, or the free tier pauses the project. health.yml needs no
+    // exemption: its `_hc` timestamp makes every check a new cache entry.
+    if (hasClientQuery(req.originalUrl)) {
+      setListCacheHeaders(res, EDGE_DAY, EDGE_WEEK);
+    } else {
+      setListCacheHeaders(res, 60, 600);
+    }
 
     res.json(response);
 
@@ -392,10 +437,13 @@ export async function filterFacetsController(req, res) {
     // so on a low-traffic site it is empty more often than it is warm. A CDN
     // cache does not have that problem: one visitor pays for the computation
     // and everyone else gets an edge hit. Facets are near-static — they only
-    // move when the scraper runs, which is on-demand — so a stale response for
-    // a few minutes costs a filter dropdown that is briefly missing a value,
-    // and stale-while-revalidate means nobody waits for the refresh.
-    setListCacheHeaders(res, 300, 3600);
+    // move when the scraper runs, which is on-demand — so a stale response
+    // costs a filter dropdown that is briefly missing a value, and
+    // stale-while-revalidate means nobody waits for the refresh. This is also
+    // the most expensive read the homepage makes (seven queries, four of them
+    // paging through the catalogue), so it is the one a cold region can least
+    // afford to send to Supabase.
+    setListCacheHeaders(res, EDGE_DAY, EDGE_WEEK);
 
     res.json(facets);
   } catch (err) {
@@ -467,7 +515,7 @@ export async function gameLaunchOptionsController(req, res) {
     
     // Every expanded table row asks for this. Same lifetime as the game page,
     // which shows the same options, so the two go stale together.
-    setListCacheHeaders(res, 86400, 604800);
+    setListCacheHeaders(res, EDGE_DAY, EDGE_WEEK);
     res.json(launchOptions);
   } catch (err) {
     logger.error('OPTIONS', 'Failed to fetch launch options', { gameId: req.params.id, error: err.message });

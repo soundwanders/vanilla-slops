@@ -7,11 +7,12 @@ const service = vi.hoisted(() => ({
   fetchGameWithLaunchOptions: vi.fn(),
   fetchRelatedGames: vi.fn(async () => []),
   fetchLaunchOptionsForGame: vi.fn(),
+  fetchGames: vi.fn(),
 }));
 vi.mock('../services/gamesService.js', () => service);
 
 const { gamePageController } = await import('../controllers/seoController.js');
-const { gameLaunchOptionsController } = await import('../controllers/gamesController.js');
+const { gameLaunchOptionsController, gamesController } = await import('../controllers/gamesController.js');
 
 const EDGE_1D = 'public, max-age=1800, s-maxage=86400, stale-while-revalidate=604800';
 const TF2 = { app_id: 440, title: 'Team Fortress 2', duplicate_of: null, launch_options: [] };
@@ -38,6 +39,7 @@ async function page(appid, slug) {
 beforeEach(() => {
   service.fetchGameWithLaunchOptions.mockReset();
   service.fetchLaunchOptionsForGame.mockReset();
+  service.fetchGames.mockReset();
 });
 
 afterEach(() => {
@@ -102,6 +104,78 @@ describe('game pages in development', () => {
     vi.stubEnv('NODE_ENV', 'development');
     service.fetchGameWithLaunchOptions.mockResolvedValue(TF2);
     const res = await page('440', 'team-fortress-2');
+    expect(cacheHeader(res)).toBe('no-store');
+  });
+});
+
+// The listing. What validateRequest leaves in req.query is the same for all of
+// these (defaults filled in), so only the raw URL can tell them apart.
+describe('GET /api/games', () => {
+  const PARSED = { page: 1, limit: 20, sort: 'featured', order: 'desc' };
+  const PAGE = { games: [], total: 0, totalPages: 0, currentPage: 1, hasNextPage: false, hasPrevPage: false };
+  const EDGE_DAY_API = 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800';
+  const EDGE_SHORT_API = 'public, max-age=0, s-maxage=60, stale-while-revalidate=600';
+
+  async function list(originalUrl) {
+    const res = mockRes();
+    await gamesController({ query: { ...PARSED }, originalUrl }, res);
+    return res;
+  }
+
+  beforeEach(() => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    service.fetchGames.mockResolvedValue(PAGE);
+  });
+
+  // The homepage's first request. A bot spread over 15 regions found it
+  // uncached nearly everywhere on 2026-11-14, under a 60 s + 10 min window.
+  it('caches the homepage request for a day', async () => {
+    const res = await list('/api/games?page=1&limit=20&sort=featured&order=desc');
+    expect(res.json).toHaveBeenCalled();
+    expect(cacheHeader(res)).toBe(EDGE_DAY_API);
+  });
+
+  it('caches it for a day as Vercel delivers it, with the rewrite parameter added', async () => {
+    const res = await list('/api/games?page=1&limit=20&sort=featured&order=desc&path=games');
+    expect(cacheHeader(res)).toBe(EDGE_DAY_API);
+  });
+
+  // cron-job.org asks for exactly this URL every three days, and it has to
+  // reach Supabase to keep the free-tier project from pausing.
+  it('keeps the short window for a bare request, the keepalive', async () => {
+    const res = await list('/api/games');
+    expect(cacheHeader(res)).toBe(EDGE_SHORT_API);
+  });
+
+  it('keeps the short window for a bare request as Vercel delivers it', async () => {
+    const res = await list('/api/games?path=games');
+    expect(cacheHeader(res)).toBe(EDGE_SHORT_API);
+  });
+
+  it('keeps the short window when there is no URL to read', async () => {
+    const res = await list(undefined);
+    expect(cacheHeader(res)).toBe(EDGE_SHORT_API);
+  });
+
+  // health.yml's `_hc` timestamp is a new cache key on every run, so the long
+  // window cannot stop it reaching the function.
+  it('caches the health check for a day, which its cache-buster makes harmless', async () => {
+    const res = await list('/api/games?limit=1&_hc=1794680113&path=games');
+    expect(cacheHeader(res)).toBe(EDGE_DAY_API);
+  });
+
+  it('never caches a failure', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    service.fetchGames.mockRejectedValue(new Error('Failed to fetch games from database'));
+    const res = await list('/api/games?page=1&limit=20&sort=featured&order=desc');
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(cacheHeader(res)).toBeUndefined();
+  });
+
+  it('is never cached in development', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    const res = await list('/api/games?page=1&limit=20&sort=featured&order=desc');
     expect(cacheHeader(res)).toBe('no-store');
   });
 });
