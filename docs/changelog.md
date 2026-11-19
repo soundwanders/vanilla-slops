@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.12] - 2026-11-18 — Held at the edge
+
+### Fixed
+- **A burst of traffic no longer takes the homepage down.** On 14 November a
+  bot sent about 2,700 requests in one minute through 15 of the hosting
+  platform's regions. The homepage's game list and filter menus were kept in
+  each region's cache for only minutes, so on a quiet site almost no region
+  had a copy; every request went to the database, the database stopped
+  answering within nine seconds, and 1,573 requests failed before the bot
+  stopped. Both are now kept for a day and served from the cache for a week
+  after that while a fresh copy is fetched, the same as game pages. The
+  catalogue only changes when it is rescanned, so a scan can now take up to
+  a day to show on the homepage, as it already did on game pages. Checked on
+  a preview deployment: both were still served from the cache eight minutes
+  after the first visit, where before they would have expired.
+
 ## [1.7.11] - 2026-11-15 — Nowhere is a 404
 
 ### Fixed
