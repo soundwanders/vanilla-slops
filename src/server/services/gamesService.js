@@ -364,7 +364,9 @@ function applySearchFilters(query, filters) {
     if (!isNaN(yearInt) && yearInt >= 1980 && yearInt <= new Date().getFullYear() + 1) {
       query = query.ilike('release_date', `%${yearInt}%`);
     } else {
-      console.warn(`⚠️ Invalid year filter ignored: ${yearFilter}`);
+      // Quoted: this is the raw query value, and a CR/LF in it would
+      // otherwise start a log line of its own.
+      console.warn(`⚠️ Invalid year filter ignored: ${JSON.stringify(yearFilter)}`);
     }
   }
 
