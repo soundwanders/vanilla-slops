@@ -276,6 +276,15 @@ this repository and therefore immune to GitHub disabling anything:
 | database keepalive | `https://launchoptions.dev/api/games` | every 3 days |
 | full-stack check | `https://launchoptions.dev/api/games` | every 3 days |
 
+**Both send an `x-monitor-key` header**, and so does `health.yml` (from the
+`MONITOR_KEY` repository secret). Vercel's Bot Protection challenges every
+non-browser request with a 429. The `monitors-bypass` firewall rule lets
+`/api/games` through only when that header matches the value stored in the
+rule. It used to match the user agent, which any bot can copy. A job
+recreated without the header is challenged and reports the site as down. To
+rotate the key, change it in all four places at once: the rule, both
+cron-job.org jobs and the GitHub secret.
+
 Both go through the site, and the duplication is deliberate redundancy. One
 request exercises the serverless function, the database and the CDN, so a pass
 means the whole chain is up, not merely that the database is awake. Both notify

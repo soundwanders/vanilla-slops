@@ -19,8 +19,16 @@ name: Health
 # There was a separate PostgREST ping here until it was removed. It had failed
 # on every scheduled run since 2025 because the SUPABASE_URL and
 # SUPABASE_ANON_KEY secrets are not set on this repository, and fixing it would
-# have bought a weaker check that duplicated this one. Nothing here needs a
-# secret now, which is the reason it stays working.
+# have bought a weaker check that duplicated this one.
+#
+# The one secret it does need is MONITOR_KEY. Vercel's Bot Protection
+# challenges any non-browser request with a 429, and the `monitors-bypass`
+# firewall rule lets /api/games through only when the `x-monitor-key` header
+# matches the value stored in that rule. It used to match the `curl/` user
+# agent instead, which any bot can send. The cron-job.org jobs send the same
+# header. A missing secret fails the run at once, with a message saying so,
+# rather than being reported as the site being down. Never turn on "Log
+# request headers" for that rule: it would write the key into Vercel's logs.
 #
 # Caveat worth knowing: GitHub disables scheduled workflows on a public repo
 # after 60 days with no repository activity. Ordinary commits reset that clock.
@@ -45,7 +53,14 @@ jobs:
 
     steps:
       - name: Site serves live data end to end
+        env:
+          MONITOR_KEY: ${{ secrets.MONITOR_KEY }}
         run: |
+          if [ -z "$MONITOR_KEY" ]; then
+            echo "::error::The MONITOR_KEY repository secret is not set. Without it the firewall challenges this check (429)."
+            exit 1
+          fi
+
           # `_hc` busts the CDN cache deliberately. /api/games sets s-maxage, so
           # without it this could be answered by a stale edge copy and stay green
           # with the function or the database completely dead.
@@ -55,11 +70,15 @@ jobs:
           # which are unmetered on public repositories.
           for attempt in 1 2 3; do
             RESPONSE=$(curl -sS --max-time 20 -w $'\n%{http_code}' \
+              -H "x-monitor-key: $MONITOR_KEY" \
               "https://launchoptions.dev/api/games?limit=1&_hc=$(date +%s)") || RESPONSE=""
             CODE=$(printf '%s' "$RESPONSE" | tail -n1)
             if [ "$CODE" = "200" ] && printf '%s' "$RESPONSE" | grep -q '"app_id"'; then
               echo "Site OK on attempt $attempt"
               exit 0
+            fi
+            if [ "$CODE" = "429" ]; then
+              echo "::warning::Challenged by the firewall: MONITOR_KEY may not match the value in the monitors-bypass rule."
             fi
             echo "Attempt $attempt failed (status: ${CODE:-no response})"
             if [ "$attempt" -lt 3 ]; then sleep 30; fi

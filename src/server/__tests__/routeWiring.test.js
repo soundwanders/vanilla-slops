@@ -81,6 +81,17 @@ describe('server-rendered route wiring', () => {
     expect(vercel.regions).toEqual(['pdx1']);
   });
 
+  it('health.yml sends the monitor key the firewall bypass checks for', () => {
+    // The `monitors-bypass` firewall rule lets /api/games past Bot Protection
+    // only when this header carries the secret. It used to trust the user
+    // agent, which anyone can send. Without the header the check is
+    // challenged with a 429 and reports the site as down.
+    const health = read('.github/workflows/health.yml');
+    expect(health).toContain('MONITOR_KEY: ${{ secrets.MONITOR_KEY }}');
+    expect(health).toContain('-H "x-monitor-key: $MONITOR_KEY"');
+    expect(health).toMatch(/if \[ -z "\$MONITOR_KEY" \]; then/);
+  });
+
   it('is only safe to exclude them because helmet is mounted app-wide', () => {
     // If helmet ever stops covering these routes, the exclusion above silently
     // turns into "no security headers at all" rather than "no duplicates".
