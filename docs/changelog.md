@@ -18,6 +18,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.13] - 2026-11-21 — Next door to the database
+
+### Fixed
+- **Pages that aren't cached are answered from beside the database.** The
+  site's server code ran in Virginia while the database is in Oregon, so
+  every query crossed the country and back, about 65-70 ms each, and a game
+  page makes about four in a row. It now runs in Oregon too. Checked on a
+  preview deployment: an uncached game page was answered from Portland.
+
+### Security
+- **The uptime checks prove who they are with a secret key.** The firewall
+  let any request claiming to be one of the site's uptime monitors skip bot
+  protection on the game list, and any bot could make that claim by copying
+  their name. The checks now send a secret key, so the firewall's exception
+  can require it.
+- **An invalid year filter can no longer add fake lines to the server
+  logs.** The value was written into a warning as typed, so an encoded line
+  break started a log line of its own. It is now quoted. Which years the
+  site accepts is unchanged.
+
 ## [1.7.12] - 2026-11-18 — Held at the edge
 
 ### Fixed
