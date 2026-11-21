@@ -72,6 +72,15 @@ describe('server-rendered route wiring', () => {
     expect(read('src/server/controllers/gamesController.js')).toContain(`const API_REWRITE_PARAM = '${param}';`);
   });
 
+  it('runs the function beside the database', () => {
+    // Supabase is in AWS us-west-2 (Oregon), and pdx1 is Vercel's region on
+    // the same AWS region. Without this the function runs in iad1 (Virginia),
+    // Vercel's default, and every database round trip crosses the country:
+    // ~65-70 ms each, and an uncached game page makes about four in a row.
+    // Hobby allows exactly one region, so this must stay a single entry.
+    expect(vercel.regions).toEqual(['pdx1']);
+  });
+
   it('is only safe to exclude them because helmet is mounted app-wide', () => {
     // If helmet ever stops covering these routes, the exclusion above silently
     // turns into "no security headers at all" rather than "no duplicates".
