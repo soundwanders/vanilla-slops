@@ -18,6 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.15] - 2026-11-22 — Says who
+
+### Fixed
+- **An option with no written description says where to read about it.**
+  About four in ten options have none yet. Their card used to go straight
+  from the command to the source details, with nothing about what the
+  option does. It now shows a short link in that place, such as "What
+  PCGamingWiki says", to the page that explains it.
+- **The API no longer invents text.** An option with no description came
+  back as "No description available", and one with no named source as
+  "Community". Neither was in the catalogue. Both now come back empty
+  (`null`), as the API documentation describes.
+- **A pressed copy box no longer fades or sticks.** On touchscreens, pressing
+  a command's copy box faded it, and if the press turned into a scroll it
+  could stay faded until tapped again. It now responds to a press the way
+  it does on game pages.
+
 ## [1.7.14] - 2026-11-22 — Nothing new to fetch
 
 ### Fixed
