@@ -18,6 +18,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.14] - 2026-11-22 — Nothing new to fetch
+
+### Fixed
+- **Made-up addresses no longer reach the database.** The hosting platform
+  keeps one cached copy per exact address, so anything that varied the
+  address got a fresh page built from the database every time. That
+  covered anything added after a "?", an App ID spelled `440abc` or
+  `0440`, and a made-up game or engine. Page addresses now send anything
+  after "?" back to the plain address without a database read. Misspelled
+  App IDs get "Page not found" without one, and a game or engine the
+  catalogue doesn't hold is remembered for an hour.
+- **Requests that arrive together share one database read.** A freshly
+  started server used to run a separate read for each request that came in
+  before the first had finished. Right after a release, that is how a burst
+  of traffic arrives.
+- **A page whose data failed to load is shown but never kept.** The
+  catalogue page could be stored for a day with its figures missing, and a
+  failed search suggestion was remembered for an hour as "no matches".
+- **A game's redirects need one read instead of two,** and its page loads
+  its options and related games together.
+- **The installable app's colours and description match the site.** They
+  still had the palette from before 1.6.0 and called the catalogue
+  "community-verified".
+
+### Changed
+- **Anything after "?" in a page address is dropped,** `utm_` tracking tags
+  included.
+- **The header links on game, engine and guide pages are smaller,** the same
+  size as the homepage's, so the header no longer feels crowded.
+- **Two API endpoints are cached for a day:** a game's details and the
+  catalogue statistics. A per-game API address with anything after "?" is
+  redirected to the plain one.
+
 ## [1.7.13] - 2026-11-21 — Next door to the database
 
 ### Fixed
