@@ -24,7 +24,7 @@ vi.mock('../config/supabaseClient.js', () => ({
 const { gameDetailsController } = await import('../controllers/gamesController.js');
 
 function run(id) {
-  const res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis() };
+  const res = { status: vi.fn().mockReturnThis(), json: vi.fn().mockReturnThis(), set: vi.fn().mockReturnThis() };
   return gameDetailsController({ params: { id } }, res).then(() => ({
     status: res.status.mock.calls[0][0],
     body: res.json.mock.calls[0][0],

@@ -9,18 +9,14 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { fetchGameWithLaunchOptions, fetchRelatedGames, getGamesForSitemap, getCatalogStats, getCatalogGrain, getEngineHubIndex, getGuideData } from '../services/gamesService.js';
+import { fetchGameRow, fetchLaunchOptionsForGame, fetchRelatedGames, getGamesForSitemap, getCatalogStats, getCatalogGrain, getEngineHubIndex, getGuideData } from '../services/gamesService.js';
+import { hasStrayQuery } from '../utils/clientQuery.js';
+import { canonicalAppId } from '../utils/appId.js';
 import { slugify } from '../../shared/slugify.js';
 import { engineSlug, resolveHub, gameHasEngineHub } from '../utils/engineHubs.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../../shared/safeUrl.js';
-import { preserveQuery } from '../utils/preserveQuery.js';
 import { reportError } from '../instrument.js';
-
-// vercel.json rewrites `/game/:path*` to the function, and Vercel puts the
-// captured `path` into the query. Never forward it into a public URL.
-// routeWiring.test.js fails if the rewrite's parameter is renamed.
-const GAME_REWRITE_PARAM = 'path';
 
 // Edge-cached for a day, then served stale for up to a week while one request
 // refreshes it: the content moves only when the scraper runs. It was six hours
@@ -28,6 +24,11 @@ const GAME_REWRITE_PARAM = 'path';
 // to be most of the function's traffic and almost never met a cached copy. A
 // deployment starts a new cache, so a release is never held back by this.
 const LONG_CACHE = 'public, max-age=1800, s-maxage=86400, stale-while-revalidate=604800';
+
+// A game or engine the catalogue does not hold. Held at the edge for an hour,
+// not a day, because a scrape can add it; never in the browser. It used to be
+// held nowhere, so any random App ID reached the database every time.
+const MISSING_CACHE = 'public, max-age=0, s-maxage=3600';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SITE_URL = (process.env.DOMAIN_URL || 'https://launchoptions.dev').replace(/\/$/, '');
@@ -200,19 +201,46 @@ ${links}
 }
 
 /**
+ * Server-rendered pages take no query string, so one is redirected away
+ * before anything is read.
+ *
+ * Vercel's edge keys its cache on the full URL, so `/game/440/slug?r=1`,
+ * `?r=2` and so on were each a full render: a function call and four or five
+ * queries apiece, on routes the `/api/` rate limit does not cover. The 301 is
+ * cached, costs no query, and the page behind it is the one already cached.
+ * Before 1.7.14 the game-page redirects carried a query through (4b216e1);
+ * `utm_` tags and the like are now dropped instead.
+ */
+export function pageQueryRedirect(req, res, next) {
+  const rewritten = /^\/(game|engine)(\/|$)/.test(req.path);
+  if (!hasStrayQuery(req.originalUrl, { rewritten })) return next();
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
+  return res.redirect(301, req.originalUrl.split('?')[0]);
+}
+
+/**
  * GET /game/:appid/:slug? — server-rendered game landing page.
  */
 export async function gamePageController(req, res) {
-  const appId = parseInt(req.params.appid, 10);
-  if (isNaN(appId) || appId < 1) {
+  const production = process.env.NODE_ENV === 'production';
+
+  // An App ID written any other way (`440abc`, `0440`) is never a page, and
+  // every spelling is its own cache entry, so it is answered without a read
+  // and held like any page.
+  const appId = canonicalAppId(req.params.appid);
+  if (appId === null) {
+    res.set('Cache-Control', production ? LONG_CACHE : 'no-store');
     return res.status(404).type('html').send(render404());
   }
 
+  // The row alone first: both redirects below are decided on it, so a slug
+  // variant costs one query instead of also paying for the options.
   let game;
   try {
-    game = await fetchGameWithLaunchOptions(appId);
+    game = await fetchGameRow(appId);
   } catch (err) {
     if (err?.code === 'GAME_NOT_FOUND') {
+      res.set('Cache-Control', production ? MISSING_CACHE : 'no-store');
       return res.status(404).type('html').send(render404());
     }
     // Every failure used to be answered 404, so while the database stalled,
@@ -220,34 +248,47 @@ export async function gamePageController(req, res) {
     reportError(err, { tags: { route: 'GET /game/:appid' } });
     return sendUnavailable(res);
   }
-  if (!game) return res.status(404).type('html').send(render404());
-
-  // Everything from here is edge-cached, the two redirects included, so a
-  // repeat visit or a slug-less link costs no function call or database read.
-  // Never in dev, for the reason howItWorksController gives.
-  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
 
   // Steam publishes some products under two App IDs (Condition Zero is 80 and
   // 100). `duplicate_of` names the surviving row, and public_games hides the
   // other — but this page still reads the table, precisely so a link to the
   // hidden ID can be honoured instead of 404ing. Send it to the canonical game,
   // which is the same "one URL per game" rule the slug redirect below applies;
-  // the slug-less target picks up its own 301 from that rule.
+  // the slug-less target picks up its own 301 from that rule. Both redirects
+  // are edge-cached, so a repeat costs no function call, and both send a bare
+  // path: Vercel's rewrite writes `path=` into the query, and forwarding the
+  // query put `?path=440` into public URLs on 2026-09-27. A visitor's own
+  // query never gets this far (pageQueryRedirect).
   if (game.duplicate_of) {
-    return res.redirect(301, preserveQuery(`/game/${game.duplicate_of}`, req.originalUrl, { drop: [GAME_REWRITE_PARAM] }));
+    res.set('Cache-Control', production ? LONG_CACHE : 'no-store');
+    return res.redirect(301, `/game/${game.duplicate_of}`);
   }
 
   // Redirect to the canonical slug if it's missing or wrong (one URL per game)
   const canonicalSlug = slugify(game.title);
   if (req.params.slug !== canonicalSlug) {
-    return res.redirect(301, preserveQuery(`/game/${appId}/${canonicalSlug}`, req.originalUrl, { drop: [GAME_REWRITE_PARAM] }));
+    res.set('Cache-Control', production ? LONG_CACHE : 'no-store');
+    return res.redirect(301, `/game/${appId}/${canonicalSlug}`);
   }
 
-  // Never let the related list take the page down with it — it returns [] on
-  // failure and the section simply doesn't render.
-  const related = await fetchRelatedGames(game);
+  // The options and the related list in one round instead of two. The related
+  // list never takes the page down with it: it returns [] on failure and the
+  // section simply doesn't render. A failed options read is a 503, uncached.
+  let launchOptions;
+  let related;
+  try {
+    [launchOptions, related] = await Promise.all([
+      fetchLaunchOptionsForGame(appId),
+      fetchRelatedGames(game),
+    ]);
+  } catch (err) {
+    reportError(err, { tags: { route: 'GET /game/:appid' } });
+    return sendUnavailable(res);
+  }
 
-  res.type('html').send(renderGamePage(game, canonicalSlug, related));
+  // Never cached in dev, for the reason howItWorksController gives.
+  res.set('Cache-Control', production ? LONG_CACHE : 'no-store');
+  res.type('html').send(renderGamePage({ ...game, launchOptions }, canonicalSlug, related));
 }
 
 function renderGamePage(game, slug, related = []) {
@@ -600,12 +641,13 @@ function renderNotice(heading, message) {
  */
 export async function howItWorksController(req, res) {
   // Figures are decorative-if-absent (getCatalogStats never throws), so the page
-  // renders either way.
+  // renders either way — but a page missing them is not held anywhere, or the
+  // edge would serve it without its figures for the next hour.
   const stats = await getCatalogStats();
   // Only cache in production. Locally, an hour-long cache means every rebuild
   // leaves the browser holding HTML that points at a bundle hash which no longer
   // exists, so the page renders unstyled until a hard refresh.
-  res.set('Cache-Control', process.env.NODE_ENV === 'production'
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' && !stats.degraded
     ? 'public, max-age=3600'
     : 'no-store');
   res.type('html').send(renderHowItWorks(stats));
@@ -1064,13 +1106,15 @@ ${seoFooter({ current: 'catalog' })}
 
 /**
  * GET /catalog — never fails on data. getCatalogGrain returns an empty result
- * rather than throwing, and the renderer degrades to an explanatory line.
+ * rather than throwing, and the renderer degrades to an explanatory line. A
+ * degraded page is served but never held: it used to be cached for a day with
+ * its figures missing.
  */
 export async function catalogController(req, res) {
   const grain = await getCatalogGrain();
   // Same reasoning as howItWorksController: caching locally leaves the browser
   // holding HTML that points at a bundle hash a rebuild has already replaced.
-  res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
+  res.set('Cache-Control', process.env.NODE_ENV === 'production' && !grain.degraded ? LONG_CACHE : 'no-store');
   res.type('html').send(renderCatalog(grain));
 }
 
@@ -1090,14 +1134,21 @@ export async function engineHubController(req, res) {
   }
 
   const { hub, canonical } = resolveHub(index.hubs, req.params.slug);
+  // Both answers below are held at the edge, so a burst of made-up slugs is not
+  // a function call apiece. The 404 for an hour only: a scrape can add a hub.
+  const production = process.env.NODE_ENV === 'production';
   if (!hub) {
+    res.set('Cache-Control', production ? MISSING_CACHE : 'no-store');
     return res.status(404).type('html')
       .send(renderNotice('Engine not found', 'We don\'t have a page for that engine.'));
   }
   // A bare path, never the query: Vercel's `/engine/:path*` rewrite writes the
-  // slug into it as `path=`, the same parameter that leaked out of the
-  // game-page redirect on 2026-09-27 (see GAME_REWRITE_PARAM).
-  if (!canonical) return res.redirect(301, `/engine/${hub.slug}`);
+  // slug into it as `path=`, the parameter that leaked out of the game-page
+  // redirect on 2026-09-27.
+  if (!canonical) {
+    res.set('Cache-Control', production ? LONG_CACHE : 'no-store');
+    return res.redirect(301, `/engine/${hub.slug}`);
+  }
 
   res.set('Cache-Control', process.env.NODE_ENV === 'production' ? LONG_CACHE : 'no-store');
   res.type('html').send(renderEngineHub(

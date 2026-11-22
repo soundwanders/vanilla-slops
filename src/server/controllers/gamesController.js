@@ -7,6 +7,8 @@ import {
   getGameStatistics
 } from '../services/gamesService.js';
 import { reportError } from '../instrument.js';
+import { hasClientQuery, hasStrayQuery } from '../utils/clientQuery.js';
+import { canonicalAppId } from '../utils/appId.js';
 
 /**
  * @fileoverview Games controller with clean, structured logging and error handling
@@ -51,28 +53,14 @@ function setListCacheHeaders(res, sMaxAge, swr) {
 const EDGE_DAY = 86400;
 const EDGE_WEEK = 604800;
 
-// vercel.json rewrites `/api/:path*` to the function, and Vercel adds the
-// captured `path` to the query: a bare `/api/games` arrives as
-// `/api/games?path=games`. routeWiring.test.js fails if the rewrite's
-// parameter is renamed.
-const API_REWRITE_PARAM = 'path';
-
 /**
- * Whether the visitor sent a query string of their own.
- *
- * Reads the raw URL because `req.query` cannot answer it: validateRequest
- * replaces it with the parsed values, defaults filled in, so a bare request
- * looks exactly like `?page=1&limit=20&sort=featured&order=desc`.
- *
- * @param {string} [originalUrl] - `req.originalUrl`
- * @returns {boolean} True when any parameter other than the rewrite's is present
+ * The per-game routes take no query, and each one sent was a new cache entry
+ * with its own database read. A cached 301 to the bare URL costs no read and
+ * still answers a caller that adds a cache-buster: `fetch` follows it.
  */
-function hasClientQuery(originalUrl = '') {
-  const query = originalUrl.split('?')[1];
-  if (!query) return false;
-  const params = new URLSearchParams(query);
-  params.delete(API_REWRITE_PARAM);
-  return params.size > 0;
+function redirectToBare(req, res) {
+  setListCacheHeaders(res, EDGE_DAY, EDGE_WEEK);
+  return res.redirect(301, req.originalUrl.split('?')[0]);
 }
 
 // ============================================================================
@@ -406,10 +394,17 @@ export async function searchSuggestionsController(req, res) {
     // list is far more tolerant of staleness than a results page: being one game
     // short in a dropdown for ten minutes costs nothing, and the underlying data
     // only changes when the scraper is run by hand.
-    setListCacheHeaders(res, 600, 3600);
+    if (suggestions.degraded) {
+      // Part of the read failed (the option half). Served, never held.
+      res.set('Cache-Control', 'no-store');
+    } else {
+      setListCacheHeaders(res, 600, 3600);
+    }
 
     res.json(suggestions);
   } catch (err) {
+    // Uncached. The service used to turn a failed read into [] itself, and the
+    // success path above then cached it for ten minutes plus an hour stale.
     logger.error('SUGGESTIONS', 'Failed to fetch suggestions', { error: err.message });
     sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch search suggestions', logger.requestId, err);
   }
@@ -460,12 +455,13 @@ export async function gameDetailsController(req, res) {
   
   try {
     const { id } = req.params;
-    const gameId = parseInt(id);
+    const gameId = canonicalAppId(id);
     
-    if (isNaN(gameId)) {
-      logger.warning('DETAILS', 'Invalid game ID provided', { id, gameId });
+    if (gameId === null) {
+      logger.warning('DETAILS', 'Invalid game ID provided', { id });
       return sendError(res, 400, 'INVALID_GAME_ID', 'Invalid game ID');
     }
+    if (hasStrayQuery(req.originalUrl, { rewritten: true })) return redirectToBare(req, res);
 
     logger.info('DETAILS', 'Fetching game details', { gameId });
 
@@ -477,11 +473,17 @@ export async function gameDetailsController(req, res) {
       optionsCount: game.launch_options?.length || 0
     });
     
+    // Nothing in the site calls this, but it is public and documented, and an
+    // uncached route is a function call and two queries every time.
+    setListCacheHeaders(res, EDGE_DAY, EDGE_WEEK);
     res.json(game);
   } catch (err) {
     logger.error('DETAILS', 'Failed to fetch game details', { gameId: req.params.id, error: err.message });
     
     if (err.code === 'GAME_NOT_FOUND') {
+      // Held an hour at the edge, like the game page's 404: a scrape can add
+      // the game, but a random App ID should not reach the database each time.
+      setListCacheHeaders(res, 3600, 0);
       sendError(res, 404, 'GAME_NOT_FOUND', err.message, logger.requestId);
     } else {
       sendError(res, 500, 'INTERNAL_ERROR', 'Failed to fetch game details', logger.requestId, err);
@@ -497,12 +499,15 @@ export async function gameLaunchOptionsController(req, res) {
   
   try {
     const { id } = req.params;
-    const gameId = parseInt(id);
+    const gameId = canonicalAppId(id);
     
-    if (isNaN(gameId)) {
+    if (gameId === null) {
       logger.warning('OPTIONS', 'Invalid game ID for launch options', { id });
       return sendError(res, 400, 'INVALID_GAME_ID', 'Invalid game ID');
     }
+    // Every query here was its own day-long cache entry, each a database
+    // read: `?r=1`, `?r=2`, ... Sent to the bare URL without one.
+    if (hasStrayQuery(req.originalUrl, { rewritten: true })) return redirectToBare(req, res);
 
     logger.info('OPTIONS', 'Fetching launch options only', { gameId });
 
@@ -549,6 +554,9 @@ export async function gameStatisticsController(req, res) {
       gamesWithoutOptions: statistics.gamesWithoutOptions
     });
     
+    // Public and documented, though the site no longer calls it. Uncached, the
+    // same URL repeated was two exact counts every time.
+    setListCacheHeaders(res, EDGE_DAY, EDGE_WEEK);
     res.json(statistics);
   } catch (err) {
     logger.error('STATS', 'Failed to fetch statistics', { error: err.message });

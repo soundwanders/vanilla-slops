@@ -69,6 +69,51 @@ const PHANTOM_TTL_MS = 60 * 60 * 1000;
 const _phantomCache = { data: null, expiresAt: 0 };
 
 /**
+ * Serve a per-instance cache, and share one fetch between every caller that
+ * arrives while it is running.
+ *
+ * Each cache above used to store its result only once the fetch finished, so
+ * K requests reaching a cold instance together ran K complete fetches (the
+ * facets alone are about twenty queries). Right after a deploy, when every
+ * edge region is empty, that is exactly how a burst arrives.
+ *
+ * A fetch that throws, or a result `keep` rejects, is not cached: the callers
+ * already waiting get that answer, and the next one starts afresh.
+ *
+ * @template T
+ * @param {{data: T|null, expiresAt: number}} cache - One of the caches above
+ * @param {number} ttlMs
+ * @param {() => Promise<T>} compute
+ * @param {{key?: string, keep?: (data: T) => boolean}} [options] - `key`
+ *   separates results computed from different inputs
+ * @returns {Promise<T>}
+ */
+function sharedCached(cache, ttlMs, compute, { key = '', keep = () => true } = {}) {
+  if (cache.data && cache.key === key && Date.now() < cache.expiresAt) {
+    return Promise.resolve(cache.data);
+  }
+  if (cache.pending && cache.pendingKey === key) return cache.pending;
+
+  const pending = Promise.resolve()
+    .then(compute)
+    .then((data) => {
+      // A fetch for a different key that started later owns the cache now.
+      if (keep(data) && cache.pendingKey === key) {
+        cache.data = data;
+        cache.key = key;
+        cache.expiresAt = Date.now() + ttlMs;
+      }
+      return data;
+    })
+    .finally(() => {
+      if (cache.pending === pending) cache.pending = null;
+    });
+  cache.pending = pending;
+  cache.pendingKey = key;
+  return pending;
+}
+
+/**
  * @fileoverview Games service layer providing data access
  * Handles logic database operations for Steam games and their launch options
  * Implements search, filter, and pagination
@@ -613,12 +658,16 @@ export async function getSearchSuggestions(query, limit = 10) {
     // are dynamic: an option becomes searchable again on its own the moment a
     // game is added with it. Embedded rows are capped at 1 (existence is all we
     // need).
-    const { data: optData } = await supabase
+    const { data: optData, error: optError } = await supabase
       .from('public_launch_options')
       .select('command, description, game_launch_options!inner(game_app_id)')
       .or(`command.ilike.%${safe}%,description.ilike.%${safe}%`)
       .limit(1, { referencedTable: 'game_launch_options' })
       .limit(12);
+    // The option half fails soft: the game suggestions are still worth
+    // showing. But the list is then incomplete, so it is flagged and the
+    // controller does not cache it.
+    if (optError) console.error('Error fetching option suggestions:', optError);
 
     const optionSuggestions = [];
     const seenCmd = new Set();
@@ -650,14 +699,15 @@ export async function getSearchSuggestions(query, limit = 10) {
     // is how these features become annoying — approximate matches crowd out the
     // literal one the user was typing toward. As a fallback it can only ever
     // appear in place of nothing.
-    if (exactSuggestions.length === 0) {
-      return await getFuzzyTitleSuggestions(query);
-    }
-
-    return exactSuggestions;
+    const result = exactSuggestions.length === 0
+      ? await getFuzzyTitleSuggestions(query)
+      : exactSuggestions;
+    return optError ? Object.assign(result, { degraded: true }) : result;
   } catch (error) {
+    // Rethrown, never turned into []: the controller caches what this returns,
+    // and an empty list cached for an hour reads as "no such game".
     console.error('Error in getSearchSuggestions:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -701,9 +751,10 @@ async function fetchSuggestionRows(query, safe, limit) {
 
   if (!error) return data || [];
 
+  // Only "no such function" falls back. Any other error throws, so the
+  // controller answers an uncached empty list instead of caching this one.
   if (error.code !== 'PGRST202') {
-    console.error('Error fetching suggestions:', error);
-    return [];
+    throw new Error(`game_suggestions: ${error.message}`);
   }
 
   const { data: games, error: fallbackError } = await supabase
@@ -713,8 +764,7 @@ async function fetchSuggestionRows(query, safe, limit) {
     .limit(limit * 3);
 
   if (fallbackError) {
-    console.error('Error fetching suggestions:', fallbackError);
-    return [];
+    throw new Error(`suggestion fallback: ${fallbackError.message}`);
   }
 
   // The or-filter returns a row if ANY of the three columns matched, so each
@@ -767,10 +817,11 @@ async function getFuzzyTitleSuggestions(query) {
   });
 
   if (error) {
-    // PGRST202 is "no such function" — the expected state before the migration
-    // is applied, and not worth logging as a failure on every keystroke.
+    // PGRST202 is "no such function": the expected state before the migration
+    // is applied, so it means "no fuzzy tier", not a failure. Anything else
+    // throws, so a failed read is never cached as "no matches".
     if (error.code !== 'PGRST202') {
-      console.error('Error fetching fuzzy suggestions:', error);
+      throw new Error(`fuzzy_game_titles: ${error.message}`);
     }
     return [];
   }
@@ -836,6 +887,8 @@ async function getFuzzyTitleSuggestions(query) {
  *
  * The page is a nice-to-have. A database hiccup returns an empty result and the
  * caller renders the page without the bed rather than failing the request.
+ * Any read that failed, whole or in part, sets `degraded`: such a result is
+ * not cached here, and the caller must not let the edge hold it either.
  *
  * `games` is every published game, the number a search runs over.
  * `gamesWithOptions` is the ones that have an option to show, and is null when
@@ -845,112 +898,118 @@ async function getFuzzyTitleSuggestions(query) {
  * @returns {Promise<{tiers: Array, options: number, games: number, gamesWithOptions: number|null, links: number, singletons: number}>}
  */
 export async function getCatalogGrain() {
-  const now = Date.now();
-  if (_grainCache.data && now < _grainCache.expiresAt) return _grainCache.data;
-
-  const empty = { tiers: [], options: 0, games: 0, gamesWithOptions: null, links: 0, singletons: 0 };
-
   try {
-    // Every read here is paged. The options were one `.limit(2000)` read, but
-    // the server lowers any limit to its 1,000-row cap, so the 1,001st option
-    // would have vanished from the page in silence (620 on 2026-11-14).
-    const [options, hiddenIds, games, gamesWithOptions] = await Promise.all([
-      // One embedded aggregate rather than paging 19k junction rows.
-      fetchAllRows((from, to) => supabase
-        .from('public_launch_options')
-        .select('id, command, game_launch_options(count)')
-        .order('id', { ascending: true })
-        .range(from, to)),
-      // Hidden duplicates, whose links are discounted below. As before, if
-      // they cannot be listed, nothing is discounted.
-      fetchAllRows((from, to) => supabase
-        .from('games')
-        .select('app_id')
-        .not('duplicate_of', 'is', null)
-        .order('app_id', { ascending: true })
-        .range(from, to))
-        .then((dupes) => dupes.map((g) => g.app_id), () => []),
-      supabase.from('public_games').select('*', { count: 'exact', head: true }),
-      countGamesWithOptions(),
-    ]);
-
-    let penalty = new Map();
-    if (hiddenIds.length) {
-      const hiddenLinks = await fetchAllRows((from, to) => supabase
-        .from('game_launch_options')
-        .select('launch_option_id')
-        .in('game_app_id', hiddenIds)
-        .order('game_app_id', { ascending: true })
-        .order('launch_option_id', { ascending: true })
-        .range(from, to))
-        .catch(() => []);
-      penalty = hiddenLinks.reduce((m, l) => {
-        m.set(l.launch_option_id, (m.get(l.launch_option_id) || 0) + 1);
-        return m;
-      }, new Map());
-    }
-
-    const rows = options
-      .map((r) => ({
-        command: r.command,
-        reach: (r.game_launch_options?.[0]?.count ?? 0) - (penalty.get(r.id) || 0),
-      }))
-      // An option linked only to hidden games has no reach the site can show.
-      .filter((r) => r.command && r.reach > 0)
-      .sort((a, b) => b.reach - a.reach || a.command.localeCompare(b.command));
-
-    const tiers = groupIntoTiers(rows);
-
-    const result = {
-      tiers,
-      options: rows.length,
-      games: games.error ? 0 : (games.count || 0),
-      gamesWithOptions,
-      links: rows.reduce((sum, r) => sum + r.reach, 0),
-      singletons: rows.filter((r) => r.reach === 1).length,
-    };
-
-    _grainCache.data = result;
-    _grainCache.expiresAt = now + GRAIN_TTL_MS;
-    return result;
+    return await sharedCached(_grainCache, GRAIN_TTL_MS, computeCatalogGrain, {
+      keep: (grain) => !grain.degraded,
+    });
   } catch (error) {
     console.error('Error in getCatalogGrain:', error);
-    return empty;
+    return { tiers: [], options: 0, games: 0, gamesWithOptions: null, links: 0, singletons: 0, degraded: true };
   }
 }
 
-export async function getCatalogStats() {
-  const now = Date.now();
-  if (_statsCache.data && now < _statsCache.expiresAt) {
-    return _statsCache.data;
+async function computeCatalogGrain() {
+  // A fallback below used to stand in silently for a failed read, and the
+  // result was then cached here for six hours and at the edge for a day.
+  let degraded = false;
+  // Every read here is paged. The options were one `.limit(2000)` read, but
+  // the server lowers any limit to its 1,000-row cap, so the 1,001st option
+  // would have vanished from the page in silence (620 on 2026-11-14).
+  const [options, hiddenIds, games, gamesWithOptions] = await Promise.all([
+    // One embedded aggregate rather than paging 19k junction rows.
+    fetchAllRows((from, to) => supabase
+      .from('public_launch_options')
+      .select('id, command, game_launch_options(count)')
+      .order('id', { ascending: true })
+      .range(from, to)),
+    // Hidden duplicates, whose links are discounted below. As before, if
+    // they cannot be listed, nothing is discounted.
+    fetchAllRows((from, to) => supabase
+      .from('games')
+      .select('app_id')
+      .not('duplicate_of', 'is', null)
+      .order('app_id', { ascending: true })
+      .range(from, to))
+      .then((dupes) => dupes.map((g) => g.app_id), () => { degraded = true; return []; }),
+    supabase.from('public_games').select('*', { count: 'exact', head: true }),
+    countGamesWithOptions(),
+  ]);
+
+  let penalty = new Map();
+  if (hiddenIds.length) {
+    const hiddenLinks = await fetchAllRows((from, to) => supabase
+      .from('game_launch_options')
+      .select('launch_option_id')
+      .in('game_app_id', hiddenIds)
+      .order('game_app_id', { ascending: true })
+      .order('launch_option_id', { ascending: true })
+      .range(from, to))
+      .catch(() => { degraded = true; return []; });
+    penalty = hiddenLinks.reduce((m, l) => {
+      m.set(l.launch_option_id, (m.get(l.launch_option_id) || 0) + 1);
+      return m;
+    }, new Map());
   }
 
-  const empty = { games: null, options: null, lastUpdated: null };
+  const rows = options
+    .map((r) => ({
+      command: r.command,
+      reach: (r.game_launch_options?.[0]?.count ?? 0) - (penalty.get(r.id) || 0),
+    }))
+    // An option linked only to hidden games has no reach the site can show.
+    .filter((r) => r.command && r.reach > 0)
+    .sort((a, b) => b.reach - a.reach || a.command.localeCompare(b.command));
 
+  const tiers = groupIntoTiers(rows);
+
+  if (games.error || gamesWithOptions == null) degraded = true;
+
+  return {
+    tiers,
+    options: rows.length,
+    games: games.error ? 0 : (games.count || 0),
+    gamesWithOptions,
+    links: rows.reduce((sum, r) => sum + r.reach, 0),
+    singletons: rows.filter((r) => r.reach === 1).length,
+    degraded,
+  };
+}
+
+/**
+ * The /how-it-works figures. Never throws: a failed count comes back null and
+ * sets `degraded`, which keeps the result out of this cache and tells the
+ * caller not to let the edge hold the page.
+ *
+ * @returns {Promise<{games: number|null, options: number|null, lastUpdated: string|null, degraded: boolean}>}
+ */
+export async function getCatalogStats() {
   try {
-    const [games, options, newest] = await Promise.all([
-      supabase.from('public_games').select('*', { count: 'exact', head: true }),
-      supabase.from('public_launch_options').select('*', { count: 'exact', head: true }),
-      supabase.from('public_launch_options')
-        .select('created_at')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
-
-    const result = {
-      games: games.error ? null : games.count,
-      options: options.error ? null : options.count,
-      lastUpdated: newest.error ? null : (newest.data?.created_at ?? null),
-    };
-
-    _statsCache.data = result;
-    _statsCache.expiresAt = now + STATS_TTL_MS;
-    return result;
+    return await sharedCached(_statsCache, STATS_TTL_MS, computeCatalogStats, {
+      keep: (stats) => !stats.degraded,
+    });
   } catch (error) {
     console.error('Error in getCatalogStats:', error);
-    return empty;
+    return { games: null, options: null, lastUpdated: null, degraded: true };
   }
+}
+
+async function computeCatalogStats() {
+  const [games, options, newest] = await Promise.all([
+    supabase.from('public_games').select('*', { count: 'exact', head: true }),
+    supabase.from('public_launch_options').select('*', { count: 'exact', head: true }),
+    supabase.from('public_launch_options')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  return {
+    games: games.error ? null : games.count,
+    options: options.error ? null : options.count,
+    lastUpdated: newest.error ? null : (newest.data?.created_at ?? null),
+    degraded: Boolean(games.error || options.error || newest.error),
+  };
 }
 
 /**
@@ -1002,9 +1061,10 @@ async function fetchEngineGames(engine, phantoms) {
  * }>}
  */
 export async function getEngineHubIndex() {
-  const now = Date.now();
-  if (_hubsCache.data && now < _hubsCache.expiresAt) return _hubsCache.data;
+  return sharedCached(_hubsCache, GRAIN_TTL_MS, computeEngineHubIndex);
+}
 
+async function computeEngineHubIndex() {
   // `{}` is how the column stores "names no engine", and 459 of 586 published
   // rows say exactly that, so filtering here keeps this to one short page.
   const options = [];
@@ -1023,6 +1083,8 @@ export async function getEngineHubIndex() {
   const flagCounts = countEngineFlags(options);
   const engines = [...flagCounts.keys()];
   const phantoms = await getPhantomOptionCounts();
+  // Thrown, so nothing here is cached: every hub prints its game counts.
+  if (phantoms.degraded) throw new Error('getEngineHubIndex: phantom counts unavailable');
   const lists = await Promise.all(engines.map((engine) => fetchEngineGames(engine, phantoms)));
 
   const gamesByEngine = new Map(engines.map((engine, i) => [engine, lists[i]]));
@@ -1036,10 +1098,7 @@ export async function getEngineHubIndex() {
       .sort((a, b) => reach(b) - reach(a) || a.command.localeCompare(b.command)),
   ]));
 
-  const result = { hubs, optionsByEngine, gamesByEngine };
-  _hubsCache.data = result;
-  _hubsCache.expiresAt = now + GRAIN_TTL_MS;
-  return result;
+  return { hubs, optionsByEngine, gamesByEngine };
 }
 
 /**
@@ -1056,45 +1115,39 @@ export async function getEngineHubIndex() {
  * @returns {Promise<{options: Map<string, Object>, featured: Array<Object>}>}
  */
 export async function getGuideData(commands) {
-  const now = Date.now();
-  const key = commands.join('\n');
-  if (_guideCache.data && _guideCache.key === key && now < _guideCache.expiresAt) {
-    return _guideCache.data;
-  }
-
-  const empty = { options: new Map(), featured: [] };
-
   try {
-    const [opts, games, phantoms] = await Promise.all([
-      supabase.from('public_launch_options').select(OPTION_CARD_COLUMNS).in('command', commands),
-      supabase
-        .from('public_games')
-        .select('app_id, title, total_options_count')
-        .in('app_id', FEATURED_APP_IDS)
-        .gt('total_options_count', 0),
-      getPhantomOptionCounts(),
-    ]);
-
-    if (opts.error || games.error) {
-      console.error('Error fetching guide data:', opts.error || games.error);
-      return empty;
-    }
-
-    const result = {
-      options: new Map(opts.data.map((o) => [o.command, o])),
-      featured: withDisplayCounts(games.data, phantoms)
-        .filter((g) => g.display_options_count > 0)
-        .sort((a, b) => FEATURED_RANK.get(a.app_id) - FEATURED_RANK.get(b.app_id)),
-    };
-
-    _guideCache.key = key;
-    _guideCache.data = result;
-    _guideCache.expiresAt = now + GRAIN_TTL_MS;
-    return result;
+    return await sharedCached(_guideCache, GRAIN_TTL_MS, () => computeGuideData(commands), {
+      key: commands.join('\n'),
+    });
   } catch (error) {
     console.error('Error in getGuideData:', error);
-    return empty;
+    return { options: new Map(), featured: [] };
   }
+}
+
+async function computeGuideData(commands) {
+  const [opts, games, phantoms] = await Promise.all([
+    supabase.from('public_launch_options').select(OPTION_CARD_COLUMNS).in('command', commands),
+    supabase
+      .from('public_games')
+      .select('app_id, title, total_options_count')
+      .in('app_id', FEATURED_APP_IDS)
+      .gt('total_options_count', 0),
+    getPhantomOptionCounts(),
+  ]);
+
+  if (opts.error || games.error) {
+    throw new Error(`guide data: ${(opts.error || games.error).message}`);
+  }
+  // The featured games print their option counts.
+  if (phantoms.degraded) throw new Error('guide data: phantom counts unavailable');
+
+  return {
+    options: new Map(opts.data.map((o) => [o.command, o])),
+    featured: withDisplayCounts(games.data, phantoms)
+      .filter((g) => g.display_options_count > 0)
+      .sort((a, b) => FEATURED_RANK.get(a.app_id) - FEATURED_RANK.get(b.app_id)),
+  };
 }
 
 /**
@@ -1119,13 +1172,14 @@ export async function getGuideData(commands) {
  *   Failing whole means nothing wrong is cached and the client falls back.
  */
 export async function getFacets(searchQuery = '') {
-  const now = Date.now();
+  // Only the unfiltered facets are cached: they are what every first load asks
+  // for, and the filter dropdowns.
+  return searchQuery
+    ? computeFacets(searchQuery)
+    : sharedCached(_facetsCache, FACETS_TTL_MS, () => computeFacets(''));
+}
 
-  // Serve cached facets for unfiltered requests (most common: initial load, filter dropdowns)
-  if (!searchQuery && _facetsCache.data && now < _facetsCache.expiresAt) {
-    return _facetsCache.data;
-  }
-
+async function computeFacets(searchQuery) {
   try {
     const facetPromises = [
       getFacetValues('developer', searchQuery),
@@ -1151,11 +1205,6 @@ export async function getFacets(searchQuery = '') {
       riskLevels: optionAttrs?.riskLevels || [],
       popularOptions: popularOptions || []
     };
-
-    if (!searchQuery) {
-      _facetsCache.data = result;
-      _facetsCache.expiresAt = now + FACETS_TTL_MS;
-    }
 
     return result;
   } catch (error) {
@@ -1191,29 +1240,30 @@ export async function getFacets(searchQuery = '') {
  * @returns {Promise<Map<number, number>>}
  */
 async function getPhantomOptionCounts() {
-  const now = Date.now();
-  if (_phantomCache.data && now < _phantomCache.expiresAt) return _phantomCache.data;
-
   try {
-    // Paged: 28 rows on 2026-11-14, but one upstream decision to withhold a
-    // few widely linked options would put this past the row cap at once. A
-    // failure lands in the catch below and fails soft, as described above.
-    const data = await fetchAllRows((from, to) => supabase
-      .from('game_launch_options')
-      .select('game_app_id, public_launch_options!left(id)')
-      .is('public_launch_options', null)
-      .order('game_app_id', { ascending: true })
-      .order('launch_option_id', { ascending: true })
-      .range(from, to));
-
-    const map = buildPhantomMap(data);
-    _phantomCache.data = map;
-    _phantomCache.expiresAt = now + PHANTOM_TTL_MS;
-    return map;
+    return await sharedCached(_phantomCache, PHANTOM_TTL_MS, computePhantomOptionCounts);
   } catch (error) {
     console.error('Error in getPhantomOptionCounts:', error);
-    return new Map();
+    // Still fails soft, but flagged: a count computed without it can overstate,
+    // so a page that prints one (/catalog, the engine hubs, the guide) must
+    // not be cached on the strength of it.
+    return Object.assign(new Map(), { degraded: true });
   }
+}
+
+async function computePhantomOptionCounts() {
+  // Paged: 28 rows on 2026-11-14, but one upstream decision to withhold a
+  // few widely linked options would put this past the row cap at once. A
+  // failure lands in the catch below and fails soft, as described above.
+  const data = await fetchAllRows((from, to) => supabase
+    .from('game_launch_options')
+    .select('game_app_id, public_launch_options!left(id)')
+    .is('public_launch_options', null)
+    .order('game_app_id', { ascending: true })
+    .order('launch_option_id', { ascending: true })
+    .range(from, to));
+
+  return buildPhantomMap(data);
 }
 
 /**
@@ -1234,7 +1284,7 @@ async function countGamesWithOptions() {
         .gt('total_options_count', 0),
       getPhantomOptionCounts(),
     ]);
-    if (linked.error || linked.count == null) return null;
+    if (linked.error || linked.count == null || phantoms.degraded) return null;
 
     const ids = [...phantoms.keys()];
     if (!ids.length) return linked.count;
@@ -1679,43 +1729,54 @@ export async function getGamesForSitemap() {
  */
 export async function fetchGameWithLaunchOptions(gameId) {
   try {
-    // Deliberately the table, not public_games: this is the only read that must
-    // still see a hidden duplicate row. A link to app 100 (Condition Zero's
-    // second App ID) should redirect to the canonical game, and it can't do that
-    // if the lookup pretends the row doesn't exist. `duplicate_of` comes back
-    // with the row and tells the caller where to send it.
-    //
-    // maybeSingle, not single: single() reports a missing row as an error
-    // (PGRST116), which reached the API as a 500 instead of the 404 below.
-    const { data: game, error: gameError } = await supabase
-      .from('games')
-      .select('*')
-      .eq('app_id', gameId)
-      .maybeSingle();
-    
-    if (gameError) {
-      console.error('Game fetch error:', gameError);
-      throw new Error(`Failed to fetch game with ID ${gameId}`);
-    }
-    
-    // Coded, so callers can tell "not in the catalogue" from "the read
-    // failed" without parsing the message. The two need different answers:
-    // a 404 tells a search engine the page is gone, and a failed read is not
-    // that.
-    if (!game) {
-      throw new HttpError(404, `Game with ID ${gameId} not found`, 'GAME_NOT_FOUND');
-    }
-    
+    const game = await fetchGameRow(gameId);
     const launchOptions = await fetchLaunchOptionsForGame(gameId);
-    
-    return {
-      ...game,
-      launchOptions
-    };
+    return { ...game, launchOptions };
   } catch (error) {
     console.error('Error in fetchGameWithLaunchOptions:', error);
     throw error;
   }
+}
+
+/**
+ * The game's own row, without its options. The game page reads this first so
+ * a redirect (wrong slug, hidden duplicate) is decided on one query rather
+ * than two: every slug variant was paying for the options it never showed.
+ *
+ * @param {number} gameId - Steam app ID
+ * @returns {Promise<Object>} The `games` row, `duplicate_of` included
+ * @throws {HttpError} code GAME_NOT_FOUND when the catalogue has no such row
+ * @throws {Error} When the read fails
+ */
+export async function fetchGameRow(gameId) {
+  // Deliberately the table, not public_games: this is the only read that must
+  // still see a hidden duplicate row. A link to app 100 (Condition Zero's
+  // second App ID) should redirect to the canonical game, and it can't do that
+  // if the lookup pretends the row doesn't exist. `duplicate_of` comes back
+  // with the row and tells the caller where to send it.
+  //
+  // maybeSingle, not single: single() reports a missing row as an error
+  // (PGRST116), which reached the API as a 500 instead of the 404 below.
+  const { data: game, error: gameError } = await supabase
+    .from('games')
+    .select('*')
+    .eq('app_id', gameId)
+    .maybeSingle();
+  
+  if (gameError) {
+    console.error('Game fetch error:', gameError);
+    throw new Error(`Failed to fetch game with ID ${gameId}`);
+  }
+  
+  // Coded, so callers can tell "not in the catalogue" from "the read
+  // failed" without parsing the message. The two need different answers:
+  // a 404 tells a search engine the page is gone, and a failed read is not
+  // that.
+  if (!game) {
+    throw new HttpError(404, `Game with ID ${gameId} not found`, 'GAME_NOT_FOUND');
+  }
+
+  return game;
 }
 
 /**

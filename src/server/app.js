@@ -7,7 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { reportServerErrors } from './instrument.js';
 import gamesRoutes from './routes/gamesRoutes.js';
-import { gamePageController, sitemapController, howItWorksController, catalogController, guideController, engineHubController, pageNotFoundController } from './controllers/seoController.js';
+import { gamePageController, sitemapController, howItWorksController, catalogController, guideController, engineHubController, pageNotFoundController, pageQueryRedirect } from './controllers/seoController.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import logRequests from './middlewares/logRequests.js';
 import { APP_VERSION } from './config/version.js';
@@ -165,6 +165,15 @@ app.use('/api', notFoundHandler);
 
 // SEO routes — server-rendered game pages + sitemap.
 // MUST be registered before the SPA catch-all below, or index.html shadows them.
+//
+// None of them takes a query string, and each one sent is a new edge-cache
+// entry, so it is redirected away first (pageQueryRedirect explains). The
+// optional groups cover `/game` and `/engine` alone, which answer 404.
+export const PAGE_ROUTES = [
+  '/sitemap.xml', '/steam-launch-options', '/how-it-works', '/catalog',
+  '/game{/*rest}', '/engine{/*rest}',
+];
+app.get(PAGE_ROUTES, pageQueryRedirect);
 app.get('/sitemap.xml', sitemapController);
 app.get('/steam-launch-options', guideController);
 app.get('/how-it-works', howItWorksController);

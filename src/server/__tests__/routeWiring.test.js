@@ -51,25 +51,16 @@ describe('server-rendered route wiring', () => {
     expect(block.source).toContain(route.replace(/^\//, ''));
   });
 
-  it('the game rewrite parameter matches the one seoController strips', () => {
-    // Vercel puts the rewrite's named parameter into the query. seoController
-    // drops it by name from redirect URLs; rename one without the other and it
-    // leaks into public URLs again, as `?path=440` did on 2026-09-27.
-    const hit = vercel.rewrites.find((r) => r.source.startsWith('/game/'));
-    const param = hit.source.match(/^\/game\/:(\w+)\*$/)?.[1];
-    expect(param, `unexpected /game rewrite source: ${hit.source}`).toBeTruthy();
-    expect(seo).toContain(`const GAME_REWRITE_PARAM = '${param}';`);
-  });
-
-  it('the api rewrite parameter matches the one gamesController ignores', () => {
-    // A bare /api/games arrives as ?path=games. gamesController ignores that
-    // parameter when deciding whether a listing request is the keepalive (short
-    // cache) or a visitor's (long cache); rename one without the other and the
-    // keepalive gets a day-long cache and stops reaching Supabase.
-    const hit = vercel.rewrites.find((r) => r.source.startsWith('/api/:'));
-    const param = hit?.source.match(/^\/api\/:(\w+)\*$/)?.[1];
-    expect(param, `unexpected /api rewrite source: ${hit?.source}`).toBeTruthy();
-    expect(read('src/server/controllers/gamesController.js')).toContain(`const API_REWRITE_PARAM = '${param}';`);
+  it.each(['/api/', '/game/', '/engine/'])('the %s rewrite parameter is the one clientQuery.js ignores', (prefix) => {
+    // Vercel puts the rewrite's named parameter into the query. clientQuery.js
+    // ignores it by name, to tell a bare /api/games (the keepalive, short
+    // cache) from a visitor's, and a page URL with a query (redirected) from
+    // one without. Rename one without the other and the keepalive gets a
+    // day-long cache, and every page request redirects to itself.
+    const hit = vercel.rewrites.find((r) => r.source.startsWith(`${prefix}:`));
+    const param = hit?.source.match(/^\/\w+\/:(\w+)\*$/)?.[1];
+    expect(param, `unexpected ${prefix} rewrite source: ${hit?.source}`).toBeTruthy();
+    expect(read('src/server/utils/clientQuery.js')).toContain(`export const REWRITE_PARAM = '${param}';`);
   });
 
   it('runs the function beside the database', () => {
@@ -123,12 +114,15 @@ describe('server-rendered route wiring', () => {
     expect(seo).toContain('`${SITE_URL}/engine/${h.slug}`');
   });
 
-  it('the engine redirect never carries the rewrite parameter', () => {
-    // The engine rewrite injects `path` exactly as the game one does. The hub
-    // redirect sidesteps it by sending a bare path; if it ever starts
-    // forwarding the query, it must drop GAME_REWRITE_PARAM the way the game
-    // redirects do.
+  it('no page redirect carries the rewrite parameter', () => {
+    // The engine rewrite injects `path` exactly as the game one does, and it
+    // leaked into a public URL on 2026-09-27. Every page redirect sends a bare
+    // path, so it never can.
     expect(seo).toContain('res.redirect(301, `/engine/${hub.slug}`)');
+    expect(seo).toContain('res.redirect(301, `/game/${appId}/${canonicalSlug}`)');
+    expect(seo).toContain('res.redirect(301, `/game/${game.duplicate_of}`)');
+    // The one redirect built from the request URL keeps only its path.
+    expect(seo).not.toMatch(/res\.redirect\(301,[^)]*originalUrl(?!\.split\('\?'\)\[0\])/);
   });
 
   it('proxies in dev exactly what it rewrites in prod', () => {
