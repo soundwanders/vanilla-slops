@@ -1,13 +1,13 @@
 {
   "name": "Vanilla Slops",
   "short_name": "Slops",
-  "description": "Community-verified Steam launch options database",
+  "description": "Search Steam launch options by game, each linked to its source",
   "icons": [
     { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
   ],
-  "theme_color": "#0d0d0f",
-  "background_color": "#0d0d0f",
+  "theme_color": "#f0ebe1",
+  "background_color": "#f0ebe1",
   "display": "standalone",
   "start_url": "/"
 }
