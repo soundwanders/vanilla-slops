@@ -90,6 +90,14 @@
 
 .seo-cta:hover { text-decoration: underline; }
 
+/* The header's text links take the homepage nav link's size. They inherited
+   the body size (18px), nearly the 20px of the wordmark beside them, and the
+   header felt crowded. Scoped to the header: the footer CTA is a .seo-cta too. */
+.seo-header .seo-cta,
+.seo-header .seo-nav-link {
+  font-size: var(--font-size-sm);
+}
+
 /* "How it works" header nav link, grouped with the CTA + toggle on the right */
 .seo-nav-link {
   color: var(--color-text-secondary);
