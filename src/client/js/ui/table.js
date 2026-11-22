@@ -6,6 +6,7 @@ import { visitorMessage } from '../apiError.js';
 // two copies still matched, nothing anywhere checked that they did.
 import { slugify } from '../../../shared/slugify.js';
 import { safeHttpUrl } from '../../../shared/safeUrl.js';
+import { descriptionPointerHTML } from '../../../shared/descriptionPointer.js';
 import { MOBILE_BREAKPOINT } from '../constants.js';
 import { CONFIG, TableState, getTableContainer, getOpenLaunchOptionsCount, escapeHtml, pasteableCommand, isCopyActivationKey } from './table-shared.js';
 import {
@@ -541,10 +542,9 @@ function createNoOptionsHTML(colspan, gameId, gameTitle = '') {
   `;
 }
 
-// Placeholder/non-answer descriptions the scraper leaves behind. Render the
-// source link instead (honest fallback) rather than a description that isn't one.
+// A non-answer the scraper once left behind (no rows on 2026-11-22, kept as a
+// guard). Shown as the pointer to the source instead, like a missing one.
 const PLACEHOLDER_DESCRIPTIONS = new Set([
-  'no description available',
   'launch option from pcgamingwiki'
 ]);
 function cleanDescription(desc) {
@@ -602,7 +602,7 @@ function createLaunchOptionHTML(option) {
         <div class="option-description ${TableState.isMobile ? 'mobile-description' : ''}">
           ${escapeHtml(description)}
         </div>
-      ` : ''}
+      ` : descriptionPointerHTML({ label: option.source ? humanizeSource(option.source) : '', href: safeHttpUrl(option.source_url) }, escapeHtml)}
       <button class="option-detail-toggle"
               type="button"
               aria-expanded="false"
@@ -655,7 +655,8 @@ function renderCategoryChips(categories) {
 // Raw source values are sometimes slugs (e.g. "manual_curation"); present them
 // readably while leaving already-clean names (PCGamingWiki, ProtonDB) untouched.
 function humanizeSource(src) {
-  const s = (src || 'Community').trim();
+  // 'Source' rather than a name: an unnamed source is not "Community".
+  const s = (src || 'Source').trim();
   if (s.includes('_')) {
     const spaced = s.replace(/_/g, ' ');
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);

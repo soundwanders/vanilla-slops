@@ -133,6 +133,23 @@ describe('game pages in production', () => {
   });
 });
 
+describe('a game page option with no written description', () => {
+  it('points to its source where the description would be, never "null"', async () => {
+    service.fetchGameRow.mockResolvedValue({ app_id: 546560, title: 'Half-Life: Alyx', duplicate_of: null });
+    service.fetchLaunchOptionsForGame.mockResolvedValue([{
+      id: 'a1', command: '-vconsole', description: null, source: 'PCGamingWiki',
+      source_url: 'https://www.pcgamingwiki.com/wiki/Half-Life:_Alyx', risk_level: 'experimental',
+      categories: [], engine_compatibility: [], created_at: '2026-11-15T00:00:00Z',
+    }]);
+    const res = await page('546560', 'half-life-alyx');
+    const html = res.send.mock.calls[0][0];
+    expect(html).toContain('What PCGamingWiki says<');
+    expect(html).toContain('href="https://www.pcgamingwiki.com/wiki/Half-Life:_Alyx"');
+    expect(html).not.toMatch(/>\s*null\s*</);
+    expect(html).not.toContain('No description available');
+  });
+});
+
 describe('game pages in development', () => {
   it('are never cached, so a rebuild is visible at once', async () => {
     vi.stubEnv('NODE_ENV', 'development');

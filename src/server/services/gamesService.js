@@ -1860,10 +1860,11 @@ export async function fetchLaunchOptionsForGame(gameId) {
           id: option.id,
           option: option.command,
           command: option.command,
-          // The invented fallback is a known defect (CLAUDE.md): seoController
-          // filters this exact string back out. Kept until the API shape change.
-          description: shown.description || 'No description available',
-          source: shown.source || 'Community',
+          // null when there is no written text, never an invented stand-in.
+          // It said "No description available" and "Community" until 1.7.15;
+          // the renderers point to `source_url` instead (shared/descriptionPointer.js).
+          description: shown.description || null,
+          source: shown.source || null,
           // The citation for the text above: the game's own page when the text
           // is its own, otherwise the shared row's. null means "no link", never
           // "broken"; the view guarantees provenance, not a URL.

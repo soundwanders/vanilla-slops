@@ -16,6 +16,7 @@ import { slugify } from '../../shared/slugify.js';
 import { engineSlug, resolveHub, gameHasEngineHub } from '../utils/engineHubs.js';
 import { jsonLdScript } from '../utils/jsonLdScript.js';
 import { safeHttpUrl } from '../../shared/safeUrl.js';
+import { descriptionPointerHTML } from '../../shared/descriptionPointer.js';
 import { reportError } from '../instrument.js';
 
 // Edge-cached for a day, then served stale for up to a week while one request
@@ -477,7 +478,8 @@ const HOW_TO_APPLY_HTML = `
 // Community and Universal — so this is now defensive against a future slug
 // rather than something the current data exercises.
 function humanizeSource(src) {
-  const s = (src || 'Community').trim();
+  // 'Source' rather than a name: an unnamed source is not "Community".
+  const s = (src || 'Source').trim();
   if (s.includes('_')) {
     const spaced = s.replace(/_/g, ' ');
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
@@ -537,9 +539,10 @@ function renderOption(opt) {
     ? example
     : command;
   const showExample = opt.usage_example && opt.usage_example !== pasteable;
-  // Drop placeholder/non-answer descriptions so the source link shows instead.
+  // Drop a non-answer the scraper once left behind (no rows on 2026-11-22,
+  // kept as a guard), so the pointer to the source shows instead.
   const rawDesc = (opt.description || '').trim();
-  const isPlaceholder = ['no description available', 'launch option from pcgamingwiki'].includes(rawDesc.toLowerCase());
+  const isPlaceholder = rawDesc.toLowerCase() === 'launch option from pcgamingwiki';
   const description = isPlaceholder ? '' : rawDesc;
   const addedDate = formatAddedDate(opt.created_at);
   const verifiedDate = formatAddedDate(opt.last_verified_at);
@@ -561,7 +564,9 @@ function renderOption(opt) {
         <span class="copy-word">Copy</span>
       </span>
     </div>
-    ${description ? `<div class="option-description">${escapeHtml(description)}</div>` : ''}
+    ${description
+    ? `<div class="option-description">${escapeHtml(description)}</div>`
+    : descriptionPointerHTML({ label: opt.source ? humanizeSource(opt.source) : '', href: safeHttpUrl(opt.source_url) }, escapeHtml)}
     ${(opt.effect || showExample) ? `
     <dl class="option-usage">
       ${opt.effect ? `<div class="option-usage-row"><dt>Effect</dt><dd>${escapeHtml(opt.effect)}</dd></div>` : ''}

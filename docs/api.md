@@ -257,7 +257,7 @@ Retrieve only the launch options for a specific game (lighter response).
 | `last_verified_at` | When that page was last re-read and still listed the option; `null` means not yet re-checked |
 | `game_source`, `game_source_url`, `game_verified_at` | This game's own page for the option, when it is extra evidence rather than the citation above; otherwise all `null` |
 
-> An option with no written description currently carries the placeholder `"No description available"`. Its `source_url` is the documentation to read instead.
+> An option with no written description has `description: null`. Its `source_url` is the documentation to read instead. Until 1.7.15 the field carried the placeholder `"No description available"`, and an unnamed source read `"Community"`; neither was in the catalogue.
 
 ### Search & Discovery
 
@@ -505,8 +505,8 @@ Every error the API sends has this shape. The one exception is the hosting firew
 |-------|------|-------------|
 | `id` | string | Unique identifier (UUID) |
 | `command` | string | Launch option command |
-| `description` | string | Human-readable description |
-| `source`, `source_url` | string | Where the description is cited from (e.g. PCGamingWiki, ProtonDB, Steam Community) |
+| `description` | string \| null | Human-readable description; `null` when none is written (read `source_url`) |
+| `source`, `source_url` | string \| null | Where the description is cited from (e.g. PCGamingWiki, ProtonDB, Steam Community) |
 | `last_verified_at` | string \| null | When the cited page last still listed the option |
 | `verification_method` | string \| null | How the option was collected (e.g. `pcgamingwiki-scrape`) |
 | `game_source`, `game_source_url`, `game_verified_at` | string \| null | This game's own page for the option, when it is extra evidence |

@@ -720,6 +720,23 @@
   user-select: text;
 }
 
+/* In place of a missing description: where the option is explained. Muted so
+   it never passes for a description; a real link so the slot still helps. */
+.option-description-pointer {
+  color: var(--color-text-secondary);
+}
+
+.option-description-pointer a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.option-description-pointer a:hover,
+.option-description-pointer a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
 /* Per-option usage docs (Effect / Example) — rendered only when the scraper has
    populated usage_example/effect, so it's simply absent until then. */
 .option-usage {
