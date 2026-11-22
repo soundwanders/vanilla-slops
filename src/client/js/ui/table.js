@@ -891,14 +891,10 @@ function cleanupLaunchOptionsEvents(container) {
   container.querySelectorAll(`.${CONFIG.CLASSES.optionCommand}`).forEach(el => {
     if (el._clickHandler) el.removeEventListener('click', el._clickHandler);
     if (el._keydownHandler) el.removeEventListener('keydown', el._keydownHandler);
-    if (el._touchStartHandler) el.removeEventListener('touchstart', el._touchStartHandler);
-    if (el._touchEndHandler) el.removeEventListener('touchend', el._touchEndHandler);
     delete el.dataset.eventsSetup;
     delete el.dataset.copying;
     delete el._clickHandler;
     delete el._keydownHandler;
-    delete el._touchStartHandler;
-    delete el._touchEndHandler;
   });
 }
 
@@ -1101,14 +1097,11 @@ function setupLaunchOptionsRowEvents(container) {
     element.tabIndex = 0;
     element.addEventListener('keydown', keydownHandler);
 
-    if (TableState.touchDevice) {
-      const touchStartHandler = () => element.classList.add('touch-active');
-      const touchEndHandler = () => element.classList.remove('touch-active');
-      element._touchStartHandler = touchStartHandler;
-      element._touchEndHandler = touchEndHandler;
-      element.addEventListener('touchstart', touchStartHandler, { passive: true });
-      element.addEventListener('touchend', touchEndHandler, { passive: true });
-    }
+    // No touch handlers. A .touch-active dim to 70% used to run on top of the
+    // :active press state (responsive.css) on touch-capable devices, faded the
+    // command while it was being read, and stuck whenever the browser cancelled
+    // the touch for a scroll, since only touchend removed it. Game pages never
+    // had it.
 
     element.dataset.eventsSetup = 'true';
   });
@@ -1169,7 +1162,6 @@ function initializeTable() {
     style.textContent = `
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       .mobile-spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; }
-      .touch-active { opacity: 0.7; transform: scale(0.95); }
       .mobile-instruction { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--color-surface-raised); color: var(--color-text-primary); padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: var(--z-popover); box-shadow: var(--shadow-lg); }
     `;
     document.head.appendChild(style);

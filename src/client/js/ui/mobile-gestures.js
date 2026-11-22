@@ -11,7 +11,6 @@ export function buffMobileTableView(table) {
 export function buffMobileTouch(container) {
   container.classList.add('mobile-optimized');
   if (TableState.touchDevice) addTouchOptimizations(container);
-  addMobileEventHandlers(container);
 }
 
 function addTouchOptimizations(container) {
@@ -24,17 +23,6 @@ function addTouchOptimizations(container) {
   // Double-tap-zoom is prevented via `touch-action: manipulation` in CSS on the
   // interactive elements — cleaner than a JS touchend preventDefault, which also
   // swallowed legitimate quick taps.
-}
-
-function addMobileEventHandlers(container) {
-  container.addEventListener('touchstart', (e) => {
-    const target = e.target.closest('[data-mobile-action]');
-    if (target) target.classList.add('touch-active');
-  }, { passive: true });
-  container.addEventListener('touchend', (e) => {
-    const target = e.target.closest('[data-mobile-action]');
-    if (target) target.classList.remove('touch-active');
-  }, { passive: true });
 }
 
 export function ensureTouchTarget(element) {
