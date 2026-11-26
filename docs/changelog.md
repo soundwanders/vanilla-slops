@@ -18,6 +18,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed**: Bug fixes
 - **Security**: Security vulnerability fixes
 
+## [1.7.16] - 2026-11-25 — Need to know
+
+### Security
+- **Error reports carry less about visitors.** The error-reporting library's
+  new version quietly dropped the setting that kept visitors' details out of
+  reports, and in testing a report picked up a visitor's IP address. Every
+  kind of data it can collect is now switched off by name, and a test fails
+  if one is switched back on. Reports also no longer carry the addresses an
+  earlier visitor asked for, and keep only the method and path of the request
+  that failed.
+
+### Changed
+- **Dependencies updated**, including Express 5.3, the database client and
+  the build tools. Two advisories in the request parser were patched; neither
+  could be reached here. The startup notice from the settings loader no
+  longer appears as an error in the hosting logs.
+
 ## [1.7.15] - 2026-11-22 — Says who
 
 ### Fixed
