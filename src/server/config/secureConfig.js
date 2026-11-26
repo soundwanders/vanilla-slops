@@ -122,7 +122,7 @@ class SecureConfig {
       
       // Skip file load if env vars are already injected (Vercel, CI)
       if (!process.env.SUPABASE_URL) {
-        const loadResult = dotenv.config({ path: dotenvPath });
+        const loadResult = dotenv.config({ path: dotenvPath, quiet: true });
         if (loadResult.error) {
           this._handleDotenvError(loadResult.error, dotenvPath);
         }

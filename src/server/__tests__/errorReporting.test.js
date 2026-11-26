@@ -102,6 +102,73 @@ describe('error reporting is lazy', () => {
   });
 });
 
+// v11 removed `sendDefaultPii` and collects by default. Measured on 11.12.0
+// with the v10 options unchanged (2026-11-25): a later report on an instance
+// carried the visitor's IP address, and on v10 and v11 alike a breadcrumb
+// carried an earlier request's query string. These pin what a report may hold.
+describe('what a report may carry', () => {
+  async function initOptions() {
+    asReportingInstance();
+    const { reportServerErrors, settleErrorReports } = await load('https://key@sentry.example/1');
+    reportServerErrors(serverError(), req, {}, vi.fn());
+    await settleErrorReports();
+    return sdk.init.mock.calls[0][0];
+  }
+
+  it('switches every kind of collected visitor data off explicitly', async () => {
+    const options = await initOptions();
+    expect(options).not.toHaveProperty('sendDefaultPii');
+    expect(options.dataCollection).toEqual({
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      mcp: { inputs: false, outputs: false },
+      frameContextLines: 5,
+    });
+  });
+
+  it('keeps no breadcrumbs', async () => {
+    expect((await initOptions()).maxBreadcrumbs).toBe(0);
+  });
+
+  it('strips the user, breadcrumbs and all request detail but method and path before sending', async () => {
+    const { beforeSend } = await initOptions();
+    const event = beforeSend({
+      exception: { values: [{ type: 'Error', value: 'boom' }] },
+      tags: { route: 'GET /engine/:slug' },
+      user: { ip_address: '203.0.113.7' },
+      breadcrumbs: [{ data: { url: { query: 'q=secret' } } }],
+      request: {
+        method: 'GET',
+        url: 'https://launchoptions.dev/engine/unity-engine?q=secret',
+        query_string: 'q=secret',
+        headers: { cookie: 'session=secret', 'x-monitor-key': 'secret' },
+        cookies: { session: 'secret' },
+        data: 'secret',
+      },
+    });
+    expect(event.user).toBeUndefined();
+    expect(event.breadcrumbs).toBeUndefined();
+    expect(event.request).toEqual({ method: 'GET', url: 'https://launchoptions.dev/engine/unity-engine' });
+    expect(event.tags).toEqual({ route: 'GET /engine/:slug' });
+    expect(JSON.stringify(event)).not.toContain('secret');
+    expect(JSON.stringify(event)).not.toContain('203.0.113.7');
+  });
+
+  it('leaves an event with no request alone', async () => {
+    const { beforeSend } = await initOptions();
+    const event = beforeSend({ exception: { values: [] } });
+    expect(event).toEqual({ exception: { values: [] } });
+  });
+});
+
 // A database stall fails hundreds of requests across hundreds of instances at
 // once. Uncapped, each instance would load the SDK (~450 ms of billed CPU) and
 // send the same event, in the hour the function is already at its most costly.

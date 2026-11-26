@@ -30,7 +30,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Absent means undefined: the test run sets it to '' (vitest.config.js) so that
 // no test can load the maintainer's .env and report to the real project.
 if (process.env.SENTRY_DSN === undefined) {
-  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+  // quiet: dotenv 18 writes "injected env" to stderr, which Vercel logs as an error.
+  dotenv.config({ path: path.resolve(__dirname, '../../.env'), quiet: true });
 }
 
 const dsn = process.env.SENTRY_DSN;
@@ -129,13 +130,46 @@ function loadSentry() {
       // Errors only, so no tracesSampleRate: Sentry treats any non-null value,
       // 0 included, as tracing switched on.
 
-      // Don't let error reports carry request bodies, cookies or headers.
-      sendDefaultPii: false,
+      // What a report may carry: the error, its stack and the route tag. v11
+      // removed `sendDefaultPii` (setting it is silently ignored) and its
+      // replacement collects by default. Measured on 11.12.0 with no
+      // `dataCollection` (2026-11-25): a later report on an instance sent the
+      // visitor's IP address as `user.ip_address`. Every key is set
+      // explicitly, so a changed default cannot change what is sent.
+      // frameContextLines is the one left on: source lines around each stack
+      // frame are this repo's own (public) code, and they make a report useful.
+      dataCollection: {
+        userInfo: false,
+        cookies: false,
+        httpHeaders: false,
+        httpBodies: [],
+        urlQueryParams: false,
+        databaseQueryData: false,
+        queues: false,
+        stackFrameVariables: false,
+        graphQL: { document: false, variables: false },
+        genAI: { inputs: false, outputs: false },
+        mcp: { inputs: false, outputs: false },
+        frameContextLines: 5,
+      },
+
+      // No breadcrumbs. On v10 and v11 alike they carried the URL of an
+      // earlier request on the same instance, query string included, so one
+      // visitor's address could ride along on another visitor's error. The
+      // route tag and the stack are what a report is for.
+      maxBreadcrumbs: 0,
 
       beforeSend(event) {
-        // Belt-and-braces: never ship credentials even if something attaches them.
-        if (event.request?.headers) delete event.request.headers;
-        if (event.request?.cookies) delete event.request.cookies;
+        // Belt-and-braces, whatever the options above do in a later version:
+        // no user, no breadcrumbs, and no request detail beyond its method
+        // and path. The exception's own message is left as thrown; the code
+        // that throws is what keeps visitor input out of it.
+        delete event.user;
+        delete event.breadcrumbs;
+        if (event.request) {
+          const { method, url } = event.request;
+          event.request = { method, url: typeof url === 'string' ? url.split('?')[0] : url };
+        }
         return event;
       },
     });
