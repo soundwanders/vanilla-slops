@@ -33,6 +33,21 @@ const FACETS_TTL_MS = 5 * 60 * 1000;
 // shrunken result set), so both listing paths re-ask for the count alone and
 // return no rows. It used to surface as a 500 from page 151 onward.
 const RANGE_NOT_SATISFIABLE = 'PGRST103';
+
+/**
+ * A short, safe name for a failed Supabase read, for the thrown error and so
+ * for Sentry. Without it a report said only "Failed to fetch game with ID
+ * 40420" and the cause was lost with Vercel's hour of runtime logs
+ * (2026-11-26). A PostgREST or Postgres code is sent alone, because a coded
+ * error such as a filter parse failure can echo the visitor's search back. A
+ * network failure or timeout has no code, and no visitor input in its message.
+ *
+ * @param {{ code?: string, message?: string } | null | undefined} error
+ * @returns {string}
+ */
+function dbErrorDetail(error) {
+  return error?.code || error?.message || 'no detail';
+}
 const _facetsCache = { data: null, expiresAt: 0 };
 
 // Catalog totals for the /how-it-works figures line. Deliberately NOT folded
@@ -277,7 +292,7 @@ export async function fetchGames({
       }
       if (result.error) {
         console.error('Supabase query error:', result.error);
-        throw new Error('Failed to fetch games from database');
+        throw new Error(`Failed to fetch games from database (${dbErrorDetail(result.error)})`, { cause: result.error });
       }
       ({ data, count } = result);
     }
@@ -484,7 +499,7 @@ async function fetchFeaturedPage(buildFilteredQuery, { offset, limit }) {
 
   if (featuredResult.error) {
     console.error('Supabase featured query error:', featuredResult.error);
-    throw new Error('Failed to fetch games from database');
+    throw new Error(`Failed to fetch games from database (${dbErrorDetail(featuredResult.error)})`, { cause: featuredResult.error });
   }
 
   const featured = (featuredResult.data || [])
@@ -517,7 +532,7 @@ async function fetchFeaturedPage(buildFilteredQuery, { offset, limit }) {
 
   if (tailResult.error) {
     console.error('Supabase query error:', tailResult.error);
-    throw new Error('Failed to fetch games from database');
+    throw new Error(`Failed to fetch games from database (${dbErrorDetail(tailResult.error)})`, { cause: tailResult.error });
   }
 
   return {
@@ -1643,8 +1658,9 @@ export async function getGameStatistics(filters = {}) {
     const [totalRes, withRes] = await Promise.all([totalQuery, withOptionsQuery]);
 
     if (totalRes.error || withRes.error) {
-      console.error('Statistics query error:', totalRes.error || withRes.error);
-      throw new Error('Failed to fetch game statistics from database');
+      const statsError = totalRes.error || withRes.error;
+      console.error('Statistics query error:', statsError);
+      throw new Error(`Failed to fetch game statistics from database (${dbErrorDetail(statsError)})`, { cause: statsError });
     }
 
     const total = totalRes.count || 0;
@@ -1765,7 +1781,7 @@ export async function fetchGameRow(gameId) {
   
   if (gameError) {
     console.error('Game fetch error:', gameError);
-    throw new Error(`Failed to fetch game with ID ${gameId}`);
+    throw new Error(`Failed to fetch game with ID ${gameId} (${dbErrorDetail(gameError)})`, { cause: gameError });
   }
   
   // Coded, so callers can tell "not in the catalogue" from "the read
